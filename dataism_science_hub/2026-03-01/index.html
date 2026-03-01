@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>От статичных пайплайнов к адаптивным агентам | Dataism Science Hub</title>
+    
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Dataism Science Hub" />
+    <meta property="og:title" content="От статичных пайплайнов к адаптивным агентам | Dataism Science Hub" />
+    <meta property="og:description" content="Как научить LLM выбирать действия, инструменты и бюджет под запрос. Разбор контроллера ARC." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://t.me/dataism_science" />
+    <meta property="og:image" content="https://i.postimg.cc/zGFSzsQM/Chat-GPT-Image-Mar-1-2026-07-21-19-PM.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://i.postimg.cc/zGFSzsQM/Chat-GPT-Image-Mar-1-2026-07-21-19-PM.png" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            purple: '#a855f7',
+                            orange: '#f97316',
+                            tg: '#229ED9',
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['"Space Mono"', 'monospace'],
+                        sans: ['"Inter"', 'sans-serif'],
+                        montserrat: ['"Montserrat"', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* CSS Переменные для Светлой и Темной темы */
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --grid-line-p: rgba(168, 85, 247, 0.1);
+            --grid-line-o: rgba(249, 115, 22, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(0, 0, 0, 0.05);
+            --card-bg: rgba(255, 255, 255, 0.6);
+            --card-border: rgba(0, 0, 0, 0.05);
+            --shadow-glow: rgba(0,0,0,0.02);
+            --image-bg: #ffffff;
+        }
+
+        .dark {
+            --bg-color: #050505;
+            --text-main: #e5e7eb;
+            --text-muted: #9ca3af;
+            --grid-line-p: rgba(168, 85, 247, 0.05);
+            --grid-line-o: rgba(249, 115, 22, 0.05);
+            --glass-bg: rgba(10, 10, 14, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --shadow-glow: rgba(0,0,0,0.5);
+            --image-bg: #e5e7eb; /* Чтобы графики из arxiv читались в dark mode */
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            transition: background-color 0.4s ease, color 0.4s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: 
+                linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px);
+            background-attachment: fixed;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 40px var(--shadow-glow);
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        .tech-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            transition: all 0.3s ease;
+        }
+
+        .tech-card:hover {
+            border-color: rgba(168, 85, 247, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .text-glow-purple { text-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+        .text-glow-orange { text-shadow: 0 0 15px rgba(249, 115, 22, 0.4); }
+        .text-glow-tg { text-shadow: 0 0 15px rgba(34, 158, 217, 0.5); }
+
+        .article-p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            margin-bottom: 1.25rem;
+            color: var(--text-main);
+        }
+        @media (min-width: 768px) {
+            .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; }
+        }
+        
+        .article-h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 1.5rem;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+        @media (min-width: 768px) {
+            .article-h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; }
+        }
+
+        .cyber-img {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 10px 30px var(--shadow-glow);
+        }
+
+        /* Анимации при скролле */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Графики из arXiv (светлый фон для контрастности линий) */
+        .arxiv-chart {
+            background-color: var(--image-bg);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+            transition: background-color 0.4s ease;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
+
+    <!-- Фоновые свечения -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 dark:bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 dark:bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay: 3s;"></div>
+    </div>
+
+    <!-- Шапка -->
+    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
+        <!-- Логотип: ДАТАИСТ (Шрифт Mono) -->
+        <div class="flex items-center gap-3 md:gap-4">
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">
+                i
+            </div>
+            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">
+                ДАТАИСТ
+            </div>
+        </div>
+        
+        <!-- Органы управления -->
+        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
+            <!-- Кнопка Луна/Солнце -->
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
+                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
+                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+            </button>
+            
+            <!-- Кнопка Telegram (Справа) -->
+            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
+                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи (Форма) -->
+    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
+        
+        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
+            
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-12 md:mb-16 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
+                    <i data-lucide="bot" class="w-4 h-4"></i> Dataism Science Hub
+                </div>
+                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
+                    От статичных пайплайнов к адаптивным агентам:<br>
+                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3">как научить LLM выбирать действия, инструменты и бюджет под запрос</span>
+                </h1>
+                
+                <img src="https://i.postimg.cc/zGFSzsQM/Chat-GPT-Image-Mar-1-2026-07-21-19-PM.png" 
+                     alt="" 
+                     class="cyber-img h-48 sm:h-64 md:h-[50vh] object-cover m-0 w-full max-w-4xl mx-auto rounded-2xl">
+            </header>
+
+            <!-- ВСТУПЛЕНИЕ -->
+            <div class="max-w-4xl mx-auto fade-in w-full">
+                <p class="article-p">
+                    В мультиагентных системах один компонент системы планирует, другой проверяет, третий вызывает инструменты вроде поиска или калькулятора. И тут выясняется, что качество зависит не только от самой LLM, но и от того, как именно мы собрали эту «обвязку»: какой пайплайн выбрать, какие инструменты разрешить, сколько токенов выделить на рассуждение, какие промты дать каждому агенту.
+                </p>
+                <p class="article-p">
+                    Проблема в том, что на практике конфигурация обычно статична. Команда один раз подбирает удачный шаблон — и дальше гоняет его на всех запросах подряд. Из-за этого система часто ведёт себя неустойчиво и расточительно. Простому вопросу достаётся тяжёлая схема с поиском, голосованием и проверками, хотя можно было ответить напрямую. А сложный запрос, наоборот, может получить слишком короткий бюджет или не те инструменты. Плюс появляется классическая беда длинных контекстов: часть важной информации теряется в середине, и качество падает.
+                </p>
+                <p class="article-p">
+                    Авторы работы <strong class="text-cyber-purple">Learning to Configure Agentic AI Systems</strong> предлагают относиться к настройке не как к разовой инженерной задаче, а как к решению, которое нужно принимать заново для каждого запроса. Правда, тут же встаёт комбинаторный кошмар: даже в относительно небольшой системе легко набираются десятки тысяч вариантов (workflow × наборы инструментов × уровни бюджетов × варианты промтов). Перебирать это вручную или простым поиском слишком дорого.
+                </p>
+            </div>
+
+            <!-- ИЛЛЮСТРАЦИЯ 1 -->
+            <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                <div class="arxiv-chart">
+                    <img src="https://arxiv.org/html/2602.11574v1/x1.png" alt="" class="w-full object-contain">
+                </div>
+                <figcaption class="mt-4 text-xs md:text-sm font-mono text-[var(--text-muted)] text-center px-4 leading-relaxed">
+                    Иллюстрация идеи: метод учится выбирать оптимальную конфигурацию из тысяч вариантов для каждого входного запроса и показывает прирост качества на нескольких датасетах (пример — Qwen 2.5 7B Instruct).
+                </figcaption>
+            </figure>
+
+            <!-- РАЗДЕЛ 1: ARC -->
+            <div class="max-w-4xl mx-auto w-full fade-in">
+                <h2 class="article-h2">ARC: контроллер, который выбирает режим работы под запрос</h2>
+                <p class="article-p">
+                    Решение авторов называется ARC (Agentic Resource & Configuration learner). По сути это лёгкий обучаемый контроллер, который стоит поверх агентной системы и решает, как её запускать именно сейчас. Важно, что backbone LLM не дообучают — вместо этого обучают небольшие политики, которые выбирают конфигурацию.
+                </p>
+                
+                <p class="article-p mb-6">ARC устроен иерархически. Такой разрез делает задачу более управляемой: вместо одной гигантской кнопки «выбери всё» система принимает решение по частям.</p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-8">
+                    <div class="tech-card p-6 rounded-2xl">
+                        <div class="flex items-center gap-3 mb-4">
+                            <i data-lucide="layers" class="text-cyber-purple w-6 h-6"></i>
+                            <h4 class="font-bold font-mono text-sm uppercase text-[var(--text-main)]">Верхний уровень</h4>
+                        </div>
+                        <p class="text-sm text-[var(--text-muted)] m-0 leading-relaxed">
+                            Политика решает «структуру»: какой workflow включить, какие инструменты разрешить, какой токен-бюджет выдать агентам.
+                        </p>
+                    </div>
+                    <div class="tech-card p-6 rounded-2xl">
+                        <div class="flex items-center gap-3 mb-4">
+                            <i data-lucide="file-code" class="text-cyber-orange w-6 h-6"></i>
+                            <h4 class="font-bold font-mono text-sm uppercase text-[var(--text-main)]">Нижний уровень</h4>
+                        </div>
+                        <p class="text-sm text-[var(--text-muted)] m-0 leading-relaxed">
+                            Другая политика собирает промты из библиотеки смысловых фрагментов (например, добавить инструкцию разложить задачу на шаги или проверить вычисления).
+                        </p>
+                    </div>
+                </div>
+
+                <p class="article-p">
+                    Чтобы политика понимала, что перед ней за запрос, она получает его представление: эмбеддинг текста плюс простые признаки вроде длины, «числовой плотности» и индикаторов того, похоже ли задание на многошаговое рассуждение или на необходимость инструментов.
+                </p>
+            </div>
+
+            <!-- ИЛЛЮСТРАЦИЯ 2 -->
+            <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                <div class="arxiv-chart">
+                    <img src="https://arxiv.org/html/2602.11574v1/x2.png" alt="" class="w-full object-contain">
+                </div>
+                <figcaption class="mt-4 text-xs md:text-sm font-mono text-[var(--text-muted)] text-center px-4 leading-relaxed">
+                    Пайплайн ARC: верхняя политика выбирает workflow, инструменты и бюджеты; нижняя собирает инструкции. Эпизоды RL копятся в буфере, затем лучшие траектории используются для SFT, чтобы закрепить удачные стратегии.
+                </figcaption>
+            </figure>
+
+            <!-- РАЗДЕЛ 2: КАК ARC УЧИТСЯ -->
+            <div class="max-w-4xl mx-auto w-full fade-in">
+                <h2 class="article-h2">Как ARC учится: награда за правильность и штраф за стоимость</h2>
+                <p class="article-p">
+                    Авторы формулируют обучение с подкреплением (RL): на каждом запросе система выбирает конфигурацию, запускает агентный пайплайн и получает награду. Награда учитывает два главных фактора: ответ правильный или нет, и сколько стоила попытка по шагам/токенам/времени. Так ARC вынуждают не просто «выжимать максимум точности», а искать баланс: где-то стоит запустить проверяющий цикл, а где-то лучше ответить быстро.
+                </p>
+                <p class="article-p">
+                    Есть тонкий момент с инструментами: можно разрешить веб-поиск, но LLM в итоге его не вызовет. Поэтому авторы добавляют shaping-награду, которая поощряет выделять инструменты тогда, когда они реально будут использованы, и штрафует за лишние разрешения без дела. 
+                </p>
+                <p class="article-p">
+                    Ещё одна важная инженерная деталь — маскирование действий: часть комбинаций просто не имеет смысла (например, назначать инструменты агентам, которых выбранный пайплайн не использует). Маскирование выкидывает такие варианты и облегчает обучение.
+                </p>
+            </div>
+
+            <!-- ИЛЛЮСТРАЦИЯ 3 -->
+            <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                <div class="arxiv-chart">
+                    <img src="https://arxiv.org/html/2602.11574v1/x3.png" alt="" class="w-full object-contain">
+                </div>
+                <figcaption class="mt-4 text-xs md:text-sm font-mono text-[var(--text-muted)] text-center px-4 leading-relaxed">
+                    Маскирование действий: RL-политика не тратит попытки на заведомо недопустимые конфигурации, что заметно упрощает поиск.
+                </figcaption>
+            </figure>
+
+            <div class="max-w-4xl mx-auto w-full fade-in">
+                <p class="article-p">
+                    После этапа RL авторы делают второй шаг: берут лучшие траектории (top 30% по награде среди правильных) и проводят supervised fine-tuning (SFT) политик. Это снижает случайность и делает поведение более стабильным: политика фиксирует найденные удачные режимы, вместо того чтобы каждый раз слегка колебаться.
+                </p>
+            </div>
+
+            <!-- РАЗДЕЛ 3: БЕНЧМАРКИ -->
+            <div class="max-w-4xl mx-auto w-full fade-in">
+                <h2 class="article-h2">Что получилось на бенчмарках и почему это важно</h2>
+                <p class="article-p">
+                    ARC проверяют на задачах рассуждения (GSM8k, DROP, MedQA) и на tool-augmented QA (HotpotQA, GAIA). На примере Qwen 2.5 7B Instruct система даёт резкий скачок относительно базовой модели с инструментами:
+                </p>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-8">
+                    <div class="tech-card p-5 rounded-xl text-center">
+                        <strong class="font-mono text-2xl lg:text-3xl block text-[var(--text-main)] mb-1">88.6%</strong>
+                        <span class="text-xs font-bold text-cyber-purple uppercase tracking-widest">GSM8k</span>
+                    </div>
+                    <div class="tech-card p-5 rounded-xl text-center">
+                        <strong class="font-mono text-2xl lg:text-3xl block text-[var(--text-main)] mb-1">63.9%</strong>
+                        <span class="text-xs font-bold text-cyber-orange uppercase tracking-widest">DROP</span>
+                    </div>
+                    <div class="tech-card p-5 rounded-xl text-center">
+                        <strong class="font-mono text-2xl lg:text-3xl block text-[var(--text-main)] mb-1">64.6%</strong>
+                        <span class="text-xs font-bold text-cyber-tg uppercase tracking-widest">MedQA</span>
+                    </div>
+                </div>
+
+                <p class="article-p">
+                    На HotpotQA и GAIA прирост тоже заметен, хотя абсолютные значения там ниже — задачи упираются в знания и поиск. Отдельно интересно, что ARC не «залипает» в одном любимом пайплайне. В анализе видно разнообразие используемых схем: для разных датасетов и типов вопросов политика выбирает разные паттерны, а не повторяет один и тот же тяжёлый конвейер.
+                </p>
+                <p class="article-p">
+                    Наконец, авторы показывают практичную метрику: компромисс точность–стоимость. ARC-решения оказываются на границе Парето или формируют её, то есть дают лучшую точность при той же цене или ту же точность дешевле, чем фиксированные и поисковые подходы.
+                </p>
+                
+                <div class="tech-card p-5 md:p-8 rounded-2xl bg-[var(--card-bg)] border-l-4 border-l-cyber-orange my-8 text-[var(--text-main)]">
+                    <p class="font-mono text-sm md:text-base m-0 leading-relaxed">
+                        В разборе ошибок приятная деталь: доля ошибок именно конфигурации политики меньше 10% на всех датасетах. В reasoning-задачах основная боль — собственно ошибки рассуждения, а в задачах с инструментами — пробелы в знаниях или неудачный retrieval.
+                    </p>
+                </div>
+            </div>
+
+            <!-- РАЗДЕЛ 4: ВЫВОДЫ -->
+            <div class="max-w-4xl mx-auto w-full fade-in">
+                <h2 class="article-h2">Что это меняет в подходе к агентным системам</h2>
+                <p class="article-p">
+                    Главный вывод работы: подход <em>one size fits all</em> для агентных LLM-систем слишком дорогой и часто неоптимальный. Гораздо выгоднее научиться подбирать пайплайны, инструменты, бюджеты и промты под конкретный запрос, и делать это не руками, а обучаемой политикой.
+                </p>
+                <p class="article-p">
+                    ARC показывает, что такой контроллер может быть лёгким, обучаться без обновления основной LLM и при этом давать ощутимую прибавку качества вместе с экономией токенов и времени. Отдельно стоит отметить аккуратность конструкции: иерархия решений, маскирование недопустимых действий и финальная стабилизация через SFT выглядят, как разумный ответ на реальную проблему огромного комбинаторного пространства.
+                </p>
+            </div>
+
+            <!-- FOOTER И CTA -->
+            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
+                
+                <!-- Ссылка на полную статью -->
+                <div class="mb-10">
+                    <a href="https://arxiv.org/html/2602.11574v1" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">📜</span>
+                        <span class="font-mono text-sm md:text-base font-bold underline decoration-cyber-purple/30 group-hover:decoration-cyber-purple underline-offset-4 transition-colors">Полная статья (arXiv)</span>
+                        <i data-lucide="external-link" class="w-4 h-4 text-cyber-purple group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform"></i>
+                    </a>
+                </div>
+
+                <!-- Целевая кнопка Telegram -->
+                <a href="https://t.me/dataism_science" target="_blank" class="px-8 py-4 md:px-12 md:py-5 bg-[#229ED9]/10 border-2 border-[#229ED9]/50 rounded-full hover:border-[#229ED9] hover:bg-[#229ED9]/20 transition-all duration-300 flex items-center gap-3 md:gap-4 justify-center w-max mx-auto shadow-[0_0_20px_rgba(34,158,217,0.3)] hover:shadow-[0_0_40px_rgba(34,158,217,0.6)] transform hover:scale-105 group relative z-50">
+                    <i data-lucide="send" class="text-[#229ED9] w-6 h-6 md:w-7 md:h-7 rotate-45 group-hover:translate-x-1 transition-all"></i>
+                    <span class="text-base md:text-lg text-[#229ED9] font-mono uppercase tracking-widest font-black text-glow-tg">Перейти в Telegram</span>
+                </a>
+            </div>
+
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    </div>
+
+    <script>
+        // Инициализация иконок
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        themeToggleBtn.addEventListener('click', () => {
+            html.classList.toggle('dark');
+            setTimeout(() => lucide.createIcons(), 50);
+        });
+
+        // Прогресс-бар при скролле страницы
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация появления элементов при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
