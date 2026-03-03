@@ -42,7 +42,7 @@
     </script>
 
     <style>
-        /* CSS Переменные для Светлой и Темной темы (из вашего кода) */
+        /* CSS Переменные для Светлой и Темной темы */
         :root {
             --bg-color: #f8fafc;
             --text-main: #0f172a;
@@ -53,6 +53,7 @@
             --glass-border: rgba(0, 0, 0, 0.05);
             --card-border: rgba(0, 0, 0, 0.05);
             --shadow-glow: rgba(0,0,0,0.02);
+            --card-bg: #ffffff;
         }
 
         .dark {
@@ -65,6 +66,7 @@
             --glass-border: rgba(255, 255, 255, 0.08);
             --card-border: rgba(255, 255, 255, 0.1);
             --shadow-glow: rgba(0,0,0,0.5);
+            --card-bg: rgba(255, 255, 255, 0.03);
         }
 
         body {
@@ -114,7 +116,7 @@
         }
         
         .nav-btn:disabled {
-            opacity: 0.3;
+            opacity: 0.2;
             cursor: not-allowed;
             transform: scale(0.95);
         }
@@ -156,8 +158,8 @@
     <!-- Основной блок (Слайдер) -->
     <main class="flex-1 w-full flex items-center justify-center relative px-4 md:px-12 py-6 overflow-hidden">
         
-        <!-- Кнопка Влево (Предыдущая - старее) -->
-        <button id="btn-prev" class="nav-btn absolute left-2 md:left-8 z-40 p-3 md:p-4 rounded-full glass-panel hover:border-cyber-purple/50 hover:text-cyber-purple transition-all group">
+        <!-- Кнопка Влево (Предыдущая/Новее) -->
+        <button id="btn-prev" disabled class="nav-btn absolute left-2 md:left-8 z-40 p-3 md:p-4 rounded-full glass-panel hover:border-cyber-purple/50 hover:text-cyber-purple transition-all group">
             <i data-lucide="chevron-left" class="w-6 h-6 group-hover:-translate-x-1 transition-transform"></i>
         </button>
 
@@ -166,7 +168,10 @@
             
             <!-- Обложка статьи -->
             <div class="w-full md:w-1/2 h-64 md:h-full relative overflow-hidden bg-black/5 dark:bg-white/5 flex-shrink-0">
-                <img id="article-img" src="" alt="Cover" class="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105">
+                <img id="article-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" alt="Cover" class="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105 opacity-0">
+                <div class="absolute inset-0 flex items-center justify-center" id="img-loader">
+                    <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-cyber-purple"></i>
+                </div>
                 <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent z-10 md:hidden"></div>
                 
                 <!-- Плашка с датой (мобильная) -->
@@ -178,9 +183,15 @@
             </div>
 
             <!-- Контент статьи -->
-            <div class="w-full md:w-1/2 p-6 md:p-10 lg:p-12 flex flex-col h-full overflow-y-auto bg-[var(--card-bg)]">
+            <div class="w-full md:w-1/2 p-6 md:p-10 lg:p-12 flex flex-col h-full overflow-hidden bg-[var(--card-bg)] relative">
+                <!-- Оверлей загрузки -->
+                <div id="content-loader" class="absolute inset-0 z-20 bg-[var(--card-bg)] backdrop-blur-md flex flex-col items-center justify-center gap-4 transition-opacity duration-300">
+                    <i data-lucide="zap" class="w-8 h-8 text-cyber-orange animate-pulse"></i>
+                    <span class="font-mono text-sm text-[var(--text-muted)] tracking-widest uppercase">Поиск статьи...</span>
+                </div>
+
                 <!-- Плашки: Тег и дата -->
-                <div class="flex flex-wrap items-center gap-3 mb-6">
+                <div class="flex flex-wrap items-center gap-3 mb-4 md:mb-6">
                     <div class="inline-flex items-center w-fit px-3 py-1.5 rounded-full border border-cyber-orange/30 bg-cyber-orange/10 text-cyber-orange text-[10px] md:text-xs font-mono font-bold tracking-[0.1em] uppercase">
                         Обзор научных статей
                     </div>
@@ -190,16 +201,16 @@
                     </div>
                 </div>
 
-                <h1 id="article-title" class="text-2xl md:text-3xl lg:text-4xl font-montserrat font-bold tracking-tight mb-4 leading-tight text-[var(--text-main)]">
+                <h1 id="article-title" class="text-xl sm:text-2xl md:text-3xl font-montserrat font-bold tracking-tight mb-3 md:mb-4 leading-tight text-[var(--text-main)]">
                     Загрузка...
                 </h1>
                 
-                <p id="article-desc" class="font-sans text-sm md:text-base text-[var(--text-muted)] line-clamp-4 md:line-clamp-none mb-8 leading-relaxed flex-1">
+                <p id="article-desc" class="font-sans text-sm text-[var(--text-muted)] line-clamp-4 sm:line-clamp-5 md:line-clamp-6 mb-6 md:mb-8 leading-relaxed flex-1">
                     Подготовка материалов...
                 </p>
 
-                <div class="mt-auto pt-6 border-t border-[var(--glass-border)] flex items-center justify-end">
-                    <a id="article-link" href="#" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-[var(--text-main)] text-[var(--bg-color)] rounded-xl font-bold font-sans text-sm transition-all hover:scale-105 active:scale-95 shadow-md hover:shadow-xl">
+                <div class="mt-auto pt-6 border-t border-[var(--glass-border)] flex items-center justify-end shrink-0">
+                    <a id="article-link" href="#" target="_blank" class="inline-flex items-center gap-2 px-6 py-3 bg-[var(--text-main)] text-[var(--bg-color)] rounded-xl font-bold font-sans text-sm transition-all hover:scale-105 active:scale-95 shadow-md hover:shadow-xl pointer-events-none opacity-50">
                         <span>Читать статью</span>
                         <i data-lucide="arrow-right" class="w-4 h-4"></i>
                     </a>
@@ -207,8 +218,8 @@
             </div>
         </div>
 
-        <!-- Кнопка Вправо (Следующая - новее) -->
-        <button id="btn-next" class="nav-btn absolute right-2 md:right-8 z-40 p-3 md:p-4 rounded-full glass-panel hover:border-cyber-orange/50 hover:text-cyber-orange transition-all group">
+        <!-- Кнопка Вправо (Следующая/Старее) -->
+        <button id="btn-next" disabled class="nav-btn absolute right-2 md:right-8 z-40 p-3 md:p-4 rounded-full glass-panel hover:border-cyber-orange/50 hover:text-cyber-orange transition-all group">
             <i data-lucide="chevron-right" class="w-6 h-6 group-hover:translate-x-1 transition-transform"></i>
         </button>
 
@@ -218,40 +229,44 @@
         // Инициализация иконок
         lucide.createIcons();
 
-        // --- БАЗА ДАННЫХ СТАТЕЙ ---
-        // Индекс 0 - самая новая (сегодняшняя или последняя добавленная).
-        // Чем больше индекс, тем старше статья.
-        const articles = [
-            {
-                date: "2026-03-03",
-                displayDate: "03 Марта 2026",
+        // --- УТИЛИТЫ ДАТЫ И ФОРМАТИРОВАНИЯ ---
+        function formatDateStr(dateObj) {
+            const y = dateObj.getFullYear();
+            const m = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        const monthsRu = ['Января', 'Февраля', 'Марта', 'Апреля', 'Мая', 'Июня', 'Июля', 'Августа', 'Сентября', 'Октября', 'Ноября', 'Декабря'];
+        function formatDisplayDate(dateObj) {
+            const d = String(dateObj.getDate()).padStart(2, '0');
+            const m = monthsRu[dateObj.getMonth()];
+            const y = dateObj.getFullYear();
+            return `${d} ${m} ${y}`;
+        }
+
+        // --- ФОЛЛБЭК ДЛЯ ПЕСОЧНИЦЫ (Без CORS) ---
+        // Когда вы загрузите код на dataist.ai, запросы пойдут по-настоящему. 
+        // Если запрос падает (например, вы открыли с локального диска), берутся эти данные:
+        const localMocks = {
+            "2026-03-03": {
                 title: "Context Engineering: новая дисциплина для автономных ИИ-агентов",
                 desc: "От README для людей — к документации для машин. Анализ того, как разработчики пишут инструкции для ИИ-агентов в open-source репозиториях.",
-                img: "https://i.ibb.co/Csbbn980/Chat-GPT-Image-Mar-3-2026-07-29-15-PM.png",
-                url: "http://dataist.ai/2026-03-03/"
+                img: "https://i.ibb.co/Csbbn980/Chat-GPT-Image-Mar-3-2026-07-29-15-PM.png"
             },
-            {
-                date: "2026-03-02",
-                displayDate: "02 Марта 2026",
+            "2026-03-02": {
                 title: "Reasoning Models: Как модели учатся рассуждать",
                 desc: "Глубокий разбор скрытых цепочек рассуждений (Chain of Thought). Как новые архитектуры планируют свои действия перед тем, как дать ответ.",
-                img: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1200&auto=format&fit=crop", // placeholder
-                url: "http://dataist.ai/2026-03-02/"
-            },
-            {
-                date: "2026-03-01",
-                displayDate: "01 Марта 2026",
-                title: "RAG vs Long Context: Битва архитектур 2026 года",
-                desc: "Что эффективнее: миллионы токенов в контекстном окне или умный векторный поиск? Анализируем затраты, скорость и точность.",
-                img: "https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=1200&auto=format&fit=crop", // placeholder
-                url: "http://dataist.ai/2026-03-01/"
+                img: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1200&auto=format&fit=crop"
             }
-            // Сюда можно добавлять новые дни
-        ];
+        };
 
-        // --- ЛОГИКА СЛАЙДЕРА ---
-        let currentIndex = 0; // 0 = самая новая статья
-        
+        // --- СОСТОЯНИЕ ---
+        let currentViewDate = new Date(); // Какая дата сейчас отображается
+        let latestAvailableDate = null;   // Самая новая доступная статья (сегодня или ближайший день)
+        const articleCache = {};
+
+        // DOM Элементы
         const container = document.getElementById('slide-container');
         const elTitle = document.getElementById('article-title');
         const elDesc = document.getElementById('article-desc');
@@ -260,78 +275,210 @@
         const elDate = document.getElementById('article-date');
         const elDateMobile = document.getElementById('article-date-mobile');
         
-        const btnPrev = document.getElementById('btn-prev'); // старее (индекс ++)
-        const btnNext = document.getElementById('btn-next'); // новее (индекс --)
+        const loader = document.getElementById('content-loader');
+        const imgLoader = document.getElementById('img-loader');
+        
+        // ВЛЕВО = Новее (вперед по дате)
+        const btnLeft = document.getElementById('btn-prev'); 
+        // ВПРАВО = Старее (назад по дате)
+        const btnNext = document.getElementById('btn-next');
 
-        function initSlider() {
-            renderSlide(currentIndex, 'none');
+        // --- ДИНАМИЧЕСКИЙ ФЕТЧИНГ ---
+        async function fetchArticleData(dateObj) {
+            const dateStr = formatDateStr(dateObj);
+            
+            // Если уже загружали эту дату в этой сессии
+            if (articleCache[dateStr]) return articleCache[dateStr];
+
+            const url = `https://dataist.ai/${dateStr}/`;
+            
+            try {
+                // Пытаемся получить HTML страницы (будет работать на родном домене)
+                const res = await fetch(url, { method: 'GET' });
+                if (!res.ok) throw new Error('Not found');
+                
+                const html = await res.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Извлекаем OpenGraph мета-теги
+                const getMeta = (prop) => doc.querySelector(`meta[property="${prop}"]`)?.content;
+                
+                const data = {
+                    title: getMeta('og:title') || doc.title || 'Статья без названия',
+                    desc: getMeta('og:description') || 'Описание временно недоступно.',
+                    img: getMeta('og:image') || 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1200&auto=format&fit=crop',
+                    url: url,
+                    displayDate: formatDisplayDate(dateObj)
+                };
+                
+                articleCache[dateStr] = data;
+                return data;
+
+            } catch (e) {
+                // Если ошибка сети (например CORS в песочнице) или 404
+                if (localMocks[dateStr]) {
+                    console.log(`Загружена локальная копия для ${dateStr} (Ожидается перенос на основной домен)`);
+                    const data = {
+                        ...localMocks[dateStr],
+                        url: url,
+                        displayDate: formatDisplayDate(dateObj)
+                    };
+                    articleCache[dateStr] = data;
+                    return data;
+                }
+                // Если статьи реально нет
+                throw new Error('Статья не найдена');
+            }
         }
 
-        function renderSlide(index, direction = 'none') {
-            const article = articles[index];
+        // --- ЛОГИКА ОТОБРАЖЕНИЯ ---
+        function applyDataToUI(data) {
+            elTitle.textContent = data.title;
+            elDesc.textContent = data.desc;
+            elDate.textContent = data.displayDate;
+            elDateMobile.textContent = data.displayDate;
             
-            // Анимация ухода
-            if (direction !== 'none') {
-                container.classList.remove('slide-visible');
-                container.classList.add(direction === 'left' ? 'slide-hidden-left' : 'slide-hidden-right');
+            elLink.href = data.url;
+            elLink.classList.remove('pointer-events-none', 'opacity-50');
+
+            elImg.onload = () => {
+                elImg.classList.remove('opacity-0');
+                imgLoader.style.display = 'none';
+            };
+            elImg.src = data.img;
+            
+            // Скрываем лоадер контента
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 300);
+        }
+
+        function showLoading() {
+            loader.style.display = 'flex';
+            imgLoader.style.display = 'flex';
+            elImg.classList.add('opacity-0');
+            // Маленький таймаут для запуска CSS transition
+            setTimeout(() => loader.style.opacity = '1', 10);
+            
+            elLink.classList.add('pointer-events-none', 'opacity-50');
+        }
+
+        async function updateButtons() {
+            // Кнопка Влево (Новее): отключаем, если текущая дата равна или больше самой новой доступной
+            if (latestAvailableDate && currentViewDate >= latestAvailableDate) {
+                btnLeft.disabled = true;
+            } else {
+                btnLeft.disabled = false;
             }
 
-            setTimeout(() => {
-                // Подставляем данные
-                elTitle.textContent = article.title;
-                elDesc.textContent = article.desc;
-                elImg.src = article.img;
-                elLink.href = article.url;
-                elDate.textContent = article.displayDate;
-                elDateMobile.textContent = article.displayDate;
-                
-                // Управляем доступностью кнопок
-                // prev значит "в прошлое" (индекс растет)
-                btnPrev.disabled = index === articles.length - 1;
-                // next значит "в будущее" (индекс падает)
-                btnNext.disabled = index === 0;
+            // Кнопка Вправо (Старее): пытаемся в фоне проверить существует ли предыдущий день
+            const prevDay = new Date(currentViewDate);
+            prevDay.setDate(prevDay.getDate() - 1);
+            
+            try {
+                // Предварительно проверяем наличие статьи (или берем из кэша)
+                await fetchArticleData(prevDay);
+                btnNext.disabled = false;
+            } catch (e) {
+                // Статьи нет, отключаем кнопку
+                btnNext.disabled = true;
+            }
+        }
 
-                // Анимация появления
-                if (direction !== 'none') {
-                    // Убираем старый класс скрытия
-                    container.classList.remove('slide-hidden-left', 'slide-hidden-right');
-                    // Добавляем класс скрытия с противоположной стороны для эффекта "выезда"
-                    container.classList.add(direction === 'left' ? 'slide-hidden-right' : 'slide-hidden-left');
+        // --- НАВИГАЦИЯ ---
+        // directionText: 'newer' (стрелка влево) или 'older' (стрелка вправо)
+        async function navigate(directionText) {
+            const targetDate = new Date(currentViewDate);
+            if (directionText === 'newer') {
+                targetDate.setDate(targetDate.getDate() + 1);
+            } else {
+                targetDate.setDate(targetDate.getDate() - 1);
+            }
+
+            showLoading();
+            
+            try {
+                const data = await fetchArticleData(targetDate);
+                currentViewDate = targetDate;
+                
+                // Определение стороны анимации
+                // Если листаем к старым статьям (вправо), новая выезжает справа
+                // Если листаем к новым статьям (влево), новая выезжает слева
+                const enterFrom = directionText === 'newer' ? 'left' : 'right';
+                const exitTo = directionText === 'newer' ? 'slide-hidden-right' : 'slide-hidden-left';
+                const enterStart = directionText === 'newer' ? 'slide-hidden-left' : 'slide-hidden-right';
+                
+                container.classList.remove('slide-visible');
+                container.classList.add(exitTo);
+                
+                setTimeout(() => {
+                    applyDataToUI(data);
                     
-                    // Форсируем перерисовку (чтобы браузер применил класс до того, как мы добавим visible)
-                    void container.offsetWidth; 
+                    container.classList.remove('slide-hidden-left', 'slide-hidden-right');
+                    container.classList.add(enterStart);
+                    
+                    void container.offsetWidth; // Force reflow
                     
                     container.classList.remove('slide-hidden-left', 'slide-hidden-right');
                     container.classList.add('slide-visible');
-                }
-            }, direction === 'none' ? 0 : 400); // Таймаут равен длительности CSS transition
+                    
+                    updateButtons();
+                }, 400);
+
+            } catch (e) {
+                console.error("Не удалось перейти на дату", formatDateStr(targetDate));
+                // Если не получилось, возвращаем старую карточку
+                applyDataToUI(articleCache[formatDateStr(currentViewDate)]);
+                updateButtons();
+            }
         }
 
-        // Идем в прошлое (старые статьи)
-        btnPrev.addEventListener('click', () => {
-            if (currentIndex < articles.length - 1) {
-                currentIndex++;
-                renderSlide(currentIndex, 'left');
-            }
-        });
+        // --- ИНИЦИАЛИЗАЦИЯ ПРИ СТАРТЕ ---
+        async function initApp() {
+            showLoading();
+            let d = new Date(); // Начинаем с сегодня
+            let found = false;
 
-        // Идем в будущее (новые статьи)
+            // Ищем последнюю доступную статью (на случай если за сегодня еще не выложили)
+            // Ищет на глубину до 7 дней назад
+            for (let i = 0; i < 7; i++) {
+                try {
+                    const data = await fetchArticleData(d);
+                    latestAvailableDate = new Date(d);
+                    currentViewDate = new Date(d);
+                    applyDataToUI(data);
+                    found = true;
+                    break;
+                } catch (e) {
+                    d.setDate(d.getDate() - 1); // Откатываемся на день назад
+                }
+            }
+
+            if (!found) {
+                elTitle.textContent = "Нет доступных статей";
+                elDesc.textContent = "Возможно, сайт только запущен или возникла ошибка сети.";
+                loader.style.opacity = '0';
+                setTimeout(() => loader.style.display = 'none', 300);
+            } else {
+                updateButtons();
+            }
+        }
+
+        // --- СЛУШАТЕЛИ СОБЫТИЙ ---
+        // Кнопка ВЛЕВО -> вперед по дате (Newer)
+        btnLeft.addEventListener('click', () => {
+            if (!btnLeft.disabled) navigate('newer');
+        });
+        
+        // Кнопка ВПРАВО -> назад по дате (Older)
         btnNext.addEventListener('click', () => {
-            if (currentIndex > 0) {
-                currentIndex--;
-                renderSlide(currentIndex, 'right');
-            }
+            if (!btnNext.disabled) navigate('older');
         });
 
-        // Управление клавиатурой
+        // Клавиатура
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'ArrowLeft' && !btnPrev.disabled) {
-                currentIndex++;
-                renderSlide(currentIndex, 'left');
-            } else if (e.key === 'ArrowRight' && !btnNext.disabled) {
-                currentIndex--;
-                renderSlide(currentIndex, 'right');
-            }
+            if (e.key === 'ArrowLeft' && !btnLeft.disabled) navigate('newer');
+            else if (e.key === 'ArrowRight' && !btnNext.disabled) navigate('older');
         });
 
         // Свайпы на мобильных
@@ -344,49 +491,35 @@
 
         container.addEventListener('touchend', e => {
             touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        }, {passive: true});
-
-        function handleSwipe() {
             const swipeThreshold = 50;
             if (touchEndX < touchStartX - swipeThreshold) {
-                // Свайп влево (хотим увидеть старую статью)
-                if(!btnPrev.disabled) {
-                    currentIndex++;
-                    renderSlide(currentIndex, 'left');
-                }
+                // Свайп влево (смахнули контент влево, значит хотим увидеть то, что справа)
+                // То есть идем в прошлое
+                if(!btnNext.disabled) navigate('older');
             }
             if (touchEndX > touchStartX + swipeThreshold) {
-                // Свайп вправо (хотим увидеть новую статью)
-                if(!btnNext.disabled) {
-                    currentIndex--;
-                    renderSlide(currentIndex, 'right');
-                }
+                // Свайп вправо (смахнули контент вправо, хотим увидеть то, что слева)
+                // То есть идем в будущее
+                if(!btnLeft.disabled) navigate('newer');
             }
-        }
+        }, {passive: true});
 
-        // --- ЛОГИКА ТЕМЫ (Дарк мод) ---
+        // --- ТЕМА (Дарк мод) ---
         const themeToggleBtn = document.getElementById('theme-toggle');
         const html = document.documentElement;
 
         function applyTheme(isDark) {
-            if (isDark) {
-                html.classList.add('dark');
-            } else {
-                html.classList.remove('dark');
-            }
+            if (isDark) html.classList.add('dark');
+            else html.classList.remove('dark');
             setTimeout(() => lucide.createIcons(), 50);
         }
 
         themeToggleBtn.addEventListener('click', () => {
-            const isCurrentlyDark = html.classList.contains('dark');
-            applyTheme(!isCurrentlyDark);
+            applyTheme(!html.classList.contains('dark'));
         });
 
-        // Запуск
-        document.addEventListener('DOMContentLoaded', () => {
-            initSlider();
-        });
+        // ЗАПУСК
+        document.addEventListener('DOMContentLoaded', initApp);
 
     </script>
 </body>
