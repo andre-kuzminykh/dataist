@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Теория разума для ИИ: что происходит, когда агенты начинают «догадываться» о намерениях друг друга</title>
+    
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Dataism Science Hub" />
+    <meta property="og:title" content="Теория разума для ИИ: что происходит, когда агенты начинают «догадываться» о намерениях друг друга" />
+    <meta property="og:description" content="Оценка Theory of Mind и внутренних убеждений в мультиагентных системах на базе LLM. Станет ли координация лучше?" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://t.me/dataism_science" />
+    <meta property="og:image" content="https://i.ibb.co/DHZPc3fF/Chat-GPT-Image-Mar-4-2026-07-35-22-PM.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://i.ibb.co/DHZPc3fF/Chat-GPT-Image-Mar-4-2026-07-35-22-PM.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            purple: '#a855f7',
+                            orange: '#f97316',
+                            tg: '#229ED9',
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['"Space Mono"', 'monospace'],
+                        sans: ['"Inter"', 'sans-serif'],
+                        montserrat: ['"Montserrat"', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* CSS Переменные для Светлой и Темной темы */
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --grid-line-p: rgba(168, 85, 247, 0.1);
+            --grid-line-o: rgba(249, 115, 22, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(0, 0, 0, 0.05);
+            --card-bg: rgba(255, 255, 255, 0.6);
+            --card-border: rgba(0, 0, 0, 0.05);
+            --shadow-glow: rgba(0,0,0,0.02);
+            --image-bg: #ffffff;
+        }
+
+        .dark {
+            --bg-color: #050505;
+            --text-main: #e5e7eb;
+            --text-muted: #9ca3af;
+            --grid-line-p: rgba(168, 85, 247, 0.05);
+            --grid-line-o: rgba(249, 115, 22, 0.05);
+            --glass-bg: rgba(10, 10, 14, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --shadow-glow: rgba(0,0,0,0.5);
+            --image-bg: #e5e7eb;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            transition: background-color 0.4s ease, color 0.4s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px);
+            background-attachment: fixed;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 40px var(--shadow-glow);
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        .tech-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            transition: all 0.3s ease;
+        }
+
+        .tech-card:hover {
+            border-color: rgba(168, 85, 247, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .text-glow-purple { text-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+        .text-glow-orange { text-shadow: 0 0 15px rgba(249, 115, 22, 0.4); }
+        .text-glow-tg { text-shadow: 0 0 15px rgba(34, 158, 217, 0.5); }
+
+        .article-p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            margin-bottom: 1.25rem;
+            color: var(--text-main);
+        }
+        @media (min-width: 768px) {
+            .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; }
+        }
+        
+        .article-h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 1.5rem;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+        @media (min-width: 768px) {
+            .article-h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; }
+        }
+
+        .cyber-img {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 10px 30px var(--shadow-glow);
+        }
+
+        /* Анимации при скролле */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Графики из arXiv */
+        .arxiv-chart {
+            background-color: var(--image-bg);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+            transition: background-color 0.4s ease;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
+
+    <!-- Фоновые свечения -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 dark:bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 dark:bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay: 3s;"></div>
+    </div>
+
+    <!-- Шапка -->
+    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
+        <!-- Логотип -->
+        <div class="flex items-center gap-3 md:gap-4">
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">
+                i
+            </div>
+            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">
+                ДАТАИСТ
+            </div>
+        </div>
+        
+        <!-- Органы управления -->
+        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
+            <!-- Кнопка Луна/Солнце -->
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
+                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
+                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+            </button>
+            
+            <!-- Кнопка Telegram -->
+            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
+                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
+        
+        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
+            <!-- Градиентная полоска сверху формы -->
+            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+            
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-12 md:mb-16 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
+                    <i data-lucide="bot" class="w-4 h-4"></i> Dataism Science Hub
+                </div>
+                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
+                    Теория разума для ИИ:<br>
+                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3">что происходит, когда агенты начинают «догадываться» о намерениях друг друга</span>
+                </h1>
+                
+                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0">
+                    <img src="https://i.ibb.co/DHZPc3fF/Chat-GPT-Image-Mar-4-2026-07-35-22-PM.png" 
+                         alt="Обложка Теория Разума для ИИ" 
+                         class="w-full h-auto max-h-[70vh] object-cover scale-[1.12] origin-center">
+                </div>
+            </header>
+
+            <!-- ВСТУПЛЕНИЕ -->
+            <div class="max-w-4xl mx-auto fade-in w-full">
+                <p class="article-p">
+                    Про мультиагентные системы на базе LLM часто говорят, что это команда агентов, которая сама договаривается, планирует и разруливает сложные задачи. На практике всё менее романтично: как только агентов становится несколько, у них появляется общая проблема — не только что делать, но и как правильно понять друг друга. Один «уверенно предполагает», другой «точно знает», третий молчит в общий чат — и команда разваливается на несогласованные действия.
+                </p>
+                <p class="article-p">
+                    Авторы работы <strong>Evaluating Theory of Mind and Internal Beliefs in LLM-Based Multi-Agent Systems</strong> разбирают важный вопрос: если добавить агентам более «человеческие» когнитивные механизмы — умение прикидывать намерения других (Theory of Mind, ToM) и внутренние убеждения в стиле BDI (belief–desire–intention), — станет ли координация лучше? И что будет, если эти убеждения ещё и проверять формальной логикой, чтобы агент не действовал на основе противоречий?
+                </p>
+            </div>
+
+            <!-- ИЛЛЮСТРАЦИЯ 1: Интро -->
+            <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                <div class="arxiv-chart">
+                    <img src="https://arxiv.org/html/2603.00142v1/img/intro.png" alt="Внутренние и внешние процессы рассуждения агента" class="w-full object-contain">
+                </div>
+                <figcaption class="mt-4 text-xs md:text-sm font-mono text-[var(--text-muted)] text-center px-4 leading-relaxed">
+                    Внутренние и внешние процессы рассуждения агента на основе LLM: что агент видит, что думает и что сообщает другим.
+                </figcaption>
+            </figure>
+
+            <!-- РАЗДЕЛ 1 -->
+            <div class="max-w-4xl mx-auto w-full fade-in">
+                <h2 class="article-h2">Город, который нужно спасать, и агенты, которые (иногда) мешают друг другу</h2>
+                <p class="article-p">
+                    Чтобы измерять «командный интеллект» не на абстрактных диалогах, исследователи сделали симуляцию: есть город из четырёх районов. Три агента отвечают каждый за свой ресурс — еду, медицину и безопасность. Ресурсы в районах постоянно убывают, и если где-то чего-то не хватает, здоровье района падает. У агентов ограничения по перемещению и по объёму того, что можно нести. Побеждает команда, которая удержит среднее здоровье районов как можно выше.
+                </p>
+                <p class="article-p">
+                    Здесь хорошо видно, что мультиагентная система — это не «три независимых решения», а непрерывная синхронизация: кому куда ехать, кто что уже везёт, какой район сейчас критичнее. И главное — насколько можно доверять тому, что другой агент действительно сделает обещанное.
+                </p>
+            </div>
+
+            <!-- ИЛЛЮСТРАЦИЯ 2: Система -->
+            <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                <div class="arxiv-chart">
+                    <img src="https://arxiv.org/html/2603.00142v1/img/system.png" alt="Общая схема системы" class="w-full object-contain">
+                </div>
+                <figcaption class="mt-4 text-xs md:text-sm font-mono text-[var(--text-muted)] text-center px-4 leading-relaxed">
+                    Общая схема системы: агенты действуют в игре, опираются на общую и личную память и координируются по обновлениям в реальном времени.
+                </figcaption>
+            </figure>
+
+            <!-- РАЗДЕЛ 2 -->
+            <div class="max-w-4xl mx-auto w-full fade-in">
+                <h2 class="article-h2">Как устроено «мышление» агента: ToM, внутренние убеждения и проверка логикой</h2>
+                <p class="article-p">
+                    Архитектура в статье строится вокруг двух уровней памяти. Есть shared memory — общее пространство, куда агенты пишут сообщения о наблюдениях и планах. А есть private memory — внутренние заметки, которые не публикуются: там агент хранит свою модель мира, предположения о других и черновик следующего действия.
+                </p>
+                <p class="article-p">
+                    Дальше — самое интересное. Авторы включали и выключали два когнитивных блока, чтобы сравнить эффект:
+                </p>
+                
+                <ul class="list-disc pl-6 mb-6 text-[var(--text-main)] font-sans text-[1.05rem] md:text-[1.15rem] leading-relaxed">
+                    <li class="mb-3"><strong>ToM</strong> заставляет агента явно формулировать ожидания: что, вероятно, сделают другие агенты, какие у них цели, куда они поедут.</li>
+                    <li class="mb-3">А <strong>Internal Beliefs</strong> — это попытка собрать наблюдения в более строгую модель мира, пригодную для рассуждений.</li>
+                </ul>
+
+                <p class="article-p">
+                    Но они пошли дальше: Internal Beliefs прогоняются через Answer Set Programming с решателем Clingo. Если в убеждениях обнаруживается противоречие, агент получает обратную связь и пересобирает рассуждение (до трёх попыток). То есть система не просто просит думать аккуратнее, а формально проверяет, не развалилось ли описание ситуации на несовместимые утверждения.
+                </p>
+            </div>
+
+            <!-- ИЛЛЮСТРАЦИЯ 3: Конвейер верификации -->
+            <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                <div class="arxiv-chart">
+                    <img src="https://arxiv.org/html/2603.00142v1/img/convo.png" alt="Итеративный конвейер логической верификации" class="w-full object-contain">
+                </div>
+                <figcaption class="mt-4 text-xs md:text-sm font-mono text-[var(--text-muted)] text-center px-4 leading-relaxed">
+                    Итеративный конвейер логической верификации: перевод убеждений в ASP, проверка Clingo и исправления при конфликте.
+                </figcaption>
+            </figure>
+
+            <!-- РАЗДЕЛ 3 -->
+            <div class="max-w-4xl mx-auto w-full fade-in">
+                <h2 class="article-h2">Разговоры в общем чате и эффект испорченного телефона</h2>
+                <p class="article-p">
+                    Коммуникация устроена последовательно: агенты по очереди читают общий контекст и добавляют своё сообщение. Это реалистично (так часто делают в LLM-оркестраторах), но даёт побочный эффект: если один агент ошибся в прогнозе или сформулировал план мутно, остальные могут построить на этом неверные решения. ToM в такой схеме — палка о двух концах. Он может помочь предугадать действия партнёра, а может усилить уверенность в неверной догадке.
+                </p>
+            </div>
+
+            <!-- ИЛЛЮСТРАЦИЯ 4: Логика взаимодействия -->
+            <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                <div class="arxiv-chart">
+                    <img src="https://arxiv.org/html/2603.00142v1/img/logic.png" alt="Пример взаимодействия агентов" class="w-full object-contain">
+                </div>
+                <figcaption class="mt-4 text-xs md:text-sm font-mono text-[var(--text-muted)] text-center px-4 leading-relaxed">
+                    Пример взаимодействия агентов «Еда», «Медицина» и «Безопасность»: обмен наблюдениями, убеждениями и действиями.
+                </figcaption>
+            </figure>
+
+            <!-- РАЗДЕЛ 4 -->
+            <div class="max-w-4xl mx-auto w-full fade-in">
+                <h2 class="article-h2">Что получилось на разных LLM: универсального усилителя нет</h2>
+                <p class="article-p">
+                    Эксперименты провели на нескольких LLM: ChatGPT-3.5-Turbo, ChatGPT-4o, ChatGPT-4o-mini, Meta Llama 3.1 8B и Claude 3.5 Sonnet. Для каждой модели сравнили четыре режима: базовый (без ToM и убеждений), только ToM, только Internal Beliefs с логической проверкой и сочетание ToM+IB.
+                </p>
+                <p class="article-p">
+                    Результат получился неожиданно честным: ToM и внутренние убеждения не дают гарантированного выигрыша. У сильных моделей вроде ChatGPT-4o качество и так высокое и довольно стабильное — включение модулей почти не меняет картину или даёт тонкие сдвиги. У Claude 3.5 Sonnet показатели тоже высокие, но реакция на модули отличается.
+                </p>
+                
+                <div class="tech-card p-5 md:p-8 rounded-2xl bg-[var(--card-bg)] border-l-4 border-l-cyber-purple my-8 text-[var(--text-main)]">
+                    <p class="font-mono text-sm md:text-base m-0 leading-relaxed">
+                        У более слабых моделей всё сложнее: иногда добавление ToM помогает, иногда ухудшает — похоже, из‑за когнитивной нагрузки и склонности «додумывать» намерения других. У Meta Llama 3.1 8B, например, режим ToM-only выглядит заметно лучше, чем некоторые другие комбинации, а связка ToM+IB может проседать.
+                    </p>
+                </div>
+
+                <p class="article-p">
+                    Эту неоднозначность авторы и подчеркивают: в мультиагентной системе важен не сам факт наличия «умных» модулей, а то, насколько конкретная LLM тянет их одновременно и насколько протокол общения не превращает догадки в лавину ошибок.
+                </p>
+            </div>
+
+            <!-- ИЛЛЮСТРАЦИЯ 5: Графики -->
+            <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                <div class="arxiv-chart mb-6">
+                    <img src="https://arxiv.org/html/2603.00142v1/img/plot.png" alt="Итоговые показатели здоровья районов" class="w-full object-contain">
+                </div>
+                <figcaption class="mt-4 text-xs md:text-sm font-mono text-[var(--text-muted)] text-center px-4 leading-relaxed mb-10">
+                    Итоговые показатели здоровья районов: медианы и 95% доверительные интервалы для разных моделей и конфигураций.
+                </figcaption>
+            </figure>
+
+            <!-- РАЗДЕЛ 5: Выводы -->
+            <div class="max-w-4xl mx-auto w-full fade-in">
+                <h2 class="article-h2">Что это значит на практике</h2>
+                <p class="article-p">
+                    Главный вывод работы звучит прагматично: если вы строите мультиагентную систему на базе LLM, нельзя просто «прикрутить ToM» или «добавить модель мира» и ждать, что координация взлетит. Эти механизмы могут улучшать работу команды, но могут и мешать — особенно если LLM начинает тратить усилия на сложные рассуждения и при этом ошибается в базовых вещах.
+                </p>
+
+                <!-- Инфографика карточками -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 my-8">
+                    <div class="tech-card p-5 rounded-xl text-center">
+                        <strong class="font-mono text-2xl lg:text-3xl block text-[var(--text-main)] mb-1 text-glow-purple">5</strong>
+                        <span class="text-xs font-bold text-cyber-purple uppercase tracking-widest">Проверенных LLM</span>
+                    </div>
+                    <div class="tech-card p-5 rounded-xl text-center">
+                        <strong class="font-mono text-2xl lg:text-3xl block text-[var(--text-main)] mb-1 text-glow-orange">ToM + IB</strong>
+                        <span class="text-xs font-bold text-cyber-orange uppercase tracking-widest">Не дают гарантий</span>
+                    </div>
+                    <div class="tech-card p-5 rounded-xl text-center">
+                        <strong class="font-mono text-2xl lg:text-3xl block text-[var(--text-main)] mb-1">Clingo</strong>
+                        <span class="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">Проверка логики</span>
+                    </div>
+                </div>
+
+                <p class="article-p">
+                    Сильная сторона статьи — демонстрация инженерной реальности: когнитивные надстройки работают только в связке с качеством самой LLM, дизайном памяти, протоколом коммуникации и простыми проверками согласованности. Символическая верификация через Clingo выглядит перспективно как «страховочный ремень», но она тоже не бесплатна: перевод из естественного языка неоднозначен, а вычислительная цена может стать ограничением при масштабировании.
+                </p>
+            </div>
+
+            <!-- FOOTER И CTA -->
+            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
+                
+                <!-- Ссылки на статью и код -->
+                <div class="mb-10 flex flex-wrap justify-center gap-4">
+                    <a href="https://arxiv.org/abs/2603.00142" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">📜</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-purple">Полная статья (arXiv)</span>
+                    </a>
+
+                    <a href="https://t.me/dataism_science" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-[#229ED9] transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <i data-lucide="send" class="w-5 h-5 text-[#229ED9] -mt-0.5 rotate-45 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"></i>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-[#229ED9]">Перейти в Telegram</span>
+                    </a>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    </div>
+
+    <script>
+        // Инициализация иконок
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+            } else {
+                html.classList.remove('dark');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Безопасная инициализация Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        
+        // Проверяем, действительно ли мы открыты внутри Telegram Mini App
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение темы (кнопкой на сайте)
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар при скролле страницы
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация появления элементов при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
