@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Датаист / Технологии | Нельзя так просто взять и внедрить LLM в прод</title>
+    
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Датаист / Технологии" />
+    <meta property="og:title" content="Нельзя так просто взять и внедрить LLM в прод: как управлять ИИ-системами в компании" />
+    <meta property="og:description" content="От DataOps до AIOps: разбираем, из чего на самом деле состоят ИИ-системы, готовые к продакшену, и почему сама по себе модель не приносит пользы бизнесу." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://t.me/andre_dataist" />
+    <meta property="og:image" content="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/___ChatGPT%20Image%20Apr%205%2C%202026%2C%2012_17_47%20AM.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/___ChatGPT%20Image%20Apr%205%2C%202026%2C%2012_17_47%20AM.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            purple: '#a855f7',
+                            orange: '#f97316',
+                            tg: '#229ED9',
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['"Space Mono"', 'monospace'],
+                        sans: ['"Inter"', 'sans-serif'],
+                        montserrat: ['"Montserrat"', 'sans-serif'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* CSS Переменные для Светлой и Темной темы */
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --grid-line-p: rgba(168, 85, 247, 0.1);
+            --grid-line-o: rgba(249, 115, 22, 0.1);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-border: rgba(0, 0, 0, 0.05);
+            --card-bg: rgba(255, 255, 255, 0.6);
+            --card-border: rgba(0, 0, 0, 0.05);
+            --shadow-glow: rgba(0,0,0,0.02);
+            --image-bg: #ffffff;
+            --table-hover: rgba(0, 0, 0, 0.02);
+        }
+
+        .dark {
+            --bg-color: #050505;
+            --text-main: #e5e7eb;
+            --text-muted: #9ca3af;
+            --grid-line-p: rgba(168, 85, 247, 0.05);
+            --grid-line-o: rgba(249, 115, 22, 0.05);
+            --glass-bg: rgba(10, 10, 14, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --card-bg: rgba(255, 255, 255, 0.03);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --shadow-glow: rgba(0,0,0,0.5);
+            --image-bg: #e5e7eb;
+            --table-hover: rgba(255, 255, 255, 0.02);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            transition: background-color 0.4s ease, color 0.4s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px);
+            background-attachment: fixed;
+        }
+
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 40px var(--shadow-glow);
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+
+        .tech-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            transition: all 0.3s ease;
+        }
+
+        .tech-card:hover {
+            border-color: rgba(168, 85, 247, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .text-glow-purple { text-shadow: 0 0 15px rgba(168, 85, 247, 0.4); }
+        .text-glow-orange { text-shadow: 0 0 15px rgba(249, 115, 22, 0.4); }
+        .text-glow-tg { text-shadow: 0 0 15px rgba(34, 158, 217, 0.5); }
+
+        .article-p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            margin-bottom: 1.25rem;
+            color: var(--text-main);
+        }
+        @media (min-width: 768px) {
+            .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; }
+        }
+        
+        .article-h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 1.5rem;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+        .article-h3 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.25rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+        @media (min-width: 768px) {
+            .article-h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; }
+            .article-h3 { font-size: 1.5rem; margin-top: 2.5rem; margin-bottom: 1.25rem; }
+        }
+
+        .cyber-img {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 10px 30px var(--shadow-glow);
+        }
+
+        /* Анимации при скролле */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .styled-link {
+            color: var(--text-main);
+            text-decoration: underline;
+            text-decoration-color: rgba(168, 85, 247, 0.5);
+            text-decoration-style: dashed;
+            text-underline-offset: 4px;
+            transition: all 0.3s ease;
+        }
+        .styled-link:hover {
+            color: #a855f7;
+            text-decoration-color: #a855f7;
+        }
+        
+        /* Стили для таблицы */
+        .glass-table th {
+            background-color: var(--card-bg);
+            border-bottom: 2px solid var(--glass-border);
+        }
+        .glass-table td {
+            border-bottom: 1px solid var(--glass-border);
+        }
+        .glass-table tr:hover td {
+            background-color: var(--table-hover);
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
+
+    <!-- Фоновые свечения -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 dark:bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 dark:bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay: 3s;"></div>
+    </div>
+
+    <!-- Шапка -->
+    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
+        <!-- Логотип -->
+        <div class="flex items-center gap-3 md:gap-4">
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">
+                i
+            </div>
+            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">
+                ДАТАИСТ
+            </div>
+        </div>
+        
+        <!-- Органы управления -->
+        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
+            <!-- Кнопка Луна/Солнце -->
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
+                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
+                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+            </button>
+            
+            <!-- Кнопка Telegram -->
+            <a href="https://t.me/andre_dataist" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
+                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
+        
+        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
+            <!-- Градиентная полоска сверху формы -->
+            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+            
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-12 md:mb-16 fade-in">
+                <!-- Тег статьи -->
+                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
+                    <i data-lucide="cpu" class="w-4 h-4"></i> Технологии
+                </div>
+                
+                <!-- Заголовок -->
+                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
+                    Нельзя так просто взять<br>и внедрить LLM в прод
+                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3">как управлять ИИ-системами в компании</span>
+                </h1>
+                
+                <!-- Главная обложка -->
+                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/___ChatGPT%20Image%20Apr%205%2C%202026%2C%2012_17_47%20AM.jpg" 
+                         alt="Управление ИИ-системами" 
+                         class="w-full h-auto">
+                </div>
+            </header>
+
+            <!-- ВСТУПЛЕНИЕ -->
+            <div class="max-w-4xl mx-auto w-full">
+                <p class="article-p fade-in font-medium text-xl border-l-4 border-cyber-purple pl-4 mt-6 mb-8 italic text-[var(--text-muted)]">
+                    Сегодня ИИ-агенты, которые что-то делают автономно, уже никого не удивляют. В демках всё выглядит шикарно, но в проде большинство таких агентов не работают. Но как же превратить их в готовое решение для продакшена? Давайте разберемся.
+                </p>
+            </div>
+
+            <!-- Раздел 1 -->
+            <div class="max-w-4xl mx-auto w-full mt-8">
+                <h2 class="article-h2 fade-in">Не путаем LLM и систему на базе LLM</h2>
+                
+                <div class="mb-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/1_.png" alt="LLM vs Система" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Бизнесу сама по себе модель не нужна. Бизнесу нужна система, которая даёт предсказуемый, контролируемый, безопасный и экономически обоснованный результат в реальном процессе.
+                </p>
+                <p class="article-p fade-in">
+                    Поэтому выигрывает не компания с самой умной моделью, а компания с самой управляемой ИИ-системой. Такие системы нужно проектировать, измерять, контролировать и постепенно масштабировать.
+                </p>
+                <p class="article-p fade-in">
+                    Когда компании начинают внедрять ИИ, они часто думают, что достаточно выбрать модель, подключить интерфейс, дать доступ к данным — и волшебным образом компания станет AI-First (нет).
+                </p>
+                <p class="article-p fade-in">
+                    В продакшене модель — это интеллектуальное ядро. Но конечный результат создаёт система вокруг неё: управление контекстом, интеграции с различными сервисами, сложная оркестрация, механизмы передачи задачи человеку, а также экономические эффекты.
+                </p>
+                <p class="article-p fade-in">
+                    Поэтому внедрить LLM ещё не означает внедрить ИИ-систему, приносящую пользу бизнесу.
+                </p>
+            </div>
+
+            <!-- Раздел 2 -->
+            <div class="max-w-4xl mx-auto w-full mt-8">
+                <h2 class="article-h2 fade-in">Почему между демками и продом такая пропасть</h2>
+                
+                <div class="mb-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/2_.png" alt="Демо vs Прод" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    В демо, как правило, всё стерильно: понятный запрос, хороший контекст и нет конфликтующих правил.
+                </p>
+                <p class="article-p fade-in">
+                    В проде всё наоборот: шумные данные, хаотичные формулировки, устаревшие документы, а ошибка может стоить денег, репутации или привести к серьёзному инциденту.
+                </p>
+                <p class="article-p fade-in">
+                    В этот момент выясняется, что в проде сбоит не столько модель, сколько вся система вокруг неё: не тот документ попал в контекст или не сработал инструмент. Так из каких элементов на самом деле состоит готовая к продакшену ИИ-система в компании?
+                </p>
+            </div>
+
+            <!-- Раздел 3 -->
+            <div class="max-w-4xl mx-auto w-full mt-8">
+                <h2 class="article-h2 fade-in">Где на самом деле создается ценность</h2>
+                
+                <div class="mb-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/3_.png" alt="Ценность ИИ" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Для бизнеса ценность появляется только тогда, когда ИИ улучшает бизнес-метрики: быстрее закрывает кейсы в поддержке, сокращает цикл разработки и повышает качество решений.
+                </p>
+                <p class="article-p fade-in">
+                    Если система выдала результат, который сотрудник ещё должен проверять десятки минут и переписывать вручную, то ценности от такой системы может не быть вовсе. Иногда ИИ в таком процессе только добавляет ещё один уровень работы.
+                </p>
+                <p class="article-p fade-in">
+                    Поэтому нужно понять, какую метрику мы улучшаем. У ИИ есть смысл в основном в трёх случаях: если он делает работу быстрее, дешевле или качественнее.
+                </p>
+            </div>
+
+            <!-- Раздел 4 -->
+            <div class="max-w-4xl mx-auto w-full mt-8">
+                <h2 class="article-h2 fade-in">Начинать нужно не с модели, а со сценария использования</h2>
+                
+                <p class="article-p fade-in">
+                    Большинство провальных ИИ-проектов стартует одинаково. Сначала команда обсуждает, как она будет файнтюнить очередную модель и навешивать на неё RAG. А потом придумывает, куда всё это пристроить.
+                </p>
+                <p class="article-p fade-in">
+                    Это неправильная логика. Правильный путь начинается с процесса. Какую задачу человек или команда реально решают? Где именно в процессе теряются время, деньги, качество или скорость? Где нужен ИИ, а где хватит обычной автоматизации? И как должна измениться роль человека после внедрения?
+                </p>
+                <p class="article-p fade-in">
+                    Сначала мы формализуем процесс в виде AS-IS-диаграммы. Затем выявляем точки автоматизации, потом проектируем TO-BE-процесс с новой ролью человека и ИИ-агентами. И только потом выбираем технологии под конкретную задачу.
+                </p>
+
+                <div class="my-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/5_.png" alt="Сценарий использования" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Не каждой задаче нужна LLM. Если всё определяется жёсткими правилами, то это детерминированная логика. Если задача связана с прогнозом на больших массивах данных, то применяем классический ML. А если мы работаем с языком и смыслами, то вот здесь подключаем LLM. Зрелая архитектура почти всегда гибридна: жёсткие правила, вызов ML-моделей для отдельных задач и LLM для интерпретации смыслов.
+                </p>
+            </div>
+
+            <!-- Раздел 5 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">Четыре роли ИИ в продукте</h2>
+                
+                <p class="article-p fade-in">
+                    Одна из причин провала многих ИИ-проектов — попытка спроектировать все сценарии использования одинаково. Но у ИИ как минимум четыре разные роли.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 my-10 fade-in">
+                    <div class="tech-card p-6 rounded-2xl border-t-4 border-t-cyber-purple flex flex-col justify-start">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-2 bg-cyber-purple/10 rounded-lg text-cyber-purple"><i data-lucide="zap" class="w-5 h-5"></i></div>
+                            <h4 class="font-bold text-xl text-[var(--text-main)]">Функция</h4>
+                        </div>
+                        <p class="text-[var(--text-muted)] text-sm md:text-base leading-relaxed">
+                            Это локальная автоматизация: суммаризация статьи, классификация документа или автозаполнение текста. Это самый простой и часто самый окупаемый уровень.
+                        </p>
+                    </div>
+                    
+                    <div class="tech-card p-6 rounded-2xl border-t-4 border-t-cyber-orange flex flex-col justify-start">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-2 bg-cyber-orange/10 rounded-lg text-cyber-orange"><i data-lucide="message-square-text" class="w-5 h-5"></i></div>
+                            <h4 class="font-bold text-xl text-[var(--text-main)]">Ассистент</h4>
+                        </div>
+                        <p class="text-[var(--text-muted)] text-sm md:text-base leading-relaxed">
+                            Система отвечает на запрос и помогает найти релевантную информацию. Она не действует сама по себе, а работает по инициативе человека.
+                        </p>
+                    </div>
+
+                    <div class="tech-card p-6 rounded-2xl border-t-4 border-t-[#229ED9] flex flex-col justify-start">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-2 bg-[#229ED9]/10 rounded-lg text-[#229ED9]"><i data-lucide="users" class="w-5 h-5"></i></div>
+                            <h4 class="font-bold text-xl text-[var(--text-main)]">Копилот</h4>
+                        </div>
+                        <p class="text-[var(--text-muted)] text-sm md:text-base leading-relaxed">
+                            ИИ подсказывает шаги, готовит черновики, предлагает решения и помогает человеку двигаться по процессу быстрее.
+                        </p>
+                    </div>
+
+                    <div class="tech-card p-6 rounded-2xl border-t-4 border-t-emerald-500 flex flex-col justify-start">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-500"><i data-lucide="bot" class="w-5 h-5"></i></div>
+                            <h4 class="font-bold text-xl text-[var(--text-main)]">Ограниченный агент</h4>
+                        </div>
+                        <p class="text-[var(--text-muted)] text-sm md:text-base leading-relaxed">
+                            Система сама запускает цепочку действий в заданных границах: вызывает инструменты и передаёт результат дальше по процессу.
+                        </p>
+                    </div>
+                </div>
+
+                <p class="article-p fade-in">
+                    Это четыре разных класса продукта. У них разные требования к UX, контролю, риску, метрикам и архитектуре. Но чем выше автономность, тем больше ответственности.
+                </p>
+                <p class="article-p fade-in">
+                    На агентном уровне уже недостаточно, чтобы система просто хорошо генерировала ответы. Нужны ограничения, подтверждения и механизмы откатов.
+                </p>
+            </div>
+
+            <!-- Раздел 6 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">Главная проблема — контекст</h2>
+                
+                <div class="mb-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/8_.png" alt="Проблема контекста" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Компании часто думают, что модель является главным ограничением, но на практике даже небольшие модели могут приносить ощутимую пользу. Дело в неправильном использовании контекста.
+                </p>
+                <p class="article-p fade-in">
+                    Даже мощная LLM будет ошибаться, если ей дали плохой контекст. И хуже всего то, что ошибаться она будет убедительно.
+                </p>
+                <p class="article-p fade-in">
+                    Контекст в компании — это не просто база знаний. Это задача пользователя, состояние процесса, применимые правила и ограничения, история действий, доступные инструменты и корпоративная память: кейсы, исключения, шаблоны и накопленные решения.
+                </p>
+
+                <div class="my-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/9_.png" alt="Инженерия контекста" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Поэтому инженерия контекста сегодня — это уже отдельное направление работы.
+                </p>
+            </div>
+
+            <!-- Раздел 7 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">Автономность нельзя повышать быстрее, чем контроль</h2>
+                
+                <p class="article-p fade-in">
+                    Это один из главных законов агентной архитектуры.
+                </p>
+                <p class="article-p fade-in">
+                    Пока ИИ работает как функция, ассистент или копилот, риск ограничен. Он помогает, но человек всё ещё принимает финальное решение.
+                </p>
+                <p class="article-p fade-in">
+                    Как только система начинает действовать самостоятельно, меняется и цена ошибки. В результате может получиться плохое решение, которое повлечёт за собой юридические, финансовые и репутационные риски для компании.
+                </p>
+                <p class="article-p fade-in font-bold text-[var(--text-main)]">
+                    Поэтому автономность должна расти только вместе с контролем.
+                </p>
+                <p class="article-p fade-in">
+                    Чем больше у агента возможностей, тем выше и степень его свободы. Но мы не должны делать вольных агентов: наши агенты должны помогать бизнесу, поэтому нам нужно больше ограничений.
+                </p>
+                <p class="article-p fade-in">
+                    Если автономность растёт быстрее, чем контроль, то в какой-то момент вы обязательно столкнётесь с инцидентом.
+                </p>
+
+                <div class="tech-card p-6 rounded-2xl border-l-4 border-l-cyber-orange my-8 fade-in bg-cyber-orange/5">
+                    <div class="flex gap-4">
+                        <i data-lucide="alert-triangle" class="w-6 h-6 text-cyber-orange shrink-0 mt-1"></i>
+                        <p class="font-medium text-[var(--text-main)] m-0 leading-relaxed text-sm md:text-base">
+                            Так у нас агент отрефакторил код, который рефакторить было не нужно, после чего бизнес-логика уже не работала должным образом. Инцидент выявили и починили, а агент получил <s class="opacity-50 decoration-cyber-orange decoration-2">по рукам</s> более строгую политику доступов в репозитории.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Раздел 8 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">Без evals нет управления качеством</h2>
+                
+                <div class="mb-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/10_.png" alt="Управление качеством (evals)" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    LLM-системы опасны тем, что могут потихоньку деградировать.
+                </p>
+                <p class="article-p fade-in">
+                    Снаружи всё может выглядеть нормально: система отвечает, интерфейс живой, пользователи получают ответы. Но внутри качество уже просело.
+                </p>
+                <p class="article-p fade-in">
+                    Поменяли промпт — поломали соседний сценарий. Обновили API — агент стал хуже работать с инструментами. Пересобрали индекс в векторной базе — теперь мы извлекаем из RAG нерелевантную информацию. Но всё это можно не заметить, если нет системы оценки — evals.
+                </p>
+                <p class="article-p fade-in font-medium text-xl border-l-4 border-cyber-purple pl-4 my-6">
+                    Evals — это инструмент управления качеством.
+                </p>
+                <p class="article-p fade-in">
+                    Нужны два подхода. Первый — офлайн: golden datasets, эталонные и краевые сценарии использования. Второй — онлайн: реальные запросы, выборочные ревью, ошибки вызова инструментов и деградация системы уже в проде.
+                </p>
+            </div>
+
+            <!-- Раздел 9 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">DataOps — подготовка контекста</h2>
+                
+                <p class="article-p fade-in">
+                    Когда говорят про LLM в проде, внимание часто уходит на модель, а данные воспринимаются как что-то вторичное. Но на практике без хорошего DataOps ничего хорошего не бывает.
+                </p>
+                <p class="article-p fade-in">
+                    Система использует конкретный контекст, который нужно откуда-то брать, обновлять, очищать и держать в рабочем состоянии. Понятно, что весь цикл DataOps мы разбирать не будем: он гораздо шире и включает также governance, разметку, архитектуру хранилищ данных и многое другое. Но если говорить о базе для LLM-систем, то здесь есть несколько обязательных уровней.
+                </p>
+
+                <!-- DataOps Subsections as Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 my-10 fade-in">
+                    <div class="tech-card p-6 rounded-2xl border-l-4 border-l-cyber-purple hover:border-l-cyber-orange flex flex-col justify-start">
+                        <h4 class="font-bold text-lg mb-2 text-[var(--text-main)]">Источники данных</h4>
+                        <p class="text-[var(--text-muted)] text-sm md:text-base leading-relaxed">
+                            CRM, почта, внутренние документы, базы знаний — всё это нужно синхронизировать. Без доступа к контексту ни о какой ИИ-системе вообще говорить не приходится.
+                        </p>
+                    </div>
+                    
+                    <div class="tech-card p-6 rounded-2xl border-l-4 border-l-cyber-purple hover:border-l-cyber-orange flex flex-col justify-start">
+                        <h4 class="font-bold text-lg mb-2 text-[var(--text-main)]">Очистка и нормализация</h4>
+                        <p class="text-[var(--text-muted)] text-sm md:text-base leading-relaxed">
+                            Реальные корпоративные данные часто славятся наличием дублей, мусора и разрозненных форматов. Если просто «скормить» всё это в векторную базу, то вы не получите умную систему.
+                        </p>
+                    </div>
+
+                    <div class="tech-card p-6 rounded-2xl border-l-4 border-l-cyber-purple hover:border-l-cyber-orange flex flex-col justify-start">
+                        <h4 class="font-bold text-lg mb-2 text-[var(--text-main)]">Эмбеддинги и индексы</h4>
+                        <p class="text-[var(--text-muted)] text-sm md:text-base leading-relaxed">
+                            Это уже вопрос того, как данные превращаются в механизм поиска и подачи контекста. Индексы нужно обновлять, а качество поиска — постоянно проверять.
+                        </p>
+                    </div>
+
+                    <div class="tech-card p-6 rounded-2xl border-l-4 border-l-cyber-purple hover:border-l-cyber-orange flex flex-col justify-start">
+                        <h4 class="font-bold text-lg mb-2 text-[var(--text-main)]">Актуальность и доступность</h4>
+                        <p class="text-[var(--text-muted)] text-sm md:text-base leading-relaxed">
+                            Недостаточно один раз загрузить данные: контекст нужно поддерживать в актуальном состоянии. Если система работает на вчерашней информации, то сегодня она будет принимать неверные решения.
+                        </p>
+                    </div>
+
+                    <div class="tech-card p-6 rounded-2xl border-l-4 border-l-cyber-purple hover:border-l-cyber-orange flex flex-col justify-start">
+                        <h4 class="font-bold text-lg mb-2 text-[var(--text-main)]">Качество данных</h4>
+                        <p class="text-[var(--text-muted)] text-sm md:text-base leading-relaxed">
+                            Здесь работает очень простой принцип: garbage in — garbage out. Если на входе у системы плохие данные, то на выходе не будет качественного результата.
+                        </p>
+                    </div>
+
+                    <div class="tech-card p-6 rounded-2xl border-l-4 border-l-cyber-purple hover:border-l-cyber-orange flex flex-col justify-start">
+                        <h4 class="font-bold text-lg mb-2 text-[var(--text-main)]">Безопасность и контроль</h4>
+                        <p class="text-[var(--text-muted)] text-sm md:text-base leading-relaxed">
+                            Контекст должен быть не только полным и актуальным, но и правильно ограниченным. ИИ-система не должна получать доступ ко всему подряд, а доступ должен быть ограничен согласно ролевой модели.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Раздел 10 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">MLOps — жизненный цикл модели</h2>
+                
+                <div class="mb-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/12_.png" alt="MLOps" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Если DataOps отвечает за данные и контекст, то MLOps — это уже про сам жизненный цикл модели. Опять же, в данной статье не целиком, а в контексте LLM.
+                </p>
+                <p class="article-p fade-in">
+                    Есть обучение модели или дообучение на новых данных, адаптация модели под домен или конкретную задачу. Есть управление версиями: какие веса используются, какая конфигурация сейчас в проде, что именно поменялось между релизами. Есть деплой и, конечно, мониторинг: как модель ведёт себя после релиза и не просело ли качество на ключевых сценариях из-за дрейфа данных.
+                </p>
+                <p class="article-p fade-in">
+                    В классическом ML MLOps является центром всей системы. Но сегодня даже идеальная модель не гарантирует, что вся ИИ-система работает хорошо. Тем не менее MLOps остаётся критичным там, где у вас есть собственные дообученные модели под ваши задачи.
+                </p>
+                <p class="article-p fade-in">
+                    В LLM-системах модель тоже должна существовать с версионностью, тестами, понятным циклом обновления и контролем изменений.
+                </p>
+            </div>
+
+            <!-- Раздел 11 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">AIOps — управление всей ИИ-системой в проде</h2>
+                
+                <div class="mb-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/13_.png" alt="AIOps" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    А вот AIOps — это уже следующий уровень зрелости. Это управление всей ИИ-системой в проде.
+                </p>
+                <p class="article-p fade-in">
+                    Почему нужен отдельный термин? Потому что нам нужно контролировать не только модель, но и качество через evals, стоимость работы системы, задержки, инструменты, оркестрацию, контекст, RAG, безопасность, поведение агентов, фолбэки и всё, что происходит вокруг инференса, включая работу с пользователями.
+                </p>
+                <p class="article-p fade-in">
+                    Иными словами, AIOps — это управление поведением системы, а не только её вычислительным ядром.
+                </p>
+                <p class="article-p fade-in">
+                    Например, модель может быть стабильной, но retrieval деградировал — и качество уже падает. Или стоимость выросла не потому, что модель стала дороже, а потому, что контекст стал длиннее и оркестратор начал делать лишние вызовы. Да и вообще пользователи жалуются, что чатбот бесполезный. Всё это уже далеко не только про MLOps.
+                </p>
+                <p class="article-p fade-in">
+                    Поэтому в AIOps важны несколько вещей: качество, стоимость, задержки, надёжность инструментов, качество контекста, безопасность и наблюдаемость.
+                </p>
+                <p class="article-p fade-in font-bold">
+                    В зрелой компании ИИ в проде — это операционная среда, где нужно видеть и контролировать весь процесс решения задачи: от входа и контекста до действия, результата, стоимости и риска.
+                </p>
+            </div>
+
+            <!-- Раздел 12 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">Релиз LLM-системы — это управляемый эксперимент</h2>
+                
+                <p class="article-p fade-in">
+                    Выкатывать LLM в прод как обычную продуктовую фичу — плохая идея.
+                </p>
+                <p class="article-p fade-in">
+                    Даже хорошо протестированная система в реальной среде сталкивается с тем, чего не было в тестах: странными формулировками, новыми типами кейсов, неожиданными цепочками действий и человеческим фактором.
+                </p>
+                <p class="article-p fade-in">
+                    Поэтому запуск такой системы должен происходить поэтапно. Сначала — скрытая проверка на реальных данных без влияния на пользователя. Затем — внутреннее использование командой на себе. Далее можно симулировать поведение реального пользователя. Потом — запуск на небольшой части реальных пользователей. После этого — постепенное расширение охвата. И только в самом конце — полноценное внедрение для всех.
+                </p>
+                <p class="article-p fade-in">
+                    Но ещё важнее другое: у релиза должны быть заранее определённые критерии отката. Если упала какая-то метрика, участились сбои вызова инструментов или просело качество, то релиз должен тормозиться автоматически.
+                </p>
+            </div>
+
+            <!-- Раздел 13 (Table) -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">Как измерять работу ИИ правильно</h2>
+                
+                <p class="article-p fade-in">
+                    Бизнесу нужно измерять завершённую работу.
+                </p>
+
+                <div class="mb-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/6_.png" alt="Измерение ИИ" class="w-full h-auto">
+                </div>
+
+                <!-- Таблица метрик -->
+                <div class="overflow-x-auto fade-in my-10 rounded-xl border border-[var(--glass-border)] bg-[var(--card-bg)] shadow-md">
+                    <table class="w-full text-left border-collapse glass-table">
+                        <thead>
+                            <tr class="bg-black/5 dark:bg-white/5 text-[var(--text-main)] font-montserrat tracking-wide">
+                                <th class="p-4 font-bold w-1/3">Метрика</th>
+                                <th class="p-4 font-bold">Что показывает</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-[var(--glass-border)] text-[var(--text-muted)] font-inter">
+                            <tr class="transition-colors">
+                                <td class="p-4 font-semibold text-[var(--text-main)]">Success Rate</td>
+                                <td class="p-4">Долю реально решённых задач</td>
+                            </tr>
+                            <tr class="transition-colors">
+                                <td class="p-4 font-semibold text-[var(--text-main)]">Deflection Rate</td>
+                                <td class="p-4">Сколько работы система сняла с человека</td>
+                            </tr>
+                            <tr class="transition-colors">
+                                <td class="p-4 font-semibold text-[var(--text-main)]">Handoff Rate</td>
+                                <td class="p-4">Как часто потребовалась передача человеку</td>
+                            </tr>
+                            <tr class="transition-colors">
+                                <td class="p-4 font-semibold text-[var(--text-main)]">Correction Rate</td>
+                                <td class="p-4">Как часто результат пришлось исправлять</td>
+                            </tr>
+                            <tr class="transition-colors">
+                                <td class="p-4 font-semibold text-[var(--text-main)]">Time Saved</td>
+                                <td class="p-4">Сколько времени реально сэкономлено</td>
+                            </tr>
+                            <tr class="transition-colors">
+                                <td class="p-4 font-semibold text-[var(--text-main)]">Adoption</td>
+                                <td class="p-4">Пользуются ли системой в реальности</td>
+                            </tr>
+                            <tr class="transition-colors">
+                                <td class="p-4 font-semibold text-[var(--text-main)]">Task Completion Time</td>
+                                <td class="p-4">Сколько занимает путь от входа до результата</td>
+                            </tr>
+                            <tr class="transition-colors">
+                                <td class="p-4 font-semibold text-[var(--text-main)]">Cost per Resolved Task</td>
+                                <td class="p-4">Сколько стоит одна полезно завершённая задача</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="article-p fade-in">
+                    Но и этого мало. ИИ-метрики должны подниматься выше — на уровень бизнеса: скорость вывода продуктов на рынок, маржа или стоимость операций.
+                </p>
+            </div>
+
+            <!-- Раздел 14 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">Экономика ИИ: считать нужно не токены, а юнит</h2>
+                
+                <div class="mb-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/14_.png" alt="Экономика ИИ" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Наивно полагать, что экономика ИИ равна счёту за API.
+                </p>
+                <p class="article-p fade-in">
+                    Настоящая стоимость включает не только токены, но и работу всей системы: подготовку и хранение данных, RAG, оркестрацию запросов, вызов инструментов и эскалации на человека.
+                </p>
+                <p class="article-p fade-in">
+                    Поэтому актуальный вопрос — сколько стоит полезно выполненная задача. У зрелой компании экономика ИИ считается на уровне единицы работы или выпущенной продукции.
+                </p>
+            </div>
+
+            <!-- Раздел 15 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">UX в ИИ — это дизайн доверия</h2>
+                
+                <div class="mb-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/15_.png" alt="UX и дизайн доверия" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    В обычных продуктах под UX обычно понимают удобство использования. В ИИ-системах UX — это ещё и управление доверием.
+                </p>
+                <p class="article-p fade-in">
+                    Проблема в том, что модель умеет звучать уверенно даже тогда, когда ошибается. Человек, естественно, склонен принимать уверенный тон за компетентность. Отсюда две крайности: слепое доверие или полное отторжение.
+                </p>
+                <p class="article-p fade-in font-bold text-[var(--text-main)]">
+                    Хороший ИИ-UX калибрует доверие.
+                </p>
+                <p class="article-p fade-in">
+                    Пользователь должен понимать, на чём основан ответ, какие данные использованы, какие правила применены, где система уверена, а где есть неопределённость.
+                </p>
+                <p class="article-p fade-in">
+                    Показывать нужно не «мышление модели», а основание решения: фактчекинг, что именно решено, на основе каких документов было принято это решение и какие ограничения действовали.
+                </p>
+
+                <div class="my-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/16_.png" alt="Интерфейс доверия" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Эскалация тоже должна быть частью UX, а не признаком плохой работы системы. Хорошая система умеет вовремя остановиться и передать человеку уже собранный и структурированный кейс.
+                </p>
+
+                <!-- Блок примера KYC -->
+                <div class="tech-card p-6 rounded-2xl border-l-4 border-l-cyber-purple my-8 fade-in bg-cyber-purple/5">
+                    <div class="flex gap-4">
+                        <i data-lucide="info" class="w-6 h-6 text-cyber-purple shrink-0 mt-1"></i>
+                        <p class="font-medium text-[var(--text-main)] m-0 leading-relaxed text-sm md:text-base">
+                            Например, при KYC (Know Your Customer, процедуре проверки клиентов) клиентам с меньшим риском открывают счета в банке автоматически, а высокорисковых отправляют на подтверждение человеком с уже собранным досье из всего интернета.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="my-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/17_.png" alt="Эскалация как часть UX" class="w-full h-auto">
+                </div>
+            </div>
+
+            <!-- Раздел 16 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">Governance должен быть исполняемым</h2>
+                
+                <div class="mb-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/18_.png" alt="Исполняемый Governance" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Многие компании совершают одну и ту же ошибку: пишут политики и регламенты, считая, что на этом governance внедрён.
+                </p>
+                <p class="article-p fade-in">
+                    Но это не так. Governance, который нельзя исполнить технически, бесполезен: он работает на уровне пожеланий, но никогда не работает в реальности.
+                </p>
+                <p class="article-p fade-in">
+                    Если агенту нельзя переводить деньги, это должно быть невозможно на уровне доступов. Если нельзя отправлять персональные данные в модель, это должно отсекаться на уровне guardrails. И если нужно расследовать инциденты, то каждый шаг должен быть зафиксирован.
+                </p>
+                <p class="article-p fade-in font-bold text-[var(--text-main)]">
+                    Настоящий governance — это политика, которая исполняется кодом.
+                </p>
+                <p class="article-p fade-in">
+                    И чем больше умеет агент, тем важнее этот принцип. Каждый новый навык агента — это не только рост пользы, но и рост возможных рисков.
+                </p>
+            </div>
+
+            <!-- Раздел 17 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">Безопасность начинается с ограничения ущерба</h2>
+                
+                <div class="mb-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/19_.png" alt="Безопасность ИИ-систем" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Как только система получает доступ к документам, внешним сервисам, API и данным, возникает вполне прикладной операционный риск. Появляются инъекции промптов через документы и внешние источники, утечки контекста или ошибки инструментов.
+                </p>
+                <p class="article-p fade-in">
+                    Поэтому базовый принцип безопасности для агентных систем: нужно давать агентам минимально необходимый набор доступов. Только нужные данные и только нужные инструменты на определённое время. Всё остальное закрыто по умолчанию.
+                </p>
+                <p class="article-p fade-in">
+                    Безопасность должна строиться так, чтобы даже при ошибке ущерб оставался ограниченным и контролируемым.
+                </p>
+            </div>
+
+            <!-- Раздел 18 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">Что компании реально могут сделать с ИИ уже сегодня</h2>
+                
+                <p class="article-p fade-in">
+                    Большинство компаний не будут выигрывать за счёт собственной большой модели: у них нет ресурсов её обучить. Для них основной интеллектуальный актив находится в контексте, оркестрации, логике работы процессов, интеграциях, evals, governance и прикладной экономике.
+                </p>
+                <p class="article-p fade-in font-bold text-[var(--text-main)]">
+                    Именно здесь создается долгосрочное преимущество.
+                </p>
+                <p class="article-p fade-in">
+                    Не в самом доступе к модели, а в способности встроить её в компанию так, чтобы она работала лучше, дешевле, надёжнее и масштабируемее, чем у других.
+                </p>
+            </div>
+
+            <!-- Раздел 19 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">ИИ-трансформация — это смена операционной модели</h2>
+                
+                <div class="mb-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/20_.png" alt="Смена операционной модели" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Главная ошибка компаний — добавить ИИ в старый процесс: прикрутить новый интеллект поверх старой логики с неготовыми к изменениям людьми и отсутствием зрелой инфраструктуры.
+                </p>
+                <p class="article-p fade-in">
+                    Настоящая ИИ-трансформация начинается с вопросов: если часть когнитивной и операционной работы теперь может выполнять ИИ-система, как должен измениться сам процесс, сама роль человека и структура ответственности в компании? Как масштабировать компанию без роста штата и оставить людям только «человеческую» работу, а всё остальное доверить ИИ?
+                </p>
+                <p class="article-p fade-in">
+                    В AI-First-парадигме человек перестаёт быть исполнителем. Его роль смещается выше: теперь человек — оператор системы или менеджер ИИ-агентов.
+                </p>
+                <p class="article-p fade-in">
+                    Меняется не только скорость, но и сама суть работы. Люди не любят неопределённость и боятся, что ИИ их заменит. Но на самом деле меняется процесс их работы, поэтому нужно заранее начинать переобучение сотрудников после проектирования TO-BE-процесса.
+                </p>
+                <p class="article-p fade-in">
+                    Сначала меняется оргструктура компании под новые роли. Затем руководители каждой функции проводят командные встречи по внедрению ИИ, где каждый сотрудник демонстрирует прогресс: что было сделано, что сработало, что не получилось и какие выводы сделаны. Лучшие практики, рабочие кейсы и готовые агенты затем выносятся на уровень всей компании в формате демо-сессий и внутренних вебинаров.
+                </p>
+                <p class="article-p fade-in">
+                    Параллельно запускается отдельная серия обучающих вебинаров, посвящённых тому, как создавать агентов: от постановки задачи и проектирования роли агента до тестирования, внедрения и оценки эффекта. Все наработанные практики фиксируются в корпоративной обучающей платформе и становятся частью стандарта онбординга, чтобы каждый новый сотрудник с первого дня понимал новые процессы работы в компании.
+                </p>
+            </div>
+
+            <!-- Раздел 20 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">Нужно строить масштабируемую ИИ-платформу</h2>
+                
+                <p class="article-p fade-in">
+                    Попытка внедрить ИИ везде и сразу, как правило, заканчивается одинаково: локальные эксперименты, отдельные демки и пилоты, разный стек, отсутствие переиспользуемых паттернов и общего контекста, недостаточный контроль над мультиагентными системами и отсутствие общей экономики.
+                </p>
+                <p class="article-p fade-in">
+                    Правильный путь такой:
+                </p>
+
+                <div class="my-8 cyber-img overflow-hidden fade-in">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/technology/21_.png" alt="Масштабируемая ИИ-платформа" class="w-full h-auto">
+                </div>
+
+                <div class="space-y-6 fade-in mb-8">
+                    <div class="flex flex-col md:flex-row gap-4 md:items-start border-l-2 border-cyber-purple pl-4">
+                        <h4 class="font-bold text-lg text-[var(--text-main)] w-48 shrink-0">Сначала — пилоты</h4>
+                        <p class="text-[var(--text-muted)] text-base m-0">Один-два-три сценария, где есть острая боль, процесс зрелый и понятный, а эффект можно быстро измерить.</p>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-4 md:items-start border-l-2 border-cyber-orange pl-4">
+                        <h4 class="font-bold text-lg text-[var(--text-main)] w-48 shrink-0">Потом — платформа</h4>
+                        <p class="text-[var(--text-muted)] text-base m-0">Единый контекстный слой, безопасные интеграции, evals, governance, мониторинг, контроль качества и стоимости.</p>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-4 md:items-start border-l-2 border-[#229ED9] pl-4">
+                        <h4 class="font-bold text-lg text-[var(--text-main)] w-48 shrink-0">И только потом — масштабирование</h4>
+                        <p class="text-[var(--text-muted)] text-base m-0">Расширение по продуктам и командам.</p>
+                    </div>
+                </div>
+
+                <p class="article-p fade-in font-bold text-xl text-center text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple to-cyber-orange">
+                    Сначала ценность. Потом платформа. Потом масштаб.
+                </p>
+            </div>
+
+            <!-- Раздел 21 -->
+            <div class="max-w-4xl mx-auto w-full mt-12">
+                <h2 class="article-h2 fade-in">Почему ИИ-проекты проваливаются</h2>
+                
+                <p class="article-p fade-in">
+                    <a href="https://fortune.com/2025/08/18/mit-report-95-percent-generative-ai-pilots-at-companies-failing-cfo/" target="_blank" class="styled-link font-bold">95% ИИ-проектов терпят провал</a> не из-за технологий, а по очень приземлённым причинам.
+                </p>
+                <p class="article-p fade-in">
+                    Их делали ради демки, а не под прод. У них не было владельца результата. У них не было evals. Контекст оказался плохим. Интеграция в процесс была слабой или экономика не сошлась. Автономность обогнала контроль, а governance остался в PDF. Да и вообще никто не решил, как именно измерять успех.
+                </p>
+                <p class="article-p fade-in">
+                    Но почти все эти причины предсказуемы. А значит, ими можно управлять.
+                </p>
+            </div>
+
+            <!-- Раздел 22 (ВЫВОДЫ) -->
+            <div class="max-w-4xl mx-auto w-full mt-16">
+                <div class="tech-card p-6 md:p-10 rounded-2xl bg-[var(--card-bg)] border border-[var(--card-border)] relative overflow-hidden fade-in shadow-lg">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-purple to-cyber-orange"></div>
+                    <h2 class="font-montserrat font-black text-xl md:text-3xl mb-6 text-[var(--text-main)] text-center uppercase tracking-tight">Выводы</h2>
+                    
+                    <p class="article-p text-[var(--text-main)] font-medium text-lg">
+                        LLM-система в компании — это не просто модель.
+                    </p>
+                    <p class="article-p text-[var(--text-main)]">
+                        Это фреймворк из сценариев использования, контекста, архитектуры, интеграций, evals, мониторинга, governance, экономики и управления изменениями.
+                    </p>
+                    <p class="article-p text-[var(--text-main)]">
+                        Если хотя бы один из них — слабое звено, то, согласно теории ограничений, устойчивость всей системы определяется самым слабым её элементом.
+                    </p>
+                    <p class="article-p text-[var(--text-main)]">
+                        LLM сама по себе не меняет бизнес. Бизнес меняет только такая ИИ-система, которая встроена в процессы, ограничена правилами, измеряется метриками и управляется как часть бизнес-модели.
+                    </p>
+                    <p class="article-p text-[var(--text-main)] mt-6 text-xl leading-relaxed text-center font-bold">
+                        <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyber-purple to-cyber-orange">
+                            Поэтому сегодня компании должны в меньшей степени думать о том, какую модель им выбрать, а сфокусироваться на создании ИИ-системы, которой можно доверить реальную работу.
+                        </span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- FOOTER И CTA -->
+            <div class="max-w-4xl mx-auto w-full mt-12 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
+                <!-- Единственная кнопка-ссылка на Telegram -->
+                <div class="mb-10 flex flex-wrap justify-center">
+                    <a href="https://t.me/andre_dataist" target="_blank" class="inline-flex items-center gap-3 px-8 py-4 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-[#229ED9] hover:bg-[#229ED9]/5 transition-all text-[var(--text-main)] shadow-sm hover:shadow-[0_0_20px_rgba(34,158,217,0.3)] group">
+                        <i data-lucide="send" class="w-6 h-6 text-[#229ED9] -mt-0.5 rotate-45 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform"></i>
+                        <span class="font-mono text-base md:text-lg font-bold transition-colors group-hover:text-[#229ED9]">Перейти в Telegram</span>
+                    </a>
+                </div>
+            </div>
+            
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    </div>
+
+    <script>
+        // Инициализация иконок
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+            } else {
+                html.classList.remove('dark');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Безопасная инициализация Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        
+        // Проверяем, действительно ли мы открыты внутри Telegram Mini App
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение темы (кнопкой на сайте)
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар при скролле страницы
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация появления элементов при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                // Понизили порог срабатывания, чтобы даже большие блоки показывались сразу
+                threshold: 0.05
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
