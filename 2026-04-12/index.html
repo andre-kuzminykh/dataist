@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Двунаправленная память</title>
+    
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Dataism Science Hub" />
+    <meta property="og:title" content="Двунаправленная память: как основа эволюции агентов, которые помнят прошлые шаги" />
+    <meta property="og:description" content="Сегодняшние «глубокие» AI-агенты умеют не только продолжать текст, но и ходить в поиск, вызывать инструменты, собирать факты из разных источников и шаг за шагом решать сложные вопросы. На бумаге это в" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://34.62.139.101:8004/static/dvunapravlennaia-pamiat/dvunapravlennaia-pamiat_ru.html" />
+    <meta property="og:image" content="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/cover.png" />
+    
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: { purple: '#a855f7', orange: '#f97316', tg: '#229ED9' }
+                    }
+                },
+                fontFamily: {
+                    mono: ['"Space Mono"', 'monospace'],
+                    sans: ['"Inter"', 'sans-serif'],
+                    montserrat: ['"Montserrat"', 'sans-serif'],
+                },
+                animation: { 'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+            }
+        }
+    </script>
+    
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --grid-line-p: rgba(168,85,247,0.1);
+            --grid-line-o: rgba(249,115,22,0.1);
+            --glass-bg: rgba(255,255,255,0.85);
+            --glass-border: rgba(0,0,0,0.05);
+            --card-bg: rgba(255,255,255,0.6);
+            --card-border: rgba(0,0,0,0.05);
+            --shadow-glow: rgba(0,0,0,0.02);
+            --image-bg: #ffffff;
+        }
+        .dark {
+            --bg-color: #050505;
+            --text-main: #e5e7eb;
+            --text-muted: #9ca3af;
+            --grid-line-p: rgba(168,85,247,0.05);
+            --grid-line-o: rgba(249,115,22,0.05);
+            --glass-bg: rgba(10,10,14,0.85);
+            --glass-border: rgba(255,255,255,0.08);
+            --card-bg: rgba(255,255,255,0.03);
+            --card-border: rgba(255,255,255,0.1);
+            --shadow-glow: rgba(0,0,0,0.5);
+            --image-bg: #111111;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            transition: background-color 0.4s ease, color 0.4s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .bg-grid {
+            background-size: 40px 40px;
+            background-image: linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px), 
+                              linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px);
+            background-attachment: fixed;
+        }
+        .glass-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 10px 40px var(--shadow-glow);
+            transition: background 0.4s ease, border-color 0.4s ease;
+        }
+        .tech-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            transition: all 0.3s ease;
+        }
+        .tech-card:hover {
+            border-color: rgba(168,85,247,0.4);
+            transform: translateY(-2px);
+        }
+        .article-p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            margin-bottom: 1.25rem;
+            color: var(--text-main);
+        }
+        @media (min-width: 768px) {
+            .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; }
+        }
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            margin-bottom: 1.25rem;
+            color: var(--text-main);
+        }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; }
+        }
+        .article-content h2 {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 900;
+            font-size: 1.5rem;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            line-height: 1.2;
+        }
+        @media (min-width: 768px) {
+            .article-content h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; }
+        }
+        .article-content section {
+            max-width: 56rem;
+            margin-left: auto;
+            margin-right: auto;
+            width: 100%;
+        }
+        .article-content figure {
+            margin: 2.5rem 0 3.5rem;
+            max-width: 56rem;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .article-content figure img {
+            width: 100%;
+            object-fit: contain;
+            border-radius: 0.75rem;
+            background-color: rgba(255,255,255,0.5);
+        }
+        .article-content figcaption {
+            font-size: 0.875rem;
+            color: #1f2937;
+            margin-top: 1.25rem;
+            text-align: center;
+            font-family: 'Space Mono', monospace;
+            max-width: 48rem;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.6;
+        }
+        .dark .article-content figcaption { color: #d1d5db; }
+        .cyber-img {
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            box-shadow: 0 10px 30px var(--shadow-glow);
+        }
+        .arxiv-chart {
+            background-color: var(--image-bg);
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
+            transition: background-color 0.4s ease;
+        }
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s cubic-bezier(0.2,0.8,0.2,1), transform 0.6s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
+    <!-- Background glows -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay:3s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
+        <a href="https://dataist.ai" target="_blank" class="flex items-center gap-3 md:gap-4 hover:opacity-80 transition-opacity">
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">i</div>
+            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">ДАТАИСТ</div>
+        </a>
+        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
+                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
+                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
+                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
+        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+
+            <!-- Cover -->
+            <header class="text-center mb-12 md:mb-16 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
+                    🤖 Датаист | 2026-04-12
+                </div>
+                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
+                    Двунаправленная память<br>
+                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3">как основа эволюции агентов, которые помнят прошлые шаги</span>
+                </h1>
+                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0 bg-black">
+                    <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/cover.png"
+                         alt="Обложка: Двунаправленная память"
+                         class="w-full h-auto max-h-[70vh] object-cover scale-[1.0] origin-center">
+                </div>
+            </header>
+
+            <!-- Article body -->
+            <div class="article-content max-w-4xl mx-auto w-full">
+                <section>
+                    <h2>Когда памяти мало, даже умные агенты тупят</h2>
+                    <p>Сегодняшние «глубокие» ИИ-агенты умеют использовать поиск, вызывать инструменты, собирать факты из разных источников и шаг за шагом решать сложные вопросы. Но на практике такой агент работает, как очень умный стажёр, который каждый раз забывает, что делал вчера.</p>
+                    <p>Именно про это статья <strong>MIA — Memory Intelligence Agent</strong>. Авторы предлагают не просто «прикрутить память» к LLM-агенту, а перестроить саму логику того, как агент учится на опыте и меняет своё поведение во время работы. И, судя по результатам, идея работает: модель не только улучшает флагманские закрытые LLM, но и позволяет относительно малой 7B-модели обгонять более крупные.</p>
+                    <p>Это важно не только для исследовательских бенчмарков. Если мы правда хотим агентов, которые могут неделями работать над задачами, искать информацию, не повторять одни и те же ошибки и адаптироваться на лету, без внятной памяти это просто не взлетит.</p>
+                </section>
+                <section>
+                    <h2>В чём проблема обычной «памяти» для агентов</h2>
+                    <p>В агентных системах память часто сводится к простому алегоритму: сохранить старые траектории — запросы, промежуточные шаги, найденные документы, ответы — и потом по похожести подтягивать их в контекст новой задачи. Звучит разумно. Но у такого подхода быстро начинаются побочные эффекты.</p>
+                    <p>Во-первых, <strong>длинный контекст — не равно умная память</strong>. Чем больше старых следов мы скармливаем модели, тем выше шанс, что полезные сигналы утонут в шуме. Во-вторых, по мере роста архива дорожают хранение и поиск. В-третьих, агенту часто нужен не просто факт из прошлого, а <strong>процедурная память</strong>: что сработало, что не сработало, какой маршрут поиска оказался полезным, где он зашёл в тупик.</p>
+                    <p>Авторы формулируют это довольно жёстко: многие существующие системы — это слабый планировщик, который достаёт не лучшую память из раздутого архива и с её помощью пытается направить не слишком подготовленного исполнителя. В результате память вроде есть, а серьёзного прироста нет.</p>
+                </section>
+                <section>
+                    <h2>Что такое MIA: память как отдельная когнитивная система</h2>
+                    <p>Вместо одной модели с большим контекстом MIA разделяет обязанности между тремя компонентами: <strong>Менеджер, Планировщик и Исполнитель</strong>.</p>
+                    <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                        <div class="arxiv-chart flex flex-col items-center">
+                            <img src="https://arxiv.org/html/2604.04503v1/x3.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+                            <p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Общая схема MIA: память сначала помогает построить план, затем исполнитель действует по плану, а результаты снова упаковываются обратно в память.</p>
+                        </div>
+                    </figure>
+                    <p>Идея такая:</p>
+                    <p><strong>Менеджер памяти</strong> — это непараметрическая память. Он хранит не сырые длинные логи, а сжатые структурированные «рабочие процессы» из прошлых попыток. Если задача мультимодальная, изображения сначала переводятся в текстовые описания, чтобы всё легло в единый формат хранения.</p>
+                    <p><strong>Планировщик</strong> — параметрическая память. Это отдельный агент, который на основе текущего вопроса и извлечённого опыта строит план поиска и рассуждения: куда идти, какие подзадачи решать, в каком порядке.</p>
+                    <p><strong>Исполнитель</strong> — он уже по плану вызывает инструменты, делает поисковые шаги, читает результаты и формирует ответ.</p>
+                    <p>В MIA память не идет напрямую в голову исполнителю. Она сначала <strong>влияет на стратегию</strong>, а уже стратегия управляет действий. Для сложных многошаговых задач это куда ближе к тому, как работает человеческое решение проблем: сначала прикинуть маршрут, потом действовать.</p>
+                </section>
+                <section>
+                    <h2>Как MIA ищет и запоминает опыт</h2>
+                    <p>Ключевая идея MIA — она хранит не только «хорошие» примеры, но и отрицательный опыт. То есть система может достать не только удачную траекторию, но и неудачную — как предупреждение, чего лучше не делать.</p>
+                    <p>У каждого воспоминания есть три сигнала:</p>
+                    <div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>семантическая близость</strong> к текущему вопросу;</span></div>
+                    <div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>ценность</strong> — насколько часто эта память раньше помогала;</span></div>
+                    <div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>частотный бонус</strong> — чтобы редкие, но потенциально полезные записи не были навсегда вытеснены «хитами».</span></div>
+                    <p>Дальше планировщик получает этот набор и генерирует пошаговый план. Исполнитель пытается его выполнить в ReAct-режиме: подумал, вызвал инструмент, посмотрел результат, пошёл дальше. Если упёрся в стену, Планировщик может один раз включить механизм <strong>Reflect-Replan</strong> — переосмыслить ситуацию и выдать новый маршрут.</p>
+                    <p>После завершения траектория снова отправляется в Менеджера, где длинный лог сжимается в компактный воркфлоу Так получается двусторонняя связь: память помогает строить план, а новые планы и траектории обновляют память.</p>
+                    <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                        <div class="arxiv-chart flex flex-col items-center">
+                            <img src="https://arxiv.org/html/2604.04503v1/x2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+                            <p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Сравнение MIA с базовыми и сильными моделями: MIA улучшает как передовые LLM, так и компактные открытые модели на мультимодальных и текстовых задачах.</p>
+                        </div>
+                    </figure>
+                </section>
+                <section>
+                    <h2>Почему здесь вообще понадобилось обучение с подкреплением</h2>
+                    <p>Одна из сильных сторон статьи — авторы не ограничились архитектурой, а отдельно обучили её части кооперироваться. Для этого используется <strong>двухэтапное попеременное RL-обучение</strong> на базе GRPO.</p>
+                    <p>Сначала тренируют исполнителя. Задача — научить его действительно следовать плану, корректно использовать инструменты и понимать, когда нужен пересмотр стратегии. То есть исполнитель не должен быть просто «LLM с поиском», он должен стать агентом, который умеет работать по указаниям.</p>
+                    <p>Затем исполнитель замораживают и обучают планировщика Теперь уже планировщик учится строить более качественные планы с опорой на память и лучше решать, когда нужна рефлексия и перепланирование.</p>
+                    <p>Вместо надежды, что две модели «как-нибудь договорятся», авторы обучают их синхронно, но по очереди. Один учится быть хорошим руками, второй — хорошей головой.</p>
+                    <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                        <div class="arxiv-chart flex flex-col items-center">
+                            <img src="https://arxiv.org/html/2604.04503v1/x5.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+                            <p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема обучения и обновления MIA: исполнитель обучается следовать плану, а планировщик — использовать память и улучшаться даже во время тестирования.</p>
+                        </div>
+                    </figure>
+                </section>
+                <section>
+                    <h2>Самая амбициозная часть: обучение во время тестирования</h2>
+                    <p>Самая интересная часть работы — <strong>test-time learning</strong>. Во многих системах инференс и обучение жёстко разделены: сначала натренировали, потом используем. MIA предлагает более живую схему: во время решения новых задач планировщик продолжает обновляться на основе свежего опыта.</p>
+                    <p>Важно, что обновляется только планировщик, а исполнитель остаётся замороженным. Это снижает риск «разболтать» всю систему и сохраняет стабильность исполнения. Одновременно происходят два процесса:</p>
+                    <div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">непараметрическая память пополняется новыми сжатыми воркфлоу;</span></div>
+                    <div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">параметрическая память улучшается через обновление весов планировщика</span></div>
+                    <p>То есть агент не просто складывает опыт на полку, а <strong>внутренне переваривает его</strong>. Это и есть та самая эволюция, которой часто не хватает memory-системам: память перестаёт быть архивом и становится механизмом развития.</p>
+                </section>
+                <section>
+                    <h2>Результаты: память, которая действительно помогает</h2>
+                    <p>На мультимодальных бенчмарках MIA показывает лучший средний результат среди open-source систем. Особенно показательно, что многие стандартные memory-подходы вроде RAG, Mem0 и A-Mem часто оказываются <strong>хуже, чем вариант вообще без памяти</strong>. Это сильный и неприятный для индустрии вывод: плохая память может быть вреднее отсутствия памяти.</p>
+                    <p>MIA на этом фоне выделяется именно тем, что память работает через планирование, а не как бесконтрольная свалка контекста. На семи мультимодальных датасетах система стабильно обходит предыдущие memory-бейзлайны. На текстовых задачах картина та же: заметный отрыв на HotpotQA, 2Wiki и особенно GAIA.</p>
+                    <p>Ещё один эффект, который выглядит почти провокационно: <strong>Qwen2.5-VL-7B в составе MIA обгоняет Qwen2.5-VL-32B без такой memory-архитектуры</strong>. Это важный сигнал для рынка. Часто мы пытаемся купить качество простым увеличением модели. Эта работа показывает, что грамотная организация памяти и планирования иногда даёт больше, чем дополнительные миллиарды параметров.</p>
+                    <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                        <div class="arxiv-chart flex flex-col items-center">
+                            <img src="https://arxiv.org/html/2604.04503v1/x1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+                            <p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Главные результаты статьи: MIA усиливает frontier-LLM, позволяет 7B-исполнителю конкурировать с гораздо более крупными моделями и превосходит предыдущие memory-фреймворки.</p>
+                        </div>
+                    </figure>
+                </section>
+                <section>
+                    <h2>MIA улучшает даже закрытые топ-модели</h2>
+                    <p>Авторы отдельно проверили, переносится ли подход на сильные закрытые модели — GPT-5.4, Gemini-3-Flash и Claude Sonnet 4.6. Ответ: да.</p>
+                    <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                        <div class="arxiv-chart flex flex-col items-center">
+                            <img src="https://arxiv.org/html/2604.04503v1/x8.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+                            <p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">MIA улучшает сильные закрытые модели на мультимодальном LiveVQA и текстовом HotpotQA по сравнению с обычным ReAct-пайплайном.</p>
+                        </div>
+                    </figure>
+                    <p>Это, пожалуй, один из самых практически значимых результатов статьи. Даже очень сильной модели полезно иметь отдельный слой памяти, планирования и переосмысления действий.</p>
+                    <p>Особенно интересно, что прирост у более сильных моделей обычно меньше, чем у слабых, но он остаётся стабильным. Это логично: чем лучше базовый исполнитель, тем меньше у него запас простых улучшений. Но сама устойчивость эффекта говорит о том, что архитектура действительно закрывает системную проблему.</p>
+                </section>
+                <section>
+                    <h2>Что показывает анализ обучения и инструментов</h2>
+                    <p>Авторы не ограничились финальными метриками и посмотрели на динамику обучения. RL постепенно поднимает вознаграждение и меняет стиль поведения планировщика и исполнителя. Причём длина ответов тоже адаптируется под датасет: где-то планировщик начинает отвечать короче, где-то длиннее. Это косвенно показывает, что модель не просто запоминает шаблоны, а настраивает стратегию под тип задач.</p>
+                    <p>Полезен и анализ вызова инструментов. Он показывает, что системы без памяти и с бедным использованием инструментов имеют худшую точность. Но ещё важнее другое: <strong>длинноконтекстная память плохо сочетается с многоходовым использованием инструментов</strong>. Когда агенту нужно не один раз что-то найти, а вести целую цепочку поисков и проверок, простое запихивание истории в контекст быстро ломается.</p>
+                    <p>MIA здесь выигрывает потому, что разделяет роли: память подсказывает стратегию, а не забивает эфир исполнителю.</p>
+                </section>
+                <section>
+                    <h2>А если нет правильных ответов? Неожиданно сильная часть статьи</h2>
+                    <p>Ещё одна сильная идея — <strong>unsupervised self-evolution</strong>. В реальном мире у агента часто нет лучших ответов, чтобы понять, справился он или нет. Авторы предлагают для этого многоагентный «peer review»: несколько специализированных LLM-ревьюеров оценивают логичность, достоверность источников и полноту результата, а отдельный агент выносит итоговое решение.</p>
+                    <figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full">
+                        <div class="arxiv-chart flex flex-col items-center">
+                            <img src="https://arxiv.org/html/2604.04503v1/x6.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+                            <p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема безнадзорной оценки: несколько LLM-ревьюеров по отдельности проверяют логику, фактичность и полноту, после чего мета-судья собирает итоговую оценку.</p>
+                        </div>
+                    </figure>
+                    <p>Это умный ход. Вместо одного LLM-as-a-judge, который легко спутает красивый текст с правильным ответом, авторы раскладывают оценку по независимым измерениям. В результате unsupervised-версия MIA оказывается не просто жизнеспособной, а местами почти догоняет supervised-вариант и превосходит многие fully supervised бейзлайны. Более того, при повторных проходах по данным она постепенно улучшается.</p>
+                    <p>Если этот результат воспроизводим широко, то перед нами очень важный шаг к агентам, которые умеют становиться лучше без ручной разметки после каждого эпизода.</p>
+                </section>
+                <section>
+                    <h2>Что в этой работе особенно важно</h2>
+                    <p>Главная ценность статьи не в том, что авторы придумали ещё один memory-блок. Таких работ сейчас много. Ценность в другом: они довольно чётко показывают, <strong>какой именно должна быть память для deep research agents</strong>.</p>
+                    <p>Не архив фактов. Не просто retrieval по похожести.</p>
+                    <p>А система, которая:</p>
+                    <div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">хранит <strong>процедурный опыт</strong>;</span></div>
+                    <div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">различает стратегию и исполнение;</span></div>
+                    <div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">умеет сжимать опыт в компактные workflow;</span></div>
+                    <div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">обновляет не только внешний буфер, но и внутренние параметры планировщика;</span></div>
+                    <div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">продолжает учиться во время использования.</span></div>
+                    <p>Это уже похоже не на «LLM с модулем памяти», а на зачаток более автономной когнитивной архитектуры.</p>
+                </section>
+                <section>
+                    <h2>Выводы</h2>
+                    <p>MIA — одна из тех работ, где за громким названием стоит вполне содержательная инженерная идея. Авторы берут наболевшую проблему агентной памяти и показывают, что её нельзя решать одним лишь увеличением контекста. Нужны <strong>разделение ролей, сжатие опыта, обучаемое планирование и способность к самообновлению</strong>.</p>
+                    <p>Результаты выглядят убедительно: система улучшает и open-source, и закрытые модели, особенно хорошо работает на сложных многошаговых задачах и не разваливается в unsupervised-режиме. При этом главный вывод, пожалуй, ещё шире самой статьи: в эпоху агентных систем следующая гонка может идти не только за размер модели, но и за то, <strong>как именно модель помнит, планирует и учится на собственном опыте</strong>.</p>
+                    <p>И если это так, то MIA — не просто удачный фреймворк, а хороший намёк на то, куда будет двигаться весь класс deep research agents дальше.</p>
+                </section>
+            </div>
+
+            <!-- Footer CTA -->
+            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
+                <div class="mb-10 flex flex-wrap justify-center gap-4">
+                    <a href="https://arxiv.org/abs/2604.04503" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">📜</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-purple">Полная статья (arXiv)</span>
+                    </a>
+                    <a href="https://github.com/ECNU-SII/MIA" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-orange transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <img src="https://cdn-icons-png.flaticon.com/256/25/25231.png" alt="GitHub" class="w-5 h-5 dark:invert transition-all">
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-orange">Код (GitHub)</span>
+                    </a>
+                    <!-- Исправленная ссылка -->
+                    <a href="https://huggingface.co/datasets/LightningCreeper/MIA" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-orange transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">🤗</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-orange">Модель (HuggingFace)</span>
+                    </a>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <!-- Progress bar -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) { html.classList.add('dark'); } else { html.classList.remove('dark'); }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready(); 
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => { applyTheme(!html.classList.contains('dark')); });
+
+        window.addEventListener('scroll', () => {
+            let h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById("progress-bar").style.width = ((document.documentElement.scrollTop / h) * 100) + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(e => { 
+                    if (e.isIntersecting) { 
+                        e.target.classList.add('visible'); 
+                        observer.unobserve(e.target); 
+                    } 
+                });
+            }, { threshold: 0.15 });
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
