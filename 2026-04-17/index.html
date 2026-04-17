@@ -1,0 +1,269 @@
+
+<!DOCTYPE html>
+<html lang="ru" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как ИИ-агенты учатся помнить через окружающий мир</title>
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Dataism Science Hub" />
+    <meta property="og:title" content="Как ИИ-агенты учатся помнить через окружающий мир" />
+    <meta property="og:description" content="В AI мы привыкли думать о памяти как о чём-то, что находится внутри агента: в скрытом состоянии RNN, в параметрах сети, в буфере опыта, в KV-cache, наконец." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://34.62.139.101:8004/static/kak-ii-agenty-uchatsia-pomnit-cherez-okruzhaiushchii-mir/kak-ii-agenty-uchatsia-pomnit-cherez-okruzhaiushchii-mir_ru.html" />
+    <meta property="og:image" content="http://34.62.139.101:8004/static/kak-ii-agenty-uchatsia-pomnit-cherez-okruzhaiushchii-mir/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="http://34.62.139.101:8004/static/kak-ii-agenty-uchatsia-pomnit-cherez-okruzhaiushchii-mir/cover.png" />
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: { purple: '#a855f7', orange: '#f97316', tg: '#229ED9' }
+                    }
+                },
+                fontFamily: {
+                    mono: ['"Space Mono"', 'monospace'],
+                    sans: ['"Inter"', 'sans-serif'],
+                    montserrat: ['"Montserrat"', 'sans-serif'],
+                },
+                animation: { 'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f8fafc; --text-main: #0f172a; --text-muted: #475569;
+            --grid-line-p: rgba(168,85,247,0.1); --grid-line-o: rgba(249,115,22,0.1);
+            --glass-bg: rgba(255,255,255,0.85); --glass-border: rgba(0,0,0,0.05);
+            --card-bg: rgba(255,255,255,0.6); --card-border: rgba(0,0,0,0.05);
+            --shadow-glow: rgba(0,0,0,0.02); --image-bg: #ffffff;
+        }
+        .dark {
+            --bg-color: #050505; --text-main: #e5e7eb; --text-muted: #9ca3af;
+            --grid-line-p: rgba(168,85,247,0.05); --grid-line-o: rgba(249,115,22,0.05);
+            --glass-bg: rgba(10,10,14,0.85); --glass-border: rgba(255,255,255,0.08);
+            --card-bg: rgba(255,255,255,0.03); --card-border: rgba(255,255,255,0.1);
+            --shadow-glow: rgba(0,0,0,0.5); --image-bg: #111111;
+        }
+        body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.4s ease, color 0.4s ease; -webkit-tap-highlight-color: transparent; }
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px); background-attachment: fixed; }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 10px 40px var(--shadow-glow); transition: background 0.4s ease, border-color 0.4s ease; }
+        .tech-card { background: var(--card-bg); border: 1px solid var(--card-border); transition: all 0.3s ease; }
+        .tech-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
+        .article-p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-content p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content h2 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.5rem; margin-top: 3rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.2; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; } }
+        .article-content section { max-width: 56rem; margin-left: auto; margin-right: auto; width: 100%; }
+        .article-content figure { margin: 2.5rem 0 3.5rem; max-width: 56rem; margin-left: auto; margin-right: auto; }
+        .article-content figure img { width: 100%; object-fit: contain; border-radius: 0.75rem; background-color: rgba(255,255,255,0.5); }
+        .article-content figcaption { font-size: 0.875rem; color: #1f2937; margin-top: 1.25rem; text-align: center; font-family: 'Space Mono', monospace; max-width: 48rem; margin-left: auto; margin-right: auto; line-height: 1.6; }
+        .dark .article-content figcaption { color: #d1d5db; }
+        .cyber-img { width: 100%; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px var(--shadow-glow); }
+        .arxiv-chart { background-color: var(--image-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); transition: background-color 0.4s ease; }
+        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.2,0.8,0.2,1), transform 0.6s cubic-bezier(0.2,0.8,0.2,1); }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
+
+    <!-- Background glows -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay:3s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
+        <a href="https://dataist.ai" target="_blank" class="flex items-center gap-3 md:gap-4 hover:opacity-80 transition-opacity">
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">i</div>
+            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">ДАТАИСТ</div>
+        </a>
+        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
+                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
+                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
+                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
+        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+
+            <!-- Cover -->
+            <header class="text-center mb-12 md:mb-16 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
+                    🤖 Датаист | 2026-04-14
+                </div>
+                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
+                    Как ИИ-агенты учатся помнить через окружающий мир<br>
+                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3"></span>
+                </h1>
+
+                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0 bg-black">
+                    <img src="http://34.62.139.101:8004/static/kak-ii-agenty-uchatsia-pomnit-cherez-okruzhaiushchii-mir/cover.png"
+                         alt="Обложка: Как ИИ-агенты учатся помнить через окружающий мир"
+                         class="w-full h-auto max-h-[70vh] object-cover scale-[1.0] origin-center">
+                </div>
+            </header>
+
+            <!-- Article body -->
+            <div class="article-content max-w-4xl mx-auto w-full">
+                <section>
+<h2>Когда память живёт не в модели, а в мире вокруг</h2>
+<p>В AI мы привыкли думать о памяти как о чём-то, что находится <strong>внутри</strong> агента: в скрытом состоянии RNN, в параметрах сети, в буфере опыта, в KV-cache, наконец. Но что, если часть памяти можно буквально <strong>вынести наружу</strong> — в саму среду? Не в метафорическом смысле, а вполне формально: так, что агенту действительно нужно меньше внутренней памяти, если мир оставляет полезные следы о прошлом.</p>
+<p>Статья <em>Artifacts as Memory Beyond the Agent Boundary</em> как раз про это. Авторы берут старую идею из когнитивистики — что разум опирается не только на мозг, но и на внешние опоры вроде заметок, закладок и следов, — и переводят её в задачу обучения с подкреплением. Получается любопытный тезис: <strong>окружение может выполнять функцию памяти</strong>, а некоторые наблюдения в среде позволяют агенту “вспоминать” прошлое, не храня его целиком внутри себя.</p>
+<p>Это звучит философски, но работа на удивление практическая. В ней есть и формализм, и теорема, и аккуратные эксперименты с Q-learning и DQN. А главное — важный для ML вывод: иногда повышать качество можно не только наращиванием параметров, но и правильной организацией среды, в которой агент учится.</p>
+</section>
+<section>
+<h2>О чём вообще речь: что такое “артефакты” как память</h2>
+<p>Представьте, что агент идёт по лабиринту и оставляет за собой дорожку — как хлебные крошки. Позже, увидев эту дорожку, он получает информацию о том, где уже был. То есть часть истории взаимодействия теперь закодирована не во внутреннем состоянии агента, а <strong>во внешнем мире</strong>.</p>
+<p>Авторы называют такие наблюдения <strong>артефактами</strong>. В их формальном определении артефакт — это текущее наблюдение, которое с полной определённостью сообщает о том, что в прошлом происходило другое наблюдение.</p>
+<p>Для объяснения они приводят почти бытовой пример с книгой: человек не запоминает номер страницы, а загибает уголок. Загнутый уголок и есть артефакт — физический след в среде, который заменяет внутреннее запоминание.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2604.08756v1/x1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Пример “внешней памяти”: текущее наблюдение A однозначно говорит о том, что раньше встречалось наблюдение B.</p>
+</div></figure>
+<p>Ключевая идея статьи в том, что это не просто красивая аналогия. Авторы показывают математически: если в истории есть такие артефакты, то для предсказания будущего может понадобиться <strong>меньше информации о прошлом</strong>.</p>
+</section>
+<section>
+<h2>Почему это важно для обучения с подкреплением</h2>
+<p>Во-первых, авторы говорят, что <strong>часть сложности задачи можно снять не с агента, а со среды</strong>. Если окружение предоставляет полезные следы прошлого, агенту не обязательно держать столько памяти внутри.</p>
+<p>Во-вторых, это важно для воплощенного ИИ для роботов. Реальный мир полон внешних опор: метки, карты, следы, состояние объектов, интерфейсы, даже расположение вещей на столе. Если агент умеет использовать такие сигналы как память, это может быть дешевле и надёжнее, чем всегда строить всё, используя внутреннюю память.</p>
+<p>В-третьих, работа помогает по-новому смотреть на “память” в обучении с подкреплением. Обычно под ней понимают рекуррентные состояния или просто число параметров. Здесь память трактуется функционально: <strong>сколько внутренней ёмкости нужно, чтобы добиться данного уровня поведения</strong>. Если при наличии артефактов этот порог снижается, значит часть памяти действительно вынесена во внешний мир.</p>
+</section>
+<section>
+<h2>Главная теоретическая идея</h2>
+<p>Теоретическое ядро статьи — так называемая <strong>Artifact Reduction Theorem</strong>. В переводе на человеческий язык она говорит примерно следующее: если в истории взаимодействия есть наблюдение-артефакт, которое уже кодирует информацию о каком-то прошлом событии, то эту часть прошлого можно убрать из представления истории <strong>без потери релевантной информации</strong>.</p>
+<p>Авторы формулируют это через взаимную информацию: существует сокращённая история, в которой на одно наблюдение меньше, но она содержит столько же информации о следующем наблюдении, сколько и полная история. Иначе говоря, артефакт работает как компактная внешняя запись о прошлом.</p>
+<p>Дальше авторы вводят определение <strong>externalized memory</strong>. Агент считается выносящим память в среду, если в мире с артефактами он достигает той же или лучшей производительности при меньшей внутренней ёмкости, чем аналогичный агент в такой же, но “очищенной” от артефактов среде.</p>
+<p>Это важный момент: память здесь измеряется не интроспекцией в скрытые состояния, а операционально — через необходимую <strong>capacity</strong>, то есть число обучаемых параметров.</p>
+</section>
+<section>
+<h2>Как исследователи это проверяли</h2>
+<p>Экспериментальная часть устроена довольно элегантно. Есть навигационная задача на сетке 13×13: агент должен находить цель, получая награду — +1 при достижении цели и ноль в остальных шагах. Наблюдение — это не координаты, а картинка 24×24, представляющая локальный фрагмент пространства вокруг агента. То есть задача не тривиальная, а частично завязанная на восприятие.</p>
+<p>Сравниваются две группы агентов:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">линейный Q-learning с разной входной размерностью и, соответственно, разной ёмкостью;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">DQN с несколькими архитектурами разной глубины и ширины.</span></div>
+<p>Базовый сценарий — <strong>No Path</strong>, где никаких полезных следов нет. Против него ставят варианты, где в среде видна некая пространственная структура: кратчайший путь до цели, случайный путь, субоптимальный путь, вводящая в заблуждение дорожка или набор геометрических ориентиров.</p>
+<p>Важно, что авторы не дают агенту отдельной цели “используй путь как память”. Агент просто учится с подкреплением.</p>
+</section>
+<section>
+<h2>Когда видимый путь заменяет внутреннюю память</h2>
+<p>Самый сильный результат — эксперимент с кратчайшим путём. Если в среде видна дорожка к цели, агентам нужно меньше внутренней мощности, чтобы научиться хорошей политике.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2604.08756v1/x2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Наличие видимого кратчайшего пути заметно повышает суммарную награду почти для всех размеров Linear Q-learning и DQN.</p>
+</div></figure>
+<p>И для линейного Q-learning, и для DQN наличие видимого пути почти всегда улучшает итоговую награду. Причём в ряде случаев маленький агент с путём оказывается лучше, чем более ёмкий агент без пути. Это и есть доказательства работы внешней памяти: среда компенсирует дефицит внутренних ресурсов.</p>
+<p>Ещё интереснее динамика обучения.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2604.08756v1/x4.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Средняя награда по ходу обучения растёт быстрее и выше, когда агент видит кратчайший путь.</p>
+</div></figure>
+<p>Без пути маломощные линейные агенты фактически не справляются: чтобы стабильно достигать цели, им нужна существенно большая ёмкость. С путём — уже нет. У DQN эффект тоже почти везде положительный.</p>
+<p>Почему так происходит? Авторы предлагают простое объяснение: если кратчайший путь присутствует в наблюдении, агенту не нужно восстанавливать длинную историю перемещений или строить сложное внутреннее представление пространства. Достаточно научиться реагировать на локальные визуальные признаки пути. Среда сама подсказывает, где агент находится по отношению к цели.</p>
+</section>
+<section>
+<h2>Не только идеальные подсказки: случайные пути и ориентиры тоже работают</h2>
+<p>Чтобы исключить то, что агент просто идёт по правильному пути, авторы проводят второй набор экспериментов с другими типами артефактов: случайным путём, субоптимальным путём, вводящей в заблуждение дорожкой и набором геометрических ориентиров.</p>
+<p>Если бы эффект объяснялся только тем, что агенту нарисовали почти готовое решение, то плохие или нерелевантные траектории не должны были бы особенно помогать. Но они помогают — хотя и не одинаково.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2604.08756v1/x8.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Сравнение разных типов артефактов показывает: внешняя память возникает не только с оптимальным путём, но и с другими устойчивыми структурами среды.</p>
+</div></figure>
+<p>Линейные агенты демонстрируют признаки внешней памяти для всех четырёх типов артефактов. У DQN эффект устойчиво наблюдается для субоптимального пути, случайного пути и ориентиров, но не для вводящей в заблуждение. Это логично: не всякая внешняя структура одинаково полезна. Однако сам факт, что даже <strong>метки</strong> без явной “поведенческой” подсказки помогают, довольно показателен.</p>
+<p>Это означает, что агент, вероятно, использует не только готовую инструкцию типа “иди сюда”, но и любые стабильные элементы среды как <strong>опоры для локализации и восстановления контекста</strong>. Иными словами, внешняя память может быть не буквальным следом поведения, а просто структурой, которая уменьшает неопределённость о прошлом.</p>
+</section>
+<section>
+<h2>Самый интересный эксперимент: агент оставляет следы сам</h2>
+<p>Третий эксперимент делает шаг к более реалистичной картине. Здесь путь не нарисован заранее. Он возникает по ходу движения самого агента: посещённые клетки оставляют шумную дорожку, которая потом постепенно исчезает.</p>
+<p>Это уже почти стигмергия в миниатюре: агент действует, меняет среду, а затем воспринимает результат собственных прошлых действий как сигнал для будущего поведения.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2604.08756v1/figures/diagrams/dynamic_path_faded_s_g.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">В динамической среде следы, оставляемые самим агентом, тоже повышают качество обучения — даже без явной цели “писать себе память”.</p>
+</div></figure>
+<p>Исследователи показывают, что даже без специального механизма записи во внешнюю память агент может <strong>непреднамеренно</strong> её создавать и затем использовать. То есть память возникает не как вручную спроектированный модуль, а как эффект взаимодействия политики и среды.</p>
+</section>
+<section>
+<h2>Выводы</h2>
+<p><em>Исследователи не просто говорят, что “среда важна”, а показывают, что <strong>среда может функционально играть роль памяти</strong>, уменьшая объём внутренней, необходимой агенту для успешного поведения.</p>
+<p>Если в окружении есть устойчивые следы прошлого — маршруты, ориентиры, отметки, изменяющиеся объекты, — агент может использовать их как внешнюю память, причём даже без специального механизма записи. Это меняет подход к проектированию интеллектуальных систем. Иногда путь к более умному агенту лежит не через ещё один миллиард параметров, а через среду, которая помогает помнить.</p>
+<p>Для обучения с подкреплением это особенно важно. Мы много говорим о масштабировании моделей, но, возможно, недооцениваем <strong>масштабирование среды</strong> — того, как она структурирует задачу, поддерживает память и подталкивает к эффективному поведению.</p>
+</section>
+            </div>
+
+            <!-- Footer CTA -->
+            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
+                <div class="mb-10 flex flex-wrap justify-center gap-4">
+                    <a href="https://arxiv.org/abs/2604.08756" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">📜</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-purple">Полная статья (arXiv)</span>
+                    </a>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <!-- Progress bar -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) { html.classList.add('dark'); } else { html.classList.remove('dark'); }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready(); tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => { applyTheme(!html.classList.contains('dark')); });
+
+        window.addEventListener('scroll', () => {
+            let h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById("progress-bar").style.width = ((document.documentElement.scrollTop / h) * 100) + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+            }, { threshold: 0.15 });
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
