@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Почему агенты хуже учатся на длинных задачах</title>
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Dataism Science Hub" />
+    <meta property="og:title" content="Почему агенты хуже учатся на длинных задачах" />
+    <meta property="og:description" content="Вокруг LLM-агентов сегодня много шума: мы учим модели пользоваться инструментами, ходить по сайтам, чинить код, решать многошаговые задачи." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://34.62.139.101:8004/static/pochemu-agenty-khuzhe-uchatsia-na-dlinnykh-zadachakh/pochemu-agenty-khuzhe-uchatsia-na-dlinnykh-zadachakh_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-05-06/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-05-06/cover.png" />
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: { purple: '#a855f7', orange: '#f97316', tg: '#229ED9' }
+                    }
+                },
+                fontFamily: {
+                    mono: ['"Space Mono"', 'monospace'],
+                    sans: ['"Inter"', 'sans-serif'],
+                    montserrat: ['"Montserrat"', 'sans-serif'],
+                },
+                animation: { 'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f8fafc; --text-main: #0f172a; --text-muted: #475569;
+            --grid-line-p: rgba(168,85,247,0.1); --grid-line-o: rgba(249,115,22,0.1);
+            --glass-bg: rgba(255,255,255,0.85); --glass-border: rgba(0,0,0,0.05);
+            --card-bg: rgba(255,255,255,0.6); --card-border: rgba(0,0,0,0.05);
+            --shadow-glow: rgba(0,0,0,0.02); --image-bg: #ffffff;
+        }
+        .dark {
+            --bg-color: #050505; --text-main: #e5e7eb; --text-muted: #9ca3af;
+            --grid-line-p: rgba(168,85,247,0.05); --grid-line-o: rgba(249,115,22,0.05);
+            --glass-bg: rgba(10,10,14,0.85); --glass-border: rgba(255,255,255,0.08);
+            --card-bg: rgba(255,255,255,0.03); --card-border: rgba(255,255,255,0.1);
+            --shadow-glow: rgba(0,0,0,0.5); --image-bg: #111111;
+        }
+        body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.4s ease, color 0.4s ease; -webkit-tap-highlight-color: transparent; }
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px); background-attachment: fixed; }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 10px 40px var(--shadow-glow); transition: background 0.4s ease, border-color 0.4s ease; }
+        .tech-card { background: var(--card-bg); border: 1px solid var(--card-border); transition: all 0.3s ease; }
+        .tech-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
+        .article-p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-content p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content h2 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.5rem; margin-top: 3rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.2; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; } }
+        .article-content section { max-width: 56rem; margin-left: auto; margin-right: auto; width: 100%; }
+        .article-content figure { margin: 2.5rem 0 3.5rem; max-width: 56rem; margin-left: auto; margin-right: auto; }
+        .article-content figure img { width: 100%; object-fit: contain; border-radius: 0.75rem; background-color: rgba(255,255,255,0.5); }
+        .article-content figcaption { font-size: 0.875rem; color: #1f2937; margin-top: 1.25rem; text-align: center; font-family: 'Space Mono', monospace; max-width: 48rem; margin-left: auto; margin-right: auto; line-height: 1.6; }
+        .dark .article-content figcaption { color: #d1d5db; }
+        .cyber-img { width: 100%; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px var(--shadow-glow); }
+        .arxiv-chart { background-color: var(--image-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); transition: background-color 0.4s ease; }
+        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.2,0.8,0.2,1), transform 0.6s cubic-bezier(0.2,0.8,0.2,1); }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
+
+    <!-- Background glows -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay:3s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
+        <a href="https://dataist.ai" target="_blank" class="flex items-center gap-3 md:gap-4 hover:opacity-80 transition-opacity">
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">i</div>
+            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">ДАТАИСТ</div>
+        </a>
+        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
+                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
+                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
+                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
+        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+
+            <!-- Cover -->
+            <header class="text-center mb-12 md:mb-16 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
+                    🤖 Датаист | 2026-05-06
+                </div>
+                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
+                    Почему агенты хуже учатся на длинных задачах<br>
+                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3"></span>
+                </h1>
+
+                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0 bg-black">
+                    <img src="https://dataist.ai/2026-05-06/cover.png"
+                         alt="Обложка: Почему агенты хуже учатся на длинных задачах"
+                         class="w-full h-auto max-h-[70vh] object-cover scale-[1.0] origin-center">
+                </div>
+            </header>
+
+            <!-- Article body -->
+            <div class="article-content max-w-4xl mx-auto w-full">
+                <section>
+<h2>Почему агент «ломается» не потому, что глуп, а потому что путь слишком длинный</h2>
+<p>Вокруг LLM-агентов сегодня много шума: мы учим модели пользоваться инструментами, ходить по сайтам, чинить код, решать многошаговые задачи. Кажется, что главный вопрос — в качестве самой модели, размере контекста или хитрости алгоритма обучения. Но авторы работы <strong>«Об обучении больших языковых моделей для задач с длинным горизонтом»</strong> предлагают куда более приземлённое и при этом важное объяснение: иногда агент проваливается не потому, что не умеет рассуждать, а потому что до цели слишком далеко.</p>
+<p>Это тонкое, но принципиальное различие. Если модель знает правила судоку и способна решить головоломку «в один присест», это ещё не значит, что она стабильно решит ту же задачу через 25–30 последовательных шагов взаимодействия со средой. По дороге накапливаются ошибки, сигнал награды размывается, а обучение с подкреплением начинает вести себя всё менее предсказуемо.</p>
+<p>Именно это исследование аккуратно, почти хирургически, отделяет <strong>сложность рассуждения</strong> от <strong>длины пути до цели</strong> — и показывает, что сам по себе длинный горизонт уже является серьёзным узким местом. Для индустрии агентных систем это очень важный вывод: прежде чем изобретать всё более сложные рецепты RL, возможно, стоит сначала сократить число шагов, которые агент обязан пройти.</p>
+</section>
+<section>
+<h2>Что именно исследовали</h2>
+<p>Главная идея статьи проста: понять, как длина горизонта влияет на обучение LLM-агентов, если всё остальное по возможности удерживать постоянным.</p>
+<p>Под «горизонтом» авторы имеют в виду не просто лимит шагов, а фактическую длину цепочки действий, необходимую для достижения цели. Исследователи различают несколько вещей:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">минимальное число элементарных действий до цели;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">максимальный бюджет взаимодействия, разрешённый средой;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">фактическое число шагов, которое делает стратегия.</span></div>
+<p>Ключевой ход работы — построить такие задачи, где <strong>правила и структура рассуждения одинаковы</strong>, а меняется в основном только длина решения.</p>
+<p>Для этого авторы выбрали два удобных текстовых мира:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>судоку</strong>, где можно контролировать длину решения через число пустых клеток;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Rush Hour</strong>, головоломку с машинками, где длина решения измеряется минимальным числом ходов.</span></div>
+<p>Важно, что в случае судоку авторы специально отфильтровали задачи так, чтобы они требовали только базовых техник решения. Это нужно, чтобы не перепутать две причины провала: «модель не знает, как решать» и «модель знает, но не удерживает длинную последовательность действий».</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-06/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема главной идеи работы: длина горизонта — самостоятельное узкое место, а сокращение горизонта стабилизирует обучение и улучшает перенос на более длинные задачи.</p>
+</div></figure>
+<p>Ещё один сильный методологический приём: авторы проверяли, может ли модель решить ту же задачу в «сжатом» формате короткого горизонта. Например, вместо пошагового судоку — выдать сразу всю готовую доску. Если модель справляется в таком режиме, значит базовая способность к решению у неё есть, а дальнейшие трудности уже можно связывать именно с длиной взаимодействия.</p>
+</section>
+<section>
+<h2>Главный результат: длинный горизонт сам по себе рушит RL</h2>
+<p>Самая важная находка статьи звучит почти как диагноз: <strong>если увеличить только длину решения, обучение с подкреплением становится нестабильным и может полностью схлопнуться</strong>.</p>
+<p>Авторы обучали модель Qwen3-1.7B, сначала проводя SFT на траекториях экспертов, а затем дообучая через RL. На коротких задачах всё выглядит привычно: RL помогает, качество растёт. Но как только расстояние до цели увеличивается, картина резко меняется — возникают сильные колебания, а затем и провал качества.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-06/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Динамика обучения при разной длине пути до цели: на коротких задачах RL стабилен, на длинных быстро становится неустойчивым.</p>
+</div></figure>
+<p>Это особенно ценно потому, что авторы не просто показывают «на длинных задачах хуже». Они пытаются изолировать причину. И их вывод: дело не обязательно в том, что задача стала интеллектуально сложнее. Даже когда рассуждение по сути то же самое, увеличение числа шагов уже само по себе делает обучение гораздо более хрупким.</p>
+<p>Почему так происходит? В статье выделены два механизма.</p>
+<p>Во-первых, <strong>исследование пространства действий</strong>. Чем длиннее цепочка, тем меньше шанс случайно или полуосознанно попасть в успешную траекторию. Ошибка в начале отравляет всё продолжение.</p>
+<p>Во-вторых, <strong>назначение заслуг</strong>. Если награда приходит редко и в конце, то при неудаче вся цепочка получает плохой сигнал — включая промежуточные шаги, которые могли быть правильными. Для языковой модели это особенно неприятно: отрицательный сигнал не аккуратно подталкивает к верному ответу, а распыляет вероятность по огромному словарю, усиливая шум.</p>
+<p>Это наблюдение хорошо ложится на реальный мир. Агент для программирования может знать, как исправить отдельную ошибку, но если до успешного завершения нужно пройти двадцать зависимых шагов — от чтения журналов событий до правки файла, запуска тестов, исправления побочных ошибок и повторной проверки, — обучение становится куда менее надёжным.</p>
+</section>
+<section>
+<h2>Сокращение горизонта как неожиданно простой рецепт</h2>
+<p>Самый практический вывод работы: бороться с длинным горизонтом можно не обязательно более хитрым RL, а <strong>структурным сокращением числа шагов</strong>.</p>
+<p>Авторы называют это принципом сокращения горизонта и предлагают два основных способа:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">использовать <strong>макродействия</strong>, когда за один ход агент делает сразу несколько элементарных действий;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">разбивать цель на <strong>подцели</strong>, чтобы длинная задача превращалась в цепочку коротких проверяемых отрезков.</span></div>
+<p>И вот здесь статья становится особенно убедительной: идея вроде бы очевидная, но экспериментально она даёт очень сильный эффект.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-06/fig_2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Сравнение элементарных действий и макродействий в судоку и Rush Hour: сокращение горизонта заметно повышает стабильность и итоговое качество на длинных задачах.</p>
+</div></figure>
+<p>В судоку агенту разрешали за один шаг заполнять не одну клетку, а несколько. В Rush Hour — делать более крупные перемещения. Результат: обучение идёт стабильнее, сходится быстрее и, главное, не разваливается на длинных сценариях, где базовый вариант с элементарными действиями терпит крах.</p>
+<p>Авторы отдельно проверили, не является ли этот выигрыш побочным эффектом «более сильной стратегии». Для этого они провели красивую абляцию: стратегию, обученную с макродействиями, заставляли исполнять среду так, будто доступны только одиночные элементарные шаги. И стабильность снова ухудшалась. Значит, ключевой фактор действительно в уменьшении <strong>эффективного</strong> горизонта, а не просто в том, что модель стала умнее.</p>
+<p>Отдельно интересно, что не любые макродействия одинаково полезны. Жёстко фиксированные пачки шагов работают хуже, чем гибкие макродействия, длину которых выбирает сама стратегия. Это похоже на здравый инженерный принцип: слишком грубая агрегация может быть так же вредна, как и её отсутствие.</p>
+</section>
+<section>
+<h2>Подцели тоже работают — и это хороший сигнал для реальных агентов</h2>
+<p>Второй путь — декомпозиция на подцели. В судоку авторы использовали промежуточные, проверяемые цели вроде корректного завершения отдельных блоков. Это превращает один длинный эпизод с редкой наградой в последовательность более коротких отрезков с плотным сигналом.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-06/fig_5.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Разбиение задачи на подцели помогает RL на длинных задачах судоку, где базовая схема с редкой наградой почти не прогрессирует.</p>
+</div></figure>
+<p>Это важный результат не только для головоломок. В реальных системах мы и так часто интуитивно строим агентов через промежуточные контрольные точки: сначала найти релевантный файл, потом локализовать ошибку, потом предложить исправление, потом прогнать тесты. Работа даёт этому не просто инженерное, а эмпирическое обоснование: <strong>подцели уменьшают эффективный горизонт и тем самым облегчают обучение</strong>.</p>
+<p>По сути, статья аккуратно подводит к мысли, что многие удачные агентные архитектуры работают не потому, что у них особенно изящное планирование, а потому что они незаметно сокращают горизонт — через иерархию действий, вызовы API, код как высокоуровневое действие, промежуточные проверки и плотную обратную связь.</p>
+</section>
+<section>
+<h2>Самое интересное: сокращение горизонта помогает даже на более длинных задачах, которых модель не видела</h2>
+<p>Одна из самых приятных частей работы — наблюдение, которое авторы называют <strong>обобщением по горизонту</strong>. Модель, обученная на задачах умеренной длины, может неплохо переноситься на ещё более длинные варианты, если сложность рассуждения остаётся той же.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-06/fig_7.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Обобщение по горизонту: стратегии, обученные на ограниченной длине задач, переносятся на более длинные сценарии, причём варианты с сокращением горизонта делают это заметно лучше.</p>
+</div></figure>
+<p>Это важный и, честно говоря, немного противоинтуитивный результат. Казалось бы, если агент не тренировался на очень длинных эпизодах, ему там должно быть совсем плохо. Но оказывается, если обучение было стабильным и точность на каждом шаге достаточно хороша, модель может тянуться дальше, чем видела во время обучения.</p>
+<p>Причём варианты с макродействиями показывают лучший перенос. Причина двойная:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">они повышают точность на каждом шаге;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">они уменьшают число точек, где ошибка может накопиться.</span></div>
+<p>Для практики это означает вот что: возможно, не всегда нужно сразу учить агента на самых длинных и дорогих сценариях. Иногда разумнее сначала научить его уверенно проходить более короткие траектории, а затем использовать перенос и учебную программу по длине задач.</p>
+<p>Авторы проверяют и эту идею. В Rush Hour они сравнивают прямое обучение на длинных задачах с режимом, где сначала идёт обучение на коротких, а потом переход на длинные. Учебная программа выигрывает. Это ещё один аргумент в пользу того, что компетентность на коротком горизонте — не приятный бонус, а фундамент для дальнейшего роста.</p>
+</section>
+<section>
+<h2>Почему эта статья важна за пределами судоку</h2>
+<p>На первый взгляд работа может показаться «ещё одной статьёй про RL на игрушечных средах». Но это было бы слишком поверхностное чтение.</p>
+<p>Её настоящая ценность в том, что она предлагает <strong>простую ось анализа агентных систем</strong>: прежде чем обсуждать размер модели, хитрость оптимизатора и качество запроса, спросите — а каков здесь эффективный горизонт?</p>
+<p>Это полезный вопрос для множества прикладных сценариев:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">агент для программирования, который может за один шаг сгенерировать и выполнить скрипт, часто будет устойчивее агента, делающего десятки мелких вызовов;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">веб-агент с высокоуровневыми действиями через API может обучаться лучше, чем агент, который имитирует каждое нажатие;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">системы с проверяемыми промежуточными результатами получают не просто «более удобный интерфейс», а структурное снижение сложности обучения.</span></div>
+<p>Авторы также показывают, что эффект не ограничен одной задачей, одной моделью или одним оптимизатором. Похожие закономерности проявляются в WebShop, на более крупной модели и при другом стиле оптимизации. Это усиливает главный тезис: <strong>длина горизонта — не частная ошибка конкретной реализации, а поперечное ограничение всего класса агентных LLM-систем</strong>.</p>
+<p>Есть и важное ограничение. Работа честно показывает, что обобщение по горизонту не означает обобщения по техникам рассуждения. Если судоку начинает требовать принципиально более сложных приёмов, перенос ломается. И это трезвый вывод: RL хорошо помогает растянуть уже имеющиеся способности на более длинные траектории, но не обязан порождать новые качественно иные навыки.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>Эта статья ценна не громкими цифрами, а тем, что очень точно называет проблему. <strong>Для LLM-агентов узким местом часто является не само рассуждение, а длина пути до цели.</strong> И если это так, то лучший следующий шаг — не обязательно усложнять RL, а сокращать эффективный горизонт.</p>
+<p>Из этого следует почти инженерный манифест:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">проектируйте действия на более высоком уровне;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">разбивайте задачи на проверяемые подцели;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">стройте учебные программы от коротких горизонтов к длинным;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">оценивайте не только «умеет ли модель решить задачу», но и «сколько зависимых шагов ей нужно пройти».</span></div>
+<p>Для всех, кто делает агентные системы — от веб-автоматизации до инструментов для разработки, — это очень практичный урок. Иногда путь к более сильному агенту лежит не через более сложный мозг, а через <strong>более короткую дорогу</strong>.</p>
+</section>
+            </div>
+
+            <!-- Footer CTA -->
+            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
+                <div class="mb-10 flex flex-wrap justify-center gap-4">
+                    <a href="https://arxiv.org/abs/2605.02572" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">📜</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-purple">Полная статья (arXiv)</span>
+                    </a>
+                    <a href="https://github.com/fogleman/rush" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-orange transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <img src="https://cdn-icons-png.flaticon.com/256/25/25231.png" alt="GitHub" class="w-5 h-5 dark:invert transition-all">
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-orange">Код (GitHub)</span>
+                    </a>
+                    <a href="https://huggingface.co/datasets/Ritvik19/Sudoku-Dataset" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-orange transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">🤗</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-orange">Модель (HuggingFace)</span>
+                    </a>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <!-- Progress bar -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) { html.classList.add('dark'); } else { html.classList.remove('dark'); }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready(); tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => { applyTheme(!html.classList.contains('dark')); });
+
+        window.addEventListener('scroll', () => {
+            let h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById("progress-bar").style.width = ((document.documentElement.scrollTop / h) * 100) + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+            }, { threshold: 0.15 });
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
