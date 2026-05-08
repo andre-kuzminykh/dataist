@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Что на самом деле делает мультиагентные системы умнее</title>
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Dataism Science Hub" />
+    <meta property="og:title" content="Что на самом деле делает мультиагентные системы умнее" />
+    <meta property="og:description" content="Вокруг современных агентных систем для LLM сложился почти культ инженерной сложности. Оркестраторы, подагенты, память, библиотеки навыков, вызовы инструментов — все это выглядит впечатляюще, но оставляет важный вопрос…" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://34.62.139.101:8004/static/chto-na-samom-dele-delaet-multiagentnye-sistemy-umnee/chto-na-samom-dele-delaet-multiagentnye-sistemy-umnee_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-05-08/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-05-08/cover.png" />
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: { purple: '#a855f7', orange: '#f97316', tg: '#229ED9' }
+                    }
+                },
+                fontFamily: {
+                    mono: ['"Space Mono"', 'monospace'],
+                    sans: ['"Inter"', 'sans-serif'],
+                    montserrat: ['"Montserrat"', 'sans-serif'],
+                },
+                animation: { 'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f8fafc; --text-main: #0f172a; --text-muted: #475569;
+            --grid-line-p: rgba(168,85,247,0.1); --grid-line-o: rgba(249,115,22,0.1);
+            --glass-bg: rgba(255,255,255,0.85); --glass-border: rgba(0,0,0,0.05);
+            --card-bg: rgba(255,255,255,0.6); --card-border: rgba(0,0,0,0.05);
+            --shadow-glow: rgba(0,0,0,0.02); --image-bg: #ffffff;
+        }
+        .dark {
+            --bg-color: #050505; --text-main: #e5e7eb; --text-muted: #9ca3af;
+            --grid-line-p: rgba(168,85,247,0.05); --grid-line-o: rgba(249,115,22,0.05);
+            --glass-bg: rgba(10,10,14,0.85); --glass-border: rgba(255,255,255,0.08);
+            --card-bg: rgba(255,255,255,0.03); --card-border: rgba(255,255,255,0.1);
+            --shadow-glow: rgba(0,0,0,0.5); --image-bg: #111111;
+        }
+        body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.4s ease, color 0.4s ease; -webkit-tap-highlight-color: transparent; }
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px); background-attachment: fixed; }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 10px 40px var(--shadow-glow); transition: background 0.4s ease, border-color 0.4s ease; }
+        .tech-card { background: var(--card-bg); border: 1px solid var(--card-border); transition: all 0.3s ease; }
+        .tech-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
+        .article-p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-content p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content h2 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.5rem; margin-top: 3rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.2; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; } }
+        .article-content section { max-width: 56rem; margin-left: auto; margin-right: auto; width: 100%; }
+        .article-content figure { margin: 2.5rem 0 3.5rem; max-width: 56rem; margin-left: auto; margin-right: auto; }
+        .article-content figure img { width: 100%; object-fit: contain; border-radius: 0.75rem; background-color: rgba(255,255,255,0.5); }
+        .article-content figcaption { font-size: 0.875rem; color: #1f2937; margin-top: 1.25rem; text-align: center; font-family: 'Space Mono', monospace; max-width: 48rem; margin-left: auto; margin-right: auto; line-height: 1.6; }
+        .dark .article-content figcaption { color: #d1d5db; }
+        .cyber-img { width: 100%; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px var(--shadow-glow); }
+        .arxiv-chart { background-color: var(--image-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); transition: background-color 0.4s ease; }
+        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.2,0.8,0.2,1), transform 0.6s cubic-bezier(0.2,0.8,0.2,1); }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
+
+    <!-- Background glows -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay:3s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
+        <a href="https://dataist.ai" target="_blank" class="flex items-center gap-3 md:gap-4 hover:opacity-80 transition-opacity">
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">i</div>
+            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">ДАТАИСТ</div>
+        </a>
+        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
+                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
+                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
+                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
+        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+
+            <!-- Cover -->
+            <header class="text-center mb-12 md:mb-16 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
+                    🤖 Датаист | 2026-05-08
+                </div>
+                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
+                    Что на самом деле делает мультиагентные системы умнее<br>
+                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3"></span>
+                </h1>
+
+                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0 bg-black">
+                    <img src="https://dataist.ai/2026-05-08/cover.png"
+                         alt="Обложка: Что на самом деле делает мультиагентные системы умнее"
+                         class="w-full h-auto max-h-[70vh] object-cover scale-[1.0] origin-center">
+                </div>
+            </header>
+
+            <!-- Article body -->
+            <div class="article-content max-w-4xl mx-auto w-full">
+                <section>
+<h2>Когда «думать дольше» уже недостаточно</h2>
+<p>Вокруг современных агентных систем для LLM сложился почти культ инженерной сложности. Оркестраторы, подагенты, память, библиотеки навыков, вызовы инструментов — все это выглядит впечатляюще, но оставляет важный вопрос без ответа: <strong>что именно на самом деле дает прирост качества?</strong></p>
+<p>Авторы статьи <strong>HeavySkill: Heavy Thinking as the Inner Skill in Agentic Harness</strong> предлагают неожиданно трезвый взгляд. Возможно, главный секрет не в хитром каркасе из компонентов, а в более простой внутренней способности модели: сначала породить несколько независимых линий рассуждения, а затем осмысленно их свести в финальный ответ. Исследователи называют это <strong>«тяжелым мышлением»</strong> и показывают, что за многими успешными агентными схемами стоит именно этот паттерн.</p>
+<p>Это не просто красивая формулировка. Работа важна потому, что переводит разговор о «магии агентности» в гораздо более практическую плоскость: какие вычисления во время инференса действительно окупаются, как их масштабировать и можно ли превратить такой режим в переносимый навык, а не в хрупкую надстройку из кода и подсказок.</p>
+</section>
+<section>
+<h2>Что такое HeavySkill и как он устроен</h2>
+<p>Главная идея статьи проста и сильна. Авторы сводят сложный агентный контур к двум шагам:</p>
+<p>1. <strong>Параллельное рассуждение</strong> — модель генерирует несколько независимых траекторий решения одной и той же задачи.</p>
+<p>2. <strong>Последовательное обдумывание</strong> — затем другая модель, или та же самая, просматривает эти траектории, сравнивает их, отбрасывает слабые и синтезирует финальный ответ.</p>
+<p>Иными словами, вместо одной попытки мы получаем маленькую «редакцию мыслей», где несколько авторов предлагают версии, а затем редактор собирает итоговый текст.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-08/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Общая схема «тяжелого мышления»: параллельные траектории рассуждения, затем их сведение в итоговый ответ.</p>
+</div></figure>
+<p>Здесь важно, что авторы не сводят все к банальному голосованию. Простое большинство ответов — это грубая эвристика: если три слабые траектории повторили одну и ту же ошибку, голосование закрепит ошибку. В HeavySkill вторая стадия должна не считать голоса, а <strong>разбирать аргументы</strong>. В статье прямо подчеркивается: сильные модели на этапе сведения способны выступать как неявные проверяющие — они замечают различия между траекториями и выбирают не самый популярный, а самый убедительный вариант.</p>
+<p>Еще один инженерно важный элемент — <strong>кэш памяти</strong>. Полные траектории рассуждения слишком длинные, поэтому их сериализуют и частично обрезают, чтобы уместить в контекст. После этого модель на втором шаге получает компактную «папку дела» с несколькими версиями решения.</p>
+<p>Отдельный вклад статьи — превращение всего процесса в <strong>читаемый навык</strong> для агентных систем. То есть не внешняя программа должна жестко оркестрировать вызовы, а сама модель может получить текстовую инструкцию: когда включать тяжелое мышление, как запускать параллельных «мыслителей», как сводить результаты и в каком формате отдавать ответ. Это важный сдвиг: авторы предлагают смотреть на тяжелое мышление не как на трюк инфраструктуры, а как на <strong>внутренний навык модели</strong>.</p>
+</section>
+<section>
+<h2>Как они это проверяли</h2>
+<p>Экспериментальная часть у статьи масштабная. Исследователи прогоняют подход на задачах нескольких типов:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">STEM-задачи с проверяемыми ответами — AIME25, BeyondAIME, HMMT25-Feb, GPQA-Diamond;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">задачи общего назначения — LiveCodeBench, Arena-Hard, IFEval, IMO Answer Bench;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">сценарии с использованием инструментов, в том числе с интерпретатором Python.</span></div>
+<p>Они сравнивают несколько метрик. Базовые:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Mean@K</strong> — среднее качество K параллельных траекторий;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Pass@K</strong> — есть ли среди K траекторий хотя бы одна правильная;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Vote@K</strong> — результат голосования по самым частым ответам.</span></div>
+<p>И специальные метрики для HeavySkill:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Heavy-Mean@4</strong> — среднее качество ответов после стадии сведения;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Heavy-Pass@4</strong> — вероятность, что среди итогов стадии сведения есть хотя бы один правильный.</span></div>
+<p>Сравнение здесь устроено аккуратно. Авторы не просто говорят: «мы сделали много прогонов и стало лучше». Они пытаются понять, <strong>насколько хорошо вторая стадия умеет извлекать скрытую ценность из множества сырых попыток</strong>.</p>
+</section>
+<section>
+<h2>Главный результат: сведение почти всегда лучше, чем просто выбрать лучший ответ</h2>
+<p>На STEM-бенчмарках HeavySkill выглядит очень убедительно. Авторы показывают устойчивую иерархию: тяжелое мышление обычно лучше среднего по траекториям, лучше голосования и часто приближается к верхней границе, заданной Pass@K. Это значит, что если правильное решение уже где-то мелькнуло среди параллельных попыток, хорошая стадия сведения часто способна его вытащить.</p>
+<p>Особенно интересно, что на сильных моделях итоговый результат местами почти упирается в потолок Pass@K. Проще говоря, <strong>если модель хотя бы иногда умеет решать задачу правильно, тяжелое мышление помогает делать это заметно стабильнее</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-08/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Распределение успеха тяжелого мышления при разной исходной вероятности правильной параллельной траектории.</p>
+</div></figure>
+<p>Одна из самых содержательных частей статьи — анализ того, может ли последовательное обдумывание исправлять слабое параллельное рассуждение. Авторы группируют задачи по тому, насколько часто в первой фазе вообще встречается правильная траектория. И оказывается, что даже там, где исходная вероятность успеха ниже 50%, вторая фаза нередко «спасает» задачу. Да, не всегда. Но заметное число случаев исправляется именно за счет осмысленного сравнения и повторного вывода ответа.</p>
+<p>Это важнее, чем кажется. Если бы HeavySkill просто выбирал лучшую из готовых траекторий, он был бы всего лишь более дорогой версией голосования. Но данные намекают, что вторая фаза иногда <strong>достраивает правильное решение из фрагментов разных попыток</strong> — то есть действительно рассуждает, а не только ранжирует.</p>
+</section>
+<section>
+<h2>Почему сила модели на второй стадии важнее, чем кажется</h2>
+<p>Еще один сильный результат — эксперименты с разными моделями на стадии сведения. Авторы фиксируют слабую модель для параллельного рассуждения и меняют модель-«редактора» на втором шаге.</p>
+<p>Вывод показательный: <strong>качество итогового ответа сильно зависит от модели, которая занимается сведением</strong>. Причем тут не обязательно нужен чемпион по математическим олимпиадам. Иногда большая и послушная инструкциям модель, не блистающая в одиночном решении сложных задач, все равно хорошо работает как агрегатор траекторий.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-08/fig_2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Как меняется итоговое качество при одной и той же первой стадии, но с разными моделями на этапе последовательного обдумывания.</p>
+</div></figure>
+<p>Это тонкое, но практически очень полезное наблюдение. Оно означает, что архитектуру можно разнести: одна модель хорошо генерирует разнообразные попытки, другая — хорошо их анализирует и сводит. Для индустрии это открывает пространство компромиссов по цене и качеству. Не обязательно ставить одинаково дорогую модель на оба шага.</p>
+</section>
+<section>
+<h2>Итерации помогают — но не бесплатно</h2>
+<p>Авторы также пробуют многократное последовательное обдумывание. То есть после первой стадии сведения модель берет уже свой промежуточный вывод, добавляет его в кэш памяти и делает еще один проход, затем еще.</p>
+<p>Интуитивно это похоже на ситуацию, когда человек несколько раз переписывает решение, каждый раз пытаясь сделать его лучше. И действительно, по метрике среднего качества дополнительные итерации обычно помогают.</p>
+<p>Но есть нюанс: вместе с этим падает потенциальный максимум. Исследователи объясняют это накоплением шума и смещений в памяти. Каждая новая итерация опирается не только на исходные траектории, но и на уже синтезированные промежуточные выводы. Если в них закрался перекос, он может начать сам себя усиливать.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-08/fig_3.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Влияние числа итераций: больше циклов помогает среднему качеству, но может ухудшать верхнюю границу потенциала.</p>
+</div></figure>
+<p>Это один из самых честных моментов статьи. Авторы не продают HeavySkill как универсальную кнопку «добавь вычислений — получи идеальный ответ». Они показывают реальный компромисс: <strong>больше глубины не всегда означает лучшее итоговое пространство решений</strong>.</p>
+</section>
+<section>
+<h2>Где подход особенно полезен, а где — не очень</h2>
+<p>На задачах с четким критерием правильности — математика, код, формальные инструкции — HeavySkill показывает себя лучше всего. Это логично: когда можно объективно оценить, какая траектория лучше, стадия сведения получает прочную опору.</p>
+<p>На задачах вроде Arena-Hard, где многое завязано на предпочтения, стиль и «человекообразность» ответа, улучшения скромнее. Там нельзя так просто сказать, что одна траектория строго верна, а другая нет. Поэтому выигрыш от аналитического сведения снижается.</p>
+<p>Это важный практический вывод. <strong>Тяжелое мышление — не универсальный усилитель любого текста</strong>. Оно особенно хорошо работает там, где есть структура, ограничения и проверяемость. Для агентов, которые пишут код, решают задачи, соблюдают форматы и работают с инструментами, это отличная новость.</p>
+<p>Кстати, в сценариях с использованием инструментов результаты тоже сильные: если параллельные траектории могут вызывать Python и получать обратную связь, стадия сведения умеет использовать эти сигналы и обходит обычное голосование. Для агентных систем это, пожалуй, один из самых практически значимых фрагментов статьи.</p>
+</section>
+<section>
+<h2>Обучение с подкреплением: следующий шаг, но пока с оговорками</h2>
+<p>Авторы идут дальше и спрашивают: если тяжелое мышление — это навык, можно ли его специально усиливать через обучение с подкреплением? Предварительные эксперименты говорят: да, можно. Особенно заметен рост по метрике Heavy-Mean@4 — примерно на 10% в ранней фазе обучения.</p>
+<p>Но стабильность пока хромает. При большем числе параллельных траекторий обучение начинает «схлопываться», вероятно из-за слишком длинных контекстов и ограничений по длине последовательности. Так что здесь статья скорее открывает направление, чем предлагает готовый рецепт.</p>
+<p>И это, пожалуй, правильная постановка вопроса. Если сегодняшние агентные каркасы кажутся слишком хрупкими и завязанными на ручную оркестровку, то идея «вшить» тяжелое мышление в параметры модели через обучение с подкреплением выглядит очень привлекательно. <strong>Не внешний дирижер управляет ансамблем, а сама модель учится играть слаженно</strong>.</p>
+</section>
+<section>
+<h2>Почему эта статья важна</h2>
+<p>Сильная сторона HeavySkill не только в цифрах. Статья помогает переосмыслить целый класс современных систем. Вместо того чтобы бесконечно спорить о том, какой оркестратор моднее и у какого агента красивее граф вызовов, авторы предлагают выделить базовую вычислительную примитиву: <strong>несколько независимых попыток плюс умное сведение</strong>.</p>
+<p>Это полезно сразу на трех уровнях.</p>
+<p>Во-первых, на научном: становится понятнее, какой именно механизм двигает качество вверх.</p>
+<p>Во-вторых, на инженерном: можно проектировать более простые и переносимые системы, не завязанные на конкретный фреймворк.</p>
+<p>В-третьих, на продуктовом: появляется реалистичный способ покупать качество за дополнительные вычисления во время инференса, не обязательно переобучая всю модель.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>HeavySkill — это одна из тех статей, которые не обещают магию, а снимают лишнюю магию с уже существующих систем. Ее главный тезис звучит почти скромно: возможно, за успехом агентных LLM стоит не сложная оркестровка сама по себе, а хорошо масштабируемый навык тяжелого мышления — параллельное рассуждение с последующим осмысленным сведением.</p>
+<p>И именно поэтому работа заслуживает внимания. Она показывает, что будущее агентных систем может быть не в еще более запутанных контурах управления, а в <strong>более глубоко усвоенном умении модели сравнивать, критиковать и синтезировать собственные попытки</strong>.</p>
+<p>Пока это не серебряная пуля: подход лучше работает на проверяемых задачах, страдает от длинных контекстов и требует аккуратного выбора модели для второй стадии. Но как исследовательская рамка и как инженерный принцип HeavySkill выглядит очень сильным ходом. Если коротко, статья предлагает смотреть на агентность не как на надстройку, а как на форму организованного внутреннего мышления. И это, пожалуй, гораздо более фундаментальная идея, чем очередной новый оркестратор.</p>
+</section>
+            </div>
+
+            <!-- Footer CTA -->
+            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
+                <div class="mb-10 flex flex-wrap justify-center gap-4">
+                    <a href="https://arxiv.org/abs/2605.02396" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">📜</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-purple">Полная статья (arXiv)</span>
+                    </a>
+                    <a href="https://github.com/wjn1996/HeavySkill" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-orange transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <img src="https://cdn-icons-png.flaticon.com/256/25/25231.png" alt="GitHub" class="w-5 h-5 dark:invert transition-all">
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-orange">Код (GitHub)</span>
+                    </a>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <!-- Progress bar -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) { html.classList.add('dark'); } else { html.classList.remove('dark'); }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready(); tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => { applyTheme(!html.classList.contains('dark')); });
+
+        window.addEventListener('scroll', () => {
+            let h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById("progress-bar").style.width = ((document.documentElement.scrollTop / h) * 100) + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+            }, { threshold: 0.15 });
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
