@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как люди и ИИ-агенты вместе пишут код в GitHub</title>
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Dataism Science Hub" />
+    <meta property="og:title" content="Как люди и ИИ-агенты вместе пишут код в GitHub" />
+    <meta property="og:description" content="Еще недавно ИИ в разработке был в основном автодополнением: подсказывал строчку, дописывал функцию, иногда — не к месту. Теперь картина меняется на глазах." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://34.62.139.101:8004/static/kak-liudi-i-ii-agenty-vmeste-pishut-kod-v-github/kak-liudi-i-ii-agenty-vmeste-pishut-kod-v-github_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-05-11_1/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-05-11_1/cover.png" />
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: { purple: '#a855f7', orange: '#f97316', tg: '#229ED9' }
+                    }
+                },
+                fontFamily: {
+                    mono: ['"Space Mono"', 'monospace'],
+                    sans: ['"Inter"', 'sans-serif'],
+                    montserrat: ['"Montserrat"', 'sans-serif'],
+                },
+                animation: { 'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f8fafc; --text-main: #0f172a; --text-muted: #475569;
+            --grid-line-p: rgba(168,85,247,0.1); --grid-line-o: rgba(249,115,22,0.1);
+            --glass-bg: rgba(255,255,255,0.85); --glass-border: rgba(0,0,0,0.05);
+            --card-bg: rgba(255,255,255,0.6); --card-border: rgba(0,0,0,0.05);
+            --shadow-glow: rgba(0,0,0,0.02); --image-bg: #ffffff;
+        }
+        .dark {
+            --bg-color: #050505; --text-main: #e5e7eb; --text-muted: #9ca3af;
+            --grid-line-p: rgba(168,85,247,0.05); --grid-line-o: rgba(249,115,22,0.05);
+            --glass-bg: rgba(10,10,14,0.85); --glass-border: rgba(255,255,255,0.08);
+            --card-bg: rgba(255,255,255,0.03); --card-border: rgba(255,255,255,0.1);
+            --shadow-glow: rgba(0,0,0,0.5); --image-bg: #111111;
+        }
+        body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.4s ease, color 0.4s ease; -webkit-tap-highlight-color: transparent; }
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px); background-attachment: fixed; }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 10px 40px var(--shadow-glow); transition: background 0.4s ease, border-color 0.4s ease; }
+        .tech-card { background: var(--card-bg); border: 1px solid var(--card-border); transition: all 0.3s ease; }
+        .tech-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
+        .article-p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-content p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content h2 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.5rem; margin-top: 3rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.2; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; } }
+        .article-content section { max-width: 56rem; margin-left: auto; margin-right: auto; width: 100%; }
+        .article-content figure { margin: 2.5rem 0 3.5rem; max-width: 56rem; margin-left: auto; margin-right: auto; }
+        .article-content figure img { width: 100%; object-fit: contain; border-radius: 0.75rem; background-color: rgba(255,255,255,0.5); }
+        .article-content figcaption { font-size: 0.875rem; color: #1f2937; margin-top: 1.25rem; text-align: center; font-family: 'Space Mono', monospace; max-width: 48rem; margin-left: auto; margin-right: auto; line-height: 1.6; }
+        .dark .article-content figcaption { color: #d1d5db; }
+        .cyber-img { width: 100%; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px var(--shadow-glow); }
+        .arxiv-chart { background-color: var(--image-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); transition: background-color 0.4s ease; }
+        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.2,0.8,0.2,1), transform 0.6s cubic-bezier(0.2,0.8,0.2,1); }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
+
+    <!-- Background glows -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay:3s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
+        <a href="https://dataist.ai" target="_blank" class="flex items-center gap-3 md:gap-4 hover:opacity-80 transition-opacity">
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">i</div>
+            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">ДАТАИСТ</div>
+        </a>
+        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
+                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
+                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
+                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
+        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+
+            <!-- Cover -->
+            <header class="text-center mb-12 md:mb-16 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
+                    🤖 Датаист | 2026-05-11
+                </div>
+                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
+                    Как люди и ИИ-агенты вместе пишут код в GitHub<br>
+                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3"></span>
+                </h1>
+
+                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0 bg-black">
+                    <img src="https://dataist.ai/2026-05-11_1/cover.png"
+                         alt="Обложка: Как люди и ИИ-агенты вместе пишут код в GitHub"
+                         class="w-full h-auto max-h-[70vh] object-cover scale-[1.0] origin-center">
+                </div>
+            </header>
+
+            <!-- Article body -->
+            <div class="article-content max-w-4xl mx-auto w-full">
+                <section>
+<h2>Когда код пишет не человек, а «коллега» из модели</h2>
+<p>Еще недавно ИИ в разработке был в основном автодополнением: подсказывал строчку, дописывал функцию, иногда — не к месту. Теперь картина меняется на глазах. На GitHub все чаще появляются запросы на включение изменений, которые оформляет не разработчик, а <strong>агент для программирования</strong>: он берет задачу, генерирует патч, пишет описание, получает замечания на ревью и иногда даже сам же их исправляет. Это уже не просто «умная клавиатура», а новый участник командной работы.</p>
+<p>Именно этот сдвиг пытается зафиксировать статья <strong>AIDev: Studying AI Coding Agents on GitHub</strong>. Ее вклад не в еще одну модель и не в очередной бенчмарк, а в нечто, возможно, более важное для отрасли: в большой, реальный, «полевой» набор данных о том, как ИИ-агенты участвуют в живой разработке на GitHub. Исследователи собрали почти <strong>933 тысячи</strong> запросов на включение изменений, созданных пятью популярными агентами, в более чем <strong>116 тысячах репозиториев</strong> и с участием <strong>72 тысяч разработчиков</strong>.</p>
+<p>Это работа не про то, «умеет ли модель решить игрушечную задачу», а про то, <strong>как ИИ реально встраивается в инженерные процессы</strong>. А значит, она интересна не только исследователям, но и тимлидам, платформенным командам, авторам инструментов и всем, кто пытается понять: что происходит с разработкой, когда код начинает писать не только человек.</p>
+</section>
+<section>
+<h2>Что именно собрали авторы</h2>
+<p>Главный результат статьи — набор данных <strong>AIDev</strong>, посвященный так называемым агентным запросам на включение изменений: это запросы, где автором выступает агент для программирования. В выборку вошли результаты работы <strong>OpenAI Codex, Devin, GitHub Copilot, Cursor и Claude Code</strong>. Данные собраны по состоянию на 1 августа 2025 года.</p>
+<p>Авторы сделали набор двух уровней.</p>
+<p>Первый — это <strong>широкое покрытие</strong>: почти 932 791 запрос на включение изменений со стандартными метаданными. Здесь есть заголовки, описания, состояние запроса, отметки времени, привязка к репозиторию и пользователю.</p>
+<p>Второй — <strong>обогащенная подвыборка</strong> из 33 596 запросов на включение изменений в 2 807 репозиториях с более чем 100 звездами. И вот это уже особенно ценно: помимо базовой информации, здесь есть комментарии, решения ревьюеров, встроенные замечания по коду, связанные коммиты, различия по файлам, история событий и даже связанные задачи. Иными словами, можно смотреть не только на итоговый факт «агент что-то предложил», но и на весь жизненный цикл такого вклада.</p>
+<p>Важно, что авторы не ограничились выгрузкой «сырых» следов. Они также добавили автоматическую разметку типов задач — например, исправление ошибки, новая возможность, документация и так далее. Это делает набор данных удобным для дальнейшего анализа: от паттернов внедрения до качества ревью.</p>
+</section>
+<section>
+<h2>Почему это вообще важно</h2>
+<p>Сегодня разговор об ИИ в разработке слишком часто ведется в двух крайностях. С одной стороны — демонстрации впечатляющих возможностей на бенчмарках. С другой — отдельные истории из практики: «нам помогло» или «нам все сломало». Между ними не хватает главного — <strong>масштабных наблюдений из реальной среды</strong>.</p>
+<p>AIDev закрывает именно этот разрыв.</p>
+<p>Во-первых, он позволяет обсуждать использование ИИ не на уровне догадок, а на уровне данных. Можно изучать, где агенты приживаются, какие задачи им доверяют, как часто их изменения принимают, сколько усилий уходит на ревью и что именно вызывает проблемы.</p>
+<p>Во-вторых, статья подчеркивает, что мы входим в новую фазу разработки, где ИИ становится не вспомогательной функцией редактора, а <strong>участником процесса внесения изменений</strong>. Это меняет не только производительность, но и организацию труда: кто отвечает за качество, кто проводит ревью, как проверяется безопасность, как перераспределяются навыки в команде.</p>
+<p>В-третьих, без таких данных невозможно всерьез говорить о рисках. В статье отдельно упоминается, что прежние работы уже показывали повышенную вероятность уязвимостей и другие проблемы в ИИ-сгенерированном коде. Но чтобы понять, насколько это характерно именно для агентного режима — когда система не просто предлагает фрагмент, а сама оформляет изменение и участвует в цикле ревью, — нужны массовые реальные следы. AIDev дает для этого основу.</p>
+</section>
+<section>
+<h2>Как выглядит агентный рабочий процесс</h2>
+<p>Один из самых наглядных моментов статьи — демонстрация того, как агент встроен в типичный процесс на GitHub. Это важное уточнение: речь не о магическом «нажал кнопку — получил продукт», а о вполне знакомом конвейере, только с новым типом автора.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-11_1/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Пример агентного запроса на включение изменений: агент создает изменение, человек оставляет замечание, после чего агент дорабатывает код следующим коммитом.</p>
+</div></figure>
+<p>На схеме видно, что агент для программирования не просто выгружает код в пустоту. Он создает запрос на включение изменений, формулирует описание, получает отзыв от человека и может ответить новым коммитом. То есть перед нами не разовая генерация, а <strong>итеративное взаимодействие</strong>.</p>
+<p>Это, пожалуй, одно из ключевых изменений последних двух лет. Раньше ИИ был инструментом в руках разработчика: человек копировал подсказку, правил ее и сам нес ответственность за результат. Теперь ИИ все чаще выступает как полуавтономный исполнитель. И это означает, что оценивать его надо уже не только по качеству кода, но и по качеству поведения в процессе: умеет ли он объяснять изменения, реагировать на замечания, не ломает ли договоренности проекта, не увеличивает ли нагрузку на ревьюеров.</p>
+</section>
+<section>
+<h2>Методология: как исследователи подошли к задаче</h2>
+<p>Статья не предлагает сложной новой архитектуры — и в этом ее сила. Это исследовательская инфраструктура, собранная вокруг реальных следов работы агентов.</p>
+<p>Подход авторов можно свести к нескольким шагам.</p>
+<p>Сначала они <strong>идентифицировали запросы на включение изменений, созданные агентами</strong> от пяти конкретных систем. Затем связали эти запросы с репозиториями и пользователями, формируя реляционную структуру данных. После этого для части репозиториев — тех, что имеют заметную активность и популярность — выгрузили более глубокие артефакты: комментарии, ревью, коммиты, различия по файлам, связанные задачи и временную шкалу событий.</p>
+<p>Отдельно стоит отметить выбор репозиториев с более чем 100 звездами для обогащенной выборки. Это не идеальный, но вполне разумный фильтр: он помогает сосредоточиться на проектах, где процессы ревью и принятия изменений обычно более формализованы, а значит, взаимодействие человека и ИИ можно наблюдать содержательнее.</p>
+<p>Еще один полезный слой — <strong>автоматическая классификация назначения запроса</strong> по категориям, близким к Conventional Commits. Это позволяет различать, что именно делают агенты: исправляют ошибки, добавляют новые возможности, обновляют документацию или вносят другие типы изменений. Для анализа поведения это критически важно, потому что агент, который хорошо справляется с документацией, и агент, который вмешивается в сложную бизнес-логику, — это два совершенно разных профиля риска.</p>
+</section>
+<section>
+<h2>Что в этом наборе данных особенно ценно</h2>
+<p>Сильная сторона AIDev — не только масштаб, но и <strong>структура наблюдений</strong>. Набор данных интересен сразу на нескольких уровнях.</p>
+<p>Первый уровень — <strong>внедрение</strong>. Мы можем увидеть, кто и где использует агентов: новички или опытные разработчики, маленькие проекты или большие, какие экосистемы и языки проявляют наибольшую активность.</p>
+<p>Второй — <strong>характер изменений</strong>. По коммитам и различиям можно исследовать размер патчей, долю добавлений и удалений, затронутые типы файлов, склонность к тестам и документации, соответствие описания реальному содержанию изменений.</p>
+<p>Третий — <strong>динамика ревью</strong>. Именно здесь набор данных особенно интересен. Есть возможность анализировать, как люди проверяют агентный код, что чаще комментируют — корректность, стиль, безопасность, тесты, — и насколько агент способен отвечать на эту обратную связь.</p>
+<p>Четвертый — <strong>отказы и риски</strong>. Если связать ранние признаки запроса на включение изменений с итогом — принят, отклонен, долго обсуждался, потребовал много доработок, — можно строить модели раннего предупреждения. Для индустрии это практически полезно: такие сигналы можно встроить в платформенные инструменты и автоматически усиливать проверки там, где вероятность проблем выше.</p>
+<p>Фактически AIDev превращает разговор об ИИ в разработке из философии в измеримую инженерную задачу.</p>
+</section>
+<section>
+<h2>Не только возможности, но и неудобные вопросы</h2>
+<p>Авторы честно помещают свою работу в контекст уже известных проблем. Ранние исследования ботов в открытом коде показывали: автоматические изменения нередко принимаются хуже, обсуждаются дольше и создают шум. Работы по LLM-инструментам добавили новую тревогу: ИИ может ускорять написание кода, но одновременно увеличивать стоимость проверки, особенно если изменения становятся более крупными и сложными.</p>
+<p>На этом фоне AIDev особенно полезен, потому что дает возможность проверить, <strong>не переносим ли мы старые метрики продуктивности в принципиально новую среду</strong>. Если агент создает запрос на включение изменений быстрее человека, но потом команда тратит вдвое больше времени на разбор, тестирование и исправления, итоговый эффект далеко не очевиден.</p>
+<p>Еще одна линия — безопасность. В статье это не основной результат, но очень важный мотив. Когда агент получает возможность самостоятельно писать изменения и фактически участвовать в репозитории как автор, цена ошибки растет. Речь уже не о неудачной подсказке в редакторе, которую человек может проигнорировать, а о полноценном инженерном действии внутри рабочего конвейера.</p>
+<p>Именно поэтому исследователи отдельно подчеркивают потенциальные вопросы для будущих работ: какие уязвимости чаще встречаются в агентном коде, какие ранние признаки позволяют предсказать некачественный запрос, какие изменения доходят до продакшена и потом не откатываются.</p>
+</section>
+<section>
+<h2>Что статья пока не делает</h2>
+<p>Важно понимать границы работы. AIDev — это <strong>не ответ</strong> на вопрос, повышают ли агенты производительность, и <strong>не доказательство</strong> того, что один агент лучше другого. Это инфраструктурная статья: она создает базу для таких исследований, но не закрывает их сама.</p>
+<p>Есть и ограничения, которые напрашиваются.</p>
+<p>Во-первых, выборка зависит от того, насколько надежно можно определить авторство агента. Если инструмент неявно участвовал в написании кода, но запрос оформил человек, такой случай может не попасть в набор. То есть AIDev, скорее всего, лучше отражает именно <strong>явную агентность</strong>, а не весь спектр ИИ-участия.</p>
+<p>Во-вторых, популярные репозитории с большим числом звезд — полезный, но смещенный срез. Поведение в них может заметно отличаться от небольших внутренних или нишевых проектов.</p>
+<p>В-третьих, автоматическая разметка типов задач — это удобно, но не безошибочно. Для тонких исследований все равно потребуется ручная проверка.</p>
+<p>Но эти ограничения не обесценивают работу. Скорее наоборот: они показывают, что авторы не продают «окончательную истину», а предлагают инструмент для систематического изучения новой реальности.</p>
+</section>
+<section>
+<h2>Главный вывод</h2>
+<p>Статья AIDev важна не потому, что показывает очередной рекорд модели. Она важна потому, что переводит разговор об ИИ в разработке из режима хайпа в режим <strong>наблюдаемой практики</strong>.</p>
+<p>Почти миллион агентных запросов на включение изменений — это уже не эксперимент на краю индустрии. Это сигнал, что агенты для программирования становятся заметной частью повседневной инженерной работы. А значит, обсуждать нужно не только их «ум», но и их место в процессах: как они проходят ревью, где ошибаются, какие задачи им подходят, а какие пока рано отдавать на автопилот.</p>
+<p>AIDev в этом смысле — очень своевременный набор данных. Он дает исследователям материал для серьезных работ о внедрении, качестве, безопасности и взаимодействии человека с ИИ. А практикам — шанс перестать спорить на ощущениях и начать смотреть на измеримые закономерности.</p>
+<p>Если коротко, статья фиксирует важный исторический момент: <strong>ИИ в разработке перестает быть подсказчиком и становится участником команды</strong>. И теперь нам нужны не только лучшие модели, но и лучшие способы понять, как с ними жить, работать и не терять контроль над качеством.</p>
+</section>
+            </div>
+
+            <!-- Footer CTA -->
+            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
+                <div class="mb-10 flex flex-wrap justify-center gap-4">
+                    <a href="https://arxiv.org/abs/2602.09185" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">📜</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-purple">Полная статья (arXiv)</span>
+                    </a>
+                    <a href="https://github.com/SAILResearch/AI_Teammates_in_SE3" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-orange transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <img src="https://cdn-icons-png.flaticon.com/256/25/25231.png" alt="GitHub" class="w-5 h-5 dark:invert transition-all">
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-orange">Код (GitHub)</span>
+                    </a>
+                    <a href="https://huggingface.co/datasets/hao-li/AIDev" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-orange transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">🤗</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-orange">Модель (HuggingFace)</span>
+                    </a>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <!-- Progress bar -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) { html.classList.add('dark'); } else { html.classList.remove('dark'); }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready(); tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => { applyTheme(!html.classList.contains('dark')); });
+
+        window.addEventListener('scroll', () => {
+            let h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById("progress-bar").style.width = ((document.documentElement.scrollTop / h) * 100) + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+            }, { threshold: 0.15 });
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
