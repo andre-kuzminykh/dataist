@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как агентам делегировать задачи без потери контроля</title>
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Dataism Science Hub" />
+    <meta property="og:title" content="Как агентам делегировать задачи без потери контроля" />
+    <meta property="og:description" content="Сегодняшние агенты на базе LLM уже умеют не только отвечать на вопросы, но и выполнять цепочки действий: открыть инструмент, вызвать API, написать код, проверить результат, отправить письмо." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://34.62.139.101:8004/static/kak-agentam-delegirovat-zadachi-bez-poteri-kontrolia/kak-agentam-delegirovat-zadachi-bez-poteri-kontrolia_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-05-11/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-05-11/cover.png" />
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: { purple: '#a855f7', orange: '#f97316', tg: '#229ED9' }
+                    }
+                },
+                fontFamily: {
+                    mono: ['"Space Mono"', 'monospace'],
+                    sans: ['"Inter"', 'sans-serif'],
+                    montserrat: ['"Montserrat"', 'sans-serif'],
+                },
+                animation: { 'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f8fafc; --text-main: #0f172a; --text-muted: #475569;
+            --grid-line-p: rgba(168,85,247,0.1); --grid-line-o: rgba(249,115,22,0.1);
+            --glass-bg: rgba(255,255,255,0.85); --glass-border: rgba(0,0,0,0.05);
+            --card-bg: rgba(255,255,255,0.6); --card-border: rgba(0,0,0,0.05);
+            --shadow-glow: rgba(0,0,0,0.02); --image-bg: #ffffff;
+        }
+        .dark {
+            --bg-color: #050505; --text-main: #e5e7eb; --text-muted: #9ca3af;
+            --grid-line-p: rgba(168,85,247,0.05); --grid-line-o: rgba(249,115,22,0.05);
+            --glass-bg: rgba(10,10,14,0.85); --glass-border: rgba(255,255,255,0.08);
+            --card-bg: rgba(255,255,255,0.03); --card-border: rgba(255,255,255,0.1);
+            --shadow-glow: rgba(0,0,0,0.5); --image-bg: #111111;
+        }
+        body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.4s ease, color 0.4s ease; -webkit-tap-highlight-color: transparent; }
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px); background-attachment: fixed; }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 10px 40px var(--shadow-glow); transition: background 0.4s ease, border-color 0.4s ease; }
+        .tech-card { background: var(--card-bg); border: 1px solid var(--card-border); transition: all 0.3s ease; }
+        .tech-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
+        .article-p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-content p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content h2 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.5rem; margin-top: 3rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.2; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; } }
+        .article-content section { max-width: 56rem; margin-left: auto; margin-right: auto; width: 100%; }
+        .article-content figure { margin: 2.5rem 0 3.5rem; max-width: 56rem; margin-left: auto; margin-right: auto; }
+        .article-content figure img { width: 100%; object-fit: contain; border-radius: 0.75rem; background-color: rgba(255,255,255,0.5); }
+        .article-content figcaption { font-size: 0.875rem; color: #1f2937; margin-top: 1.25rem; text-align: center; font-family: 'Space Mono', monospace; max-width: 48rem; margin-left: auto; margin-right: auto; line-height: 1.6; }
+        .dark .article-content figcaption { color: #d1d5db; }
+        .cyber-img { width: 100%; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px var(--shadow-glow); }
+        .arxiv-chart { background-color: var(--image-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); transition: background-color 0.4s ease; }
+        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.2,0.8,0.2,1), transform 0.6s cubic-bezier(0.2,0.8,0.2,1); }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
+
+    <!-- Background glows -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay:3s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
+        <a href="https://dataist.ai" target="_blank" class="flex items-center gap-3 md:gap-4 hover:opacity-80 transition-opacity">
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">i</div>
+            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">ДАТАИСТ</div>
+        </a>
+        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
+                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
+                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
+                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
+        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+
+            <!-- Cover -->
+            <header class="text-center mb-12 md:mb-16 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
+                    🤖 Датаист | 2026-05-11
+                </div>
+                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
+                    Как агентам делегировать задачи без потери контроля<br>
+                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3"></span>
+                </h1>
+
+                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0 bg-black">
+                    <img src="https://dataist.ai/2026-05-11/cover.png"
+                         alt="Обложка: Как агентам делегировать задачи без потери контроля"
+                         class="w-full h-auto max-h-[70vh] object-cover scale-[1.0] origin-center">
+                </div>
+            </header>
+
+            <!-- Article body -->
+            <div class="article-content max-w-4xl mx-auto w-full">
+                <section>
+<h2>Когда ИИ перестаёт быть «одним помощником» и становится менеджером</h2>
+<p>Сегодняшние агенты на базе LLM уже умеют не только отвечать на вопросы, но и выполнять цепочки действий: открыть инструмент, вызвать API, написать код, проверить результат, отправить письмо. Следующий шаг напрашивается сам собой: если задача слишком велика для одного агента, почему бы не разбить её на части и не раздать подзадачи другим агентам — а иногда и людям?</p>
+<p>На бумаге всё выглядит красиво. На практике же возникает неудобный вопрос: <strong>кто отвечает, если что-то пошло не так?</strong> Кто решает, кому что поручить? Как проверять результат? Когда нужно остановить процесс, а когда — срочно переделегировать задачу? И главное: как не превратить такую систему в хрупкий клубок автоматизации, где никто ничего толком не контролирует?</p>
+<p>Именно на эту проблему нацелена статья исследователей из Google DeepMind об <strong>интеллектуальном делегировании</strong>. Это не работа про очередной способ «ускорить агентов», а попытка описать более фундаментальную вещь: каким должен быть мир, в котором агенты массово поручают задачи друг другу и людям, не разваливаясь от ошибок, конфликтов, недоверия и непрозрачности.</p>
+</section>
+<section>
+<h2>О чём вообще речь: делегирование — это не просто разбить задачу</h2>
+<p>Главная мысль статьи проста, но важна: <strong>делегирование — это не то же самое, что декомпозиция задачи</strong>. Недостаточно сказать «ты делаешь пункт А, ты — пункт Б». Настоящее делегирование включает передачу полномочий, ответственности, рамок допустимого поведения, правил отчётности и механизмов доверия.</p>
+<p>Это особенно важно в мире агентных систем, где взаимодействуют разные участники:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">человек поручает задачу агенту;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">агент поручает задачу другому агенту;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">агент поручает работу человеку;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">а дальше возникают длинные цепочки из нескольких уровней.</span></div>
+<p>Авторы показывают, что существующие подходы чаще всего держатся на простых эвристиках: разделить задачу на части, раздать специализированным подагентам, собрать ответы. Это работает в демонстрациях и аккуратных сценариях. Но как только среда меняется, один из исполнителей задерживается, инструмент становится недоступен или задача оказывается не до конца верифицируемой, вся конструкция начинает шататься.</p>
+<p>В этом смысле статья важна не только для разработчиков агентных платформ. Она важна для всей индустрии, потому что ставит вопрос ребром: <strong>если агенты действительно станут инфраструктурой цифровой экономики, то делегирование должно быть таким же серьёзным инженерным объектом, как безопасность, сеть или база данных</strong>.</p>
+</section>
+<section>
+<h2>Почему это важно именно сейчас</h2>
+<p>Интерес к агентам взлетел слишком быстро, а вот культура проектирования сложных агентных систем пока заметно отстаёт. Мы уже видим зачатки будущего: оркестраторы, команды специализированных агентов, автоматические рабочие процессы, гибридные схемы «человек + ИИ». Но большинство таких систем по-прежнему опирается на хрупкие допущения:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">исполнитель всегда доступен;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">задача сформулирована достаточно ясно;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">результат можно оценить без споров;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">подагенты не злоупотребляют доступами;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">мониторинг не нужен или нужен минимально.</span></div>
+<p>Авторы фактически говорят: <strong>этот оптимизм закончится, как только агенты выйдут из песочницы</strong>. В реальном мире задачи бывают дорогими, долгими, неоднозначными, с чувствительными данными и необратимыми последствиями. Если агент ошибётся при черновике письма — это неприятно. Если он ошибётся в медицинском контуре, финансах или управлении инфраструктурой — это уже совсем другой разговор.</p>
+<p>Статья ценна ещё и тем, что смотрит не только на связку «человек — агент», но и на будущую сеть, где агенты взаимодействуют друг с другом в больших масштабах, почти как участники рынка. Отсюда — разговор о репутации, контрактах, подтверждении выполнения, правах доступа и устойчивости всей системы.</p>
+</section>
+<section>
+<h2>На чём строится предлагаемая рамка</h2>
+<p>Авторы предлагают рамку интеллектуального делегирования, собранную вокруг пяти опорных принципов:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>динамическая оценка</strong> — нужно постоянно понимать, кто сейчас способен выполнить задачу, с какими ресурсами и рисками;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>адаптивное исполнение</strong> — план нельзя считать фиксированным, он должен пересматриваться по ходу;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>структурная прозрачность</strong> — должно быть видно, что, кем и почему было сделано;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>масштабируемая координация</strong> — делегирование должно работать не только в маленькой команде, но и в большой сети агентов;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>системная устойчивость</strong> — нужно проектировать защиту от каскадных сбоев, злоупотреблений и размывания ответственности.</span></div>
+<p>Это не готовый протокол и не конкретная реализация. Скорее, это <strong>архитектурный чертёж</strong> для будущих агентных экосистем.</p>
+</section>
+<section>
+<h2>Как должна выглядеть декомпозиция задачи</h2>
+<p>Один из самых интересных фрагментов статьи — обсуждение декомпозиции. Авторы подчёркивают, что хорошая декомпозиция не просто дробит цель на куски, а делает это так, чтобы каждый кусок было реально поручить, проверить и при необходимости заменить исполнителя.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-11/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема того, как задача разбивается на подзадачи и распределяется между исполнителями.</p>
+</div></figure>
+<p>Здесь появляется сильная идея: <strong>сначала контракт, потом делегирование</strong>. Если результат подзадачи нельзя чётко проверить, задачу нужно дробить дальше. Иначе система заранее загоняет себя в ситуацию, где остаётся только «верить на слово» — а это плохо масштабируется и плохо переживает ошибки.</p>
+<p>Такой подход особенно логичен для технических задач. Код можно проверить тестами, формальные преобразования — верификацией, вычисления — криптографическими подтверждениями. Но в более субъективных случаях — например, исследование, дизайн или стратегия — всё сложнее. Значит, либо нужны люди в контуре, либо более дорогой надзор, либо иная структура самой задачи.</p>
+<p>Авторы также напоминают, что декомпозиция должна учитывать стоимость, задержки, требования к ресурсам, доступ к данным и даже необратимость действий. Стереть базу данных и набросать черновик презентации — формально тоже «задачи», но делегировать их одинаково нельзя.</p>
+</section>
+<section>
+<h2>Как выбирать исполнителя: это уже почти экономика</h2>
+<p>После декомпозиции встаёт вопрос назначения исполнителя. И здесь статья уходит далеко за пределы привычной логики «есть агент для поиска, агент для кода и агент для проверки». Авторы предлагают смотреть на распределение задач как на <strong>многоцелевую оптимизацию</strong>: нужно одновременно учитывать качество, стоимость, время, надёжность, приватность и верифицируемость.</p>
+<p>Иными словами, лучший исполнитель — это не обязательно самый сильный, самый дешёвый или самый быстрый. Лучший — это тот, кто даёт правильный баланс под конкретную задачу.</p>
+<p>Эта часть особенно интересна на фоне будущих агентных рынков. Исследователи прямо обсуждают сценарий, где задачи публикуются в децентрализованных узлах, а агенты и люди подают заявки на выполнение. Дальше идут переговоры, проверка компетенций, выбор условий, фиксация обязательств.</p>
+<p>Такая картина может звучать футуристично, но логика у неё железная. Если агентов будет много, централизованная ручная маршрутизация перестанет работать. Значит, понадобятся механизмы, похожие на рынок: поиск исполнителя, сравнение предложений, оценка репутации, защита от мошенничества.</p>
+</section>
+<section>
+<h2>Самая сильная часть статьи: адаптивная координация</h2>
+<p>Пожалуй, наиболее практически важный раздел — про адаптивную координацию. Авторы исходят из очень взрослой предпосылки: <strong>никакой план исполнения не переживает столкновения с реальностью без изменений</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-11/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Цикл адаптивной координации: система отслеживает сигналы среды и при необходимости пересобирает схему делегирования.</p>
+</div></figure>
+<p>Триггеры для пересмотра делегирования могут быть внешними и внутренними. Внешние — изменились требования, пропал внешний сервис, подорожали вычисления, появилась более приоритетная задача. Внутренние — исполнитель замедлился, тратит слишком много ресурсов, не проходит проверку промежуточного результата, перестал отвечать.</p>
+<p>В ответ система должна не просто сигналить об ошибке, а запускать цикл диагностики и переоптимизации. Иногда достаточно подправить параметры. Иногда — переназначить исполнителя. Иногда — полностью пересобрать декомпозицию.</p>
+<p>Это звучит как здравый смысл, но в большинстве агентных систем сегодня такого уровня динамики нет. Часто есть либо жёсткий сценарий, либо примитивная повторная попытка. Авторы же описывают делегирование как <strong>непрерывный процесс управления в изменчивой среде</strong>.</p>
+<p>И это, пожалуй, одна из ключевых причин, почему статья важна: она переносит разговор об агентах из режима «автоматизируем цепочку» в режим «строим управляемую операционную систему для распределённого труда».</p>
+</section>
+<section>
+<h2>Мониторинг, доверие и репутация: без этого ничего не полетит</h2>
+<p>Отдельный крупный блок посвящён мониторингу. Авторы различают наблюдение за итогом и наблюдение за процессом, прямой и косвенный мониторинг, чёрный ящик и белый ящик, полную прозрачность и криптографически защищённые схемы.</p>
+<p>Это не абстрактная классификация. За ней стоит болезненная реальность: <strong>если мы не видим, как именно агент выполнял задачу, нам трудно понять, была ли ошибка случайной, системной или злонамеренной</strong>. А без этого невозможно ни адекватное доверие, ни ответственность.</p>
+<p>Отсюда возникает связка мониторинга с репутацией. Репутация в статье понимается не как лайки и звёздочки, а как верифицируемая история прошлых действий. Причём авторы справедливо разделяют публичную репутацию и частное доверие: агент может быть в целом надёжен, но не подходить под конкретный рискованный сценарий.</p>
+<p>Это хороший, трезвый взгляд. Вокруг агентных систем часто звучит идея «доверим хорошему агенту больше автономии». Статья уточняет: <strong>уровень автономии должен зависеть от контекста, проверяемых способностей и текущего состояния исполнителя</strong>, а не от общей ауры компетентности.</p>
+</section>
+<section>
+<h2>Безопасность и права доступа — не приложение, а основа</h2>
+<p>Ещё один сильный раздел касается прав доступа и безопасности. Делегирование почти всегда связано с передачей возможностей: доступа к данным, инструментам, платежам, внешним действиям. И здесь авторы последовательно проводят принцип минимально необходимых полномочий.</p>
+<p>Если агент переделегирует задачу, он не должен автоматически передавать весь свой объём прав дальше по цепочке. Наоборот, полномочия должны <strong>ослабляться</strong> при каждом новом уровне. Иначе компрометация дальнего узла превращается в системную катастрофу.</p>
+<p>Авторы подробно перечисляют угрозы: злонамеренные исполнители, злонамеренные постановщики задач, подмена целей, отравление данных, саботаж проверки, атаки на репутацию, сговор, массовое создание фальшивых идентичностей, уязвимости протоколов. Этот список полезен уже сам по себе: он показывает, насколько наивно обсуждать «автономных агентов» без полноценной модели угроз.</p>
+<p>Особенно точен тезис о <strong>когнитивной монокультуре</strong>. Если большая часть агентной экономики построена на одном типе базовых моделей и одних и тех же рецептах безопасности, ошибка или уязвимость может распространиться лавинообразно. Это важное напоминание для индустрии, которая пока скорее стремится к унификации, чем к разнообразию.</p>
+</section>
+<section>
+<h2>Что в статье особенно ценно, а что пока остаётся на уровне программы</h2>
+<p>Главная сила работы — в широте и зрелости постановки вопроса. Это не статья с красивой метрикой и победой на бенчмарке. И именно поэтому она интересна. Авторы честно смотрят на агентные системы как на социотехническую инфраструктуру, где важны не только качество ответа модели, но и ответственность, институциональные правила, проверяемость и устойчивость.</p>
+<p>Слабое место у статьи тоже очевидно: <strong>это в первую очередь концептуальная рамка, а не готовая инженерная система</strong>. Здесь много принципов, таксономий и архитектурных идей, но мало конкретных реализаций и эмпирических результатов. Для части аудитории это может показаться недостатком.</p>
+<p>Но, если смотреть шире, именно такие работы часто становятся отправной точкой для следующего этапа. Индустрии агентных систем сейчас как раз не хватает не ещё одного демонстрационного ролика, а языка, на котором можно обсуждать реальные механизмы делегирования.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>Статья Google DeepMind предлагает смотреть на агентные системы не как на набор умных вызовов LLM, а как на <strong>будущую систему распределённой работы</strong>, где задачи разбиваются, передаются, перепроверяются, переназначаются и закрываются с понятной ответственностью.</p>
+<p>Главный вывод можно сформулировать так: <strong>масштабирование агентов упирается не только в качество моделей, но и в качество делегирования</strong>. Если мы хотим, чтобы агенты брали на себя сложные, длинные и рискованные процессы, нам нужны механизмы доверия, мониторинга, проверки, ограничения прав и адаптивного управления. Без этого вся «агентная экономика» рискует остаться эффектной, но хрупкой игрушкой.</p>
+<p>В этом смысле работа важна не тем, что даёт окончательные ответы, а тем, что очень вовремя ставит правильные вопросы. И, возможно, именно такие вопросы сегодня ценнее любой локальной прибавки к качеству на очередном бенчмарке.</p>
+</section>
+            </div>
+
+            <!-- Footer CTA -->
+            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
+                <div class="mb-10 flex flex-wrap justify-center gap-4">
+                    <a href="https://arxiv.org/abs/2602.11865" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">📜</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-purple">Полная статья (arXiv)</span>
+                    </a>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <!-- Progress bar -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) { html.classList.add('dark'); } else { html.classList.remove('dark'); }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready(); tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => { applyTheme(!html.classList.contains('dark')); });
+
+        window.addEventListener('scroll', () => {
+            let h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById("progress-bar").style.width = ((document.documentElement.scrollTop / h) * 100) + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+            }, { threshold: 0.15 });
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
