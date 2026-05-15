@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как графы знаний учат LLM меньше галлюцинировать</title>
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Dataism Science Hub" />
+    <meta property="og:title" content="Как графы знаний учат LLM меньше галлюцинировать" />
+    <meta property="og:description" content="У больших языковых моделей есть странная суперсила: они умеют говорить так уверенно, что порой кажется — они точно знают. Проблема в том, что уверенность и знание — не одно и то же." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://34.62.139.101:8004/static/kak-grafy-znanii-uchat-llm-menshe-galliutsinirovat/kak-grafy-znanii-uchat-llm-menshe-galliutsinirovat_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-05-15/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-05-15/cover.png" />
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: { purple: '#a855f7', orange: '#f97316', tg: '#229ED9' }
+                    }
+                },
+                fontFamily: {
+                    mono: ['"Space Mono"', 'monospace'],
+                    sans: ['"Inter"', 'sans-serif'],
+                    montserrat: ['"Montserrat"', 'sans-serif'],
+                },
+                animation: { 'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f8fafc; --text-main: #0f172a; --text-muted: #475569;
+            --grid-line-p: rgba(168,85,247,0.1); --grid-line-o: rgba(249,115,22,0.1);
+            --glass-bg: rgba(255,255,255,0.85); --glass-border: rgba(0,0,0,0.05);
+            --card-bg: rgba(255,255,255,0.6); --card-border: rgba(0,0,0,0.05);
+            --shadow-glow: rgba(0,0,0,0.02); --image-bg: #ffffff;
+        }
+        .dark {
+            --bg-color: #050505; --text-main: #e5e7eb; --text-muted: #9ca3af;
+            --grid-line-p: rgba(168,85,247,0.05); --grid-line-o: rgba(249,115,22,0.05);
+            --glass-bg: rgba(10,10,14,0.85); --glass-border: rgba(255,255,255,0.08);
+            --card-bg: rgba(255,255,255,0.03); --card-border: rgba(255,255,255,0.1);
+            --shadow-glow: rgba(0,0,0,0.5); --image-bg: #111111;
+        }
+        body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.4s ease, color 0.4s ease; -webkit-tap-highlight-color: transparent; }
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px); background-attachment: fixed; }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 10px 40px var(--shadow-glow); transition: background 0.4s ease, border-color 0.4s ease; }
+        .tech-card { background: var(--card-bg); border: 1px solid var(--card-border); transition: all 0.3s ease; }
+        .tech-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
+        .article-p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-content p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content h2 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.5rem; margin-top: 3rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.2; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; } }
+        .article-content section { max-width: 56rem; margin-left: auto; margin-right: auto; width: 100%; }
+        .article-content figure { margin: 2.5rem 0 3.5rem; max-width: 56rem; margin-left: auto; margin-right: auto; }
+        .article-content figure img { width: 100%; object-fit: contain; border-radius: 0.75rem; background-color: rgba(255,255,255,0.5); }
+        .article-content figcaption { font-size: 0.875rem; color: #1f2937; margin-top: 1.25rem; text-align: center; font-family: 'Space Mono', monospace; max-width: 48rem; margin-left: auto; margin-right: auto; line-height: 1.6; }
+        .dark .article-content figcaption { color: #d1d5db; }
+        .cyber-img { width: 100%; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px var(--shadow-glow); }
+        .arxiv-chart { background-color: var(--image-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); transition: background-color 0.4s ease; }
+        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.2,0.8,0.2,1), transform 0.6s cubic-bezier(0.2,0.8,0.2,1); }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
+
+    <!-- Background glows -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay:3s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
+        <a href="https://dataist.ai" target="_blank" class="flex items-center gap-3 md:gap-4 hover:opacity-80 transition-opacity">
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">i</div>
+            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">ДАТАИСТ</div>
+        </a>
+        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
+                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
+                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
+                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
+        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+
+            <!-- Cover -->
+            <header class="text-center mb-12 md:mb-16 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
+                    🤖 Датаист | 2026-05-15
+                </div>
+                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
+                    Как графы знаний учат LLM меньше галлюцинировать<br>
+                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3"></span>
+                </h1>
+
+                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0 bg-black">
+                    <img src="https://dataist.ai/2026-05-15/cover.png"
+                         alt="Обложка: Как графы знаний учат LLM меньше галлюцинировать"
+                         class="w-full h-auto max-h-[70vh] object-cover scale-[1.0] origin-center">
+                </div>
+            </header>
+
+            <!-- Article body -->
+            <div class="article-content max-w-4xl mx-auto w-full">
+                <section>
+<h2>Когда одной памяти мало: как LLM учат искать факты не в тексте, а в графе</h2>
+<p>У больших языковых моделей есть странная суперсила: они умеют говорить так уверенно, что порой кажется — они <strong>точно знают</strong>. Проблема в том, что уверенность и знание — не одно и то же. Особенно там, где вопрос требует нескольких логических шагов, проверки фактов и аккуратной работы с контекстом. Именно в таких местах и ломаются многие системы поиска с генерацией: модель красиво отвечает, но не всегда по делу.</p>
+<p>Авторы статьи о <strong>PersonalAI 2.0</strong>, или PAI-2, предлагают довольно практичный ответ на эту проблему. Они берут LLM, добавляют к ней внешнюю память в виде графа знаний и, что особенно важно, заставляют систему <strong>не просто извлекать ближайшие фрагменты, а строить план поиска</strong>, пересматривать его по ходу дела и ходить по графу итеративно. Получается не «нашли кусок текста — сгенерировали ответ», а мини-расследование: что именно нужно узнать, какие сущности важны, куда идти дальше, хватает ли уже данных или план стоит переписать.</p>
+<p>Это важная работа не потому, что обещает магическую универсальную память для ИИ, а потому что показывает: следующий шаг после обычного RAG, вероятно, лежит в сторону <strong>структурированной памяти и управляемого поиска</strong>.</p>
+</section>
+<section>
+<h2>Что именно предлагают авторы</h2>
+<p>В центре статьи — архитектура PAI-2, системы вопросно-ответного поиска по <strong>графу памяти</strong>. Этот граф хранит знания, извлеченные из документов: сущности, утверждения, связи и эпизодические записи. Поверх этого графа работает LLM, но не как всезнайка, а как диспетчер поиска.</p>
+<p>Ключевая идея проста: сложный вопрос редко стоит решать одним запросом. Вместо этого PAI-2 разбивает задачу на этапы:</p>
+<p>1. при необходимости очищает и уточняет вопрос;</p>
+<p>2. определяет, не состоит ли он из нескольких независимых подвопросов;</p>
+<p>3. строит начальный план поиска;</p>
+<p>4. извлекает именованные сущности из текущего шага;</p>
+<p>5. сопоставляет их с вершинами графа;</p>
+<p>6. генерирует вспомогательные запросы-подсказки;</p>
+<p>7. обходит граф от найденных точек;</p>
+<p>8. фильтрует релевантные триплеты;</p>
+<p>9. суммирует найденную информацию;</p>
+<p>10. проверяет, достаточно ли ее для ответа;</p>
+<p>11. если нет — <strong>улучшает план</strong> и идет дальше.</p>
+<p>То есть система не просто достает «самое похожее», а ведет поиск по частям, с промежуточной проверкой: а мы вообще движемся туда?</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-15/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема конвейера PAI-2: от вопроса пользователя к поэтапному поиску по графу памяти и финальному ответу.</p>
+</div></figure>
+<p>Это и есть главное отличие от многих вариантов GraphRAG: там поиск часто остается довольно статичным. В PAI-2 он <strong>адаптивный</strong>. Если на середине маршрута выяснилось, что исходный план был слишком расплывчатым или упустил важную сущность, система может его переписать.</p>
+</section>
+<section>
+<h2>Почему это вообще важно</h2>
+<p>У обычных систем поиска с генерацией есть фундаментальная слабость: они хорошо работают, когда ответ лежит рядом с запросом в одном-двух фрагментах текста. Но как только нужно связать несколько документов, восстановить цепочку сущностей или уточнить промежуточный факт, качество начинает проседать. Возникают галлюцинации, обрывочные ответы или уверенное «нет данных», хотя данные в базе на самом деле есть.</p>
+<p>Граф знаний в этом смысле удобен как внешняя память: он явно хранит связи между объектами. Но одного графа тоже мало. Если просто делать поиск по узлам, без стратегии, система может утонуть в шуме или, наоборот, пройти мимо нужного маршрута.</p>
+<p>PAI-2 интересен тем, что сочетает два мира:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>структурированную память</strong> в виде графа;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>гибкость LLM</strong> для управления поиском и суммаризации.</span></div>
+<p>Для персональных помощников, корпоративных агентов, поисковых систем по внутренним базам знаний и вообще любых приложений, где цена фактической ошибки высока, это очень приземленная и полезная идея.</p>
+</section>
+<section>
+<h2>Как устроен поиск: не один запрос, а серия догадок</h2>
+<p>Методологически статья выглядит как инженерная работа с большим количеством практических деталей. Авторы явно не пытались придумать «новую теорию интеллекта» — они строят систему, которую можно разложить на понятные модули и протестировать по частям.</p>
+<p>Особенно любопытна механика <strong>вспомогательных запросов</strong>. После того как из шага плана выделены сущности и сопоставлены вершины графа, система создает несколько уточняющих формулировок вопроса, каждая из которых опирается на свою комбинацию найденных вершин. Это помогает исследовать разные куски графа, даже если знание о нужном объекте в памяти хранится не в одном месте, а рассыпано по нескольким подграфам.</p>
+<p>Затем найденные триплеты не просто скармливаются модели списком. Сначала ответы генерируются для каждого вспомогательного запроса, а потом агрегируются в единое знание для текущего шага плана. После этого LLM решает: уже можно отвечать или нужно искать дальше.</p>
+<p>Важная деталь: авторы отдельно показывают, что <strong>механизм улучшения плана</strong> — не украшение, а реально рабочий компонент. Если его отключить, качество заметно падает. Логика понятна: многие вопросы невозможно корректно решить с первого чернового маршрута. Нужна возможность переобуться на ходу.</p>
+</section>
+<section>
+<h2>Что показали эксперименты</h2>
+<p>PAI-2 тестировали на шести известных наборах данных для вопросно-ответных задач: Natural Questions, TriviaQA, HotpotQA, 2WikiMultihopQA, MuSiQue и DiaASQ. В качестве соперников взяли LightRAG, RAPTOR, HippoRAG 2 и предыдущую версию системы — PAI-1.</p>
+<p>Главная метрика — оценка через LLM-судью. Это уже довольно привычный подход в задачах, где простое совпадение строк мало что говорит о правильности ответа. Авторы отдельно проверили надежность такой оценки на человеческой разметке и получили высокую корреляцию, так что метод оценки здесь выглядит достаточно добросовестно.</p>
+<p>Если кратко, результаты такие:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">PAI-2 показывает <strong>средний выигрыш около 4%</strong> по оценке LLM-судьи на четырех из шести бенчмарков по сравнению с основными аналогами;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">по сравнению с PAI-1 новая система заметно лучше по релевантности контекста, фактической согласованности и итоговому качеству ответа;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">использование алгоритмов обхода графа вместо плоского извлечения дает в среднем около <strong>6% прироста</strong>;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">включение механизма улучшения плана дает еще более сильный эффект — около <strong>18% прироста</strong>.</span></div>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-15/fig_19.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Распределение оценок на MINE-1: PAI-2 заметно лучше сохраняет факты при построении графа памяти, чем альтернативы.</p>
+</div></figure>
+<p>По бенчмаркам картина не совсем ровная. Лучше всего система выглядит на TriviaQA, 2WikiMultihopQA и MuSiQue — то есть как раз там, где многоскачковый поиск особенно важен. На Natural Questions у PAI-2, наоборот, есть заметный разрыв с HippoRAG 2. Авторы честно объясняют возможные причины: вопросы там часто плохо нормализованы, написаны строчными буквами, а тип ожидаемого ответа не всегда очевиден. Для системы, которая любит явные сущности и аккуратное планирование, это неприятный режим.</p>
+</section>
+<section>
+<h2>Самая сильная абляция: планирование действительно работает</h2>
+<p>Пожалуй, самый убедительный фрагмент статьи — не итоговая таблица с цифрами, а абляция по улучшению плана. Авторы показывают на примере вопроса о режиссерах двух фильмов, почему статический план недостаточен.</p>
+<p>Изначально система формирует шаги вроде «кто режиссер первого фильма», «кто режиссер второго фильма», «из какой страны режиссер первого фильма», «из какой страны режиссер второго фильма». Но проблема в том, что последние два шага слишком расплывчаты: без подстановки конкретных имен поиск легко промахивается.</p>
+<p>Когда улучшение плана включено, система подставляет уже найденные промежуточные факты: вместо абстрактного «режиссер второго фильма» появляется конкретный человек. И вот после этого граф отдает нужную информацию.</p>
+<p>Это звучит почти банально, но именно в таких мелочах часто и лежит разница между «архитектурой на слайде» и реально работающей системой. Здесь планирование — не красивое слово, а механизм <strong>уточнения запроса по мере накопления знаний</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-15/fig_8.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Пример шаблона для генерации базового плана поиска — отправная точка для многошагового обхода графа.</p>
+</div></figure>
+</section>
+<section>
+<h2>Что еще важно: качество самой памяти</h2>
+<p>У таких систем есть два уровня качества. Первый — как хорошо агент ищет. Второй — насколько добротна сама память, по которой он ходит. Если граф строится плохо, никакой умный поиск уже не спасет.</p>
+<p>Авторы отдельно оценивают свой конвейер построения графа на бенчмарке MINE-1, который измеряет, сколько фактической информации из исходного текста сохранилось в графе. И здесь у PAI-2 очень сильный результат: <strong>89% сохранения информации</strong>, что заметно выше, чем у Wikontic и KGGen в приведенном сравнении.</p>
+<p>Это, возможно, даже не менее важно, чем успехи в вопросно-ответных тестах. Потому что внешняя память для LLM умирает в двух случаях: если из нее плохо искать и если в нее плохо записывать. PAI-2, судя по статье, старается закрыть обе проблемы сразу.</p>
+</section>
+<section>
+<h2>Ограничения, о которых авторы не молчат</h2>
+<p>Работа выглядит сильной еще и потому, что авторы не притворяются, будто решили все.</p>
+<p>Во-первых, система медленная. По их замерам, PAI-2 примерно вдвое медленнее PAI-1: в среднем около 1,5 минуты на один вопрос. Для исследования это терпимо, для промышленного применения — уже вызов. Узкие места предсказуемы: инференс LLM, векторный поиск и обход графа.</p>
+<p>Во-вторых, в текущем виде граф страдает от дубликатов на уровне смысла. Если одна и та же мысль сформулирована по-разному, могут появляться несколько похожих подграфов. Отсюда и необходимость в нескольких вспомогательных запросах на один шаг.</p>
+<p>В-третьих, слабым местом остается работа с неоднозначными сущностями, временем и типами утверждений. Авторы сами предлагают, куда двигаться дальше: лучше маркировать факты, мнения и предсказания, явно моделировать временные интервалы, фиксировать словарь предикатов и добавлять семантическое устранение дублей.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-05-15/fig_18.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Шаблон оценки ответов через LLM-судью, который использовался как основная метрика качества.</p>
+</div></figure>
+</section>
+<section>
+<h2>Итог</h2>
+<p>PAI-2 — это не очередная работа в духе «мы просто прикрутили граф к LLM». Ее главный тезис тоньше: <strong>для надежного ответа мало иметь память, нужно уметь по ней думать маршрутом</strong>. Разбивать вопрос, строить план, уточнять сущности, запускать несколько траекторий поиска, проверять промежуточную достаточность фактов и при необходимости переписывать стратегию.</p>
+<p>Именно поэтому статья интересна не только тем, кто строит системы GraphRAG, но и вообще всем, кто работает с агентами, корпоративным поиском и внешней памятью для LLM. Она показывает, что следующий уровень качества приходит не из «еще более большой модели», а из более дисциплинированной организации поиска.</p>
+<p>Главный вывод здесь такой: <strong>структурированная память без планирования слишком тупа, а LLM без внешней памяти слишком самоуверенна</strong>. PAI-2 пытается соединить лучшее из обоих миров — и, судя по результатам, делает это весьма убедительно.</p>
+</section>
+            </div>
+
+            <!-- Footer CTA -->
+            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
+                <div class="mb-10 flex flex-wrap justify-center gap-4">
+                    <a href="https://arxiv.org/abs/2605.13481" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">📜</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-purple">Полная статья (arXiv)</span>
+                    </a>
+                    <a href="https://github.com/Alab-NII/2wikimultihop, https://github.com/On-Point-RND/DiaASQ-2-QA" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-orange transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <img src="https://cdn-icons-png.flaticon.com/256/25/25231.png" alt="GitHub" class="w-5 h-5 dark:invert transition-all">
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-orange">Код (GitHub)</span>
+                    </a>
+                    <a href="https://huggingface.co/intfloat/multilingual-e5-large, https://huggingface.co/BAAI/bge-m3, https://huggingface.co/sentence-transformers/multi-qa-mpnet-base-cos-v1, https://huggingface.co/facebook/contriever, https://huggingface.co/datasets/sentence-transformers/natural-questions, https://huggingface.co/datasets/mandarjoshi/trivia_qa, https://huggingface.co/datasets/hotpotqa/hotpot_qa, https://huggingface.co/datasets/dgslibisey/MuSiQue" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-orange transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">🤗</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-orange">Модель (HuggingFace)</span>
+                    </a>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <!-- Progress bar -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) { html.classList.add('dark'); } else { html.classList.remove('dark'); }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready(); tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => { applyTheme(!html.classList.contains('dark')); });
+
+        window.addEventListener('scroll', () => {
+            let h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById("progress-bar").style.width = ((document.documentElement.scrollTop / h) * 100) + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+            }, { threshold: 0.15 });
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
