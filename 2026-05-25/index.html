@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Улучшать нужно не модель, а интерфейс агента</title>
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Dataism Science Hub" />
+    <meta property="og:title" content="Улучшать нужно не модель, а интерфейс агента" />
+    <meta property="og:description" content="В гонке за более умными агентами на базе LLM мы почти автоматически думаем о привычных рычагах: взять модель побольше, докрутить файн-тюнинг, добавить RL, переписать инструкцию." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://34.62.139.101:8004/static/uluchshat-nuzhno-ne-model-a-interfeis-agenta/uluchshat-nuzhno-ne-model-a-interfeis-agenta_ru.html" />
+    <meta property="og:image" content="https://andre-kuzminykh.github.io/dataist/2026-05-25/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://andre-kuzminykh.github.io/dataist/2026-05-25/cover.png" />
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: { purple: '#a855f7', orange: '#f97316', tg: '#229ED9' }
+                    }
+                },
+                fontFamily: {
+                    mono: ['"Space Mono"', 'monospace'],
+                    sans: ['"Inter"', 'sans-serif'],
+                    montserrat: ['"Montserrat"', 'sans-serif'],
+                },
+                animation: { 'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f8fafc; --text-main: #0f172a; --text-muted: #475569;
+            --grid-line-p: rgba(168,85,247,0.1); --grid-line-o: rgba(249,115,22,0.1);
+            --glass-bg: rgba(255,255,255,0.85); --glass-border: rgba(0,0,0,0.05);
+            --card-bg: rgba(255,255,255,0.6); --card-border: rgba(0,0,0,0.05);
+            --shadow-glow: rgba(0,0,0,0.02); --image-bg: #ffffff;
+        }
+        .dark {
+            --bg-color: #050505; --text-main: #e5e7eb; --text-muted: #9ca3af;
+            --grid-line-p: rgba(168,85,247,0.05); --grid-line-o: rgba(249,115,22,0.05);
+            --glass-bg: rgba(10,10,14,0.85); --glass-border: rgba(255,255,255,0.08);
+            --card-bg: rgba(255,255,255,0.03); --card-border: rgba(255,255,255,0.1);
+            --shadow-glow: rgba(0,0,0,0.5); --image-bg: #111111;
+        }
+        body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.4s ease, color 0.4s ease; -webkit-tap-highlight-color: transparent; }
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px); background-attachment: fixed; }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 10px 40px var(--shadow-glow); transition: background 0.4s ease, border-color 0.4s ease; }
+        .tech-card { background: var(--card-bg); border: 1px solid var(--card-border); transition: all 0.3s ease; }
+        .tech-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
+        .article-p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-content p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content h2 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.5rem; margin-top: 3rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.2; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; } }
+        .article-content section { max-width: 56rem; margin-left: auto; margin-right: auto; width: 100%; }
+        .article-content figure { margin: 2.5rem 0 3.5rem; max-width: 56rem; margin-left: auto; margin-right: auto; }
+        .article-content figure img { width: 100%; object-fit: contain; border-radius: 0.75rem; background-color: rgba(255,255,255,0.5); }
+        .article-content figcaption { font-size: 0.875rem; color: #1f2937; margin-top: 1.25rem; text-align: center; font-family: 'Space Mono', monospace; max-width: 48rem; margin-left: auto; margin-right: auto; line-height: 1.6; }
+        .dark .article-content figcaption { color: #d1d5db; }
+        .cyber-img { width: 100%; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px var(--shadow-glow); }
+        .arxiv-chart { background-color: var(--image-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); transition: background-color 0.4s ease; }
+        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.2,0.8,0.2,1), transform 0.6s cubic-bezier(0.2,0.8,0.2,1); }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
+
+    <!-- Background glows -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay:3s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
+        <a href="https://dataist.ai" target="_blank" class="flex items-center gap-3 md:gap-4 hover:opacity-80 transition-opacity">
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">i</div>
+            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">ДАТАИСТ</div>
+        </a>
+        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
+                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
+                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
+                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
+        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+
+            <!-- Cover -->
+            <header class="text-center mb-12 md:mb-16 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
+                    🤖 Датаист | 2026-05-25
+                </div>
+                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
+                    Улучшать нужно не модель, а интерфейс агента<br>
+                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3"></span>
+                </h1>
+
+                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0 bg-black">
+                    <img src="https://andre-kuzminykh.github.io/dataist/2026-05-25/cover.png"
+                         alt="Обложка: Улучшать нужно не модель, а интерфейс агента"
+                         class="w-full h-auto max-h-[70vh] object-cover scale-[1.0] origin-center">
+                </div>
+            </header>
+
+            <!-- Article body -->
+            <div class="article-content max-w-4xl mx-auto w-full">
+                <section>
+<h2>Когда проблема не в модели, а в «проводке»</h2>
+<p>В гонке за более умными агентами на базе LLM мы почти автоматически думаем о привычных рычагах: взять модель побольше, докрутить файн-тюнинг, добавить RL, переписать инструкцию. Но авторы работы <strong>Adapting the Interface, Not the Model</strong> предлагают неприятно простой вопрос: а что, если агент проваливается не потому, что «плохо думает», а потому что <strong>плохо встроен в среду</strong>?</p>
+<p>Это важный сдвиг оптики. Агент — это не только сама LLM. Между моделью и миром стоит целый слой: как ей показывают наблюдения, как описывают инструменты, как исполняют действия, как возвращают ошибки и как останавливают зацикливание. Именно этот слой авторы называют рантайм-обвязкой, и именно его они предлагают адаптировать вместо весов модели.</p>
+<p>Результат выглядит впечатляюще: система Life-Harness улучшает качество в <strong>116 из 126</strong> сочетаний «модель-среда» на семи детерминированных задачах, а средний относительный прирост достигает <strong>88,5%</strong>. И всё это — <strong>без изменения весов</strong> модели.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://andre-kuzminykh.github.io/dataist/2026-05-25/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Главная идея работы: адаптировать не модель, а рантайм-обвязку, через которую агент взаимодействует со средой.</p>
+</div></figure>
+</section>
+<section>
+<h2>Почему это вообще важно</h2>
+<p>Сегодня индустрия привыкла мыслить моделецентрично. Если агент плохо управляет операционной системой, ошибается в базе данных или путается в интернет-магазине, стандартный рецепт звучит так: дообучим его на похожих траекториях. В этом есть логика, но есть и цена: обучение дорого, зависит от конкретной модели и часто плохо переносится на другие среды.</p>
+<p>Авторы показывают, что в детерминированных, строго регулируемых сценариях — там, где есть фиксированные правила, инструменты, форматы ответов и понятные критерии успеха, — многие сбои возникают на границе «модель-среда». Не потому, что у модели нет способности к рассуждению, а потому что:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">она вызывает не тот инструмент;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">передаёт аргументы не в том формате;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">пишет действие в свободном тексте вместо структурированного вызова;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">неверно интерпретирует обратную связь;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">начинает крутиться в цикле и не замечает этого.</span></div>
+<p>Это особенно интересно на фоне парадокса современных LLM: модель может хорошо решать сложную математику, но слабо справляться с простым на вид агентным сценарием, где надо не просто «понять задачу», а <strong>действовать по контракту среды</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://andre-kuzminykh.github.io/dataist/2026-05-25/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Агент — это не только LLM: его поведение формируется всей интерфейсной прослойкой между моделью, инструментами, действиями и обратной связью.</p>
+</div></figure>
+<p>Именно поэтому работа важна не только как ещё один способ поднять метрики. Она предлагает более практичный взгляд на агентные системы: прежде чем учить модель заново, стоит проверить, не ломается ли всё в «операционной прослойке».</p>
+</section>
+<section>
+<h2>Что такое Life-Harness</h2>
+<p>Life-Harness — это многоуровневая рантайм-обвязка, которая улучшает работу «замороженного» агента. Веса модели не меняются, тестовая среда не меняется, а сама обвязка эволюционирует по тренировочным траекториям и потом фиксируется для оценки на новых задачах.</p>
+<p>Ключевая идея в том, что повторяющиеся провалы можно не «зашивать» в параметры модели, а превратить в <strong>переиспользуемые интерфейсные вмешательства</strong>.</p>
+<p>Система устроена в виде четырёх слоёв жизненного цикла взаимодействия:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Слой контракта среды</strong> — уточняет правила до начала эпизода: какие инструменты допустимы, как их вызывать, какие есть ограничения и типичные ловушки.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Слой процедурных навыков</strong> — достаёт из памяти компактные инструкции и шаблоны действий, извлечённые из прошлых траекторий.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Слой реализации действий</strong> — проверяет, исполнимо ли действие модели, и при необходимости приводит очевидные ошибки формата к каноническому виду.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Слой регулирования траектории</strong> — следит за динамикой эпизода и вмешивается, если агент начал повторяться, топтаться на месте или сжигать бюджет шагов без прогресса.</span></div>
+<p>На практике это значит, что Life-Harness может, например, напомнить модели, что поиск авиабилетов принимает только город отправления, назначения и дату; не дать отправить заведомо невалидный вызов; подсказать, что для задачи в интернет-магазине сначала надо выбрать размер и цвет, а уже потом нажимать покупку; или распознать бессмысленную петлю из одинаковых команд.</p>
+</section>
+<section>
+<h2>Как авторы пришли к этой архитектуре</h2>
+<p>Сильная сторона статьи — не только в результате, но и в том, что архитектура не взялась из воздуха. Авторы сначала вручную разобрали неудачные траектории базового агента и классифицировали типичные причины сбоев.</p>
+<p>Они выделили четыре категории:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">ошибки реализации действия;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">несоответствие контракту среды;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">деградация траектории;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">остаточные ошибки рассуждения.</span></div>
+<p>Это важный момент. В популярных обсуждениях агентных систем почти все проблемы любят сводить к «модель плохо рассуждает». Здесь картина тоньше: в детерминированных средах провалы очень разнородны, и значительная их часть не требует улучшения самой модели.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://andre-kuzminykh.github.io/dataist/2026-05-25/fig_3.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Обзор Life-Harness: четыре слоя вмешательства на разных этапах жизненного цикла агента — до действия, во время и после него.</p>
+</div></figure>
+<p>Отсюда и дизайн Life-Harness: разные типы ошибок ловятся в разных местах. Где-то надо переписать контракт, где-то — подмешать процедурный навык, где-то — отфильтровать действие до исполнения, а где-то — остановить уже развернувшуюся деградацию.</p>
+<p>Технически система эволюционирует по тренировочным траекториям с помощью агента для программирования: он анализирует журналы, находит повторяющиеся паттерны ошибок и предлагает обновления соответствующих слоёв. При этом тестовые задачи скрыты, а после завершения эволюции обвязка фиксируется. То есть это не онлайн-подстройка под тест, а именно отдельный этап разработки интерфейсного слоя.</p>
+</section>
+<section>
+<h2>Где тестировали и что получилось</h2>
+<p>Авторы проверили Life-Harness на семи средах из трёх наборов задач: сценарии с авиалиниями, розницей, телекомом, домашними интерактивными задачами, интернет-магазином, управлением операционной системой и базами данных. Это хороший набор: он охватывает и деловые рабочие процессы, и классические агентные бенчмарки.</p>
+<p>Особенно примечательно, что обвязку эволюционировали только на траекториях <strong>Qwen3-4B-Instruct</strong>, а потом применяли ещё к <strong>17 другим моделям</strong>. То есть авторы проверяли не «умеет ли система подогнать инструкцию под одну модель», а переносится ли найденная структура среды между разными семействами.</p>
+<p>Главные цифры:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">улучшение в <strong>116 из 126</strong> настроек;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">средний относительный прирост <strong>88,5%</strong>;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">особенно заметные выигрыши в ALFWorld, WebShop, DBBench и телеком-сценариях.</span></div>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://andre-kuzminykh.github.io/dataist/2026-05-25/fig_4.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Абсолютный прирост качества на 18 моделях и 7 бенчмарках: выигрыш наблюдается почти везде.</p>
+</div></figure>
+<p>Если смотреть по средним результатам, картина такая:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">ALFWorld: с 41,1% до 75,7%;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">WebShop: с 31,4% до 44,0%;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">OS: с 34,7% до 41,2%;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">DBBench: с 48,4% до 64,6%;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Airline: с 49,7% до 62,6%;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Telecom: с 55,3% до 69,0%.</span></div>
+<p>То есть выигрыш не декоративный. В ряде случаев это разница между «агент в целом ненадёжен» и «с ним уже можно работать».</p>
+<p>Ещё один важный вывод: <strong>маленькие модели с хорошей обвязкой начинают конкурировать с гораздо более крупными</strong>. Для практики это, возможно, даже важнее, чем очередной рекорд SOTA. Если качество можно поднять без дообучения и без перехода на модель в разы дороже, это сразу меняет экономику агентных систем.</p>
+</section>
+<section>
+<h2>Почему это лучше, чем просто эволюция инструкции</h2>
+<p>Авторы отдельно сравнили Life-Harness с подходом, где эволюционируется только инструкция. Инструкция тоже помогает, но гораздо слабее. И это логично: инструкция работает только на входе, а большинство проблем агентов возникают <strong>по ходу взаимодействия</strong>.</p>
+<p>Инструкция не может:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">перехватить невалидный вызов инструмента перед исполнением;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">исправить очевидную ошибку в формате действия;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">обнаружить цикл из повторяющихся шагов;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">встроить механическую защиту от заведомо провальных действий.</span></div>
+<p>Именно поэтому рантайм-обвязка оказывается сильнее: она работает не только как текстовая инструкция модели, а как активный интерфейс между агентом и средой.</p>
+</section>
+<section>
+<h2>А как это соотносится с обучением моделей</h2>
+<p>Один из самых интересных фрагментов статьи — сравнение с моделями, которые уже прошли специализированное обучение на использование инструментов. На первый взгляд может показаться, что если модель уже доучили под агентные сценарии, дополнительная обвязка ей не нужна. Но результаты показывают более сложную картину.</p>
+<p>Авторы сравнили базовую модель Qwen2.5-32B-Instruct, её специализированную производную xLAM-2-32B и обе версии с Life-Harness. Выводы получились такие:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">рантайм-обвязка может <strong>обойти специализированное обучение</strong> даже без изменения весов;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">после обучения обвязка всё равно остаётся полезной и даёт дополнительный прирост;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">специализированное обучение не всегда хорошо переносится на новые среды вне тренировочного распределения.</span></div>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://andre-kuzminykh.github.io/dataist/2026-05-25/fig_7.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Сравнение специализированного обучения работе с инструментами и рантайм-обвязки: обвязка не заменяет обучение полностью, но часто выигрывает и хорошо дополняет его.</p>
+</div></figure>
+<p>Это, пожалуй, главный практический тезис статьи. Обучение и адаптация интерфейса решают <strong>разные задачи</strong>. Обучение подгоняет внутреннее поведение модели под распределение данных. Обвязка подгоняет взаимодействие под конкретную среду. Эти вещи не конкурируют напрямую — они дополняют друг друга.</p>
+</section>
+<section>
+<h2>Что особенно понравилось в работе</h2>
+<p>Во-первых, статья предлагает здравый инженерный взгляд на агентов. Вместо магического «надо больше рассуждения» — конкретный анализ того, где именно ломается цикл взаимодействия.</p>
+<p>Во-вторых, у авторов получилась хорошая декомпозиция ошибок. Это не абстрактная философия про «системный уровень», а вполне прикладная схема, которая позволяет локализовать проблему и починить её без переобучения всего остального.</p>
+<p>В-третьих, переносимость между 18 моделями — очень сильный аргумент. Он показывает, что Life-Harness действительно выучивает не повадки одной конкретной LLM, а <strong>структуру самой среды</strong>.</p>
+<p>Наконец, работа хорошо попадает в реальность продакшена. В промышленной системе чаще хочется не переучивать модель на тысячи GPU-часов, а надёжно улучшить слой исполнения, валидации и обработки ошибок.</p>
+</section>
+<section>
+<h2>Ограничения и что дальше</h2>
+<p>Авторы честно оговаривают границы подхода. Life-Harness работает в детерминированных, формализованных средах, где есть стабильные правила, чёткие инструменты и воспроизводимые ошибки. Это идеальные условия для интерфейсной адаптации.</p>
+<p>Но в открытых задачах, где меняются цели, инструменты и критерии успеха, такой подход будет применить намного труднее. Чем менее стабильна среда, тем сложнее построить фиксированный контракт и тем меньше шансов, что найденные вмешательства будут переиспользуемыми.</p>
+<p>Тем не менее именно в «скучных» и строго регламентированных сценариях — работа с базами, внутренними API, операционными системами, бизнес-процессами — сегодня и живёт большая часть практической ценности агентных систем. Так что ограничение не обесценивает результат, а скорее очерчивает его наиболее продуктивную зону.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>Эта работа бьёт в очень точную цель: <strong>не каждый провал агента надо лечить новой моделью</strong>. Иногда достаточно починить интерфейс, через который модель видит мир и действует в нём.</p>
+<p>Life-Harness показывает, что рантайм-обвязка — не второстепенная инженерная деталь, а самостоятельный объект оптимизации. Причём объект дешёвый, переносимый и практически полезный. В мире, где все соревнуются в обучении всё больших моделей, это звучит почти еретически — и именно поэтому так интересно.</p>
+<p>Главный вывод статьи можно сформулировать так: будущее агентных систем, вероятно, зависит не только от того, <strong>насколько умна модель</strong>, но и от того, <strong>насколько грамотно устроен её контакт со средой</strong>. И, судя по этой работе, именно здесь сейчас лежит один из самых недооценённых резервов роста.</p>
+</section>
+            </div>
+
+            <!-- Footer CTA -->
+            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
+                <div class="mb-10 flex flex-wrap justify-center gap-4">
+                    <a href="https://arxiv.org/abs/2605.22166" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">📜</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-purple">Полная статья (arXiv)</span>
+                    </a>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <!-- Progress bar -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) { html.classList.add('dark'); } else { html.classList.remove('dark'); }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready(); tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => { applyTheme(!html.classList.contains('dark')); });
+
+        window.addEventListener('scroll', () => {
+            let h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById("progress-bar").style.width = ((document.documentElement.scrollTop / h) * 100) + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+            }, { threshold: 0.15 });
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
