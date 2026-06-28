@@ -1,17 +1,20 @@
-
 <!DOCTYPE html>
-<html lang="ru" class="dark scroll-smooth">
+<html lang="ru" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Архитектура общей памяти агентов для программирования</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
 
     <!-- Open Graph -->
     <meta property="og:site_name" content="Dataism Science Hub" />
     <meta property="og:title" content="Архитектура общей памяти агентов для программирования" />
     <meta property="og:description" content="У кодовых агентов есть странная слабость: они отлично пишут код, но часто повторяют одни и те же ошибки, как стажёр, который каждый раз заново узнаёт, что перед коммитом неплохо бы прогнать тесты." />
     <meta property="og:type" content="article" />
-    <meta property="og:url" content="http://34.62.139.101:8004/static/arkhitektura-obshchei-pamiati-agentov-dlia-programmirovaniia/arkhitektura-obshchei-pamiati-agentov-dlia-programmirovaniia_ru.html" />
+    <meta property="og:url" content="https://dataist.ai/2026-04-24/" />
     <meta property="og:image" content="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/2026-04-24/cover.png" />
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
@@ -20,13 +23,30 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/2026-04-24/cover.png" />
 
+    <!-- Telegram Web App Script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Шрифты: Inter и Space Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
+    <!-- Иконки Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <script>
@@ -35,267 +55,441 @@
             theme: {
                 extend: {
                     colors: {
-                        cyber: { purple: '#a855f7', orange: '#f97316', tg: '#229ED9' }
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
                     }
-                },
-                fontFamily: {
-                    mono: ['"Space Mono"', 'monospace'],
-                    sans: ['"Inter"', 'sans-serif'],
-                    montserrat: ['"Montserrat"', 'sans-serif'],
-                },
-                animation: { 'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+                }
             }
-        }
+        };
     </script>
 
-    <style>
-        :root {
-            --bg-color: #f8fafc; --text-main: #0f172a; --text-muted: #475569;
-            --grid-line-p: rgba(168,85,247,0.1); --grid-line-o: rgba(249,115,22,0.1);
-            --glass-bg: rgba(255,255,255,0.85); --glass-border: rgba(0,0,0,0.05);
-            --card-bg: rgba(255,255,255,0.6); --card-border: rgba(0,0,0,0.05);
-            --shadow-glow: rgba(0,0,0,0.02); --image-bg: #ffffff;
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
         }
-        .dark {
-            --bg-color: #050505; --text-main: #e5e7eb; --text-muted: #9ca3af;
-            --grid-line-p: rgba(168,85,247,0.05); --grid-line-o: rgba(249,115,22,0.05);
-            --glass-bg: rgba(10,10,14,0.85); --glass-border: rgba(255,255,255,0.08);
-            --card-bg: rgba(255,255,255,0.03); --card-border: rgba(255,255,255,0.1);
-            --shadow-glow: rgba(0,0,0,0.5); --image-bg: #111111;
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
         }
-        body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.4s ease, color 0.4s ease; -webkit-tap-highlight-color: transparent; }
-        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px); background-attachment: fixed; }
-        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 10px 40px var(--shadow-glow); transition: background 0.4s ease, border-color 0.4s ease; }
-        .tech-card { background: var(--card-bg); border: 1px solid var(--card-border); transition: all 0.3s ease; }
-        .tech-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
-        .article-p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
-        @media (min-width: 768px) { .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
-        .article-content p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
-        @media (min-width: 768px) { .article-content p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
-        .article-content h2 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.5rem; margin-top: 3rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.2; }
-        @media (min-width: 768px) { .article-content h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; } }
-        .article-content section { max-width: 56rem; margin-left: auto; margin-right: auto; width: 100%; }
-        .article-content figure { margin: 2.5rem 0 3.5rem; max-width: 56rem; margin-left: auto; margin-right: auto; }
-        .article-content figure img { width: 100%; object-fit: contain; border-radius: 0.75rem; background-color: rgba(255,255,255,0.5); }
-        .article-content figcaption { font-size: 0.875rem; color: #1f2937; margin-top: 1.25rem; text-align: center; font-family: 'Space Mono', monospace; max-width: 48rem; margin-left: auto; margin-right: auto; line-height: 1.6; }
-        .dark .article-content figcaption { color: #d1d5db; }
-        .cyber-img { width: 100%; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px var(--shadow-glow); }
-        .arxiv-chart { background-color: var(--image-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); transition: background-color 0.4s ease; }
-        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.2,0.8,0.2,1), transform 0.6s cubic-bezier(0.2,0.8,0.2,1); }
-        .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-p strong {
+            @apply font-semibold text-black dark:text-white;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .apple-img {
+            @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12;
+        }
+
+        /* Карточки-списки */
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 mb-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
-<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
 
-    <!-- Background glows -->
-    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
-        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay:3s;"></div>
-    </div>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
 
-    <!-- Header -->
-    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
-        <a href="https://dataist.ai" target="_blank" class="flex items-center gap-3 md:gap-4 hover:opacity-80 transition-opacity">
-            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">i</div>
-            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">ДАТАИСТ</div>
-        </a>
-        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
-            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
-                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
-                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
             </button>
-            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
-                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 <span class="hidden sm:inline">Telegram</span>
             </a>
         </div>
     </header>
 
-    <!-- Main -->
-    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
-        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
 
-            <!-- Cover -->
-            <header class="text-center mb-12 md:mb-16 fade-in">
-                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
-                    🤖 Датаист | 2026-04-18
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+
+                <!-- Тег категории -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-04-24</span>
                 </div>
-                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
-                    Архитектура общей памяти агентов для программирования<br>
-                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3"></span>
+
+                <!-- Заголовок -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Архитектура общей памяти агентов для программирования
                 </h1>
 
-                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0 bg-black">
+                <!-- Главная обложка -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
                     <img src="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/2026-04-24/cover.png"
                          alt="Обложка: Архитектура общей памяти агентов для программирования"
-                         class="w-full h-auto max-h-[70vh] object-cover scale-[1.0] origin-center">
+                         class="w-full h-auto object-cover">
                 </div>
             </header>
 
-            <!-- Article body -->
-            <div class="article-content max-w-4xl mx-auto w-full">
-                <section>
-<h2>Когда агенту полезно «вспоминать» чужой опыт</h2>
-<p>У агентов для программирования есть одна слабость: они отлично пишут код, но часто повторяют одни и те же ошибки, как стажёр, который каждый раз заново узнаёт, что перед коммитом неплохо бы прогнать тесты. Последний год исследователи активно учат такие системы <strong>пользоваться памятью</strong> — сохранять удачные и неудачные ходы, а потом опираться на них в новых задачах. Но почти всегда эта память живёт в узкой песочнице: задачи по одному и тому же бенчмарку, одному типу проблем, одной «экосистеме».</p>
-<p>Авторы работы <em>Memory Transfer Learning: How Memories are Transferred Across Domains in Coding Agents</em> предлагают выйти из этого локального мышления. Их идея проста и амбициозна: если разные задачи программирования всё равно делят общую инфраструктуру — языки, shell, тестирование, API-контракты, структуру репозиториев, — почему бы агенту не переносить опыт <strong>между доменами</strong>? Например, использовать урок, полученный на соревновательной задаче, чтобы лучше починить баг в реальном репозитории.</p>
-<p>И, что важно, статья показывает: это не красивая метафора, а вполне рабочий механизм. В среднем перенос памяти между разными типами задач по программированию даёт <strong>+3,7% к качеству</strong>. По меркам зрелых бенчмарков это уже заметный прирост — особенно если речь идёт не о дообучении модели, а о том, как она использует уже полученный опыт.</p>
-</section>
-<section>
-<h2>В чём здесь новизна</h2>
-<p>Главный тезис статьи звучит почти контринтуитивно: кодовому агенту полезно помнить не только «как решить такую же задачу», но и <strong>как вообще правильно действовать в вычислительной среде</strong>. Иными словами, ценность памяти — не столько в готовых алгоритмах, сколько в процедурном опыте.</p>
-<p>Авторы называют свой подход <strong>Memory Transfer Learning</strong> (MTL). В отличие от обычных memory-based агентов, которые копят воспоминания внутри одного домена, MTL строит <strong>единую память из гетерогенных задач</strong> — от генерации кода функций до репозиторных исправлений и задач на воспроизведение ML-экспериментов.</p>
-<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2604.14004v1/x1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
-<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Идея Memory Transfer Learning: вместо памяти, ограниченной одним доменом, агент использует общий пул воспоминаний из разных типов задач по программированию.</p>
-</div></figure>
-<p>Это важно по двум причинам. Во-первых, индустрия идёт к универсальным агентам, которые должны уметь и править баги, и запускать пайплайны, и ориентироваться в чужом репозитории, и не ломаться об инфраструктуру. Во-вторых, масштабировать модели всё дороже, а значит, любые прибавки за счёт <strong>лучшего использования inference-time опыта</strong> становятся особенно ценными.</p>
-</section>
-<section>
-<h2>Как устроена память в этой работе</h2>
-<p>Авторы не ограничились одним форматом «воспоминаний», а протестировали сразу четыре — от максимально сырого до максимально абстрактного.</p>
-<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2604.14004v1/x2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
-<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Четыре формата памяти: от сырых траекторий действий до абстрактных инсайтов. Чем выше уровень обобщения, тем лучше перенос между задачами.</p>
-</div></figure>
-<p>Вот эти четыре формата:</p>
-<p><strong>Trajectory</strong> — почти сырая трасса действий агента: команды, код, выводы среды.</p>
-<p><strong>Workflow</strong> — выжимка из траектории: цель и последовательность значимых шагов.</p>
-<p><strong>Summary</strong> — краткий пересказ задачи, действий и причин успеха или провала.</p>
-<p><strong>Insight</strong> — максимально обобщённый инсайт: принцип, который может пригодиться в будущих задачах без привязки к конкретным файлам и деталям.</p>
-<p>Это очень удачный дизайн эксперимента, потому что он позволяет проверить не просто «работает ли память», а <strong>какая именно память переносится лучше</strong>. И ответ, пожалуй, главный в статье: чем более память абстрактна, тем полезнее она для междоменного переноса.</p>
-</section>
-<section>
-<h2>Как они это проверяли</h2>
-<p>Экспериментальная часть у работы добротная. Авторы гоняли агента по шести бенчмаркам, которые покрывают разные классы задач по программированию:</p>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">LiveCodeBench v6</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Aider Polyglot</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">SWE-Bench Verified</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">TerminalBench2</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">ReplicationBench</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">MLGym-Bench</span></div>
-<p>То есть в одном наборе оказываются и соревновательные задачи, и реальная работа с репозиториями, и ML/research задачи. Для каждого домена агент сначала решал задачи, затем из полученных траекторий офлайн строилась память. После этого при тестировании на одном бенчмарке агенту подмешивали память, собранную <strong>из всех остальных</strong>.</p>
-<p>Технически retrieval сделан довольно просто: задачи и элементы памяти встраиваются в embedding-пространство, затем по косинусовой близости выбираются три самых релевантных воспоминания. Это не выглядит как особенно хитрая retrieval-система — и именно поэтому результаты интересны. Эффект достигается не за счёт сложной инженерии, а за счёт самого принципа.</p>
-</section>
-<section>
-<h2>Что получилось в цифрах</h2>
-<p>Главный результат: в среднем MTL действительно улучшает качество по шести бенчмаркам. Лучший формат — <strong>Insight</strong>. Для основного сетапа на GPT-5-mini средний Pass@3 вырос с 0.523 до 0.560, то есть как раз на <strong>3,7%</strong>.</p>
-<p>Особенно заметные приросты были на задачах, где важны не только алгоритмы, но и дисциплина работы с окружением: ReplicationBench и MLGym-Bench получили весьма чувствительные бонусы. На SWE-Bench Verified тоже есть прибавка, что особенно показательно: это уже не игрушечная генерация функций, а реальные багфиксы в репозиториях.</p>
-<p>Авторы также проверили перенос на других моделях — DeepSeek V3.2 и Qwen3-Coder. Эффект сохраняется, пусть и слабее: +2.6% и +1.8% в среднем. Это важный момент: похоже, речь идёт не о частном трюке под одну модель, а о более общем свойстве агентной памяти.</p>
-</section>
-<section>
-<h2>Почему память помогает: не код, а мета-знание</h2>
-<p>Пожалуй, самая сильная мысль статьи — <strong>переносится в основном не содержательный кодовый паттерн, а способ поведения</strong>.</p>
-<p>Авторы проанализировали случаи, когда zero-shot агент проваливался, а с MTL — проходил, и классифицировали вклад памяти. Оказалось, что основной выигрыш даёт не «вспомнил правильный алгоритм», а более прозаичные, но критически важные вещи:</p>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">сначала осмотреть структуру репозитория, а потом редактировать;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">делать маленькие патчи, а не переписывать полпроекта;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">соблюдать сигнатуры и внешние интерфейсы;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">валидировать правки быстрыми локальными тестами;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">не полагаться слепо на догадки о поведении среды;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">избегать хрупких shortcut-решений.</span></div>
-<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2604.14004v1/x3.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
-<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Основной вклад памяти — мета-знание: дисциплина действий, валидация и работа с окружением, а не прямой перенос алгоритмов.</p>
-</div></figure>
-<p>Это очень похоже на то, как работает хороший инженерный опыт у человека. Старший разработчик часто выигрывает не потому, что знает больше алгоритмов, а потому, что лучше чувствует процесс: где проверить контракт, где не делать опасный рефакторинг, где сначала воспроизвести баг, а потом чинить.</p>
-<p>И в этом смысле статья делает важный шаг к более реалистичному пониманию агентов для программирования: их бутылочное горлышко — не всегда «недостаток интеллекта», часто это <strong>недостаток процедурной дисциплины</strong>.</p>
-</section>
-<section>
-<h2>Почему абстракция решает всё</h2>
-<p>Самый красивый результат работы — демонстрация связи между уровнем абстракции памяти и её переносимостью. Сырые траектории часто оказываются слишком конкретными: в них зашиты имена файлов, команды, особенности окружения, библиотечные версии. Такой опыт легко становится ловушкой.</p>
-<p>Например, если агент видит, что в другой задаче помогло переписать файл через heredoc и запустить конкретную команду, он может механически применить тот же паттерн в новой среде — и сломать всё. А вот абстрактный инсайт вроде «сначала проверь формат оценки, потом делай минимальные изменения и быстро валидируй результат» переносится куда лучше.</p>
-<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2604.14004v1/x4.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
-<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">В embedding-пространстве более абстрактные воспоминания сильнее перемешиваются между доменами, что указывает на их большую универсальность.</p>
-</div></figure>
-<p>Авторы визуализируют это через t-SNE и дополнительно меряют количественно: по мере роста абстракции воспоминания становятся менее привязанными к конкретному бенчмарку и сильнее перемешиваются между доменами. Это и есть признак обобщаемости.</p>
-<p>Иными словами, если кратко: <strong>плохая память для переноса — это лог действий; хорошая память — это правило поведения</strong>.</p>
-</section>
-<section>
-<h2>Где система всё ещё ошибается</h2>
-<p>Разумеется, междоменная память не всегда помогает. Иногда она даёт <strong>negative transfer</strong> — когда чужой опыт неуместно якорит решение.</p>
-<p>Авторы разбирают три основных режима провала:</p>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>неподходящий якорь</strong>: память выглядит похожей, но структурно не относится к задаче;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>ложное чувство валидации</strong>: агент решает, что быстрая проверка достаточна, и пропускает реальные требования;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>слепой перенос best practice</strong>: полезный шаблон превращается в жёсткую догму и мешает адаптироваться к контексту.</span></div>
-<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2604.14004v1/x7.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
-<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Примеры негативного переноса: неподходящий паттерн из другой среды или искажение полезного совета могут увести агента в неверную стратегию.</p>
-</div></figure>
-<p>Один из показательных кейсов: память из R-задачи подталкивает агента к неуместному перезаписыванию файлов в C++-проекте. В другом случае полезный совет «сначала быстро проверь, что всё запускается» искажается в оправдание поверхностного smoke-test вместо полноценной работы над качеством.</p>
-<p>Это важное напоминание: память — не магия. Если retrieval слабый, а адаптация к новой задаче поверхностна, агент будет не учиться, а <strong>галлюцинировать по аналогии</strong>.</p>
-</section>
-<section>
-<h2>Чем больше память, тем лучше — но не бесконечно просто</h2>
-<p>Ещё один практический вывод: MTL масштабируется. Чем больше память и чем больше разных доменов в ней собрано, тем выше шанс вытащить полезное мета-знание.</p>
-<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2604.14004v1/x6.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
-<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Рост пула памяти и числа доменов повышает качество: разнообразие опыта увеличивает шанс найти полезный переносимый паттерн.</p>
-</div></figure>
-<p>Это особенно интересно на фоне популярного скепсиса к memory-системам: мол, всё упрётся в шум. Здесь авторы показывают, что по крайней мере в их сетапе рост разнообразия скорее помогает, чем мешает. Видимо, для кодовых агентов широкая база процедурных паттернов действительно ценна.</p>
-<p>При этом любопытно, что более сложные retrieval-стратегии не обошли простой embedding-based поиск. Ни LLM-reranking, ни переписывание памяти под задачу не дали лучшего результата. Вероятное объяснение — в агентных сценариях заранее трудно понять, какой именно кусок опыта окажется полезен на следующем шаге. Статический reranking тут уступает грубой, но устойчивой семантической близости.</p>
-</section>
-<section>
-<h2>Почему это важно для индустрии</h2>
-<p>У статьи есть вполне прикладной смысл. Сегодня мы много говорим о software engineering agents как о будущих универсальных помощниках разработчика. Но пока многие из них остаются «сильными стажёрами»: что-то умеют, но легко теряются вне привычного формата.</p>
-<p>Эта работа подсказывает более реалистичный путь развития. Вместо бесконечной гонки за ещё большей моделью можно учить агента <strong>систематически накапливать и переиспользовать опыт</strong> — причём не в узкой специализации, а поперёк разных задач. По сути, речь идёт о building blocks для инженерной интуиции.</p>
-<p>Особенно важен акцент на <strong>мета-знании</strong>. Если будущие агенты действительно будут работать в production-средах, то решать задачу мало — нужно ещё уметь не портить репозиторий, не нарушать контракты, корректно валидировать изменения и адекватно общаться с инструментами. Именно такой опыт и переносится лучше всего.</p>
-</section>
-<section>
-<h2>Вывод</h2>
-<p><em>Memory Transfer Learning</em> — не революция в архитектуре моделей, а аккуратная, но очень содержательная работа о том, <strong>какую именно память стоит давать агентам</strong>. Авторы показывают три ключевых вещи.</p>
-<p>Во-первых, память из других доменов действительно помогает: агенты для программирования выигрывают, когда могут опираться не только на локальный опыт. Во-вторых, переносится в основном не код как таковой, а процедурная инженерная мудрость — как исследовать, править, тестировать и не ломать среду. В-третьих, чем выше уровень абстракции памяти, тем она полезнее: инсайты работают лучше сырых трасс.</p>
-<p>Главный практический урок отсюда звучит так: если мы хотим действительно универсальных агентов для программирования, их нужно учить не просто помнить прошлое, а <strong>извлекать из него обобщённые правила поведения</strong>. Не «какую команду я тогда запускал», а «какой принцип тогда сработал».</p>
-<p>И это, возможно, куда более важный шаг к надёжным агентам, чем ещё один скачок в размере модели.</p>
-</section>
-            </div>
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
 
-            <!-- Footer CTA -->
-            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
-                <div class="mb-10 flex flex-wrap justify-center gap-4">
-                    <a href="https://arxiv.org/abs/2604.14004" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
-                        <span class="text-xl">📜</span>
-                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-purple">Полная статья (arXiv)</span>
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">
+                    У агентов для программирования есть одна слабость: они отлично пишут код, но часто повторяют одни и те же ошибки, как стажёр, который каждый раз заново узнаёт, что перед коммитом неплохо бы прогнать тесты. Последний год исследователи активно учат такие системы <strong>пользоваться памятью</strong> — сохранять удачные и неудачные ходы, а потом опираться на них в новых задачах. Но почти всегда эта память живёт в узкой песочнице: задачи по одному и тому же бенчмарку, одному типу проблем, одной «экосистеме».
+                </p>
+
+                <h2 class="article-h2 fade-in">Когда агенту полезно «вспоминать» чужой опыт</h2>
+                <p class="article-p fade-in">Авторы работы <em>Memory Transfer Learning: How Memories are Transferred Across Domains in Coding Agents</em> предлагают выйти из этого локального мышления. Их идея проста и амбициозна: если разные задачи программирования всё равно делят общую инфраструктуру — языки, shell, тестирование, API-контракты, структуру репозиториев, — почему бы агенту не переносить опыт <strong>между доменами</strong>? Например, использовать урок, полученный на соревновательной задаче, чтобы лучше починить баг в реальном репозитории.</p>
+                <p class="article-p fade-in">И, что важно, статья показывает: это не красивая метафора, а вполне рабочий механизм. В среднем перенос памяти между разными типами задач по программированию даёт <strong>+3,7% к качеству</strong>. По меркам зрелых бенчмарков это уже заметный прирост — особенно если речь идёт не о дообучении модели, а о том, как она использует уже полученный опыт.</p>
+
+                <h2 class="article-h2 fade-in">В чём здесь новизна</h2>
+                <p class="article-p fade-in">Главный тезис статьи звучит почти контринтуитивно: кодовому агенту полезно помнить не только «как решить такую же задачу», но и <strong>как вообще правильно действовать в вычислительной среде</strong>. Иными словами, ценность памяти — не столько в готовых алгоритмах, сколько в процедурном опыте.</p>
+                <p class="article-p fade-in">Авторы называют свой подход <strong>Memory Transfer Learning</strong> (MTL). В отличие от обычных memory-based агентов, которые копят воспоминания внутри одного домена, MTL строит <strong>единую память из гетерогенных задач</strong> — от генерации кода функций до репозиторных исправлений и задач на воспроизведение ML-экспериментов.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://arxiv.org/html/2604.14004v1/x1.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Идея Memory Transfer Learning: вместо памяти, ограниченной одним доменом, агент использует общий пул воспоминаний из разных типов задач по программированию.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Это важно по двум причинам. Во-первых, индустрия идёт к универсальным агентам, которые должны уметь и править баги, и запускать пайплайны, и ориентироваться в чужом репозитории, и не ломаться об инфраструктуру. Во-вторых, масштабировать модели всё дороже, а значит, любые прибавки за счёт <strong>лучшего использования inference-time опыта</strong> становятся особенно ценными.</p>
+
+                <h2 class="article-h2 fade-in">Как устроена память в этой работе</h2>
+                <p class="article-p fade-in">Авторы не ограничились одним форматом «воспоминаний», а протестировали сразу четыре — от максимально сырого до максимально абстрактного.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://arxiv.org/html/2604.14004v1/x2.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Четыре формата памяти: от сырых траекторий действий до абстрактных инсайтов. Чем выше уровень обобщения, тем лучше перенос между задачами.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Вот эти четыре формата:</p>
+                <p class="article-p fade-in"><strong>Trajectory</strong> — почти сырая трасса действий агента: команды, код, выводы среды.</p>
+                <p class="article-p fade-in"><strong>Workflow</strong> — выжимка из траектории: цель и последовательность значимых шагов.</p>
+                <p class="article-p fade-in"><strong>Summary</strong> — краткий пересказ задачи, действий и причин успеха или провала.</p>
+                <p class="article-p fade-in"><strong>Insight</strong> — максимально обобщённый инсайт: принцип, который может пригодиться в будущих задачах без привязки к конкретным файлам и деталям.</p>
+                <p class="article-p fade-in">Это очень удачный дизайн эксперимента, потому что он позволяет проверить не просто «работает ли память», а <strong>какая именно память переносится лучше</strong>. И ответ, пожалуй, главный в статье: чем более память абстрактна, тем полезнее она для междоменного переноса.</p>
+
+                <h2 class="article-h2 fade-in">Как они это проверяли</h2>
+                <p class="article-p fade-in">Экспериментальная часть у работы добротная. Авторы гоняли агента по шести бенчмаркам, которые покрывают разные классы задач по программированию:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">LiveCodeBench v6</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">Aider Polyglot</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">SWE-Bench Verified</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">TerminalBench2</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">ReplicationBench</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">MLGym-Bench</span>
+                </div>
+
+                <p class="article-p fade-in">То есть в одном наборе оказываются и соревновательные задачи, и реальная работа с репозиториями, и ML/research задачи. Для каждого домена агент сначала решал задачи, затем из полученных траекторий офлайн строилась память. После этого при тестировании на одном бенчмарке агенту подмешивали память, собранную <strong>из всех остальных</strong>.</p>
+                <p class="article-p fade-in">Технически retrieval сделан довольно просто: задачи и элементы памяти встраиваются в embedding-пространство, затем по косинусовой близости выбираются три самых релевантных воспоминания. Это не выглядит как особенно хитрая retrieval-система — и именно поэтому результаты интересны. Эффект достигается не за счёт сложной инженерии, а за счёт самого принципа.</p>
+
+                <h2 class="article-h2 fade-in">Что получилось в цифрах</h2>
+                <p class="article-p fade-in">Главный результат: в среднем MTL действительно улучшает качество по шести бенчмаркам. Лучший формат — <strong>Insight</strong>. Для основного сетапа на GPT-5-mini средний Pass@3 вырос с 0.523 до 0.560, то есть как раз на <strong>3,7%</strong>.</p>
+                <p class="article-p fade-in">Особенно заметные приросты были на задачах, где важны не только алгоритмы, но и дисциплина работы с окружением: ReplicationBench и MLGym-Bench получили весьма чувствительные бонусы. На SWE-Bench Verified тоже есть прибавка, что особенно показательно: это уже не игрушечная генерация функций, а реальные багфиксы в репозиториях.</p>
+                <p class="article-p fade-in">Авторы также проверили перенос на других моделях — DeepSeek V3.2 и Qwen3-Coder. Эффект сохраняется, пусть и слабее: +2.6% и +1.8% в среднем. Это важный момент: похоже, речь идёт не о частном трюке под одну модель, а о более общем свойстве агентной памяти.</p>
+
+                <h2 class="article-h2 fade-in">Почему память помогает: не код, а мета-знание</h2>
+                <p class="article-p fade-in">Пожалуй, самая сильная мысль статьи — <strong>переносится в основном не содержательный кодовый паттерн, а способ поведения</strong>.</p>
+                <p class="article-p fade-in">Авторы проанализировали случаи, когда zero-shot агент проваливался, а с MTL — проходил, и классифицировали вклад памяти. Оказалось, что основной выигрыш даёт не «вспомнил правильный алгоритм», а более прозаичные, но критически важные вещи:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">сначала осмотреть структуру репозитория, а потом редактировать;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">делать маленькие патчи, а не переписывать полпроекта;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">соблюдать сигнатуры и внешние интерфейсы;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">валидировать правки быстрыми локальными тестами;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">не полагаться слепо на догадки о поведении среды;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">избегать хрупких shortcut-решений.</span>
+                </div>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://arxiv.org/html/2604.14004v1/x3.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Основной вклад памяти — мета-знание: дисциплина действий, валидация и работа с окружением, а не прямой перенос алгоритмов.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Это очень похоже на то, как работает хороший инженерный опыт у человека. Старший разработчик часто выигрывает не потому, что знает больше алгоритмов, а потому, что лучше чувствует процесс: где проверить контракт, где не делать опасный рефакторинг, где сначала воспроизвести баг, а потом чинить.</p>
+                <p class="article-p fade-in">И в этом смысле статья делает важный шаг к более реалистичному пониманию агентов для программирования: их бутылочное горлышко — не всегда «недостаток интеллекта», часто это <strong>недостаток процедурной дисциплины</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Почему абстракция решает всё</h2>
+                <p class="article-p fade-in">Самый красивый результат работы — демонстрация связи между уровнем абстракции памяти и её переносимостью. Сырые траектории часто оказываются слишком конкретными: в них зашиты имена файлов, команды, особенности окружения, библиотечные версии. Такой опыт легко становится ловушкой.</p>
+                <p class="article-p fade-in">Например, если агент видит, что в другой задаче помогло переписать файл через heredoc и запустить конкретную команду, он может механически применить тот же паттерн в новой среде — и сломать всё. А вот абстрактный инсайт вроде «сначала проверь формат оценки, потом делай минимальные изменения и быстро валидируй результат» переносится куда лучше.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://arxiv.org/html/2604.14004v1/x4.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">В embedding-пространстве более абстрактные воспоминания сильнее перемешиваются между доменами, что указывает на их большую универсальность.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Авторы визуализируют это через t-SNE и дополнительно меряют количественно: по мере роста абстракции воспоминания становятся менее привязанными к конкретному бенчмарку и сильнее перемешиваются между доменами. Это и есть признак обобщаемости.</p>
+                <p class="article-p fade-in">Иными словами, если кратко: <strong>плохая память для переноса — это лог действий; хорошая память — это правило поведения</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Где система всё ещё ошибается</h2>
+                <p class="article-p fade-in">Разумеется, междоменная память не всегда помогает. Иногда она даёт <strong>negative transfer</strong> — когда чужой опыт неуместно якорит решение.</p>
+                <p class="article-p fade-in">Авторы разбирают три основных режима провала:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">неподходящий якорь</strong>: память выглядит похожей, но структурно не относится к задаче;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">ложное чувство валидации</strong>: агент решает, что быстрая проверка достаточна, и пропускает реальные требования;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">слепой перенос best practice</strong>: полезный шаблон превращается в жёсткую догму и мешает адаптироваться к контексту.</span>
+                </div>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://arxiv.org/html/2604.14004v1/x7.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Примеры негативного переноса: неподходящий паттерн из другой среды или искажение полезного совета могут увести агента в неверную стратегию.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Один из показательных кейсов: память из R-задачи подталкивает агента к неуместному перезаписыванию файлов в C++-проекте. В другом случае полезный совет «сначала быстро проверь, что всё запускается» искажается в оправдание поверхностного smoke-test вместо полноценной работы над качеством.</p>
+                <p class="article-p fade-in">Это важное напоминание: память — не магия. Если retrieval слабый, а адаптация к новой задаче поверхностна, агент будет не учиться, а <strong>галлюцинировать по аналогии</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Чем больше память, тем лучше — но не бесконечно просто</h2>
+                <p class="article-p fade-in">Ещё один практический вывод: MTL масштабируется. Чем больше память и чем больше разных доменов в ней собрано, тем выше шанс вытащить полезное мета-знание.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://arxiv.org/html/2604.14004v1/x6.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Рост пула памяти и числа доменов повышает качество: разнообразие опыта увеличивает шанс найти полезный переносимый паттерн.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Это особенно интересно на фоне популярного скепсиса к memory-системам: мол, всё упрётся в шум. Здесь авторы показывают, что по крайней мере в их сетапе рост разнообразия скорее помогает, чем мешает. Видимо, для кодовых агентов широкая база процедурных паттернов действительно ценна.</p>
+                <p class="article-p fade-in">При этом любопытно, что более сложные retrieval-стратегии не обошли простой embedding-based поиск. Ни LLM-reranking, ни переписывание памяти под задачу не дали лучшего результата. Вероятное объяснение — в агентных сценариях заранее трудно понять, какой именно кусок опыта окажется полезен на следующем шаге. Статический reranking тут уступает грубой, но устойчивой семантической близости.</p>
+
+                <h2 class="article-h2 fade-in">Почему это важно для индустрии</h2>
+                <p class="article-p fade-in">У статьи есть вполне прикладной смысл. Сегодня мы много говорим о software engineering agents как о будущих универсальных помощниках разработчика. Но пока многие из них остаются «сильными стажёрами»: что-то умеют, но легко теряются вне привычного формата.</p>
+                <p class="article-p fade-in">Эта работа подсказывает более реалистичный путь развития. Вместо бесконечной гонки за ещё большей моделью можно учить агента <strong>систематически накапливать и переиспользовать опыт</strong> — причём не в узкой специализации, а поперёк разных задач. По сути, речь идёт о building blocks для инженерной интуиции.</p>
+                <p class="article-p fade-in">Особенно важен акцент на <strong>мета-знании</strong>. Если будущие агенты действительно будут работать в production-средах, то решать задачу мало — нужно ещё уметь не портить репозиторий, не нарушать контракты, корректно валидировать изменения и адекватно общаться с инструментами. Именно такой опыт и переносится лучше всего.</p>
+
+                <h2 class="article-h2 fade-in">Вывод</h2>
+                <p class="article-p fade-in"><em>Memory Transfer Learning</em> — не революция в архитектуре моделей, а аккуратная, но очень содержательная работа о том, <strong>какую именно память стоит давать агентам</strong>. Авторы показывают три ключевых вещи.</p>
+                <p class="article-p fade-in">Во-первых, память из других доменов действительно помогает: агенты для программирования выигрывают, когда могут опираться не только на локальный опыт. Во-вторых, переносится в основном не код как таковой, а процедурная инженерная мудрость — как исследовать, править, тестировать и не ломать среду. В-третьих, чем выше уровень абстракции памяти, тем она полезнее: инсайты работают лучше сырых трасс.</p>
+                <p class="article-p fade-in">Главный практический урок отсюда звучит так: если мы хотим действительно универсальных агентов для программирования, их нужно учить не просто помнить прошлое, а <strong>извлекать из него обобщённые правила поведения</strong>. Не «какую команду я тогда запускал», а «какой принцип тогда сработал».</p>
+                <p class="article-p fade-in">И это, возможно, куда более важный шаг к надёжным агентам, чем ещё один скачок в размере модели.</p>
+
+                <!-- Источник -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2604.14004" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
                     </a>
-                    <a href="https://github.com/laude-institute/harbor" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-orange transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
-                        <img src="https://cdn-icons-png.flaticon.com/256/25/25231.png" alt="GitHub" class="w-5 h-5 dark:invert transition-all">
-                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-orange">Код (GitHub)</span>
+                    <a href="https://github.com/laude-institute/harbor" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="github" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
                     </a>
                 </div>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                Обзоры ИИ простыми словами
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день в Telegram.
+                            </p>
+
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </article>
     </main>
 
-    <!-- Progress bar -->
-    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
-        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
     </div>
 
+    <!-- Инициализация и скрипты -->
     <script>
         lucide.createIcons();
 
+        // Логика смены темы
         const themeToggleBtn = document.getElementById('theme-toggle');
         const html = document.documentElement;
 
         function applyTheme(isDark) {
-            if (isDark) { html.classList.add('dark'); } else { html.classList.remove('dark'); }
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
             setTimeout(() => lucide.createIcons(), 50);
         }
 
+        // Telegram Web App
         const tg = window.Telegram?.WebApp;
         if (tg && tg.initData) {
-            tg.ready(); tg.expand();
+            tg.ready();
+            tg.expand();
             if (tg.colorScheme) {
                 applyTheme(tg.colorScheme === 'dark');
-                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
             }
         }
 
-        themeToggleBtn.addEventListener('click', () => { applyTheme(!html.classList.contains('dark')); });
-
-        window.addEventListener('scroll', () => {
-            let h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            document.getElementById("progress-bar").style.width = ((document.documentElement.scrollTop / h) * 100) + "%";
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
         });
 
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
         document.addEventListener("DOMContentLoaded", function() {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
-            }, { threshold: 0.15 });
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
             document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
         });
     </script>

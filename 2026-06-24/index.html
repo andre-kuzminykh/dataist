@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru" class="dark scroll-smooth">
+<html lang="ru" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -18,7 +18,7 @@
 
 В этом обзоре разбираем, из каких частей на деле состоит память ИИ-агента, почему не существует одного лучшего решения для всех случаев и какой способ поддержки памяти оказывается самым разумным на практике." />
     <meta property="og:type" content="article" />
-    <meta property="og:url" content="http://34.62.139.101:8004/static/gotovy-li-vashi-agenty-k-ai-native-pamiati/gotovy-li-vashi-agenty-k-ai-native-pamiati_ru.html" />
+    <meta property="og:url" content="https://dataist.ai/2026-06-24/" />
     <meta property="og:image" content="https://dataist.ai/2026-06-24/cover.png" />
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1200" />
@@ -27,13 +27,30 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image" content="https://dataist.ai/2026-06-24/cover.png" />
 
+    <!-- Telegram Web App Script -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Шрифты: Inter и Space Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
+    <!-- Иконки Lucide -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <script>
@@ -42,279 +59,449 @@
             theme: {
                 extend: {
                     colors: {
-                        cyber: { purple: '#a855f7', orange: '#f97316', tg: '#229ED9' }
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
                     }
-                },
-                fontFamily: {
-                    mono: ['"Space Mono"', 'monospace'],
-                    sans: ['"Inter"', 'sans-serif'],
-                    montserrat: ['"Montserrat"', 'sans-serif'],
-                },
-                animation: { 'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+                }
             }
-        }
+        };
     </script>
 
-    <style>
-        :root {
-            --bg-color: #f8fafc; --text-main: #0f172a; --text-muted: #475569;
-            --grid-line-p: rgba(168,85,247,0.1); --grid-line-o: rgba(249,115,22,0.1);
-            --glass-bg: rgba(255,255,255,0.85); --glass-border: rgba(0,0,0,0.05);
-            --card-bg: rgba(255,255,255,0.6); --card-border: rgba(0,0,0,0.05);
-            --shadow-glow: rgba(0,0,0,0.02); --image-bg: #ffffff;
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
         }
-        .dark {
-            --bg-color: #050505; --text-main: #e5e7eb; --text-muted: #9ca3af;
-            --grid-line-p: rgba(168,85,247,0.05); --grid-line-o: rgba(249,115,22,0.05);
-            --glass-bg: rgba(10,10,14,0.85); --glass-border: rgba(255,255,255,0.08);
-            --card-bg: rgba(255,255,255,0.03); --card-border: rgba(255,255,255,0.1);
-            --shadow-glow: rgba(0,0,0,0.5); --image-bg: #111111;
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
         }
-        body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.4s ease, color 0.4s ease; -webkit-tap-highlight-color: transparent; }
-        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px); background-attachment: fixed; }
-        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 10px 40px var(--shadow-glow); transition: background 0.4s ease, border-color 0.4s ease; }
-        .tech-card { background: var(--card-bg); border: 1px solid var(--card-border); transition: all 0.3s ease; }
-        .tech-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
-        .article-p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
-        @media (min-width: 768px) { .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
-        .article-content p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
-        @media (min-width: 768px) { .article-content p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
-        .article-content h2 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.5rem; margin-top: 3rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.2; }
-        @media (min-width: 768px) { .article-content h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; } }
-        .article-content section { max-width: 56rem; margin-left: auto; margin-right: auto; width: 100%; }
-        .article-content figure { margin: 2.5rem 0 3.5rem; max-width: 56rem; margin-left: auto; margin-right: auto; }
-        .article-content figure img { width: 100%; object-fit: contain; border-radius: 0.75rem; background-color: rgba(255,255,255,0.5); }
-        .article-content figcaption { font-size: 0.875rem; color: #1f2937; margin-top: 1.25rem; text-align: center; font-family: 'Space Mono', monospace; max-width: 48rem; margin-left: auto; margin-right: auto; line-height: 1.6; }
-        .dark .article-content figcaption { color: #d1d5db; }
-        .cyber-img { width: 100%; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px var(--shadow-glow); }
-        .arxiv-chart { background-color: var(--image-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); transition: background-color 0.4s ease; }
-        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.2,0.8,0.2,1), transform 0.6s cubic-bezier(0.2,0.8,0.2,1); }
-        .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-p strong {
+            @apply font-semibold text-black dark:text-white;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .apple-img {
+            @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12;
+        }
+
+        /* Карточки-списки */
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 mb-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
     </style>
 </head>
-<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
 
-    <!-- Background glows -->
-    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
-        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
-        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay:3s;"></div>
-    </div>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
 
-    <!-- Header -->
-    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
-        <a href="https://dataist.ai" target="_blank" class="flex items-center gap-3 md:gap-4 hover:opacity-80 transition-opacity">
-            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">i</div>
-            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">ДАТАИСТ</div>
-        </a>
-        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
-            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
-                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
-                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
             </button>
-            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
-                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
                 <span class="hidden sm:inline">Telegram</span>
             </a>
         </div>
     </header>
 
-    <!-- Main -->
-    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
-        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
-            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
 
-            <!-- Cover -->
-            <header class="text-center mb-12 md:mb-16 fade-in">
-                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
-                    🤖 Датаист | 2026-06-24
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+
+                <!-- Тег категории -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-06-24</span>
                 </div>
-                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
-                    Готовы ли ваши агенты к AI-Native памяти?<br>
-                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3"></span>
+
+                <!-- Заголовок -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Готовы ли ваши агенты к AI-Native памяти?
                 </h1>
 
-                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0 bg-black">
+                <!-- Главная обложка -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
                     <img src="https://dataist.ai/2026-06-24/cover.png"
                          alt="Обложка: Готовы ли ваши агенты к AI-Native памяти?"
-                         class="w-full h-auto max-h-[70vh] object-cover scale-[1.0] origin-center">
+                         class="w-full h-auto object-cover">
                 </div>
             </header>
 
-            <!-- Article body -->
-            <div class="article-content max-w-4xl mx-auto w-full">
-                <section>
-<h2>Память для ИИ-агентов: почему «просто поиск по векторной базе» уже не спасает</h2>
-<p>Если вы следите за развитием ИИ-агентов, то наверняка замечали странную вещь. Модели стали лучше писать код, вести диалог, пользоваться инструментами и даже выполнять длинные цепочки действий. Но как только агенту нужно <strong>помнить</strong> — что пользователь говорил неделю назад, какая версия факта актуальна сейчас, в каком порядке происходили события, — магия быстро заканчивается. Вместо умного помощника мы получаем машину с провалами в памяти, ложными воспоминаниями и привычкой путать прошлое с настоящим.</p>
-<p>Именно в эту боль бьет работа <strong>«Готовы ли мы к нативной системе памяти для агентов?»</strong>. Авторы предлагают посмотреть на память агента не как на декоративный модуль вокруг LLM, а как на полноценную систему управления данными: с записью, извлечением, маршрутизацией запросов, обновлением, забыванием и издержками. И это очень своевременный сдвиг оптики. Потому что пока индустрия часто меряет только «получилось ли решить задачу», остается за кадром главное: <strong>какой ценой, на какой архитектуре и насколько надежно это работает, когда мир меняется</strong>.</p>
-<p>Статья ценна именно этим: она не рекламирует очередной способ «прикрутить память», а разбирает весь зоопарк подходов по косточкам и показывает неприятную, но полезную правду — <strong>универсальной памяти для агентов пока нет</strong>.</p>
-</section>
-<section>
-<h2>Что вообще считается памятью агента</h2>
-<p>Один из сильных ходов статьи — четкое разведение понятий. Авторы говорят: память агента — это не просто длинный контекст и не обычный поиск по внешней базе знаний. Это <strong>постоянное, обновляемое хранилище состояния</strong>, которое переживает отдельные шаги инференса и помогает агенту в будущем.</p>
-<p>То есть речь идет не только о том, чтобы достать релевантный фрагмент текста. Нужно еще решить:</p>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">что именно сохранять из диалога, журналов инструментов и промежуточных действий;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">в каком виде это хранить;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">как искать нужное;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">как обновлять устаревшие факты;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">как не утонуть в растущем объеме памяти;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">как не потратить на все это слишком много времени и вычислений.</span></div>
-<p>Авторы раскладывают любую систему памяти на четыре модуля:</p>
-<p>1. <strong>Представление и хранение памяти</strong> — текст, граф, дерево, гибрид.</p>
-<p>2. <strong>Извлечение памяти</strong> — как сырые данные превращаются в факты, заметки, сводки или структуры.</p>
-<p>3. <strong>Поиск и маршрутизация</strong> — как система решает, что именно поднять по запросу.</p>
-<p>4. <strong>Поддержка памяти</strong> — обновления, версии, консолидация, удаление и контроль роста.</p>
-<p>Эта декомпозиция важна, потому что позволяет сравнивать не «черные ящики», а конкретные инженерные решения.</p>
-<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-24/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
-<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Типовые рабочие процессы памяти агента: от простого потока заметок до многослойных и гибридных систем.</p>
-</div></figure>
-</section>
-<section>
-<h2>Как сегодня устроена память: от плоских заметок до графов и гибридов</h2>
-<p>На практике исследователи выделили несколько семейств архитектур.</p>
-<p>Самый простой вариант — <strong>последовательная память</strong>: история хранится как текст, факты или сжатые сводки. Это близко к идее «сложим все в журнал и будем искать по сходству». Такой подход дешевле и проще, но быстро начинает ломаться на дальних зависимостях и обновлениях.</p>
-<p>Следующий уровень — <strong>графы и деревья</strong>. Здесь память уже не просто набор фраз, а структура: сущности, связи, временные отметки, иерархии. Это особенно полезно, когда нужно понимать, <strong>кто связан с кем</strong>, <strong>что изменилось</strong> и <strong>в каком порядке происходили события</strong>.</p>
-<p>Наконец, есть <strong>гибридные системы</strong>, которые совмещают сразу несколько видов памяти: текст, векторные индексы, графовые базы, ключевые слова, сводки и отдельные хранилища для краткосрочного и долгосрочного состояния. Они выглядят как наиболее «взрослый» путь — но и платят за это сложностью.</p>
-<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-24/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
-<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Основные способы представления памяти: плоские последовательности, графовые структуры и гибридные контейнеры.</p>
-</div></figure>
-<p>Это не просто классификация ради классификации. Она подводит к главному выводу статьи: <strong>выигрывает не самая умная архитектура сама по себе, а та, чья структура совпадает с узким местом конкретной задачи</strong>.</p>
-</section>
-<section>
-<h2>Как авторы проверяли память агентов</h2>
-<p>Работа впечатляет масштабом: исследователи сравнили <strong>12 репрезентативных систем памяти</strong> и две базовые альтернативы — длинный контекст и обычный поиск по эмбеддингам. Проверка шла на <strong>пяти типах нагрузки и 11 наборах данных</strong>.</p>
-<p>Что особенно хорошо: они не ограничились общей метрикой «насколько хороший ответ». Вместо этого оценивали память по пяти измерениям:</p>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">итоговая эффективность на задачах;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">точность извлечения нужных свидетельств;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">устойчивость к обновлению знаний;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">стабильность на длинном горизонте;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">операционные издержки.</span></div>
-<p>Именно такой дизайн превращает статью из очередного сравнения моделей в почти системное исследование.</p>
-</section>
-<section>
-<h2>Главный результат: лучшей памяти «на все случаи» не существует</h2>
-<p>Самый отрезвляющий вывод звучит просто: <strong>ни одна архитектура не доминирует во всех сценариях</strong>.</p>
-<p>На задачах, где нужно собирать факты через несколько сессий и отслеживать временные связи, лучше показывают себя системы с явной структурой — например графовые. Там, где важна точная привязка ответа к длинному, но цельному диалогу, хорошо работают гибридные схемы с многоступенчатой фильтрацией. А на задачах, где успех зависит от сохранения следа промежуточных действий, неожиданно сильным остается просто длинный контекст или память, сохраняющая трассу событий почти без переработки.</p>
-<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-24/fig_6.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
-<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Сравнение общей эффективности систем памяти на нескольких бенчмарках: лидер меняется в зависимости от типа нагрузки.</p>
-</div></figure>
-<p>Это, пожалуй, самый практичный вывод для разработчиков. Если ваш агент — это помощник с персональной историей, вам нужны хорошие механизмы временных обновлений и связи между фактами. Если это исполнитель многошаговых процедур, критично не «умное сжатие», а сохранение последовательности действий. Если это диалоговый интерфейс с длинными беседами, пригодится грубая фильтрация с последующим уточнением.</p>
-<p>Иными словами, <strong>память — это не аксессуар, а часть специализации агента</strong>.</p>
-</section>
-<section>
-<h2>Почему обычный поиск не справляется</h2>
-<p>Отдельный сильный блок статьи — анализ не только качества ответов, но и того, <strong>насколько хорошо система поднимает нужные свидетельства</strong>. И здесь у обычного плоского поиска по эмбеддингам начинаются проблемы.</p>
-<p>Исследователи показывают, что на короткой дистанции такие системы еще конкурентоспособны. Но как только доказательства ответа оказываются разбросаны по времени или по разным частям истории, качество резко падает. Память начинает поднимать что-то «похожее по смыслу», но не обязательно то, что нужно для конкретного вопроса.</p>
-<p>Это важное различие. Для агента мало найти <strong>что-то релевантное</strong>. Ему нужно собрать <strong>полный набор опорных фрагментов</strong>, причем иногда из очень далеких кусков истории.</p>
-<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-24/fig_7.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
-<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Точность извлечения свидетельств: структурированные системы лучше держат дальние и разрозненные зависимости, чем плоский поиск.</p>
-</div></figure>
-<p>Отсюда один из центральных выводов статьи: <strong>качество памяти — это не только ранжирование первого подходящего фрагмента, но и способность восстановить полный контекст</strong>. Графы и иерархии здесь помогают, потому что хранят не просто «похожие куски текста», а отношения между ними.</p>
-</section>
-<section>
-<h2>Самое больное место: обновления и «галлюцинации прошлого»</h2>
-<p>Если пользователь вчера сказал, что живет в Берлине, а сегодня — что переехал в Мюнхен, память агента должна не просто сохранить оба факта. Она должна понять, <strong>какой из них актуален сейчас</strong>, а какой — часть прошлого состояния.</p>
-<p>Именно тут многие популярные решения оказываются хрупкими. Авторы показывают, что системы без нормального управления жизненным циклом памяти склонны возвращать устаревшие сведения. Получается эффект, который можно назвать <strong>галлюцинацией прошлого</strong>: агент честно извлекает то, что когда-то было правдой, но больше не соответствует реальности.</p>
-<p>Лучше всего с обновлениями справляются архитектуры, где память связана с сущностями, отношениями и временными версиями. Грубо говоря, если система знает, что речь идет об одном и том же объекте и умеет вести версии, она с большей вероятностью корректно перепишет состояние. Если же память — это просто лента текстовых заметок, обновление превращается в гадание.</p>
-<p>Еще один важный результат: смена базовой LLM влияет на абсолютное качество ответа, но не меняет фундаментально то, <strong>какая система памяти работает лучше</strong>. Это значит, что хорошие свойства памяти возникают не из-за «более умной модели сверху», а из-за правильной организации данных снизу.</p>
-</section>
-<section>
-<h2>Длинный горизонт: хранить мало, связывать важно</h2>
-<p>Очень интересен вывод про длинную историю взаимодействий. Интуитивно кажется, что проблему можно решить просто большим контекстом. Но статья показывает: по мере роста истории это работает все хуже. Контекст обрастает шумом, нужные сигналы теряются, а внимание модели рассеивается.</p>
-<p>Здесь выигрывают системы, которые умеют <strong>строить абстракции</strong>: связи между сущностями, сводки по сессиям, иерархии, локальные кластеры. Они не обязательно хранят больше, но хранят <strong>осмысленнее</strong>.</p>
-<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-24/fig_9.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
-<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Устойчивость на длинном горизонте: при росте контекста и удалении свидетельств выигрывают системы со структурой и многошаговой организацией памяти.</p>
-</div></figure>
-<p>Но и тут есть тонкость. Слишком агрессивное сжатие тоже вредно. Авторы в разборе отдельных компонентов показывают, что чем больше уровней абстракции между исходным содержанием и тем, что реально хранится, тем выше риск потерять детали, которые позже окажутся важны. Сводка удобна, но она легко выбрасывает именно тот маленький факт, который потом станет ключом к ответу.</p>
-<p>Отсюда очень практичное правило: <strong>легкое сжатие допустимо, агрессивная семантическая переработка — уже риск</strong>.</p>
-</section>
-<section>
-<h2>Цена вопроса: хорошая память может оказаться слишком дорогой</h2>
-<p>В промышленной среде этот раздел, пожалуй, не менее важен, чем все разговоры о качестве. Авторы специально измерили операционные издержки: время построения индексов, задержки запросов и общую стоимость операций памяти.</p>
-<p>И тут обнаруживается неприятный компромисс. Самые структурированные и «богатые» системы памяти часто оказываются на порядки тяжелее по задержкам и стоимости обслуживания. Глобальная реорганизация памяти, синхронизация нескольких хранилищ и сложная консолидация дают прирост качества, но не всегда пропорциональный цене.</p>
-<p>Особенно хорошо выглядят решения, где обслуживание памяти <strong>локализовано</strong>: обновляется не весь мир сразу, а только небольшой релевантный фрагмент. Это один из самых инженерно ценных выводов статьи. Авторы прямо показывают, что <strong>локальная поддержка памяти обычно выгоднее глобальной перестройки</strong>.</p>
-<p>Для реальных систем это почти руководство к действию: если хотите масштабируемую память, думайте не только о качестве поиска, но и о радиусе воздействия каждой записи и каждого обновления.</p>
-</section>
-<section>
-<h2>Что полезного дает разбор по компонентам</h2>
-<p>Помимо общего сравнения систем, статья делает еще одну важную вещь: проводит тонкие эксперименты по отдельным модулям памяти. И здесь появляются очень прикладные наблюдения.</p>
-<p>Во-первых, <strong>сохранение исходного содержания важнее красивой абстракции</strong>. Сырые или слабо сжатые записи часто лучше поддерживают точное восстановление фактов, чем аккуратные сводки.</p>
-<p>Во-вторых, <strong>фильтровать лучше позже, а не раньше</strong>. Если слишком агрессивно чистить и структурировать данные на этапе записи, агент потом может недополучить детали, нужные для комбинированного рассуждения.</p>
-<p>В-третьих, <strong>легкое планирование поиска помогает</strong>, а вот дополнительные слои самопроверки и усложнения маршрута не всегда окупаются. То есть немного «подумать, где искать» полезно; бесконечно рефлексировать над поиском — уже нет.</p>
-<p>Наконец, в поддержке памяти лучшей стратегией выглядит <strong>консервативная консолидация</strong>: аккуратно объединять близкие элементы, но не спешить превращать все в одну большую сводку. Слишком грубое укрупнение и отложенная запись скорее вредят.</p>
-</section>
-<section>
-<h2>Почему эта работа важна</h2>
-<p>Эта статья важна не потому, что объявляет нового победителя. Наоборот: ее ценность в том, что она <strong>ломает иллюзию простого решения</strong>. Сегодня память для агентов часто подается как что-то вроде «добавьте векторную базу — и агент станет долгоживущим». Исследование показывает, что это слишком наивная картина.</p>
-<p>Память агента — это полноценный системный слой со своими компромиссами:</p>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">между точностью и стоимостью;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">между компактностью и сохранностью свидетельств;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">между гибкостью и управляемостью обновлений;</span></div>
-<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">между быстрым поиском и корректным восстановлением длинных зависимостей.</span></div>
-<p>Именно поэтому вопрос из заголовка — готовы ли мы к нативной системе памяти для агентов — пока получает скорее <strong>осторожный ответ «еще не совсем»</strong>.</p>
-</section>
-<section>
-<h2>Выводы</h2>
-<p>Если сжать статью до нескольких тезисов, получится вот что.</p>
-<p>Во-первых, <strong>универсальной архитектуры памяти пока нет</strong>. Хорошая память зависит от типа нагрузки.</p>
-<p>Во-вторых, <strong>структура имеет значение</strong>. Графы, иерархии и гибридные схемы действительно помогают, особенно когда нужно работать с дальними и обновляемыми фактами.</p>
-<p>В-третьих, <strong>главная проблема — не просто помнить, а помнить правильно во времени</strong>. Без версий, связей и аккуратного обновления агент начинает жить в прошлом.</p>
-<p>В-четвертых, <strong>операционные издержки нельзя игнорировать</strong>. Самая умная память может оказаться непрактичной в реальном продукте.</p>
-<p>И наконец, главный мета-вывод: память для ИИ-агента пора оценивать не как магическую надстройку над LLM, а как инженерную систему управления данными. Пожалуй, именно этот переход — от красивых демонстраций к архитектурной дисциплине — и делает работу по-настоящему важной.</p>
-</section>
-            </div>
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
 
-            <!-- Footer CTA -->
-            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
-                <div class="mb-10 flex flex-wrap justify-center gap-4">
-                    <a href="https://arxiv.org/abs/2606.24775" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
-                        <span class="text-xl">📜</span>
-                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-purple">Полная статья (arXiv)</span>
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">
+                    Память ИИ-агента — это уже не мелкая деталь, а место, где часто решается, будет он полезным или начнёт путаться.
+                </p>
+
+                <h2 class="article-h2 fade-in">Память для ИИ-агентов: почему «просто поиск по векторной базе» уже не спасает</h2>
+                <p class="article-p fade-in">Если вы следите за развитием ИИ-агентов, то наверняка замечали странную вещь. Модели стали лучше писать код, вести диалог, пользоваться инструментами и даже выполнять длинные цепочки действий. Но как только агенту нужно <strong>помнить</strong> — что пользователь говорил неделю назад, какая версия факта актуальна сейчас, в каком порядке происходили события, — магия быстро заканчивается. Вместо умного помощника мы получаем машину с провалами в памяти, ложными воспоминаниями и привычкой путать прошлое с настоящим.</p>
+                <p class="article-p fade-in">Именно в эту боль бьет работа <strong>«Готовы ли мы к нативной системе памяти для агентов?»</strong>. Авторы предлагают посмотреть на память агента не как на декоративный модуль вокруг LLM, а как на полноценную систему управления данными: с записью, извлечением, маршрутизацией запросов, обновлением, забыванием и издержками. И это очень своевременный сдвиг оптики. Потому что пока индустрия часто меряет только «получилось ли решить задачу», остается за кадром главное: <strong>какой ценой, на какой архитектуре и насколько надежно это работает, когда мир меняется</strong>.</p>
+                <p class="article-p fade-in">Статья ценна именно этим: она не рекламирует очередной способ «прикрутить память», а разбирает весь зоопарк подходов по косточкам и показывает неприятную, но полезную правду — <strong>универсальной памяти для агентов пока нет</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Что вообще считается памятью агента</h2>
+                <p class="article-p fade-in">Один из сильных ходов статьи — четкое разведение понятий. Авторы говорят: память агента — это не просто длинный контекст и не обычный поиск по внешней базе знаний. Это <strong>постоянное, обновляемое хранилище состояния</strong>, которое переживает отдельные шаги инференса и помогает агенту в будущем.</p>
+                <p class="article-p fade-in">То есть речь идет не только о том, чтобы достать релевантный фрагмент текста. Нужно еще решить:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">что именно сохранять из диалога, журналов инструментов и промежуточных действий;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">в каком виде это хранить;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">как искать нужное;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">как обновлять устаревшие факты;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">как не утонуть в растущем объеме памяти;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">как не потратить на все это слишком много времени и вычислений.</span>
+                </div>
+
+                <p class="article-p fade-in">Авторы раскладывают любую систему памяти на четыре модуля:</p>
+                <p class="article-p fade-in">1. <strong>Представление и хранение памяти</strong> — текст, граф, дерево, гибрид.</p>
+                <p class="article-p fade-in">2. <strong>Извлечение памяти</strong> — как сырые данные превращаются в факты, заметки, сводки или структуры.</p>
+                <p class="article-p fade-in">3. <strong>Поиск и маршрутизация</strong> — как система решает, что именно поднять по запросу.</p>
+                <p class="article-p fade-in">4. <strong>Поддержка памяти</strong> — обновления, версии, консолидация, удаление и контроль роста.</p>
+                <p class="article-p fade-in">Эта декомпозиция важна, потому что позволяет сравнивать не «черные ящики», а конкретные инженерные решения.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-06-24/fig_0.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Типовые рабочие процессы памяти агента: от простого потока заметок до многослойных и гибридных систем.</figcaption>
+                </figure>
+
+                <h2 class="article-h2 fade-in">Как сегодня устроена память: от плоских заметок до графов и гибридов</h2>
+                <p class="article-p fade-in">На практике исследователи выделили несколько семейств архитектур.</p>
+                <p class="article-p fade-in">Самый простой вариант — <strong>последовательная память</strong>: история хранится как текст, факты или сжатые сводки. Это близко к идее «сложим все в журнал и будем искать по сходству». Такой подход дешевле и проще, но быстро начинает ломаться на дальних зависимостях и обновлениях.</p>
+                <p class="article-p fade-in">Следующий уровень — <strong>графы и деревья</strong>. Здесь память уже не просто набор фраз, а структура: сущности, связи, временные отметки, иерархии. Это особенно полезно, когда нужно понимать, <strong>кто связан с кем</strong>, <strong>что изменилось</strong> и <strong>в каком порядке происходили события</strong>.</p>
+                <p class="article-p fade-in">Наконец, есть <strong>гибридные системы</strong>, которые совмещают сразу несколько видов памяти: текст, векторные индексы, графовые базы, ключевые слова, сводки и отдельные хранилища для краткосрочного и долгосрочного состояния. Они выглядят как наиболее «взрослый» путь — но и платят за это сложностью.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-06-24/fig_1.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Основные способы представления памяти: плоские последовательности, графовые структуры и гибридные контейнеры.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Это не просто классификация ради классификации. Она подводит к главному выводу статьи: <strong>выигрывает не самая умная архитектура сама по себе, а та, чья структура совпадает с узким местом конкретной задачи</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Как авторы проверяли память агентов</h2>
+                <p class="article-p fade-in">Работа впечатляет масштабом: исследователи сравнили <strong>12 репрезентативных систем памяти</strong> и две базовые альтернативы — длинный контекст и обычный поиск по эмбеддингам. Проверка шла на <strong>пяти типах нагрузки и 11 наборах данных</strong>.</p>
+                <p class="article-p fade-in">Что особенно хорошо: они не ограничились общей метрикой «насколько хороший ответ». Вместо этого оценивали память по пяти измерениям:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">итоговая эффективность на задачах;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">точность извлечения нужных свидетельств;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">устойчивость к обновлению знаний;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">стабильность на длинном горизонте;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">операционные издержки.</span>
+                </div>
+
+                <p class="article-p fade-in">Именно такой дизайн превращает статью из очередного сравнения моделей в почти системное исследование.</p>
+
+                <h2 class="article-h2 fade-in">Главный результат: лучшей памяти «на все случаи» не существует</h2>
+                <p class="article-p fade-in">Самый отрезвляющий вывод звучит просто: <strong>ни одна архитектура не доминирует во всех сценариях</strong>.</p>
+                <p class="article-p fade-in">На задачах, где нужно собирать факты через несколько сессий и отслеживать временные связи, лучше показывают себя системы с явной структурой — например графовые. Там, где важна точная привязка ответа к длинному, но цельному диалогу, хорошо работают гибридные схемы с многоступенчатой фильтрацией. А на задачах, где успех зависит от сохранения следа промежуточных действий, неожиданно сильным остается просто длинный контекст или память, сохраняющая трассу событий почти без переработки.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-06-24/fig_6.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Сравнение общей эффективности систем памяти на нескольких бенчмарках: лидер меняется в зависимости от типа нагрузки.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Это, пожалуй, самый практичный вывод для разработчиков. Если ваш агент — это помощник с персональной историей, вам нужны хорошие механизмы временных обновлений и связи между фактами. Если это исполнитель многошаговых процедур, критично не «умное сжатие», а сохранение последовательности действий. Если это диалоговый интерфейс с длинными беседами, пригодится грубая фильтрация с последующим уточнением.</p>
+                <p class="article-p fade-in">Иными словами, <strong>память — это не аксессуар, а часть специализации агента</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Почему обычный поиск не справляется</h2>
+                <p class="article-p fade-in">Отдельный сильный блок статьи — анализ не только качества ответов, но и того, <strong>насколько хорошо система поднимает нужные свидетельства</strong>. И здесь у обычного плоского поиска по эмбеддингам начинаются проблемы.</p>
+                <p class="article-p fade-in">Исследователи показывают, что на короткой дистанции такие системы еще конкурентоспособны. Но как только доказательства ответа оказываются разбросаны по времени или по разным частям истории, качество резко падает. Память начинает поднимать что-то «похожее по смыслу», но не обязательно то, что нужно для конкретного вопроса.</p>
+                <p class="article-p fade-in">Это важное различие. Для агента мало найти <strong>что-то релевантное</strong>. Ему нужно собрать <strong>полный набор опорных фрагментов</strong>, причем иногда из очень далеких кусков истории.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-06-24/fig_7.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Точность извлечения свидетельств: структурированные системы лучше держат дальние и разрозненные зависимости, чем плоский поиск.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Отсюда один из центральных выводов статьи: <strong>качество памяти — это не только ранжирование первого подходящего фрагмента, но и способность восстановить полный контекст</strong>. Графы и иерархии здесь помогают, потому что хранят не просто «похожие куски текста», а отношения между ними.</p>
+
+                <h2 class="article-h2 fade-in">Самое больное место: обновления и «галлюцинации прошлого»</h2>
+                <p class="article-p fade-in">Если пользователь вчера сказал, что живет в Берлине, а сегодня — что переехал в Мюнхен, память агента должна не просто сохранить оба факта. Она должна понять, <strong>какой из них актуален сейчас</strong>, а какой — часть прошлого состояния.</p>
+                <p class="article-p fade-in">Именно тут многие популярные решения оказываются хрупкими. Авторы показывают, что системы без нормального управления жизненным циклом памяти склонны возвращать устаревшие сведения. Получается эффект, который можно назвать <strong>галлюцинацией прошлого</strong>: агент честно извлекает то, что когда-то было правдой, но больше не соответствует реальности.</p>
+                <p class="article-p fade-in">Лучше всего с обновлениями справляются архитектуры, где память связана с сущностями, отношениями и временными версиями. Грубо говоря, если система знает, что речь идет об одном и том же объекте и умеет вести версии, она с большей вероятностью корректно перепишет состояние. Если же память — это просто лента текстовых заметок, обновление превращается в гадание.</p>
+                <p class="article-p fade-in">Еще один важный результат: смена базовой LLM влияет на абсолютное качество ответа, но не меняет фундаментально то, <strong>какая система памяти работает лучше</strong>. Это значит, что хорошие свойства памяти возникают не из-за «более умной модели сверху», а из-за правильной организации данных снизу.</p>
+
+                <h2 class="article-h2 fade-in">Длинный горизонт: хранить мало, связывать важно</h2>
+                <p class="article-p fade-in">Очень интересен вывод про длинную историю взаимодействий. Интуитивно кажется, что проблему можно решить просто большим контекстом. Но статья показывает: по мере роста истории это работает все хуже. Контекст обрастает шумом, нужные сигналы теряются, а внимание модели рассеивается.</p>
+                <p class="article-p fade-in">Здесь выигрывают системы, которые умеют <strong>строить абстракции</strong>: связи между сущностями, сводки по сессиям, иерархии, локальные кластеры. Они не обязательно хранят больше, но хранят <strong>осмысленнее</strong>.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-06-24/fig_9.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Устойчивость на длинном горизонте: при росте контекста и удалении свидетельств выигрывают системы со структурой и многошаговой организацией памяти.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Но и тут есть тонкость. Слишком агрессивное сжатие тоже вредно. Авторы в разборе отдельных компонентов показывают, что чем больше уровней абстракции между исходным содержанием и тем, что реально хранится, тем выше риск потерять детали, которые позже окажутся важны. Сводка удобна, но она легко выбрасывает именно тот маленький факт, который потом станет ключом к ответу.</p>
+                <p class="article-p fade-in">Отсюда очень практичное правило: <strong>легкое сжатие допустимо, агрессивная семантическая переработка — уже риск</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Цена вопроса: хорошая память может оказаться слишком дорогой</h2>
+                <p class="article-p fade-in">В промышленной среде этот раздел, пожалуй, не менее важен, чем все разговоры о качестве. Авторы специально измерили операционные издержки: время построения индексов, задержки запросов и общую стоимость операций памяти.</p>
+                <p class="article-p fade-in">И тут обнаруживается неприятный компромисс. Самые структурированные и «богатые» системы памяти часто оказываются на порядки тяжелее по задержкам и стоимости обслуживания. Глобальная реорганизация памяти, синхронизация нескольких хранилищ и сложная консолидация дают прирост качества, но не всегда пропорциональный цене.</p>
+                <p class="article-p fade-in">Особенно хорошо выглядят решения, где обслуживание памяти <strong>локализовано</strong>: обновляется не весь мир сразу, а только небольшой релевантный фрагмент. Это один из самых инженерно ценных выводов статьи. Авторы прямо показывают, что <strong>локальная поддержка памяти обычно выгоднее глобальной перестройки</strong>.</p>
+                <p class="article-p fade-in">Для реальных систем это почти руководство к действию: если хотите масштабируемую память, думайте не только о качестве поиска, но и о радиусе воздействия каждой записи и каждого обновления.</p>
+
+                <h2 class="article-h2 fade-in">Что полезного дает разбор по компонентам</h2>
+                <p class="article-p fade-in">Помимо общего сравнения систем, статья делает еще одну важную вещь: проводит тонкие эксперименты по отдельным модулям памяти. И здесь появляются очень прикладные наблюдения.</p>
+                <p class="article-p fade-in">Во-первых, <strong>сохранение исходного содержания важнее красивой абстракции</strong>. Сырые или слабо сжатые записи часто лучше поддерживают точное восстановление фактов, чем аккуратные сводки.</p>
+                <p class="article-p fade-in">Во-вторых, <strong>фильтровать лучше позже, а не раньше</strong>. Если слишком агрессивно чистить и структурировать данные на этапе записи, агент потом может недополучить детали, нужные для комбинированного рассуждения.</p>
+                <p class="article-p fade-in">В-третьих, <strong>легкое планирование поиска помогает</strong>, а вот дополнительные слои самопроверки и усложнения маршрута не всегда окупаются. То есть немного «подумать, где искать» полезно; бесконечно рефлексировать над поиском — уже нет.</p>
+                <p class="article-p fade-in">Наконец, в поддержке памяти лучшей стратегией выглядит <strong>консервативная консолидация</strong>: аккуратно объединять близкие элементы, но не спешить превращать все в одну большую сводку. Слишком грубое укрупнение и отложенная запись скорее вредят.</p>
+
+                <h2 class="article-h2 fade-in">Почему эта работа важна</h2>
+                <p class="article-p fade-in">Эта статья важна не потому, что объявляет нового победителя. Наоборот: ее ценность в том, что она <strong>ломает иллюзию простого решения</strong>. Сегодня память для агентов часто подается как что-то вроде «добавьте векторную базу — и агент станет долгоживущим». Исследование показывает, что это слишком наивная картина.</p>
+                <p class="article-p fade-in">Память агента — это полноценный системный слой со своими компромиссами:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">между точностью и стоимостью;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">между компактностью и сохранностью свидетельств;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">между гибкостью и управляемостью обновлений;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">между быстрым поиском и корректным восстановлением длинных зависимостей.</span>
+                </div>
+
+                <p class="article-p fade-in">Именно поэтому вопрос из заголовка — готовы ли мы к нативной системе памяти для агентов — пока получает скорее <strong>осторожный ответ «еще не совсем»</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Выводы</h2>
+                <p class="article-p fade-in">Если сжать статью до нескольких тезисов, получится вот что.</p>
+                <p class="article-p fade-in">Во-первых, <strong>универсальной архитектуры памяти пока нет</strong>. Хорошая память зависит от типа нагрузки.</p>
+                <p class="article-p fade-in">Во-вторых, <strong>структура имеет значение</strong>. Графы, иерархии и гибридные схемы действительно помогают, особенно когда нужно работать с дальними и обновляемыми фактами.</p>
+                <p class="article-p fade-in">В-третьих, <strong>главная проблема — не просто помнить, а помнить правильно во времени</strong>. Без версий, связей и аккуратного обновления агент начинает жить в прошлом.</p>
+                <p class="article-p fade-in">В-четвертых, <strong>операционные издержки нельзя игнорировать</strong>. Самая умная память может оказаться непрактичной в реальном продукте.</p>
+                <p class="article-p fade-in">И наконец, главный мета-вывод: память для ИИ-агента пора оценивать не как магическую надстройку над LLM, а как инженерную систему управления данными. Пожалуй, именно этот переход — от красивых демонстраций к архитектурной дисциплине — и делает работу по-настоящему важной.</p>
+
+                <!-- Источник -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2606.24775" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
                     </a>
-                    <a href="https://github.com/OpenDataBox/MemoryData" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-orange transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
-                        <img src="https://cdn-icons-png.flaticon.com/256/25/25231.png" alt="GitHub" class="w-5 h-5 dark:invert transition-all">
-                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-orange">Код (GitHub)</span>
+                    <a href="https://github.com/OpenDataBox/MemoryData" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="github" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
                     </a>
                 </div>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                Обзоры ИИ простыми словами
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день в Telegram.
+                            </p>
+
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </article>
     </main>
 
-    <!-- Progress bar -->
-    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
-        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
     </div>
 
+    <!-- Инициализация и скрипты -->
     <script>
         lucide.createIcons();
 
+        // Логика смены темы
         const themeToggleBtn = document.getElementById('theme-toggle');
         const html = document.documentElement;
 
         function applyTheme(isDark) {
-            if (isDark) { html.classList.add('dark'); } else { html.classList.remove('dark'); }
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
             setTimeout(() => lucide.createIcons(), 50);
         }
 
+        // Telegram Web App
         const tg = window.Telegram?.WebApp;
         if (tg && tg.initData) {
-            tg.ready(); tg.expand();
+            tg.ready();
+            tg.expand();
             if (tg.colorScheme) {
                 applyTheme(tg.colorScheme === 'dark');
-                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
             }
         }
 
-        themeToggleBtn.addEventListener('click', () => { applyTheme(!html.classList.contains('dark')); });
-
-        window.addEventListener('scroll', () => {
-            let h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            document.getElementById("progress-bar").style.width = ((document.documentElement.scrollTop / h) * 100) + "%";
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
         });
 
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
         document.addEventListener("DOMContentLoaded", function() {
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
-            }, { threshold: 0.15 });
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
             document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
         });
     </script>
