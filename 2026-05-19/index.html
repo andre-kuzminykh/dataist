@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Почему код стал операционной системой для агентов</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Почему код стал операционной системой для агентов" />
+    <meta property="og:description" content="Вокруг LLM уже сложился почти привычный сюжет: модель пишет код, чинит ошибки, вызывает инструменты, иногда даже проходит бенчмарки уровня хорошего стажёра." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2026-05-19/" />
+    <meta property="og:image" content="https://dataist.ai/2026-05-19/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-05-19/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-p strong {
+            @apply font-semibold text-black dark:text-white;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .apple-img {
+            @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12;
+        }
+
+        /* Карточки-списки */
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 mb-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+
+                <!-- Тег категории -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-05-19</span>
+                </div>
+
+                <!-- Заголовок -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Почему код стал операционной системой для агентов
+                </h1>
+
+                <!-- Главная обложка -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-05-19/cover.png"
+                         alt="Обложка: Почему код стал операционной системой для агентов"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">
+                    Вокруг LLM уже сложился почти привычный сюжет: модель пишет код, чинит ошибки, вызывает инструменты, иногда даже проходит бенчмарки уровня хорошего стажёра.
+                </p>
+
+                <h2 class="article-h2 fade-in">Новая инфраструктура для агентов</h2>
+                <p class="article-p fade-in">ИИ пишет код, чинит ошибки, вызывает инструменты, иногда даже проходит бенчмарки уровня хорошего стажёра. Но обзор <strong>Code as Agent Harness</strong> предлагает куда более интересный поворот. Авторы утверждают, что код становится <strong>операционной средой</strong>, через которую агент думает, действует, хранит состояние, проверяет себя и координируется с другими агентами.</p>
+                <p class="article-p fade-in">Это важно. Если раньше мы спрашивали: «Насколько хорошо модель генерирует программу?», то теперь вопрос звучит иначе: <strong>как устроить систему вокруг модели так, чтобы она могла надёжно работать в длинных, многошаговых задачах</strong>. И тут код оказывается не целью, а каркасом. Через него агент запускает вычисления, общается с API, сохраняет промежуточные артефакты, читает журналы, обновляет план, проверяет гипотезы тестами и даже делит работу с другими агентами.</p>
+                <p class="article-p fade-in">Обзор огромный по охвату, но идея у него на удивление ясная: если мы хотим по-настоящему автономных ИИ-агентов, мало улучшать только саму модель. Нужно проектировать <strong>обвязку агента</strong> — систему, которая превращает «текстовый мозг» в исполнимую, проверяемую и сохраняющую состояние машину.</p>
+
+                <h2 class="article-h2 fade-in">Главная идея: код как “сцепка” между моделью и миром</h2>
+                <p class="article-p fade-in">Авторы вводят фреймворк, который можно перевести как <strong>«код как каркас агента»</strong>. Под каркасом здесь понимается программный слой вокруг LLM: инструменты, песочницы, память, валидаторы, журналы, разрешения, циклы исполнения и каналы обратной связи. Именно он делает из модели, генерирующей токены, агента, который может что-то делать в мире.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-19/fig_0.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Таксономия подхода: код выступает интерфейсом, механизмом управления и общим рабочим пространством для агентов.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Ключевой тезис обзора в том, что код хорош для этой роли по трём причинам.</p>
+                <p class="article-p fade-in">Во-первых, он <strong>исполнимый</strong>. Текстовое рассуждение может звучать убедительно, но код можно запустить и проверить, что он реально делает.</p>
+                <p class="article-p fade-in">Во-вторых, он <strong>наблюдаемый</strong>. У кода есть трассы исполнения, значения переменных, ошибки времени выполнения, результаты тестов. То есть система получает не только финальный ответ, но и следы того, как агент пришёл к нему.</p>
+                <p class="article-p fade-in">В-третьих, он <strong>сохраняет состояние</strong>. Программа, файл, тест, журнал, конфигурация, сценарий — всё это можно хранить, редактировать, переиспользовать и передавать между шагами и агентами.</p>
+                <p class="article-p fade-in">На этом месте обзор попадает в нерв нынешнего рынка агентных систем. Практическое ограничение сегодня часто не в том, что модель «плохо думает», а в том, что ей не хватает надёжной среды исполнения: памяти, контроля, проверки, безопасных действий и устойчивой работы на длинной дистанции.</p>
+
+                <h2 class="article-h2 fade-in">Три слоя всей конструкции</h2>
+                <p class="article-p fade-in">Авторы предлагают рассматривать тему в трёх слоях.</p>
+                <p class="article-p fade-in">Первый слой — <strong>интерфейс каркаса</strong>: как именно код связывает агента с рассуждением, действием и представлением среды.</p>
+                <p class="article-p fade-in">Второй — <strong>механизмы каркаса</strong>: планирование, память, работа с инструментами, управление циклом «спланировать — выполнить — проверить», а также оптимизация самой обвязки.</p>
+                <p class="article-p fade-in">Третий — <strong>масштабирование каркаса</strong>: как из одиночного агента сделать мультиагентную систему, где код становится общим рабочим пространством.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-19/fig_1.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Общий интерфейс каркаса: код связывает агента с рассуждением, действиями и моделированием среды через исполнимые программы и обратную связь.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Эта структура сильна тем, что объединяет разрозненные направления — от помощников программиста и автоматизации интерфейсов до робототехники и научных агентов — в одну инженерную картину.</p>
+
+                <h2 class="article-h2 fade-in">Как код помогает рассуждать, действовать и “видеть” среду</h2>
+                <p class="article-p fade-in">Самая понятная часть обзора — первый слой, где код выступает интерфейсом.</p>
+                <p class="article-p fade-in"><strong>Код для рассуждения</strong> — это уже знакомая, но всё ещё мощная идея: модель не пытается посчитать всё в тексте, а выносит промежуточные вычисления в программу. Например, пишет небольшой фрагмент на языке программирования, запускает его и опирается на результат. Это снижает число ошибок в арифметике, логике и пошаговом выводе. Дальше начинается более интересное: система может использовать не только финальный вывод программы, но и трассы исполнения, промежуточные состояния, формальные доказательства и машинную верификацию.</p>
+                <p class="article-p fade-in"><strong>Код для действия</strong> — это уже не «решить задачу», а «сделать шаг во внешней среде». Программа может стать политикой управления роботом, сценарием кликов в интерфейсе, цепочкой вызовов инструментов или временным навыком, который агент написал для себя сам. Здесь код — это способ превратить абстрактное намерение в конкретное исполнимое действие.</p>
+                <p class="article-p fade-in"><strong>Код для моделирования среды</strong> — пожалуй, самая недооценённая идея. Среда для агента может быть представлена не только текстом, но и репозиторием, тестами, журналами, симулятором, состоянием интерфейса, сценариями переходов. Тогда агент работает не «в тумане», а поверх явной вычислимой структуры. Это делает мир более проверяемым и менее магическим.</p>
+                <p class="article-p fade-in">Почему это важно? Потому что без такого интерфейса агент остаётся существом с короткой памятью и слабой связью с реальностью. Он может красиво объяснять, но плохо действовать. Код делает действия и состояние <strong>объектами инженерии</strong>, а не только красивого текста.</p>
+
+                <h2 class="article-h2 fade-in">Механизмы: где агент либо улучшается, либо разваливается</h2>
+                <p class="article-p fade-in">Самый практичный вклад обзора — разбор механизмов, без которых агент не живёт дольше одного хода.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-19/fig_4.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Дорожная карта механизмов каркаса: планирование, память, инструменты, контроль и оптимизация образуют единый системный слой.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Первый такой механизм — <strong>планирование</strong>. На длинных задачах мало один раз сгенерировать ответ. Нужно разбить задачу на подшаги, зафиксировать промежуточные цели, понимать зависимости между файлами и действиями, а иногда — исследовать несколько альтернативных траекторий. Авторы показывают эволюцию от линейных планов «шаг 1, шаг 2, шаг 3» к более серьёзным конструкциям: графам зависимостей, поиску по дереву решений и оркестрации нескольких ролей.</p>
+                <p class="article-p fade-in">Второй — <strong>память</strong>. И здесь речь не просто о длинном контекстном окне. Память у агента — это управляемый слой состояния: что держать «в голове» прямо сейчас, что извлекать из репозитория, что сохранять как полезный опыт, что сжимать, а что выносить во внешнее хранилище. Для реальных задач это критично. Репозиторий, история запусков, журналы, тесты, найденные подсказки — всё это не влезает в активный контекст, но должно оставаться доступным.</p>
+                <p class="article-p fade-in">Третий — <strong>использование инструментов</strong>. Инструмент в этой логике — не просто «модель может вызвать функцию». Это управляемая граница между намерением агента и внешней системой. Какие инструменты доступны? С какими разрешениями? Где выполняется код? Как очищаются результаты? Как записываются в журнал действия? Какой вызов требует участия человека? Именно на этом уровне рождается надёжность или, наоборот, хаос.</p>
+                <p class="article-p fade-in">Очень хорошо подходит цикл <strong>«планирование — реализация — контроль»</strong>. Авторы предлагают смотреть на отладку не как на исправление задним числом, а как на основной контур управления. План задаёт контракт: что хотим изменить и как поймём, что получилось. Исполнение делает ограниченное изменение в песочнице. Проверка решает, принимаем ли новое состояние, откатываем ли его, исправляем или передаём человеку.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-19/fig_7.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Механизмы работы с инструментами: от вызова API и навигации по среде до проверки, маршрутизации и управления рабочим процессом.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Это звучит почти тривиально, но именно здесь проходит граница между «демо-агентом» и системой, которой можно доверить хоть что-то серьёзнее игрушечной задачи.</p>
+
+                <h2 class="article-h2 fade-in">Мультиагентность: код как общее рабочее пространство</h2>
+                <p class="article-p fade-in">Отдельная сильная часть обзора — масштабирование к мультиагентным системам. В индустрии любят говорить о командах агентов: менеджер, планировщик, программист, рецензент, тестировщик. Но обзор показывает, что главное тут не сами роли, а <strong>общий исполнимый субстрат</strong>, через который они координируются.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-19/fig_9.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Масштабирование через мультиагентную оркестрацию: специализированные роли координируются через общий код, проверки и обратную связь.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Код, тесты, журналы, репозиторий, промежуточные патчи, сценарии исполнения — всё это становится общим «полем», где агенты видят работу друг друга, проверяют изменения и синхронизируют состояние. И тут всплывает важный инженерный момент: мультиагентность — это не просто несколько моделей в чате. Это почти задача распределённых систем.</p>
+                <p class="article-p fade-in">Авторы честно показывают, что у такой архитектуры много сложностей: расхождение представлений о состоянии, устаревшие планы, конфликтующие правки, переполнение контекста, неясно, чья версия «правильная». Поэтому будущее, по их мнению, не просто за большим числом агентов, а за более формальным представлением общего состояния: общими досками, репозиторной памятью, транзакционной синхронизацией, явными правилами слияния и повторной проверки.</p>
+                <p class="article-p fade-in">Это особенно важно сейчас, когда мультиагентные системы нередко выигрывают не потому, что «коллективный разум», а потому, что компенсируют слабую структуру среды лишними ролями и сложными схемами координации.</p>
+
+                <h2 class="article-h2 fade-in">Где это уже работает на практике</h2>
+                <p class="article-p fade-in">Обзор хорош ещё и тем, что не застревает в абстракциях. Авторы показывают, где подход уже материализуется.</p>
+                <p class="article-p fade-in">Во-первых, это <strong>ассистенты для программирования</strong>. Здесь всё очевидно: репозиторий, тесты, терминал, патчи, запросы на слияние, проверка результатов. Это, пожалуй, самый зрелый домен для каркасов на основе кода.</p>
+                <p class="article-p fade-in">Во-вторых, <strong>агенты для графических интерфейсов и операционных систем</strong>. Там код превращает действия по экрану в исполнимые сценарии, а состояние интерфейса — в структурированную среду.</p>
+                <p class="article-p fade-in">В-третьих, <strong>научные агенты</strong>. Это особенно интересно: гипотеза, эксперимент, симуляция, анализ и отчёт могут стать одной длинной исполнимой цепочкой. Наука в таком взгляде — почти идеальный «мир программ».</p>
+                <p class="article-p fade-in">В-четвёртых, <strong>воплощённые агенты</strong> и робототехника, где код становится границей между языковым намерением и физическим действием.</p>
+                <p class="article-p fade-in">И, наконец, <strong>персонализация</strong>, где состояние пользователя, ограничения и правила адаптации тоже начинают оформляться как явные, редактируемые и проверяемые артефакты.</p>
+
+                <h2 class="article-h2 fade-in">Главное, что статья делает правильно</h2>
+                <p class="article-p fade-in">Это обзорная работа, а не экспериментальная статья с одной новой моделью и красивой таблицей SOTA. Но именно в этом её ценность. Она не обещает чудо-решение, а <strong>собирает разрозненное поле в одну инженерную дисциплину</strong>.</p>
+                <p class="article-p fade-in">Авторы очень точно подмечают, что слабое место агентных систем — не только качество модели, но и качество среды вокруг неё: проверка, память, разрешения, воспроизводимость, синхронизация, управление риском. И если это не проектировать осознанно, любая «умная» модель рано или поздно упрётся в системную хрупкость.</p>
+                <p class="article-p fade-in">Особенно важен список открытых проблем. Как оценивать не только финальный успех, но и качество самой обвязки? Как проверять смысловую корректность, если тесты неполны? Как улучшать каркас без регрессий? Как синхронизировать общее состояние у нескольких агентов? Как встроить человека в контур безопасности? Как расширить всё это на мультимодальные среды?</p>
+
+                <h2 class="article-h2 fade-in">Вывод</h2>
+                <p class="article-p fade-in"><strong>Code as Agent Harness</strong> — это не статья про ещё один приём для LLM. Это попытка переопределить сам объект разговора. Не «как модель пишет код», а «как код становится средой, в которой агент живёт и работает».</p>
+                <p class="article-p fade-in">И в этом смысле обзор попадает очень точно в текущий момент. Индустрия уже увидела, что голая модель — ещё не агент. Следующий этап — научиться строить вокруг неё надёжные, исполнимые, проверяемые и сохраняющие состояние системы. Код здесь выступает лучшим кандидатом на роль общего языка между рассуждением, действием, памятью и координацией.</p>
+                <p class="article-p fade-in">Если коротко, главный вывод статьи звучит так: <strong>будущее агентных ИИ-систем определяется не только мощностью модели, но и качеством их каркаса</strong>. А значит, следующая большая дисциплина в ИИ — это, возможно, не только архитектуры моделей, но и инженерия каркасов.</p>
+
+                <!-- Источник -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2605.18747" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/YennNing/Awesome-Code-as-Agent-Harness-Papers" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                </div>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                Обзоры ИИ простыми словами
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
