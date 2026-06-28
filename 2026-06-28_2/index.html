@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Почему ИИ для картинок не понимает реальный контекст</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Dataism Science Hub" />
+    <meta property="og:title" content="Почему ИИ для картинок не понимает реальный контекст" />
+    <meta property="og:description" content="Почему ИИ для картинок всё ещё часто рисует не то, что мы на самом деле имели в виду.
+
+Авторы показывают, что проблема не только в качестве самой картинки, а в том, что человеку часто лень или трудно сразу объяснить весь нужный смысл. Поэтому они предлагают ИИ-агента, который не просто получает короткий запрос, а по шагам достраивает недостающий контекст: понимает, чего не хватает, ищет нужные сведения, вспоминает прошлые подсказки и учитывает отклик человека. Это важно, потому что в жизни мы почти никогда не формулируем запрос идеально с первой попытки.
+
+В этом обзоре разбираем, почему между словами пользователя и хорошим результатом возникает разрыв, как ИИ может сам собирать недостающий смысл и что это меняет для создания картинок по описанию." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/pochemu-ii-dlia-kartinok-ne-ponimaet-realnyi-kontekst/pochemu-ii-dlia-kartinok-ne-ponimaet-realnyi-kontekst_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-06-28_2/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-06-28_2/cover.png" />
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: { purple: '#a855f7', orange: '#f97316', tg: '#229ED9' }
+                    }
+                },
+                fontFamily: {
+                    mono: ['"Space Mono"', 'monospace'],
+                    sans: ['"Inter"', 'sans-serif'],
+                    montserrat: ['"Montserrat"', 'sans-serif'],
+                },
+                animation: { 'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f8fafc; --text-main: #0f172a; --text-muted: #475569;
+            --grid-line-p: rgba(168,85,247,0.1); --grid-line-o: rgba(249,115,22,0.1);
+            --glass-bg: rgba(255,255,255,0.85); --glass-border: rgba(0,0,0,0.05);
+            --card-bg: rgba(255,255,255,0.6); --card-border: rgba(0,0,0,0.05);
+            --shadow-glow: rgba(0,0,0,0.02); --image-bg: #ffffff;
+        }
+        .dark {
+            --bg-color: #050505; --text-main: #e5e7eb; --text-muted: #9ca3af;
+            --grid-line-p: rgba(168,85,247,0.05); --grid-line-o: rgba(249,115,22,0.05);
+            --glass-bg: rgba(10,10,14,0.85); --glass-border: rgba(255,255,255,0.08);
+            --card-bg: rgba(255,255,255,0.03); --card-border: rgba(255,255,255,0.1);
+            --shadow-glow: rgba(0,0,0,0.5); --image-bg: #111111;
+        }
+        body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.4s ease, color 0.4s ease; -webkit-tap-highlight-color: transparent; }
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px); background-attachment: fixed; }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 10px 40px var(--shadow-glow); transition: background 0.4s ease, border-color 0.4s ease; }
+        .tech-card { background: var(--card-bg); border: 1px solid var(--card-border); transition: all 0.3s ease; }
+        .tech-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
+        .article-p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-content p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content h2 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.5rem; margin-top: 3rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.2; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; } }
+        .article-content section { max-width: 56rem; margin-left: auto; margin-right: auto; width: 100%; }
+        .article-content figure { margin: 2.5rem 0 3.5rem; max-width: 56rem; margin-left: auto; margin-right: auto; }
+        .article-content figure img { width: 100%; object-fit: contain; border-radius: 0.75rem; background-color: rgba(255,255,255,0.5); }
+        .article-content figcaption { font-size: 0.875rem; color: #1f2937; margin-top: 1.25rem; text-align: center; font-family: 'Space Mono', monospace; max-width: 48rem; margin-left: auto; margin-right: auto; line-height: 1.6; }
+        .dark .article-content figcaption { color: #d1d5db; }
+        .cyber-img { width: 100%; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px var(--shadow-glow); }
+        .arxiv-chart { background-color: var(--image-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); transition: background-color 0.4s ease; }
+        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.2,0.8,0.2,1), transform 0.6s cubic-bezier(0.2,0.8,0.2,1); }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
+
+    <!-- Background glows -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay:3s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
+        <a href="https://dataist.ai" target="_blank" class="flex items-center gap-3 md:gap-4 hover:opacity-80 transition-opacity">
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">i</div>
+            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">ДАТАИСТ</div>
+        </a>
+        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
+                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
+                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
+                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
+        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+
+            <!-- Cover -->
+            <header class="text-center mb-12 md:mb-16 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
+                    🤖 Датаист | 2026-06-28
+                </div>
+                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
+                    Почему ИИ для картинок не понимает реальный контекст<br>
+                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3"></span>
+                </h1>
+
+                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0 bg-black">
+                    <img src="https://dataist.ai/2026-06-28_2/cover.png"
+                         alt="Обложка: Почему ИИ для картинок не понимает реальный контекст"
+                         class="w-full h-auto max-h-[70vh] object-cover scale-[1.0] origin-center">
+                </div>
+            </header>
+
+            <!-- Article body -->
+            <div class="article-content max-w-4xl mx-auto w-full">
+                <section>
+<h2>Когда генератору картинок не хватает не пикселей, а контекста</h2>
+<p>Современные модели генерации изображений научились впечатлять. Они рисуют постеры, продуктовые визуализации, иллюстрации для презентаций и фантазийные сцены по текстовому описанию. Но стоит вынести такую систему из лаборатории в реальный мир — и магия быстро трескается. Пользователь пишет что-то вроде «сделай инфографику про текущую погоду в Токио в стиле ретро-плаката» или «нарисуй персонажа из малоизвестной игры в такой же позе, как на референсе, но для детской аудитории», и модель внезапно теряется.</p>
+<p>Новая работа <strong>Qwen-Image-Agent: Bridging the Context Gap in Real-World Image Generation</strong> предлагает важный сдвиг в мышлении: проблема не только в качестве генератора, а в том, что ему <strong>не хватает контекста</strong>. Авторы называют это <strong>разрывом контекста</strong> — несоответствием между тем, что сообщил пользователь, и тем, что действительно нужно системе для правильной генерации.</p>
+<p>Это, по сути, заявка на новый класс систем: не просто «модель рисует по запросу», а <strong>ИИ-агент для генерации изображений</strong>, который умеет планировать, искать, помнить, проверять себя и уточнять задачу по ходу дела. И именно поэтому статья важна: она пытается превратить генерацию изображений из красивого фокуса в инструмент, пригодный для реальных рабочих сценариев.</p>
+</section>
+<section>
+<h2>В чем вообще проблема: пользовательский запрос — это не готовое техзадание</h2>
+<p>Классическая схема генерации изображений проста: есть текстовый запрос, модель превращает его в картинку. Такая постановка хорошо работает, когда запрос уже идеально сформулирован. Но в жизни так почти не бывает.</p>
+<p>Пользователь может не договорить важные детали, подразумевать общеизвестные для человека вещи, ссылаться на свежие факты из внешнего мира, ожидать сохранения стиля из предыдущих сообщений или хотеть серию связанных изображений. Для человека это нормально. Для модели — нет.</p>
+<p>Авторы вводят полезное различие между двумя типами контекста:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>пользовательский контекст</strong> — то, что явно дано во входе;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>контекст генерации</strong> — то, что реально требуется, чтобы создать корректное изображение.</span></div>
+<p>Именно между ними и возникает разрыв. Если попросить «сделай постер с актуальной ценой акций компании», генератору мало текста. Нужны свежие данные. Если попросить «нарисуй лабиринт с правильным маршрутом», мало визуализации — сначала надо найти решение. Если попросить «сохрани стиль из прошлого диалога», нужна память.</p>
+<p>Это звучит очевидно, но в индустрии генерации изображений долгое время этим фактически пренебрегали. Статья хороша тем, что упаковывает разрозненные проблемы в единую рамку.</p>
+</section>
+<section>
+<h2>Как устроен Qwen-Image-Agent</h2>
+<p>Вместо того чтобы считать пользовательский запрос финальной инструкцией, Qwen-Image-Agent рассматривает его как <strong>неполный черновик контекста</strong>. Дальше система постепенно достраивает недостающую информацию, а уже потом передает задачу генератору изображений.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-28_2/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Общая схема Qwen-Image-Agent: система находит недостающий контекст, добывает его из разных источников и только потом строит финальную инструкцию для генерации.</p>
+</div></figure>
+<p>Архитектура состоит из двух больших блоков.</p>
+<p>Первый — <strong>контекстно-осведомленное планирование</strong>. Он работает на трех уровнях:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>информационный уровень</strong>: чего не хватает в запросе;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>уровень содержания</strong>: как собрать найденные фрагменты в понятную и подробную инструкцию;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>уровень генерации</strong>: как распределить контекст по нескольким изображениям или по нескольким ходам диалога.</span></div>
+<p>Второй — <strong>заземление контекста</strong>, то есть добыча недостающей информации. Для этого агент использует четыре механизма:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>рассуждение</strong> — чтобы вывести скрытые требования и смысловые связи;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>поиск</strong> — чтобы получить факты и визуальные референсы из внешних источников;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>память</strong> — чтобы учитывать историю диалога и пользовательские предпочтения;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>обратную связь</strong> — чтобы проверить результат и при необходимости скорректировать его.</span></div>
+<p>Ключевая идея здесь не в том, что каждый из этих компонентов нов сам по себе. Новизна в том, что они собраны в <strong>единую контекстно-центричную систему</strong>, где каждый модуль нужен не ради галочки, а ради заполнения конкретной дыры в контексте.</p>
+<p>Особенно интересно, что авторы подают систему как <strong>обучаемую без дополнительного дообучения</strong>: она строится поверх уже существующего генератора изображений и сильной мультимодальной LLM. Это делает подход более практичным.</p>
+</section>
+<section>
+<h2>Почему без планирования и рассуждения далеко не уедешь</h2>
+<p>Если посмотреть на примеры из статьи, становится ясно, что многие провалы генерации изображений начинаются задолго до визуализации. Модель может прекрасно рисовать, но не понимать, <strong>что именно надо рисовать</strong>.</p>
+<p>Например, в задачах на композицию система должна не просто изобразить объекты, а <strong>спланировать их расположение</strong>. В задаче на перечисление нужно корректно разложить несколько элементов по сцене, соблюдая число, порядок и атрибуты. В задаче с лабиринтом нужно сначала найти маршрут, а уже потом визуализировать его.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-28_2/fig_4.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Пример способности к планированию: агент заранее продумывает раскладку объектов и за счет этого решает задачу, где обычный генератор легко ошибается в числе и расположении элементов.</p>
+</div></figure>
+<p>Это важный момент: генерация изображений все чаще упирается не в художественную визуализацию, а в <strong>предгенерационную интеллектуальную работу</strong>. И в этом смысле статья перекладывает акцент с красоты картинки на качество промежуточных решений.</p>
+<p>Авторы отдельно показывают, что если убрать модуль рассуждения, заметно проседают не только задачи на рассуждение, но и задачи на планирование. Это логично: иногда, чтобы составить план сцены, сначала нужно вывести скрытое ограничение из запроса.</p>
+</section>
+<section>
+<h2>Поиск как недостающий орган чувств</h2>
+<p>Еще одна сильная часть работы — аккуратное включение поиска. В реальных задачах картинка часто завязана на внешний мир: погоду, акции, культурных персонажей, свежие факты, визуальные особенности объектов интеллектуальной собственности.</p>
+<p>Обычная модель генерации живет в границах того, что успела выучить раньше. Но внешний мир меняется. Поэтому агент в этой работе умеет:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">выделять ключевые слова из запроса;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">искать текстовую информацию в сети;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">сжимать найденное в полезный фактологический контекст;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">искать изображения-референсы;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">ранжировать найденные картинки и оставлять самые релевантные.</span></div>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-28_2/fig_3.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Устройство IA-Bench — нового бенчмарка для оценки ИИ-агентов генерации изображений по четырем ключевым способностям: планирование, рассуждение, поиск и память.</p>
+</div></figure>
+<p>Здесь важна тонкость: авторы не призывают бездумно тащить в генерацию как можно больше найденных картинок. Наоборот, в разделе обсуждения они признают, что <strong>избыточный поиск изображений может вредить</strong>. Лишние референсы вносят визуальный шум, а редактирование по множеству источников все еще хрупкая процедура. Это редкий для таких статей момент честности: поиск полезен, но только если им управлять осторожно.</p>
+</section>
+<section>
+<h2>Память и обратная связь: то, чего особенно не хватает в продакшене</h2>
+<p>Если генераторы изображений и ломаются в реальных приложениях, то очень часто в длинных взаимодействиях. Пользователь возвращается к сцене, просит поменять детали, сохранить стиль, использовать ранее заданного персонажа, не потерять композицию. Для обычной модели каждый новый запрос — почти как новая жизнь.</p>
+<p>Qwen-Image-Agent пытается это исправить через модуль памяти. Он отбирает релевантную информацию из предыдущих ходов, а не просто бездумно складывает всю историю в контекст. Это важно: авторы отдельно пишут о проблеме <strong>взрыва контекста</strong>, особенно когда в историю попадает много изображений. В какой-то момент система начинает захлебываться во входных данных.</p>
+<p>Плюс есть контур обратной связи. После генерации агент формирует список проверок: какими свойствами обязана обладать картинка. Затем мультимодальная модель оценивает результат по этому списку. Если что-то не выполнено, это превращается в новый контекст для следующей попытки.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-28_2/fig_8.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Пример работы обратной связи: агент проверяет собственный результат, находит ошибки в композиции и исправляет изображение на следующем шаге.</p>
+</div></figure>
+<p>На бумаге это выглядит очень здраво: система не просто рисует, но и сама себя критикует. Впрочем, авторы признают, что прирост от обратной связи пока ограничен. Причина проста: если проверка устроена как текстовый цикл поверх уже готового генератора, она помогает, но не радикально. Более мощный эффект, вероятно, появится, когда обратная связь начнет влиять не только на финальный запрос, но и на ранние стадии поиска разрыва контекста.</p>
+</section>
+<section>
+<h2>Новый бенчмарк: как вообще измерять ИИ-агентов для картинок</h2>
+<p>Отдельный вклад статьи — <strong>IA-Bench</strong>, новый бенчмарк для оценки агентных способностей в генерации изображений. И это, пожалуй, не менее важно, чем сама модель.</p>
+<p>Проблема старых бенчмарков в том, что они в основном проверяют: соответствует ли картинка запросу, красива ли она, правильно ли привязаны атрибуты. Но агентные сценарии требуют другого. Нужно оценивать, умеет ли система:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">раскладывать сложную задачу на шаги;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">делать промежуточные выводы;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">искать внешние знания;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">помнить историю взаимодействия.</span></div>
+<p>IA-Bench покрывает <strong>4 типа задач, 17 подзадач, 730 примеров и 1801 пункт чек-листа</strong>. Оценка устроена по двум метрикам:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>доля полных успехов</strong> — задача считается решенной только если выполнены все условия;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>точность по чек-листу</strong> — средняя доля выполненных условий.</span></div>
+<p>Это удачный дизайн. Первая метрика суровая и приближена к реальным ожиданиям пользователя: если в инфографике все верно, кроме одной цифры, это все равно проблема. Вторая позволяет видеть частичный прогресс, а не только «прошел/провалил».</p>
+</section>
+<section>
+<h2>Что показали эксперименты</h2>
+<p>По результатам на IA-Bench система выглядит действительно сильно. Qwen-Image-Agent получил лучший совокупный результат и заметно обошел как обычные генераторы изображений, так и ряд агентных базовых систем.</p>
+<p>Главная цифра в статье: переход от прямой генерации на базе Qwen-Image-2.0 к агентному варианту поднял итоговый балл <strong>с 17,4 до 45,4</strong>. Это очень крупный скачок, который трудно списать на косметические улучшения.</p>
+<p>На IA-Bench модель особенно уверенно выглядит в категориях <strong>планирования, рассуждения, поиска и памяти</strong>. Причем по памяти прирост особенно заметен, а это как раз одна из самых болезненных зон для практических приложений.</p>
+<p>На дополнительных наборах — WISE-Verified и MindBench — система тоже показывает результаты уровня SOTA. На WISE-Verified она обходит сильные закрытые модели, а на MindBench, ориентированном на сложные знания и многошаговые рассуждения, тоже выходит в лидеры.</p>
+<p>Важно и то, что авторы провели внятные абляции. Если убрать поиск — резко падают задачи поиска. Если убрать память — почти обнуляется память. Если заменить сильную мультимодальную LLM на более слабую — заметно страдает вся система. Это хорошо подтверждает, что архитектура работает не как случайный набор эвристик, а как действительно взаимосвязанная конструкция.</p>
+</section>
+<section>
+<h2>Где система все еще спотыкается</h2>
+<p>Статья не пытается делать вид, что проблема решена окончательно. Авторы довольно честно перечисляют слабые места.</p>
+<p>Во-первых, <strong>не всегда удается распознать сам разрыв контекста</strong>. Если недостающая информация слишком неявная, система может даже не понять, что ей чего-то не хватает.</p>
+<p>Во-вторых, граница между рассуждением и поиском размыта. Иногда факт можно «вспомнить» из параметров модели, а иногда правильнее искать его во внешнем мире. Это инженерно неудобная и концептуально интересная зона.</p>
+<p>В-третьих, агентный режим дорогой. Планирование, поиск, сбор контекста, проверка, повторная генерация — все это увеличивает задержку и стоимость по сравнению с генерацией в один проход.</p>
+<p>И наконец, многое по-прежнему зависит от качества базового генератора. Даже идеальный контекст не спасет, если модель для визуализации плохо умеет следовать сложным композиционным ограничениям.</p>
+</section>
+<section>
+<h2>Что все это значит на практике</h2>
+<p>Главный вывод статьи прост и важен: <strong>следующий большой шаг в генерации изображений — это не только более сильная модель для визуализации, но и более умный слой над ней</strong>. Не модель, которая просто рисует по словам, а система, которая умеет понять, чего ей не хватает, добыть нужную информацию и превратить сырой пользовательский запрос в полноценное техзадание.</p>
+<p>Именно поэтому работа выглядит значимой. Она предлагает не очередную «еще одну модель», а более зрелую постановку задачи. В реальных продуктах — от маркетинга до дизайна интерфейсов и образовательного контента — пользователи редко говорят с системой идеальными запросами. Им нужен собеседник, который сам достроит недосказанное.</p>
+<p>Qwen-Image-Agent еще не выглядит окончательным ответом. Он дорогой, сложный и все еще местами хрупкий. Но как исследовательский сигнал работа очень сильная: <strong>будущее генерации изображений похоже не на один большой генератор, а на связку из генератора и ИИ-агента, который управляет контекстом</strong>.</p>
+<p>Для индустрии это, возможно, и есть главный поворот. Не «рисуй лучше», а «сначала пойми, что именно надо рисовать».</p>
+</section>
+            </div>
+
+            <!-- Footer CTA -->
+            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
+                <div class="mb-10 flex flex-wrap justify-center gap-4">
+                    <a href="https://arxiv.org/abs/2606.26907" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">📜</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-purple">Полная статья (arXiv)</span>
+                    </a>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <!-- Progress bar -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) { html.classList.add('dark'); } else { html.classList.remove('dark'); }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready(); tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => { applyTheme(!html.classList.contains('dark')); });
+
+        window.addEventListener('scroll', () => {
+            let h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById("progress-bar").style.width = ((document.documentElement.scrollTop / h) * 100) + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+            }, { threshold: 0.15 });
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
