@@ -12,8 +12,9 @@ from datetime import datetime
 from urllib.parse import unquote
 
 CHANNEL = sys.argv[1] if len(sys.argv) > 1 else "dataist_lab"
-SINCE   = sys.argv[2] if len(sys.argv) > 2 else "2026-03-01"
+SINCE   = sys.argv[2] if len(sys.argv) > 2 else "2020-01-01"   # selection floor; default = all
 REPO    = "andre-kuzminykh/dataist"
+MAX_PAGES = 40
 since_d = datetime.strptime(SINCE, "%Y-%m-%d").date()
 UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124 Safari/537.36"
 
@@ -65,7 +66,7 @@ posts = {}
 all_hrefs = set()
 sample_block = ""
 before = None
-while True:
+for _page in range(MAX_PAGES):
     url = f"https://t.me/s/{CHANNEL}" + (f"?before={before}" if before else "")
     try:
         html = fetch(url)
@@ -96,18 +97,17 @@ while True:
         break
     oldest = min(ids)
     print(f"  page: {len(ids)} msgs, oldest #{oldest} ({posts[oldest]['date']})")
-    od = posts[oldest]["date"]
-    if od and datetime.fromisoformat(od).date() < since_d:
+    if before == oldest:        # no progress → reached the start of the channel
         break
-    if before == oldest:
-        break
-    before = oldest
+    before = oldest             # paginate to the very beginning (no date cut-off)
     time.sleep(0.5)
 
+# Select posts that CONTAIN a telegraph link (those are the ones to import).
+# Posts that only link to dataist.ai are already-published articles → skipped.
 selected = [p for p in posts.values()
-            if p["date"] and datetime.fromisoformat(p["date"]).date() >= since_d and p["links"]]
-selected.sort(key=lambda p: p["date"])
-print(f"{len(selected)} posts with a telegraph link since {SINCE} (of {len(posts)} scanned)")
+            if p["links"] and (not p["date"] or datetime.fromisoformat(p["date"]).date() >= since_d)]
+selected.sort(key=lambda p: p["date"] or "0000")
+print(f"{len(selected)} posts WITH a telegraph link (of {len(posts)} scanned)")
 
 if not selected:
     print("\n--- DEBUG: no telegraph links found ---")
