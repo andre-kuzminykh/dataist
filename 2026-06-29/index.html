@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Почему RL ломает ИИ-агентов с инструментами?</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Dataism Science Hub" />
+    <meta property="og:title" content="Почему RL ломает ИИ-агентов с инструментами?" />
+    <meta property="og:description" content="Иногда обучение делает ИИ-агента не умнее, а буквально ломает его на ровном месте.
+
+Авторы показывают, что если учить модель действовать методом проб и ошибок, она может внезапно начать хуже пользоваться инструментами и сбиваться в своих шагах. При этом сама способность решать задачу у неё не исчезает — она как будто прячется из-за того, что модель застревает на неудачной форме ответа. Хорошая новость в том, что это можно заметно исправить, если чередовать такое обучение с обычными понятными примерами и разными мягкими подсказками.
+
+В этом обзоре разбираем, почему у ИИ-агентов случаются такие срывы, что именно их вызывает и как обучать модели стабильнее в сложных задачах из нескольких шагов." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/pochemu-rl-lomaet-ii-agentov-s-instrumentami/pochemu-rl-lomaet-ii-agentov-s-instrumentami_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-06-29/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-06-29/cover.png" />
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: { purple: '#a855f7', orange: '#f97316', tg: '#229ED9' }
+                    }
+                },
+                fontFamily: {
+                    mono: ['"Space Mono"', 'monospace'],
+                    sans: ['"Inter"', 'sans-serif'],
+                    montserrat: ['"Montserrat"', 'sans-serif'],
+                },
+                animation: { 'pulse-slow': 'pulse 6s cubic-bezier(0.4, 0, 0.6, 1) infinite' }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f8fafc; --text-main: #0f172a; --text-muted: #475569;
+            --grid-line-p: rgba(168,85,247,0.1); --grid-line-o: rgba(249,115,22,0.1);
+            --glass-bg: rgba(255,255,255,0.85); --glass-border: rgba(0,0,0,0.05);
+            --card-bg: rgba(255,255,255,0.6); --card-border: rgba(0,0,0,0.05);
+            --shadow-glow: rgba(0,0,0,0.02); --image-bg: #ffffff;
+        }
+        .dark {
+            --bg-color: #050505; --text-main: #e5e7eb; --text-muted: #9ca3af;
+            --grid-line-p: rgba(168,85,247,0.05); --grid-line-o: rgba(249,115,22,0.05);
+            --glass-bg: rgba(10,10,14,0.85); --glass-border: rgba(255,255,255,0.08);
+            --card-bg: rgba(255,255,255,0.03); --card-border: rgba(255,255,255,0.1);
+            --shadow-glow: rgba(0,0,0,0.5); --image-bg: #111111;
+        }
+        body { background-color: var(--bg-color); color: var(--text-main); transition: background-color 0.4s ease, color 0.4s ease; -webkit-tap-highlight-color: transparent; }
+        .bg-grid { background-size: 40px 40px; background-image: linear-gradient(to right, var(--grid-line-p) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-line-o) 1px, transparent 1px); background-attachment: fixed; }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 10px 40px var(--shadow-glow); transition: background 0.4s ease, border-color 0.4s ease; }
+        .tech-card { background: var(--card-bg); border: 1px solid var(--card-border); transition: all 0.3s ease; }
+        .tech-card:hover { border-color: rgba(168,85,247,0.4); transform: translateY(-2px); }
+        .article-p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content p { font-family: 'Inter', sans-serif; font-size: 1.05rem; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text-main); }
+        @media (min-width: 768px) { .article-content p { font-size: 1.15rem; line-height: 1.8; margin-bottom: 1.5rem; } }
+        .article-content h2 { font-family: 'Montserrat', sans-serif; font-weight: 900; font-size: 1.5rem; margin-top: 3rem; margin-bottom: 1.5rem; text-transform: uppercase; letter-spacing: -0.02em; color: var(--text-main); line-height: 1.2; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 2rem; margin-top: 4rem; margin-bottom: 2rem; } }
+        .article-content section { max-width: 56rem; margin-left: auto; margin-right: auto; width: 100%; }
+        .article-content figure { margin: 2.5rem 0 3.5rem; max-width: 56rem; margin-left: auto; margin-right: auto; }
+        .article-content figure img { width: 100%; object-fit: contain; border-radius: 0.75rem; background-color: rgba(255,255,255,0.5); }
+        .article-content figcaption { font-size: 0.875rem; color: #1f2937; margin-top: 1.25rem; text-align: center; font-family: 'Space Mono', monospace; max-width: 48rem; margin-left: auto; margin-right: auto; line-height: 1.6; }
+        .dark .article-content figcaption { color: #d1d5db; }
+        .cyber-img { width: 100%; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px var(--shadow-glow); }
+        .arxiv-chart { background-color: var(--image-bg); padding: 1rem; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05); transition: background-color 0.4s ease; }
+        .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s cubic-bezier(0.2,0.8,0.2,1), transform 0.6s cubic-bezier(0.2,0.8,0.2,1); }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-screen relative bg-grid selection:bg-cyber-purple selection:text-white pb-12">
+
+    <!-- Background glows -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div class="absolute top-[10%] left-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-purple/10 rounded-full blur-[120px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[10%] right-[5%] w-[50%] md:w-[30%] h-[50%] bg-cyber-orange/10 rounded-full blur-[120px] animate-pulse-slow" style="animation-delay:3s;"></div>
+    </div>
+
+    <!-- Header -->
+    <header class="fixed top-0 left-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 border-b border-[var(--glass-border)] bg-[var(--bg-color)]/90 backdrop-blur-md transition-colors duration-400">
+        <a href="https://dataist.ai" target="_blank" class="flex items-center gap-3 md:gap-4 hover:opacity-80 transition-opacity">
+            <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 flex items-center justify-center text-sm md:text-base font-bold font-mono leading-none transition-colors duration-400 shrink-0">i</div>
+            <div class="font-mono font-black text-lg md:text-2xl tracking-[0.2em] md:tracking-[0.25em] uppercase text-gray-900 dark:text-white leading-none mt-[2px] transition-colors duration-400">ДАТАИСТ</div>
+        </a>
+        <div class="flex items-center gap-2 md:gap-4 relative z-50 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all text-gray-700 dark:text-gray-300 relative cursor-pointer">
+                <i data-lucide="sun" class="w-5 h-5 md:w-6 md:h-6 hidden dark:block text-cyber-orange"></i>
+                <i data-lucide="moon" class="w-5 h-5 md:w-6 md:h-6 block dark:hidden text-cyber-purple"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" class="flex items-center gap-2 md:gap-3 px-3 py-2 md:px-5 md:py-2.5 bg-[#229ED9]/10 hover:bg-[#229ED9]/20 text-[#229ED9] border border-[#229ED9]/30 rounded-lg transition-all text-[11px] md:text-sm font-mono font-bold uppercase tracking-wider shadow-[0_0_10px_rgba(34,158,217,0.2)] hover:shadow-[0_0_15px_rgba(34,158,217,0.4)]">
+                <i data-lucide="send" class="w-4 h-4 md:w-5 md:h-5 rotate-45 mt-0.5"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Main -->
+    <main class="pt-24 md:pt-32 pb-16 px-4 md:px-8 w-full max-w-5xl mx-auto relative z-30">
+        <article class="glass-panel p-6 md:p-12 lg:p-16 rounded-3xl w-full flex flex-col relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-cyber-purple via-transparent to-cyber-orange opacity-80 z-10"></div>
+
+            <!-- Cover -->
+            <header class="text-center mb-12 md:mb-16 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-2 mb-6 rounded-full border border-cyber-purple/30 bg-cyber-purple/10 text-cyber-purple text-xs md:text-sm font-mono font-bold tracking-[0.2em] uppercase">
+                    🤖 Датаист | 2026-06-29
+                </div>
+                <h1 class="text-2xl sm:text-3xl md:text-5xl lg:text-5xl font-montserrat font-black tracking-tight mb-8 leading-[1.2] text-[var(--text-main)]">
+                    Почему RL ломает ИИ-агентов с инструментами?<br>
+                    <span class="text-lg sm:text-xl md:text-2xl lg:text-3xl text-[var(--text-muted)] font-bold block mt-3"></span>
+                </h1>
+
+                <div class="cyber-img w-full max-w-4xl mx-auto rounded-2xl overflow-hidden m-0 bg-black">
+                    <img src="https://dataist.ai/2026-06-29/cover.png"
+                         alt="Обложка: Почему RL ломает ИИ-агентов с инструментами?"
+                         class="w-full h-auto max-h-[70vh] object-cover scale-[1.0] origin-center">
+                </div>
+            </header>
+
+            <!-- Article body -->
+            <div class="article-content max-w-4xl mx-auto w-full">
+                <section>
+<h2>Когда ИИ ломается не потому, что «поглупел»</h2>
+<p>У больших языковых моделей есть неприятная привычка: иногда они перестают ошибаться <em>понятно</em> и начинают ошибаться <em>странно</em>. В задачах с инструментами это выглядит особенно болезненно. Модель еще вчера умела вызвать поиск, передать параметры в API, дождаться ответа и сделать следующий шаг. А потом — внезапно — скатывается в бессмысленные служебные токены, ломает формат вызова инструмента и показывает почти нулевой результат.</p>
+<p>Именно этот сбой разбирает работа <strong>Why Multi-Step Tool-Use Reinforcement Learning Collapses and How Supervisory Signals Fix It</strong>. Авторы смотрят на популярную надежду индустрии — обучение с подкреплением для ИИ-агентов — и показывают важную вещь: в многошаговом использовании инструментов проблема часто не в том, что модель теряет способность к рассуждению, а в том, что она теряет <strong>структуру поведения</strong>.</p>
+<p>Это тонкое, но очень важное различие. Если модель «забыла», как решать задачу, нужен один тип лечения. Если она все еще «понимает», что делать, но ломает обвязку — теги, формат, служебные маркеры, последовательность вызовов — нужен совсем другой подход.</p>
+</section>
+<section>
+<h2>Что именно исследовали</h2>
+<p>Авторы изучали, как две относительно компактные модели семейства Qwen ведут себя в задачах многошагового использования инструментов. В качестве основного полигона взяли BFCL-V3 — бенчмарк, где модель должна не просто выдать текстовый ответ, а корректно пройти через несколько шагов: выбрать нужный инструмент, передать аргументы, обработать ответ и продолжить взаимодействие.</p>
+<p>Сценарии там не игрушечные: пропущенные функции, недостающие параметры, длинный контекст. То есть это уже довольно близко к реальным ИИ-агентам, которые должны не только «думать», но и соблюдать протокол.</p>
+<p>Главный вопрос статьи звучит так: <strong>почему чистое обучение с подкреплением часто делает такие системы нестабильными</strong>, и можно ли это исправить за счет дополнительных сигналов обучения.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-29/fig_2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема сравниваемых стратегий обучения: от чистого обучения с подкреплением до методов с дополнительным контролем и рефлексией по процессу.</p>
+</div></figure>
+<p>Исследователи сравнили несколько подходов:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">чистое обучение с подкреплением;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">сначала контролируемое дообучение, потом обучение с подкреплением;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">добавление правильных траекторий «снаружи»;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">подсказки, направляющие поиск решения;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">обучение на собственных ошибках модели;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">и предложенный авторами вариант — <strong>контроль через рефлексию по процессу</strong>, когда по неудачным траекториям создаются текстовые разборы ошибок и правильных ходов.</span></div>
+<p>Важна не только сама идея «добавим больше надзора», а то, <strong>как именно</strong> этот надзор встраивается в цикл обучения.</p>
+</section>
+<section>
+<h2>Главная находка: модель рушится структурно, а не когнитивно</h2>
+<p>Самая интересная часть статьи — анализ того, что авторы называют катастрофическим коллапсом. Во время обучения с подкреплением модель может внезапно перестать выдавать корректные вызовы инструментов и начать генерировать мусор вроде обрывков специальных токенов или пустых формальных конструкций.</p>
+<p>Но вот в чем интрига: это не обязательно означает, что внутренняя способность решать задачу исчезла.</p>
+<p>Авторы показывают, что коллапс часто связан с тем, что обучение с подкреплением <strong>непропорционально раздувает вероятности отдельных управляющих токенов</strong>. Речь о маркерах, которые задают структуру общения с инструментами: начало вызова, конец хода, специальные разделители. Когда их вероятности уходят вразнос, модель начинает «залипать» на формальной оболочке и ломает сам протокол.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-29/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Как во время обучения меняется частота специальных токенов: от нормальной генерации к «загрязнению» текста и полному структурному коллапсу.</p>
+</div></figure>
+<p>Авторы делят поведение на четыре состояния:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>здоровый вызов инструмента</strong> — корректный формат и правильный вызов;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>здоровый текстовый ответ</strong> — обычный ответ без структурных артефактов;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>загрязнение текста</strong> — в ответ начинают просачиваться лишние служебные токены;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>коллапс</strong> — модель схлопывается в бессмысленные короткие последовательности.</span></div>
+<p>Это очень полезная рамка. Она переводит разговор о «модель стала хуже» в более инженерный язык: <strong>нет, у нее поехала токенная динамика в структурно чувствительной зоне</strong>.</p>
+<p>Для тех, кто строит ИИ-агентов, вывод почти практический: нельзя оценивать устойчивость только по итоговому вознаграждению. Нужно смотреть на микродинамику генерации — какие токены начинают доминировать, не портится ли формат раньше, чем рухнет метрика качества.</p>
+</section>
+<section>
+<h2>Почему чистое обучение с подкреплением здесь подводит</h2>
+<p>В задачах типа математики или короткого рассуждения обучение с подкреплением часто представляют как естественный путь к усилению модели: пусть исследует, получает вознаграждение, улучшает стратегию. Но задачи с инструментами устроены жестче.</p>
+<p>Здесь недостаточно «почти угадать». Нужно соблюсти точный синтаксис, выбрать правильный инструмент, не забыть аргументы, не перепутать последовательность действий. Малейшая ошибка в структуре — и система исполнения уже не может продолжить работу.</p>
+<p>Авторы показывают, что в такой среде чистое обучение с подкреплением легко теряет устойчивость. Особенно это видно на Qwen2.5-1.5B-Instruct: прямое применение метода приводит почти к нулевым результатам. У Qwen3-1.7B картина чуть мягче, но выигрыш все равно скромный и нестабильный.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-29/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Динамика обучения на BFCL-V3: у одной модели виден резкий срыв при чистом обучении с подкреплением, у другой — более мягкая, но все равно нестабильная траектория.</p>
+</div></figure>
+<p>Почему так происходит? Потому что скалярное вознаграждение плохо объясняет модели, <strong>каким именно образом</strong> нужно сохранять структуру многошагового взаимодействия. Оно говорит, по сути, только «хорошо» или «плохо» на выходе. А проблема возникает на уровне промежуточной сборки ответа — там, где один лишний управляющий токен уже все ломает.</p>
+<p>И это, пожалуй, один из центральных тезисов статьи: <strong>для инструментальных ИИ-агентов одного сигнала вознаграждения недостаточно</strong>. Нужны дополнительные формы надзора, которые стабилизируют саму форму поведения, а не только оценивают его результат.</p>
+</section>
+<section>
+<h2>Какие сигналы надзора действительно помогают</h2>
+<p>Авторы систематически перебирают несколько вариантов.</p>
+<p>Простой сценарий «сначала контролируемое дообучение, потом обучение с подкреплением» помогает поднять стартовый уровень и часто делает обучение стабильнее. Но это не универсальное решение. Такой подход может слишком сильно привязать модель к конкретному формату обучающих данных, и она начинает хуже переноситься на новые схемы запросов.</p>
+<p>Более слабые результаты показали методы, которые выглядят интуитивно привлекательными: подмешивание правильных траекторий в духе внешнего надзора и направляющие подсказки. На бумаге это должно помогать, но на практике в синхронном режиме обучения такие сигналы создают рассогласование распределений и не дают надежной устойчивости.</p>
+<p>Лучше сработали два метода, построенные вокруг <strong>чередования</strong> контролируемого дообучения и обучения с подкреплением:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>обучение на ошибочных траекториях</strong> — когда модель сначала проваливается, а потом по этим провалам строится корректирующее дообучение;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>контроль через рефлексию по процессу</strong> — когда поверх неудачных траекторий создаются текстовые объяснения: где ошибка, почему она возникла, как должен выглядеть правильный ход.</span></div>
+<p>Именно второй метод оказался самым сильным на Qwen2.5-1.5B-Instruct. В среднем он дал лучший результат среди всех протестированных стратегий.</p>
+<p>Это особенно интересно, потому что статья фактически говорит: модели полезно не просто показать правильный ответ, а <strong>словесно объяснить логику исправления</strong>. Такой сигнал помогает не только запомнить шаблон вызова, но и удерживать причинную структуру многошагового действия.</p>
+</section>
+<section>
+<h2>Что показали числа</h2>
+<p>На первой модели, Qwen2.5-1.5B-Instruct, чистое обучение с подкреплением провалилось почти полностью. Зато методы с чередованием дали резкий прирост. Особенно выделился подход с рефлексией по процессу: он заметно обошел и базовый вариант, и простое контролируемое дообучение, и комбинацию «дообучение плюс обучение с подкреплением».</p>
+<p>На второй модели, Qwen3-1.7B, картина сложнее. Некоторые варианты после начального улучшения тоже сваливались в коллапс. Авторы связывают это с несоответствием форматов обучения и генерации, в частности с режимом «размышления» и специальными служебными вставками. Это еще одно напоминание: для ИИ-агентов формат — не косметика, а часть самой задачи.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-29/fig_3.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Влияние скорости обучения: слишком осторожные обновления не спасают устойчивость, а более агрессивные в некоторых режимах даже помогают.</p>
+</div></figure>
+<p>Еще один любопытный результат связан со скоростью обучения. Привычная интуиция подсказывает, что для нестабильного обучения стоит брать меньший шаг. Но здесь слишком осторожные обновления не решают проблему. В некоторых конфигурациях более высокая скорость обучения даже улучшала результаты, особенно когда корректирующий сигнал был хорошо организован. Иными словами, дело не только в «нежности» оптимизации, а в том, <strong>какой именно сигнал получает модель</strong>.</p>
+</section>
+<section>
+<h2>Обратная сторона: устойчивость и переносимость не всегда идут вместе</h2>
+<p>Пожалуй, самый зрелый момент статьи — авторы не пытаются продать свой метод как универсальное решение без издержек.</p>
+<p>Да, контролируемые сигналы делают обучение стабильнее. Но за это можно заплатить ухудшением обобщающей способности, особенно если модель слишком прилипает к формату обучающих примеров. На внешнем бенчмарке с измененным форматом вызовов оказалось, что некоторые методы, отлично работающие «дома», резко проседают вне распределения.</p>
+<p>Это очень важное предупреждение для практиков. В мире ИИ-агентов легко получить красивую метрику на знакомом протоколе и при этом незаметно натренировать модель на хрупкий шаблон. Тогда при смене оболочки — другого стиля подсказки, другой разметки, другой схемы вызова — качество исчезает.</p>
+<p>Здесь особенно интересно, что чистое обучение с подкреплением в некоторых тестах вне распределения выглядело не так уж безнадежно. Это поддерживает главный тезис статьи: коллапс часто носит <strong>форматный</strong> характер. Модель не полностью теряет способность действовать, а как будто «запирается» в неудачной схеме вывода.</p>
+</section>
+<section>
+<h2>Почему эта работа важна</h2>
+<p>В последние два года вокруг ИИ-агентов было много энтузиазма: дайте модели инструменты, добавьте обучение с подкреплением — и она научится действовать как автономный исполнитель. Реальность, как часто бывает, оказалась менее романтичной.</p>
+<p>Эта статья важна сразу по трем причинам.</p>
+<p>Во-первых, она дает <strong>механистическое объяснение</strong> нестабильности. Не просто «обучение с подкреплением иногда ломает агентные задачи», а вполне конкретную картину: расползаются вероятности управляющих токенов, рушится структура вызова инструментов.</p>
+<p>Во-вторых, работа показывает, что в агентных задачах нужно думать не только о награде и политике, но и о <strong>структурном контроле генерации</strong>. Для индустрии это означает переход от грубого «оптимизируем итоговый успех» к более аккуратной инженерии протокола.</p>
+<p>В-третьих, статья предлагает практически полезную мысль: <strong>наиболее эффективны не просто правильные ответы, а сигналы, которые объясняют процесс исправления ошибок</strong>. Это хорошо укладывается в более широкий тренд: модели становятся устойчивее, когда учатся не только на результате, но и на разборе неудачных траекторий.</p>
+</section>
+<section>
+<h2>Выводы</h2>
+<p>Работа китайских исследователей — это хороший пример статьи, которая не обещает магии, а аккуратно вскрывает реальную инженерную проблему. Ее главный вывод звучит просто: <strong>в многошаговом использовании инструментов обучение с подкреплением ломается прежде всего на уровне структуры, а не способности</strong>.</p>
+<p>Из этого следуют и практические рекомендации:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">не полагаться только на обучение с подкреплением;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">отслеживать поведение специальных токенов и формат генерации;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">использовать чередование с контролируемым дообучением, а не только синхронное смешивание сигналов;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">отдельно думать о переносимости на новые форматы, а не только о результате на тренировочном протоколе.</span></div>
+<p>Самый сильный ход статьи — превращение расплывчатой «нестабильности ИИ-агента» в диагностируемую проблему токенной динамики. Для всех, кто строит системы с инструментами, это почти чек-лист: если агент внезапно «отупел», возможно, он вовсе не отупел. Возможно, он просто сломал язык, на котором должен разговаривать со своими инструментами. И чинить нужно именно этот язык.</p>
+</section>
+            </div>
+
+            <!-- Footer CTA -->
+            <div class="max-w-4xl mx-auto w-full mt-16 pt-12 border-t border-[var(--glass-border)] text-center fade-in">
+                <div class="mb-10 flex flex-wrap justify-center gap-4">
+                    <a href="https://arxiv.org/abs/2606.26027" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-purple transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <span class="text-xl">📜</span>
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-purple">Полная статья (arXiv)</span>
+                    </a>
+                    <a href="https://github.com/hypasd-art/Tool-RL-Box" target="_blank" class="inline-flex items-center gap-3 px-6 py-3 bg-[var(--card-bg)] border border-[var(--card-border)] rounded-full hover:border-cyber-orange transition-all text-[var(--text-main)] shadow-sm hover:shadow-md group">
+                        <img src="https://cdn-icons-png.flaticon.com/256/25/25231.png" alt="GitHub" class="w-5 h-5 dark:invert transition-all">
+                        <span class="font-mono text-sm md:text-base font-bold transition-colors group-hover:text-cyber-orange">Код (GitHub)</span>
+                    </a>
+                </div>
+            </div>
+        </article>
+    </main>
+
+    <!-- Progress bar -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-[var(--glass-border)] z-50">
+        <div id="progress-bar" class="h-full bg-gradient-to-r from-cyber-purple to-cyber-orange w-0 shadow-[0_0_15px_rgba(168,85,247,0.6)] transition-all duration-100"></div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) { html.classList.add('dark'); } else { html.classList.remove('dark'); }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready(); tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => { applyTheme(!html.classList.contains('dark')); });
+
+        window.addEventListener('scroll', () => {
+            let h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            document.getElementById("progress-bar").style.width = ((document.documentElement.scrollTop / h) * 100) + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+            }, { threshold: 0.15 });
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
