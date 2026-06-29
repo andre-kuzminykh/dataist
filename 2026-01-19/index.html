@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Агентный RAG против модульного: что реально лучше на практике</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Агентный RAG против модульного: что реально лучше на практике" />
+    <meta property="og:description" content="RAG сегодня — один из самых практичных способов подключить LLM к внешним знаниям: модель не полагается только на собственную память, а сначала ищет нужные фрагменты в базе знаний и уже потом отвечает. В реальных продуктах это выглядит как спасение от галлюцинаций и устаревших фактов. Но у…" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2026-01-19/" />
+    <meta property="og:image" content="https://i.ibb.co/Z6mqzr6Z/Chat-GPT-Image-Jan-19-2026-09-48-42-PM.png" />
+    <meta property="article:published_time" content="2026-01-19T10:00:00+03:00" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://i.ibb.co/Z6mqzr6Z/Chat-GPT-Image-Jan-19-2026-09-48-42-PM.png" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function () { try { var s=localStorage.getItem('theme'); var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; if(s?s==='dark':p) document.documentElement.classList.add('dark'); } catch(e){ document.documentElement.classList.add('dark'); } })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {
+            colors: { apple: { light:'#F5F5F7', dark:'#000000', grayLight:'#E5E5EA', grayDark:'#1C1C1E', textMutedLight:'#86868B', textMutedDark:'#8E8E93' } },
+            fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','"Inter"','sans-serif'], mono: ['"Space Mono"','monospace'] },
+            boxShadow: { 'apple':'0 4px 24px rgba(0,0,0,0.04)', 'apple-dark':'0 4px 24px rgba(255,255,255,0.04)' }
+        } } };
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header { @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10; }
+        }
+        body { @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300; }
+        ::selection { @apply bg-black text-white dark:bg-white dark:text-black; }
+        .article-p { @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85; }
+        .article-p strong { @apply font-semibold text-black dark:text-white; }
+        .article-h2 { @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white; }
+        .apple-img { @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white; }
+        .fade-in { opacity:0; transform:translateY(20px); transition:opacity .8s cubic-bezier(0.2,0.8,0.2,1), transform .8s cubic-bezier(0.2,0.8,0.2,1); will-change:opacity,transform; }
+        .fade-in.visible { opacity:1; transform:translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white"><i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">i</div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">ДАТАИСТ</div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i><i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i><span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i><span>Обзор · 2026-01-19</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white">Агентный RAG против модульного: что реально лучше на практике</h1>
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-white"><img src="https://i.ibb.co/Z6mqzr6Z/Chat-GPT-Image-Jan-19-2026-09-48-42-PM.png" alt="Агентный RAG против модульного: что реально лучше на практике" class="w-full h-auto object-cover"></div>
+            </header>
+            <div class="max-w-3xl mx-auto w-full">
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">RAG сегодня — один из самых практичных способов подключить LLM к внешним знаниям: модель не полагается только на собственную память, а сначала ищет нужные фрагменты в базе знаний и уже потом отвечает. В реальных продуктах это выглядит как спасение от галлюцинаций и устаревших фактов. Но у обычного RAG поиск иногда притаскивает «не то». Поэтому индустрия пошла двумя дорогами.</p>
+                <p class="article-p fade-in">Первая — «улучшенный» (Enhanced) RAG: мы строим фиксированный пайплайн из полезных деталей. Роутер решает, нужен ли поиск. Переформулировщик переписывает запрос, чтобы он лучше совпадал с документами. Ретривер достаёт кандидатов. Переранкер пересортировывает их, чтобы контекст был максимально точным. Всё понятно, детерминированно и воспроизводимо.</p>
+                <p class="article-p fade-in">Вторая — «агентный» (Agentic) RAG: вместо заранее заданных модулей мы даём LLM роль агента. Она сама решает, искать ли документы, стоит ли переписать запрос, нужно ли повторить поиск, достаточно ли контекста. Звучит красиво: меньше жёстких правил, больше гибкости «по ситуации». Но действительно ли это лучше, и главное — в каких условиях?</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.07711v1/fig_1_large1.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Слева — улучшенный RAG как фиксированный конвейер модулей (роутинг, rewriting, retrieval, reranking, генерация). Справа — агентный RAG, где LLM сама управляет шагами: решает, когда звать поиск, можно ли отвечать сразу и нужно ли повторять итерации.</figcaption></figure>
+                <p class="article-p fade-in">Авторы статьи как раз берутся за неприятный вопрос: «что реально работает» — и делают масштабное экспериментальное сравнение Enhanced и Agentic RAG. Причём на разных типах задач: финансовые вопросы (FIQA), фактчекинг (FEVER), поиск похожих обсуждений (CQADupStack-English) и открытые вопросы общего характера (NQ). Они раскладывают RAG на несколько «узких мест» и проверяют, кто и где выигрывает.</p>
+                <h2 class="article-h2 fade-in">Где RAG должен уметь говорить «поиск не нужен»</h2>
+                <p class="article-p fade-in">Первый тест — умение отличать запросы, где внешние знания действительно нужны, от запросов «вне области знаний» или таких, где лучше отвечать без поиска. В Enhanced RAG это делает отдельный семантический роутер на эмбеддингах: сравнивает запрос с примерами «валидных» и «невалидных» запросов и решает, запускать ли retrieval. В Agentic RAG решение принимает сама LLM в процессе рассуждения.</p>
+                <p class="article-p fade-in">На финансовых и форумных данных агент действительно хорош: почти не ошибается и даже немного обходит модульный роутинг. Но на FEVER (фактчекинг чего угодно) агент часто делает retrieval даже там, где он не нужен, и резко проигрывает по качеству распознавания. Вывод: чем шире домен и размытее границы задачи, тем сложнее агенту стабильно «отсекать лишнее», и модульная маршрутизация оказывается надёжнее.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.07711v1/router.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Схема роутинга в Enhanced RAG: запрос сравнивается с примерами двух классов (валидный/невалидный) через эмбеддинги, берутся ближайшие, и по среднему сходству выбирается метка.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Переписать запрос — но не всегда одинаково</h2>
+                <p class="article-p fade-in">Вторая проверка — query rewriting. Здесь документы в базе часто длинные и «канцелярские», а пользовательский запрос короткий и разговорный. Переписывание помогает ретриверу «свести форматы». В Enhanced RAG rewriting делается принудительно одним методом (HyDE-подход: LLM пишет абзац, как будто это ответ, и по нему идёт поиск). В Agentic RAG rewriting — опциональный шаг: агент может переписывать запрос по ситуации и под тип документов.</p>
+                <p class="article-p fade-in">И здесь агентный подход в среднем лучше вытягивает релевантные документы. Похоже, гибкость действительно важна: иногда запрос лучше «развернуть», иногда — оставить как есть, а иногда — изменить стиль под конкретный корпус знаний (например, под форумные обсуждения). Универсальная принудительная переформулировка не всегда попадает в точку.</p>
+                <p class="article-p fade-in">Третий момент — улучшение списка документов после первичного retrieval. Enhanced RAG добавляет классический cross-encoder переранкер и из большого пула кандидатов выбирает лучшее. Agentic RAG теоретически может добиться похожего, делая дополнительные итерации поиска с новыми формулировками. Но в эксперименте это не сработало: повторные заходы агента не приводят к качественно лучшим документам, а иногда даже ухудшают картину.</p>
+                <p class="article-p fade-in">Итак, если проблема в том, что «в топе выдачи много мусора», то переранкер часто даёт более прямое и надёжное решение, чем попытка уговорить LLM переформулировать запрос ещё пятью способами.</p>
+                <h2 class="article-h2 fade-in">Зависимость от базовой LLM и неприятная цена гибкости</h2>
+                <p class="article-p fade-in">Авторы отдельно проверяют, меняется ли баланс Enhanced vs Agentic при разных базовых моделях Qwen3 (0.6B, 4B, 8B, 32B). Тренд ожидаемый: чем лучше LLM, тем лучше итоговый ответ. Но важная деталь: кривые роста у Enhanced и Agentic похожи — агентный подход не получает «магического бонуса» от того, что модель стала сильнее.</p>
+                <p class="article-p fade-in">В замерах Agentic RAG потребляет примерно в несколько раз больше входных и выходных токенов (для разных задач по‑разному) и даёт заметно большую задержку. То есть даже когда качество сравнимо, платить часто придётся больше — просто потому что агент рассуждает, выбирает действия и делает дополнительные шаги.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.07711v1/fiqa_selene.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Сравнение Enhanced и Agentic при смене базовой LLM: оценка итоговых ответов через LLM-as-a-judge (Selene-70B) показывает схожие тренды улучшения по мере роста модели.</figcaption></figure>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.07711v1/tot_time_fiqa.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Стоимость и задержки в агентном режиме: распределение времени, а также средние входные/выходные токены для разных моделей. Хорошо видно, что «размышление» и дополнительные шаги агента заметно раздувают расход токенов и latency.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Что из этого стоит вынести, если вы строите RAG в продукте</h2>
+                <p class="article-p fade-in">Эта работа не «хоронит» Agentic RAG и не объявляет Enhanced единственно правильным. Она делает более полезное: показывает, где агентность действительно помогает (гибкое переписывание, узкие домены), а где модульность выигрывает устойчивостью (роутинг в сложных запросах, надёжный reranking). И отдельно напоминает про цену: агентный контроль почти неизбежно означает больше токенов и времени, а значит — более дорогой ответ.</p>
+                <p class="article-p fade-in">Если перевести вывод в инженерный совет, он звучит так: агентный RAG имеет смысл там, где неопределённость высока и полезна адаптация «на лету», но для стабильных частей пайплайна вроде переранкинга модульный подход пока выглядит сильнее и экономичнее.</p>
+                <p class="article-p fade-in"><a href="https://arxiv.org/html/2601.07711v1" target="_blank" rel="noopener" class="underline underline-offset-2 hover:opacity-70 transition-opacity">📜 Полная статья</a></p>
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-16 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i></div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">Обзоры ИИ простыми словами</h2>
+                        </div>
+                        <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium mb-10">Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.</p>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">Новые обзоры — каждый день.</p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span><i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50"><div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div></div>
+    <script>
+        lucide.createIcons();
+        const themeToggleBtn=document.getElementById('theme-toggle'), html=document.documentElement;
+        function applyTheme(d){ if(d){html.classList.add('dark');localStorage.setItem('theme','dark');}else{html.classList.remove('dark');localStorage.setItem('theme','light');} setTimeout(()=>lucide.createIcons(),50); }
+        const tg=window.Telegram?.WebApp;
+        if(tg&&tg.initData){ tg.ready();tg.expand(); if(tg.colorScheme){ applyTheme(tg.colorScheme==='dark'); tg.onEvent('themeChanged',()=>applyTheme(tg.colorScheme==='dark')); } }
+        themeToggleBtn.addEventListener('click',()=>applyTheme(!html.classList.contains('dark')));
+        window.addEventListener('scroll',()=>{ let h=document.documentElement.scrollHeight-document.documentElement.clientHeight; document.getElementById("progress-bar").style.width=((document.documentElement.scrollTop/h)*100)+"%"; });
+        document.addEventListener("DOMContentLoaded",function(){ const o=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');o.unobserve(e.target);}});},{threshold:0.05}); document.querySelectorAll('.fade-in').forEach(el=>o.observe(el)); });
+    </script>
+</body>
+</html>

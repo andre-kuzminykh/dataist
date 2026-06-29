@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как выжать максимум смысла из тысяч строк кода</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как выжать максимум смысла из тысяч строк кода" />
+    <meta property="og:description" content="LLM для кодинга уже умеют дополнять, объяснять и чинить код, но в реальных проектах им приходится читать тысячи строк. Большие окна контекста помогают, но бьют по времени и цене, а ещё парадоксально ухудшают точность: модель начинает теряться в деталях и упускает скрытые зависимости между…" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2025-10-04/" />
+    <meta property="og:image" content="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1759589146/yaxjt5iinxe1y5hppnrr.png" />
+    <meta property="article:published_time" content="2025-10-04T10:00:00+03:00" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1759589146/yaxjt5iinxe1y5hppnrr.png" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function () { try { var s=localStorage.getItem('theme'); var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; if(s?s==='dark':p) document.documentElement.classList.add('dark'); } catch(e){ document.documentElement.classList.add('dark'); } })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {
+            colors: { apple: { light:'#F5F5F7', dark:'#000000', grayLight:'#E5E5EA', grayDark:'#1C1C1E', textMutedLight:'#86868B', textMutedDark:'#8E8E93' } },
+            fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','"Inter"','sans-serif'], mono: ['"Space Mono"','monospace'] },
+            boxShadow: { 'apple':'0 4px 24px rgba(0,0,0,0.04)', 'apple-dark':'0 4px 24px rgba(255,255,255,0.04)' }
+        } } };
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header { @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10; }
+        }
+        body { @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300; }
+        ::selection { @apply bg-black text-white dark:bg-white dark:text-black; }
+        .article-p { @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85; }
+        .article-p strong { @apply font-semibold text-black dark:text-white; }
+        .article-h2 { @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white; }
+        .apple-img { @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white; }
+        .fade-in { opacity:0; transform:translateY(20px); transition:opacity .8s cubic-bezier(0.2,0.8,0.2,1), transform .8s cubic-bezier(0.2,0.8,0.2,1); will-change:opacity,transform; }
+        .fade-in.visible { opacity:1; transform:translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white"><i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">i</div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">ДАТАИСТ</div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i><i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i><span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i><span>Обзор · 2025-10-04</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white">Как выжать максимум смысла из тысяч строк кода</h1>
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-white"><img src="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1759589146/yaxjt5iinxe1y5hppnrr.png" alt="Как выжать максимум смысла из тысяч строк кода" class="w-full h-auto object-cover"></div>
+            </header>
+            <div class="max-w-3xl mx-auto w-full">
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">LLM для кодинга уже умеют дополнять, объяснять и чинить код, но в реальных проектах им приходится читать тысячи строк. Большие окна контекста помогают, но бьют по времени и цене, а ещё парадоксально ухудшают точность: модель начинает теряться в деталях и упускает скрытые зависимости между файлами и функциями. Обычные текстовые компрессоры отбрасывают фразы и токены, не учитывая структуру кода. RAG по схожести ловит поверхностные совпадения и часто промахивается мимо неявных связей — например, где именно берутся параметры из конфигурации.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.00446v1/x1.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Вызов для RAG, метода сжатия контекста на основе сходства.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Идея: сжимаем, не ломая смысл</h2>
+                <p class="article-p fade-in">Авторы LongCodeZip предлагают простой, но точный рецепт: оставить в контексте только то, что действительно помогает ответить на текущий промт. Фреймворк training-free и не требует дообучения модели. Он работает в два шага. Сначала грубо отбирает функции и классы, которые сильнее всего снижают неопределённость модели относительно запроса. Затем внутри выбранных функций аккуратно режет код на смысловые блоки и оптимально раскладывает их в заданный бюджет токенов. Получается компактный, но информативный ввод: структура сохраняется, мусор исчезает.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.00446v1/x2.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Общий обзор фреймворка LongCodeZip.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Как это устроено изнутри</h2>
+                <p class="article-p fade-in">Что значит полезный фрагмент? Исследователи измеряют, насколько наличие куска кода уменьшает перплексию на тексте запроса — по сути, насколько проще модели предсказывать слова промта, когда она видит этот код. Это приближённая взаимная информация: чем больше падение перплексии, тем выше вклад фрагмента.</p>
+                <h3 class="font-sans font-bold text-xl md:text-2xl tracking-tight mt-10 mb-4 text-black dark:text-white fade-in">Дальше — два уровня компрессии.</h3>
+                <ul class="list-disc pl-6 my-6 space-y-2 text-lg md:text-[21px] text-black/85 dark:text-white/85 fade-in"><li class="leading-relaxed"><strong class="font-semibold text-black dark:text-white">Грубый отбор. </strong>Репозиторий режется по границам функций и классов. Каждую часть ранжируют по условной перплексии относительно промта и берут верхние кандидаты под предварительный бюджет. Остальные заменяются короткими заглушками, чтобы не поломать общую структуру.</li><li class="leading-relaxed"><strong class="font-semibold text-black dark:text-white">Точная подрезка.</strong> Внутри оставшихся функций строки рассматриваются как атомы и объединяются в блоки по всплескам перплексии — там обычно меняется тема кода: переход к новой ветке логики, важная проверка, вызов внешнего API. На каждый файл выделяется адаптивный бюджет: более релевантные получают больше. Выбор блоков формализуется как баланс между ценностью и релевантностью, весом и числом токенов, целью и возможностью уложиться в лимит и забрать максимум смысла.</li></ul>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.00446v1/x4.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Пример процесса детализированной компрессии при автодополнении длинного кода.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Что показали эксперименты</h2>
+                <p class="article-p fade-in">Тесты шли на трёх типах задач: автодополнение, суммаризация модулей и вопросы по репозиторию. Модели — как открытые (DeepSeek‑Coder‑6.7B, Qwen2.5‑Coder‑7B, Seed‑Coder‑8B), так и закрытые (GPT‑4o, Claude‑3.7‑Sonnet).</p>
+                <p class="article-p fade-in">Главный итог: до 5.6× сжатия без падения качества, а порой и с ростом — шум уходит, сигнал остаётся. На автодополнении Qwen2.5‑Coder‑7B получил 57.55 ES и 32.40 EM при 4.3×, что выше RAG по функциям при меньшем бюджете. DeepSeek‑Coder‑6.7B на тех же данных стал лучше, чем без сжатия, при 5.3×. Seed‑Coder‑8B — максимум 5.6× с лучшим качеством среди методов. На RepoQA точность поднималась до 87–91 при 4.5–5.3×, включая закрытые модели. Суммаризация осталась на уровне без компрессии или слегка улучшилась при 1.7–3.5×.</p>
+                <p class="article-p fade-in">По времени и стоимости выгода ощутимая. Пример для Qwen2.5‑Coder‑7B на автодополнении: вместо 15.7 секунд без сжатия генерация заняла 6.6 секунды после компрессии; затраты на входные токены снизились примерно на 77%. Сама компрессия — около 2.6 секунды и мало памяти. Её можно ускорить ещё сильнее, если выполнять на маленькой 0.5B‑модели: качество почти не проседает, а ресурсы экономятся.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.00446v1/x3.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Зависимость производительности (ES) от доли оставшегося контекста (%).</figcaption></figure>
+                <h2 class="article-h2 fade-in">Что важнее всего в дизайне</h2>
+                <p class="article-p fade-in">Абляции показывают, что основную пользу даёт именно грубый отбор по условной перплексии. Замените его на похожесть по эмбеддингам — и качество заметно падает. Но и вторая стадия работает не зря: семантические блоки, адаптивный бюджет и рюкзак добавляют проценты точности, особенно при жёстком лимите токенов. В совокупности это повышает плотность полезной информации в каждом символе, который вы показываете модели.</p>
+                <h2 class="article-h2 fade-in">Где это пригодится на практике</h2>
+                <ul class="list-disc pl-6 my-6 space-y-2 text-lg md:text-[21px] text-black/85 dark:text-white/85 fade-in"><li class="leading-relaxed">Автодополнение на уровне нескольких файлов, когда окно модели не вмещает весь проект.</li><li class="leading-relaxed">Ответы на вопросы в репозитории: найти нужную реализацию, проследить цепочку вызовов, не загружая всё подряд.</li><li class="leading-relaxed">Суммаризация больших модулей и подготовка контекста для ревью.</li></ul>
+                <p class="article-p fade-in">Интересно, что LongCodeZip не зависит от конкретной LLM и не требует обучения — его можно вставить перед любой моделью как прозрачный фильтр. Это ценно там, где модель закрытая или её нельзя дообучить.</p>
+                <h2 class="article-h2 fade-in">Ограничения и что дальше</h2>
+                <p class="article-p fade-in">Оценка релевантности строится на перплексии, значит, требуется доступ к логитам. Впрочем, авторы показывают, что даже крохотная компрессорная модель справляется.</p>
+                <p class="article-p fade-in">Ещё один момент — оценка суммаризаций выполнялось LLM‑оценщиком; смещения снижались реверсом порядка сравнений, но человеческая проверка всегда полезна. Дальнейшие шаги видятся в более точном учёте зависимостей между файлами и в ускорении сегментации под многоязычные репозитории.</p>
+                <p class="article-p fade-in"><a href="https://arxiv.org/abs/2510.00446" target="_blank" rel="noopener" class="underline underline-offset-2 hover:opacity-70 transition-opacity">📜 Полная статья</a></p>
+                <p class="article-p fade-in"><a href="https://github.com/YerbaPage/LongCodeZip" target="_blank" rel="noopener" class="underline underline-offset-2 hover:opacity-70 transition-opacity">💾 Код</a></p>
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-16 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i></div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">Обзоры ИИ простыми словами</h2>
+                        </div>
+                        <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium mb-10">Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.</p>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">Новые обзоры — каждый день.</p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span><i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50"><div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div></div>
+    <script>
+        lucide.createIcons();
+        const themeToggleBtn=document.getElementById('theme-toggle'), html=document.documentElement;
+        function applyTheme(d){ if(d){html.classList.add('dark');localStorage.setItem('theme','dark');}else{html.classList.remove('dark');localStorage.setItem('theme','light');} setTimeout(()=>lucide.createIcons(),50); }
+        const tg=window.Telegram?.WebApp;
+        if(tg&&tg.initData){ tg.ready();tg.expand(); if(tg.colorScheme){ applyTheme(tg.colorScheme==='dark'); tg.onEvent('themeChanged',()=>applyTheme(tg.colorScheme==='dark')); } }
+        themeToggleBtn.addEventListener('click',()=>applyTheme(!html.classList.contains('dark')));
+        window.addEventListener('scroll',()=>{ let h=document.documentElement.scrollHeight-document.documentElement.clientHeight; document.getElementById("progress-bar").style.width=((document.documentElement.scrollTop/h)*100)+"%"; });
+        document.addEventListener("DOMContentLoaded",function(){ const o=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');o.unobserve(e.target);}});},{threshold:0.05}); document.querySelectorAll('.fade-in').forEach(el=>o.observe(el)); });
+    </script>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Длинное мышление против жёстких пайплайнов: как DeepAgent превращает рассуждение в действие</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Длинное мышление против жёстких пайплайнов: как DeepAgent превращает рассуждение в действие" />
+    <meta property="og:description" content="LLM-агенты умеют рассуждать, но этого недостаточно в решении реальных задач. Необходимо уметь вызывать сторонние инструменты, справляться с длинными сценариями и оставаться автономными на протяжении десятков шагов. Этому мешают строгие пайплайны с фиксированными режимами и классические подходы…" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2025-10-28/" />
+    <meta property="og:image" content="https://i.ibb.co/xKm9FdnG/0bab3566-5f3a-431b-a246-8ebb4a70805a.jpg" />
+    <meta property="article:published_time" content="2025-10-28T10:00:00+03:00" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://i.ibb.co/xKm9FdnG/0bab3566-5f3a-431b-a246-8ebb4a70805a.jpg" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function () { try { var s=localStorage.getItem('theme'); var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; if(s?s==='dark':p) document.documentElement.classList.add('dark'); } catch(e){ document.documentElement.classList.add('dark'); } })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {
+            colors: { apple: { light:'#F5F5F7', dark:'#000000', grayLight:'#E5E5EA', grayDark:'#1C1C1E', textMutedLight:'#86868B', textMutedDark:'#8E8E93' } },
+            fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','"Inter"','sans-serif'], mono: ['"Space Mono"','monospace'] },
+            boxShadow: { 'apple':'0 4px 24px rgba(0,0,0,0.04)', 'apple-dark':'0 4px 24px rgba(255,255,255,0.04)' }
+        } } };
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header { @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10; }
+        }
+        body { @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300; }
+        ::selection { @apply bg-black text-white dark:bg-white dark:text-black; }
+        .article-p { @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85; }
+        .article-p strong { @apply font-semibold text-black dark:text-white; }
+        .article-h2 { @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white; }
+        .apple-img { @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white; }
+        .fade-in { opacity:0; transform:translateY(20px); transition:opacity .8s cubic-bezier(0.2,0.8,0.2,1), transform .8s cubic-bezier(0.2,0.8,0.2,1); will-change:opacity,transform; }
+        .fade-in.visible { opacity:1; transform:translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white"><i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">i</div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">ДАТАИСТ</div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i><i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i><span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i><span>Обзор · 2025-10-28</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white">Длинное мышление против жёстких пайплайнов: как DeepAgent превращает рассуждение в действие</h1>
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-white"><img src="https://i.ibb.co/xKm9FdnG/0bab3566-5f3a-431b-a246-8ebb4a70805a.jpg" alt="Длинное мышление против жёстких пайплайнов: как DeepAgent превращает рассуждение в действие" class="w-full h-auto object-cover"></div>
+            </header>
+            <div class="max-w-3xl mx-auto w-full">
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">LLM-агенты умеют рассуждать, но этого недостаточно в решении реальных задач. Необходимо уметь вызывать сторонние инструменты, справляться с длинными сценариями и оставаться автономными на протяжении десятков шагов. Этому мешают строгие пайплайны с фиксированными режимами и классические подходы вроде ReAct и Plan-and-Solve. Эти подходы задают один и тот же цикл действий и хорошо работают на задачах в два-три шага. Но если дать агенту обширный набор API или MCP, позволить ему самому искать новые инструменты и поставить сложную цель, которую нужно решить за 20–30 вызовов сторонних инструментов, такой подход начинает мешать вместо того, чтобы помогать. Агент теряет автономность, раздувает контекст и накапливает ошибки на длинных траекториях.</p>
+                <h2 class="article-h2 fade-in">Что предлагают исследователи? </h2>
+                <p class="article-p fade-in">В исследовании предлагают не дробить рассуждение на этапы, а вести единый поток: размышляя об инструменте, сразу искать подходящие вариантом с помощью ретривера, читать сжатое описание найденных API и сразу их вызывать. Для этого агент имеет два действия: специальный вызов для ретривера и один шаг для инструментов. При этом набор инструментов обширный и может пополняться за счет ретривера. Все это построено на базе одной модели и одного трека рассуждения.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.21618v1/x2.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Как DeepAgent отличается от традиционных подходов: вместо фиксированного цикла — сплошное рассуждение с динамическим поиском инструментов</figcaption></figure>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.21618v1/x3.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">DeepAgent: мыслит, находит и вызывает инструменты, при необходимости сворачивает память; end-to-end обучение методом ToolPO</figcaption></figure>
+                <h2 class="article-h2 fade-in">Память, которая помогает действовать</h2>
+                <p class="article-p fade-in">Иногда длинные траектории мешают агенту из-за потери внимания на ненужных деталях. Для этого в DeepAgent предложено автономное сворачивание памяти: по сигналу агент вставляет шаг fold, и вспомогательная модель сжимает историю взаимодействия в три структурированных блока: рабочая память (что за подцель мы сейчас решаем и какие препятствия возникли), эпизодическая память (что уже произошло и какие решения мы предприняли) и инструментальная память (какие API мы вызывали, с какими параметрами и к чему это привело.) Память хранится в компактной структуре, поэтому после сворачивания агент не теряет важные факты о задаче.</p>
+                <h2 class="article-h2 fade-in">Как обучали</h2>
+                <p class="article-p fade-in">Обычное обучение с подкреплением (RL) на агентных сценариях часто неустойчиво: внешние инструменты отвечают по-разному, и ошибки сильно бьют по обучению. В статье предложено сквозное RL с двумя улучшениями. Во-первых, симулятор API на базе LLM - он имитирует ответы реальных сервисов, ускоряя и удешевляя обучение на тысячах вызовов. Во-вторых, обучающие сценарии, в которых инструментальный вызов заслуживает награды. В итоге финальная функция атрибуции преимущества комбинирует награду за решения заданий, за вызовы инструментов и за сворачивание памяти. При этом итоговая награда от задания приписывается тем токенам, которые отвечают за вызов API. Так обучение становится более точечным. Авторы называют этот подход ToolPO.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.21618v1/x4.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Динамика обучения: ToolPO достигает более высокого потолка наград и даёт меньшую вариативность по сравнению с альтернативами</figcaption></figure>
+                <h2 class="article-h2 fade-in">Что в экспериментах?</h2>
+                <p class="article-p fade-in">Авторы тестируют DeepAgent в двух режимах: когда все инструменты уже доступны и когда нужные инструменты сперва нужно найти в большой базе. Для обоих случаев используются бенчмарки ToolBench, API-Bank, TMDB, Spotify b ToolHop. На всех наборах новый агент обходит альтернативные сценарии использования инструментов. В режиме открытого поиска API преимущество особенно велико. Например, на сложном ToolBench DeepAgent-32B-RL достигает 64% успеха против лучших пайплайнов, которые находятся около отметки 54%, а на самом сложном ToolHop имеет 40,6% успеха против 29–36% для альтернатив. Авторы также тестируют агент на реальных задачах, для этого в ALFWorld, WebShop и GAIA встроена поддержка вызова инструментов. И в этих задачах новый подход также обгоняет альтернативы. Например, на GAIA DeepAgent-32B-RL показывает 53,3% успешных решения задач против 42,5% у сильного иерархического агента.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.21618v1/x1.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Сводные результаты: в задачах использования инструментов и прикладных сценариях DeepAgent уверенно обходит альтернативы</figcaption></figure>
+                <p class="article-p fade-in">Важная деталь - как сценарии масштабирутся с увеличением лимита действий. Авторы тестируют разные лимиты на задачах WebShop. Оказывается, что при большом ограничении по действиям агенты сопоставимы, но чем больше разрешать агенту делать вызовов, тем больше отрыв DeepAgent от того же ReAct.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.21618v1/x5.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Масштабирование по лимиту действий: преимущество DeepAgent увеличивается с длиной сессии</figcaption></figure>
+                <h2 class="article-h2 fade-in">Почему это важно</h2>
+                <p class="article-p fade-in">Для реальных ассистентов мало уметь рассуждать, нужно еще ориентироваться в богатом наборе API, уметь менять сценарий при ошибках и держать цель в долгом диалоге. DeepAgent показывает, что для этого нужно не дробить сценарий на искусственные этапы, а вести одно рассуждение с единым вызовом - побочным инструментом, расширяя инструменты за счет поиска и контролируя память, чтобы не терять важные факты на долгом горизонте. Кроме того, обучать такие модели можно дешево и стабильно за счет API-симуляции и адресного RL со сворачиванием памяти.</p>
+                <p class="article-p fade-in">Ограничения - агент все еще зависит от качества поиска инструментов. Симулятор полезен на этапе обучения, но не полностью заменяет внешний инструменты. Тем не менее переход к одному сценарию вместо набора встроенных конвейеров выглядит разумным продолжением развития инструментальных LLM-агентов.</p>
+                <p class="article-p fade-in">DeepAgent — это шаг к настоящему «длинному мышлению» ИИ. Он не просто рассуждает, а действует в непрерывном потоке, сам находит нужные инструменты, управляет памятью и учится напрямую на своих вызовах. Такой подход убирает искусственные границы между размышлениями и действием, превращая LLM из разговорного партнёра в автономного оператора. Это фундамент для следующего поколения ассистентов — тех, кто не просто красиво отвечает, а успешно завершает задачи.</p>
+                <p class="article-p fade-in"><a href="https://arxiv.org/abs/2510.21618" target="_blank" rel="noopener" class="underline underline-offset-2 hover:opacity-70 transition-opacity">📜 Полная статья</a></p>
+                <p class="article-p fade-in"><a href="https://github.com/RUC-NLPIR/DeepAgent" target="_blank" rel="noopener" class="underline underline-offset-2 hover:opacity-70 transition-opacity">💾 Код</a></p>
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-16 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i></div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">Обзоры ИИ простыми словами</h2>
+                        </div>
+                        <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium mb-10">Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.</p>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">Новые обзоры — каждый день.</p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span><i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50"><div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div></div>
+    <script>
+        lucide.createIcons();
+        const themeToggleBtn=document.getElementById('theme-toggle'), html=document.documentElement;
+        function applyTheme(d){ if(d){html.classList.add('dark');localStorage.setItem('theme','dark');}else{html.classList.remove('dark');localStorage.setItem('theme','light');} setTimeout(()=>lucide.createIcons(),50); }
+        const tg=window.Telegram?.WebApp;
+        if(tg&&tg.initData){ tg.ready();tg.expand(); if(tg.colorScheme){ applyTheme(tg.colorScheme==='dark'); tg.onEvent('themeChanged',()=>applyTheme(tg.colorScheme==='dark')); } }
+        themeToggleBtn.addEventListener('click',()=>applyTheme(!html.classList.contains('dark')));
+        window.addEventListener('scroll',()=>{ let h=document.documentElement.scrollHeight-document.documentElement.clientHeight; document.getElementById("progress-bar").style.width=((document.documentElement.scrollTop/h)*100)+"%"; });
+        document.addEventListener("DOMContentLoaded",function(){ const o=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');o.unobserve(e.target);}});},{threshold:0.05}); document.querySelectorAll('.fade-in').forEach(el=>o.observe(el)); });
+    </script>
+</body>
+</html>

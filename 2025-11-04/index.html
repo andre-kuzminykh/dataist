@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как ИИ-браузер ChatGPT Atlas разгадал судоку за пару минут, но проиграл в Flappy Bird</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как ИИ-браузер ChatGPT Atlas разгадал судоку за пару минут, но проиграл в Flappy Bird" />
+    <meta property="og:description" content="Что если мы дадим агенту глаза и руки в браузере, и он получит не только контекст на странице, но и намерение, и сможет выполнять целенаправленные клики и нажатия клавиш? Исследователи решили проверить как поведет себя агент на нескольких веб-играх. Думаю, вы уже поняли ответ: У Atlas есть…" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2025-11-04/" />
+    <meta property="og:image" content="https://i.ibb.co/4wf8yhX6/photo-2025-11-04-17-03-57.jpg" />
+    <meta property="article:published_time" content="2025-11-04T10:00:00+03:00" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://i.ibb.co/4wf8yhX6/photo-2025-11-04-17-03-57.jpg" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function () { try { var s=localStorage.getItem('theme'); var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; if(s?s==='dark':p) document.documentElement.classList.add('dark'); } catch(e){ document.documentElement.classList.add('dark'); } })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {
+            colors: { apple: { light:'#F5F5F7', dark:'#000000', grayLight:'#E5E5EA', grayDark:'#1C1C1E', textMutedLight:'#86868B', textMutedDark:'#8E8E93' } },
+            fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','"Inter"','sans-serif'], mono: ['"Space Mono"','monospace'] },
+            boxShadow: { 'apple':'0 4px 24px rgba(0,0,0,0.04)', 'apple-dark':'0 4px 24px rgba(255,255,255,0.04)' }
+        } } };
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header { @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10; }
+        }
+        body { @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300; }
+        ::selection { @apply bg-black text-white dark:bg-white dark:text-black; }
+        .article-p { @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85; }
+        .article-p strong { @apply font-semibold text-black dark:text-white; }
+        .article-h2 { @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white; }
+        .apple-img { @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white; }
+        .fade-in { opacity:0; transform:translateY(20px); transition:opacity .8s cubic-bezier(0.2,0.8,0.2,1), transform .8s cubic-bezier(0.2,0.8,0.2,1); will-change:opacity,transform; }
+        .fade-in.visible { opacity:1; transform:translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white"><i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">i</div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">ДАТАИСТ</div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i><i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i><span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i><span>Обзор · 2025-11-04</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white">Как ИИ-браузер ChatGPT Atlas разгадал судоку за пару минут, но проиграл в Flappy Bird</h1>
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-white"><img src="https://i.ibb.co/4wf8yhX6/photo-2025-11-04-17-03-57.jpg" alt="Как ИИ-браузер ChatGPT Atlas разгадал судоку за пару минут, но проиграл в Flappy Bird" class="w-full h-auto object-cover"></div>
+            </header>
+            <div class="max-w-3xl mx-auto w-full">
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">Что если мы дадим агенту глаза и руки в браузере, и он получит не только контекст на странице, но и намерение, и сможет выполнять целенаправленные клики и нажатия клавиш? Исследователи решили проверить как поведет себя агент на нескольких веб-играх. Думаю, вы уже поняли ответ: У Atlas есть сильные стороны в пошаговой логике, но управление в реальном времени — его ахиллесова пята.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.26298v1/x1.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">ChatGPT Atlas оценивается на разных веб-играх: 2048, судоку, T-Rex Runner, Flappy Bird и Stein.world</figcaption></figure>
+                <h2 class="article-h2 fade-in">Зачем тестировать агента на играх</h2>
+                <p class="article-p fade-in">Почему игры? Потому что это маленькая модель реального мира, которая предоставляет богатый спектр задач для агентов с четкими измерениями, разнообразным поведением и высокой скоростью обратной связи. Исследователи выполнили базовую оценку Atlas как браузерного агента, используя следующие игры, учитывая только поведение, извлекающее правила и цели из контента страницы, а не явные инструкции; насколько точно он передает целенаправленные действия в мышь и клавиатуру; способен ли он изменить поведение, если застрянет; способен ли он глобально понять контекст игры, сюжет и многошаговые цели.</p>
+                <h2 class="article-h2 fade-in">Как был устроен эксперимент</h2>
+                <p class="article-p fade-in">Авторы запустили ChatGPT Atlas с Agent Mode, но без памяти, кода и фалойовой системы на каждой из игр, с один и тем же промтом, который не давал никаких подсказок во время игры. Авторы выполнили десять независимых прогонов, запуская каждого агента со стандартного старта в игре, и сравнили с простыми человеческими бейзлайнами: решение судоку средней сложности обычно занимает 10-12 минут, а для двух реальных аркад авторы взяли показатель от первых человеческих попыток.</p>
+                <h2 class="article-h2 fade-in">Что получилось?</h2>
+                <p class="article-p fade-in">В Sudoku Atlas показал отличный результат, стабильно решая в каждом прогоне за 2 мин 28 с со 100% правильностью, то есть примерно в 4,5 раза быстрее, чем человек. В среднем в 2048 набирал 2242 очка, ни разу не проигрывая, но у человека этот показатель составил 3463 (в своем первом заходе). Агент продвигался, но не демонстрировал понимания какой либо долгосрочной стратегии.</p>
+                <p class="article-p fade-in">В T-Rex Atlas набрал 45,5 очка по сравнению с 388,9 у человека, то есть всего 11,7% от человеческого уровня. В 9 из 10 прогонов он не смог пройти даже первое препятствие, часто пытаясь прыгнуть, но делая это слишком поздно (что привело к столкновению) или слишком рано (теряя высоту к моменту препятствия).</p>
+                <p class="article-p fade-in">Во Flappy Bird Atlas в каждом прогоне набрал 0 очков, в то время как люди в первых попытках набирали в среднем около 2,9 очков. В обоих аркадах требовалось быстрое повторное нажатие той же клавиши с точным интервалом, что Atlas явно не удавалось.</p>
+                <p class="article-p fade-in">В разных запусках он даже изменял поведение (меняя частоту нажатий или целенаправленно замедляя начало), и искал в интерфейсе способы снизить сложность или замедлить начало, но ни одна из игр не предлагала таких опций.</p>
+                <p class="article-p fade-in">В 2048 агент тратит значительное время, изучая интерфейс, сначала пробуя клики по плиткам, затем клавиши со стрелками, затем WASD, и оперируя текущим игровым контекстом. Но появляется слишком много действий: циклы нажатий во все четыре стороны, паузы, повторение тех же позиций с неявным условием выхода - часто с застреванием на трех возможных позициях. Иногда он достигает 512-плитки, но часто застревает на 64.</p>
+                <p class="article-p fade-in">В Stein.world нужен долгосрочный стратегический план, а интерфейс требует управления разными клавишами для перемещения. Агенты не смогли выйти из стартовой комнаты, так что авторы стали подсказывать им - сначала смешивая клики и клавиши, но без успеха. Потом две отдельных подсказки: одну про WASD для движения, другую про F для взаимодействия. В результате Atlas быстро вышел и провзаимодействовал с NPC, завершив первое задание.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.26298v1/x2.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Стартовая зона в Stein.world и место первого задания. Игрок начинает в комнате и должен выйти наружу, чтобы поговорить с NPC Уборщицей, чтобы продолжить сюжет. Atlas поначалу не смог выйти из комнаты, но после получения подробных инструкций успешно выполнил задачу.</figcaption></figure>
+                <p class="article-p fade-in">В целом браузерный агент плохо справляется с задачами, которые требуют быстрой реакции в реальном времени, что явно будет узким местом и во многих реальных приложениях. Однако агент демонстрирует уверенное поведение в задачах с анализом. Он хорошо извлекает информацию об интерфейсе и целей игры из неявного контекста, но плохо справляется с теми задачами, где нет четкой инструкции к действиям. Он пытается понять, что делать, часто с неплохими размышлениями.</p>
+                <h2 class="article-h2 fade-in">Почему это важно</h2>
+                <p class="article-p fade-in">В целом, можно сделать вывод, что браузерного агента стоит использовать для получения информации и решения задач, которые хорошо сформулированы и имеют проверенные пути решения. Но в реальном браузере есть формы, плавающие окна, анимации, задержка и другое, что может сильно мешать в реальном мире. Нужен ли тогда такой интерфейс - вопрос. Если же задача сложнее, то ему очень не хватает низкоуровневого контроля и качественного целеполагания в непредсказуемом окружении.</p>
+                <p class="article-p fade-in">Авторы оговариваются, что это не систематический бенчмарк, а наблюдение и что выборка мала, а сценарии ограничены. Оценки они называют ранними, но из-за устойчивости паттерна, они дают понимание об ограничениях Atlas в качестве веб-агента. Авторы призывают расширить список задач вне игр, например - динамические формы, активные визуализации и сложные веб-интерфейсы, и сравнить с другими агентами. Так же они считают полезным поведенческие протоколы, которые отделяют разные компоненты поведения.</p>
+                <h2 class="article-h2 fade-in">Выводы</h2>
+                <p class="article-p fade-in">Эксперимент с ChatGPT Atlas хорошо иллюстрирует границу между &quot;пониманием&quot; и &quot;действием&quot;. Atlas может решить судоку, понять правила 2048, даже логически вывести стратегию — но там, где нужно реагировать на события в миллисекундах, его действия запаздывают. Это не баг, а фундаментальная особенность архитектуры: большие языковые модели рождены для рассуждений, а не для моторики.</p>
+                <p class="article-p fade-in">И всё же, именно такие эксперименты важны: они показывают, где пролегает линия между когнитивными способностями ИИ и реальным взаимодействием. В будущем эти способности, скорее всего, будут разделены — скоординированные мультиагентные системы объединят “мыслителей” и “исполнителей”. Один агент будет понимать контекст и цели, другой — управлять действиями в реальном времени, а менеджер координировать их взаимодействие.</p>
+                <p class="article-p fade-in">Игра — всего лишь небольшая модель мира, но именно на таких игрушечных песочницах рождается следующий шаг эволюции ИИ: от мышления к действию.</p>
+                <p class="article-p fade-in"><a href="https://arxiv.org/abs/2510.26298" target="_blank" rel="noopener" class="underline underline-offset-2 hover:opacity-70 transition-opacity">📜 Полная статья</a></p>
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-16 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i></div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">Обзоры ИИ простыми словами</h2>
+                        </div>
+                        <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium mb-10">Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.</p>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">Новые обзоры — каждый день.</p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span><i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50"><div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div></div>
+    <script>
+        lucide.createIcons();
+        const themeToggleBtn=document.getElementById('theme-toggle'), html=document.documentElement;
+        function applyTheme(d){ if(d){html.classList.add('dark');localStorage.setItem('theme','dark');}else{html.classList.remove('dark');localStorage.setItem('theme','light');} setTimeout(()=>lucide.createIcons(),50); }
+        const tg=window.Telegram?.WebApp;
+        if(tg&&tg.initData){ tg.ready();tg.expand(); if(tg.colorScheme){ applyTheme(tg.colorScheme==='dark'); tg.onEvent('themeChanged',()=>applyTheme(tg.colorScheme==='dark')); } }
+        themeToggleBtn.addEventListener('click',()=>applyTheme(!html.classList.contains('dark')));
+        window.addEventListener('scroll',()=>{ let h=document.documentElement.scrollHeight-document.documentElement.clientHeight; document.getElementById("progress-bar").style.width=((document.documentElement.scrollTop/h)*100)+"%"; });
+        document.addEventListener("DOMContentLoaded",function(){ const o=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');o.unobserve(e.target);}});},{threshold:0.05}); document.querySelectorAll('.fade-in').forEach(el=>o.observe(el)); });
+    </script>
+</body>
+</html>

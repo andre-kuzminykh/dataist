@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Репозитории на автопилоте: как ИИ сам поднимает окружение и запускает код</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Репозитории на автопилоте: как ИИ сам поднимает окружение и запускает код" />
+    <meta property="og:description" content="Открытые репозитории полны готовых решений: скрипты, модели, датасеты, демо. Но чтобы собрать всё и запустить, нужен ручной труд: поставить зависимости, скачать артефакты, прочесть документацию, не ошибиться со вступными параметрами. EnvX предлагает простой, но мощный подход: агентировать…" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2025-09-12/" />
+    <meta property="og:image" content="https://i.ibb.co/t5PXWby/5129f9ff-663f-4e0d-92da-0553d9e57a53-1.jpg" />
+    <meta property="article:published_time" content="2025-09-12T10:00:00+03:00" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://i.ibb.co/t5PXWby/5129f9ff-663f-4e0d-92da-0553d9e57a53-1.jpg" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function () { try { var s=localStorage.getItem('theme'); var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; if(s?s==='dark':p) document.documentElement.classList.add('dark'); } catch(e){ document.documentElement.classList.add('dark'); } })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {
+            colors: { apple: { light:'#F5F5F7', dark:'#000000', grayLight:'#E5E5EA', grayDark:'#1C1C1E', textMutedLight:'#86868B', textMutedDark:'#8E8E93' } },
+            fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','"Inter"','sans-serif'], mono: ['"Space Mono"','monospace'] },
+            boxShadow: { 'apple':'0 4px 24px rgba(0,0,0,0.04)', 'apple-dark':'0 4px 24px rgba(255,255,255,0.04)' }
+        } } };
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header { @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10; }
+        }
+        body { @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300; }
+        ::selection { @apply bg-black text-white dark:bg-white dark:text-black; }
+        .article-p { @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85; }
+        .article-p strong { @apply font-semibold text-black dark:text-white; }
+        .article-h2 { @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white; }
+        .apple-img { @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white; }
+        .fade-in { opacity:0; transform:translateY(20px); transition:opacity .8s cubic-bezier(0.2,0.8,0.2,1), transform .8s cubic-bezier(0.2,0.8,0.2,1); will-change:opacity,transform; }
+        .fade-in.visible { opacity:1; transform:translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white"><i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">i</div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">ДАТАИСТ</div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i><i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i><span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i><span>Обзор · 2025-09-12</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white">Репозитории на автопилоте: как ИИ сам поднимает окружение и запускает код</h1>
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-white"><img src="https://i.ibb.co/t5PXWby/5129f9ff-663f-4e0d-92da-0553d9e57a53-1.jpg" alt="Репозитории на автопилоте: как ИИ сам поднимает окружение и запускает код" class="w-full h-auto object-cover"></div>
+            </header>
+            <div class="max-w-3xl mx-auto w-full">
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">Открытые репозитории полны готовых решений: скрипты, модели, датасеты, демо. Но чтобы собрать всё и запустить, нужен ручной труд: поставить зависимости, скачать артефакты, прочесть документацию, не ошибиться со вступными параметрами. EnvX предлагает простой, но мощный подход: агентировать репозитории. Иначе говоря, сделать из них автономных помощников, которые понимают документы проекта, сами поднимают среду, исполняют функции по естественной инструкции и общаются с другими агентами, когда задача требует кооперации.</p>
+                <h2 class="article-h2 fade-in">Что такое EnvX в двух словах</h2>
+                <p class="article-p fade-in">Это система на базе LLM и инструментов, которая превращает репозиторий в агента со стандартным интерфейсом. Такой агент понимает README и примеры использования, строит рабочее окружение, вызывает нативные функции кода и способен говорить на одном языке с другими агентами через протокол Agent-to-Agent (A2A). Важный принцип — никаких безумных переписываний кода: EnvX старается использовать уже имеющиеся точки входа и скрипты, а не изобретать их заново.</p>
+                <h2 class="article-h2 fade-in">Как это устроено: три фазы</h2>
+                <p class="article-p fade-in"><strong class="font-semibold text-black dark:text-white">Фаза 1. </strong>Подготовка среды и контекста. Система автоматически извлекает из документации и туториалов структурированный список шагов: какие пакеты поставить, какие данные и чекпойнты скачать, как проверить, что всё работает. Эти шаги складываются в TODO-план, а менеджер TODO умеет исполнять, откатывать, править и повторять, пока всё не станет стабильным.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2509.08088v1/x1.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Этап 1: Настройка агентной среды</figcaption></figure>
+                <p class="article-p fade-in"><strong class="font-semibold text-black dark:text-white">Фаза 2.</strong> Агентная автоматизация под человека. Мета-агент осваивает арсенал привычных DevOps-инструментов и адаптируется под конкретный репозиторий. Он понимает намерение пользователя, находит нужные функции, вызывает их с корректными параметрами и объясняет, что делает. Здесь упор на полезность, надёжность и интерпретируемость: результат должен быть воспроизводимым и понятным.</p>
+                <p class="article-p fade-in"><strong class="font-semibold text-black dark:text-white">Фаза 3. </strong>Коммуникация A2A. Добавляется стандартизированный интерфейс — карты агентов и формализованные скиллы. Агенты обмениваются запросами и результатами по общему протоколу, оставаясь при этом верными своей специфике. Так появляется кооперация без ручной “склейки”.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2509.08088v1/x2.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Фаза 2: агентная автоматизация и Фаза 3: агентная коммуникация</figcaption></figure>
+                <h2 class="article-h2 fade-in">Инструменты под капотом</h2>
+                <p class="article-p fade-in">Чтобы всё это работало, EnvX опирается на набор инструментов:</p>
+                <ul class="list-disc pl-6 my-6 space-y-2 text-lg md:text-[21px] text-black/85 dark:text-white/85 fade-in"><li class="leading-relaxed">Базовые действия: рассуждение, чтение и запись файлов, выполнение скриптов, завершение задач.</li><li class="leading-relaxed">Загрузка артефактов: скачивание датасетов и модельных весов.</li><li class="leading-relaxed">TODO-менеджмент: автоинициализация и проверка шагов, валидационные мини-наборы.</li><li class="leading-relaxed">Управление зависимостями: универсальная абстракция для pip, Conda и других менеджеров.</li><li class="leading-relaxed">Code Knowledge Graph: извлечение функций и их связей, чтобы агент целенаправленно искал точки входа.</li><li class="leading-relaxed">Генерация A2A: выявление скиллов, создание карт агентов и кода, открывающего порт для общения.</li></ul>
+                <h2 class="article-h2 fade-in">Как проверяли</h2>
+                <p class="article-p fade-in">Авторы собрали GitTaskBench — 18 разнородных репозиториев (изображения, речь, документы, видео и другие области) и 54 задачи с строгой проверкой. Две ключевые метрики: Execution Completion Rate (ECR) — доведена ли задача до корректного исполняемого выпуска, и Task Pass Rate (TPR) — прошла ли она доменную проверку на качество. Сравнивали с OpenHands, Aider, SWE-Agent на разных LLM (GPT-4o, GPT-4.1, Claude 3.7 Sonnet).</p>
+                <h2 class="article-h2 fade-in">Что показали эксперименты</h2>
+                <p class="article-p fade-in">EnvX даёт лучший на сегодня баланс исполнимости и качества. На связке с Claude 3.7 Sonnet система достигает 74.07% ECR и 51.85% TPR, перешагнув порог 50% по TPR и улучшив предыдущие результаты. С GPT-4.1 — плюс 23.40 п.п. к ECR и 8.72 п.п. к TPR относительно лучшего бейзлайна; с GPT-4o — относительный прирост ECR на 100% и TPR на 124.90%. При этом токенная эффективность выше: по сравнению с OpenHands на тех же моделях EnvX часто тратит заметно меньше токенов для схожей или более высокой полезности.</p>
+                <h2 class="article-h2 fade-in">Живой пример кооперации</h2>
+                <p class="article-p fade-in">В кейсе с несколькими репозиториями EnvX агентирует каждый из них, автоматически описывает его скиллы и включает их в A2A-сетку. Роутер-агент распределяет подзадачи и собирает итог, например, превращая свободный промт в итоговое изображение со стилевыми требованиями. Без ручной интеграции и с понятными шагами.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2509.08088v1/x3.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Кейс о сотрудничестве агентов репозиториев: три репозитория агентизированы с помощью EnvX. Маршрутизирующие агенты в системе A2A получают навыки через карты агентов и совместно с агентами репозиториев решают сложные реальные задачи.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Что дальше</h2>
+                <p class="article-p fade-in">Сложные сценарии с длинным горизонтом, сдвигами данных и требованиями к безопасности всё ещё непросты. Валидация взаимодействий в A2A местами грубовата. Авторы планируют масштабировать проверки, перейти к свойственно-ориентированным и метаморфным тестам, ввести версии для карт агентов и скилл-контрактов с прозрачным провенансом, а также системно изучать баланс “стоимость–качество” по данным, инструментам и моделям.</p>
+                <h2 class="article-h2 fade-in">Почему это важно</h2>
+                <p class="article-p fade-in">Сегодняшний open-source — это гигантская библиотека функций. EnvX показывает, как сделать её не только читаемой, но и разговаривающей. Репозитории становятся участниками мультиагентной системы: они объясняют, что умеют, сами готовят себе сцену и выполняют роль в общем ансамбле. Получается путь к по-настоящему модульной автоматизации, где компоненты легко подключаются, сотрудничают и приносят практическую пользу без болезненной ручной сборки.</p>
+                <p class="article-p fade-in"><a href="https://arxiv.org/abs/2509.08088" target="_blank" rel="noopener" class="underline underline-offset-2 hover:opacity-70 transition-opacity">📜 Полная статья</a></p>
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-16 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i></div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">Обзоры ИИ простыми словами</h2>
+                        </div>
+                        <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium mb-10">Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.</p>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">Новые обзоры — каждый день.</p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span><i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50"><div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div></div>
+    <script>
+        lucide.createIcons();
+        const themeToggleBtn=document.getElementById('theme-toggle'), html=document.documentElement;
+        function applyTheme(d){ if(d){html.classList.add('dark');localStorage.setItem('theme','dark');}else{html.classList.remove('dark');localStorage.setItem('theme','light');} setTimeout(()=>lucide.createIcons(),50); }
+        const tg=window.Telegram?.WebApp;
+        if(tg&&tg.initData){ tg.ready();tg.expand(); if(tg.colorScheme){ applyTheme(tg.colorScheme==='dark'); tg.onEvent('themeChanged',()=>applyTheme(tg.colorScheme==='dark')); } }
+        themeToggleBtn.addEventListener('click',()=>applyTheme(!html.classList.contains('dark')));
+        window.addEventListener('scroll',()=>{ let h=document.documentElement.scrollHeight-document.documentElement.clientHeight; document.getElementById("progress-bar").style.width=((document.documentElement.scrollTop/h)*100)+"%"; });
+        document.addEventListener("DOMContentLoaded",function(){ const o=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');o.unobserve(e.target);}});},{threshold:0.05}); document.querySelectorAll('.fade-in').forEach(el=>o.observe(el)); });
+    </script>
+</body>
+</html>

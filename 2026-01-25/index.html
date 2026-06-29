@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RoboBrain: как робот понимает глубину 3D-сцены и учится самоконтролю</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="RoboBrain: как робот понимает глубину 3D-сцены и учится самоконтролю" />
+    <meta property="og:description" content="В робототехнике есть старая боль: даже сильные визуальные и языковые модели неплохо рассуждают о сцене, но иногда плохо справляются с тем, чтобы действовать в физическом мире. В быту это выглядит просто: «подвинь кружку на 10 сантиметров вправо» или «лей воду над цветами на высоте 1–5 см». Для…" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2026-01-25/" />
+    <meta property="og:image" content="https://i.ibb.co/VWRJnDz4/Chat-GPT-Image-Jan-25-2026-07-56-21-PM.png" />
+    <meta property="article:published_time" content="2026-01-25T10:00:00+03:00" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://i.ibb.co/VWRJnDz4/Chat-GPT-Image-Jan-25-2026-07-56-21-PM.png" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function () { try { var s=localStorage.getItem('theme'); var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; if(s?s==='dark':p) document.documentElement.classList.add('dark'); } catch(e){ document.documentElement.classList.add('dark'); } })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {
+            colors: { apple: { light:'#F5F5F7', dark:'#000000', grayLight:'#E5E5EA', grayDark:'#1C1C1E', textMutedLight:'#86868B', textMutedDark:'#8E8E93' } },
+            fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','"Inter"','sans-serif'], mono: ['"Space Mono"','monospace'] },
+            boxShadow: { 'apple':'0 4px 24px rgba(0,0,0,0.04)', 'apple-dark':'0 4px 24px rgba(255,255,255,0.04)' }
+        } } };
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header { @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10; }
+        }
+        body { @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300; }
+        ::selection { @apply bg-black text-white dark:bg-white dark:text-black; }
+        .article-p { @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85; }
+        .article-p strong { @apply font-semibold text-black dark:text-white; }
+        .article-h2 { @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white; }
+        .apple-img { @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white; }
+        .fade-in { opacity:0; transform:translateY(20px); transition:opacity .8s cubic-bezier(0.2,0.8,0.2,1), transform .8s cubic-bezier(0.2,0.8,0.2,1); will-change:opacity,transform; }
+        .fade-in.visible { opacity:1; transform:translateY(0); }
+    </style>
+</head>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white"><i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">i</div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">ДАТАИСТ</div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i><i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i><span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i><span>Обзор · 2026-01-25</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white">RoboBrain: как робот понимает глубину 3D-сцены и учится самоконтролю</h1>
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-white"><img src="https://i.ibb.co/VWRJnDz4/Chat-GPT-Image-Jan-25-2026-07-56-21-PM.png" alt="RoboBrain: как робот понимает глубину 3D-сцены и учится самоконтролю" class="w-full h-auto object-cover"></div>
+            </header>
+            <div class="max-w-3xl mx-auto w-full">
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">В робототехнике есть старая боль: даже сильные визуальные и языковые модели неплохо рассуждают о сцене, но иногда плохо справляются с тем, чтобы  действовать в физическом мире. В быту это выглядит просто: «подвинь кружку на 10 сантиметров вправо» или «лей воду над цветами на высоте 1–5 см». Для человека такие инструкции почти тривиальны, а для робота — минное поле. Нужно не только узнать, где объект на картинке, но и понять реальную глубину, расстояния, ограничения на столкновения и, что не менее важно, постоянно отслеживать: задача продвигается или мы топчемся на месте.</p>
+                <p class="article-p fade-in">Авторы работы <strong class="font-semibold text-black dark:text-white">RoboBrain 2.5: Depth in Sight, Time in Mind</strong> как раз занимаются этими двумя узкими местами. Они предлагают следующую версию foundation-модели для embodied AI, которая учится точнее мыслить в 3D и лучше чувствовать «темп» выполнения действий.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.14352v1/x1.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Новые возможности RoboBrain 2.5: точное 3D-пространственное рассуждение и плотная временная оценка прогресса, а также суммарный прирост на бенчмарках.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Глубина в поле зрения: как перейти от 2D-указаний к метрическому 3D</h2>
+                <p class="article-p fade-in">Многие VLM хорошо делают 2D-привязку: когда нужно показать пальцем на объект, выделить область и т.д. Но манипуляции руками требуют другого уровня: «на сколько сантиметров», «на какой высоте», «как провести руку так, чтобы не задеть». В RoboBrain 2.5 это реализовано в идее <strong class="font-semibold text-black dark:text-white">3D spatial trace</strong> — последовательность ключевых точек, по сути черновик будущей траектории манипулятора.</p>
+                <p class="article-p fade-in">Ключевой инженерный подход — представление точки как <strong class="font-semibold text-black dark:text-white">(u, v, d)</strong>: координаты в изображении плюс абсолютная глубина. Из этого легко восстановить 3D-точку, если известны параметры камеры (что в роботах обычно так и есть). Такой формат не заставляет модель угадывать геометрию камеры и хорошо стыкуется с уже существующими 2D-датасетами: можно временно отбросить глубину или свести задачу к началу/концу.</p>
+                <p class="article-p fade-in">Обучение построено как учебный план: сначала модель учится находить объекты в 3D, затем измерять метрические величины (зазоры, расстояния), а потом — генерировать след манипуляции, который проходит по сцене без коллизий. Это важный мост между пониманием инструкции и возможностью исполнения.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.14352v1/x3.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Пример TraceSpatial-Bench: показаны истинные start/end и 2D-проекция предсказанной 3D-траектории RoboBrain 2.5.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Время в голове: как понять, продвигаемся ли мы</h2>
+                <p class="article-p fade-in">Вторая часть обновления — <strong class="font-semibold text-black dark:text-white">dense temporal value estimation</strong>. Идея простая: роботу нужна постоянная обратная связь по ходу выполнения, а не только финальная оценка «успех/провал». В реальности робот может застрять, отклониться от цели, сделать шаг назад или попасть в ошибочное состояние. Если модель умеет распознавать эти режимы по видео, её можно использовать как надёжный сигнал для управления в замкнутом контуре и как награду для RL.</p>
+                <p class="article-p fade-in">Авторы размечают прогресс не грубо по времени, а через нормализованные «прыжки» между состояниями (hop). Это делает сигнал устойчивым: он остаётся в ограниченном диапазоне и меньше расползается при плотной нарезке видео на кадры. Дополнительно используется слияние трёх взглядов на прогресс: пошагового, «от старта» и «от цели». А ещё — проверка согласованности вперёд/назад: если оценки противоречат друг другу, модель снижает доверие к собственному сигналу. Это выглядит как защита от галлюцинаций в неожиданных ситуациях — важная вещь, если дальше вы строите на этом автоматическую награду.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.14352v1/x10.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Примеры предсказаний прогресса: покадровые Hop и накопленный Progress на разных задачах.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Данные и обучение: ставка на масштаб, но с «физическим смыслом»</h2>
+                <p class="article-p fade-in">RoboBrain 2.5 обучают на примерно <strong class="font-semibold text-black dark:text-white">12,4 млн</strong> отобранных примеров, где смешаны общие мультимодальные данные, пространственные задания и временные. Особенно выделяется массив для value estimation: исходно десятки миллионов кадров, затем выборка для обучения.</p>
+                <p class="article-p fade-in">Интересная практическая деталь — инфраструктура: авторы отдельно обсуждают стабильность обучения на длинных последовательностях (там много визуальных токенов), борьбу с фрагментацией памяти и даже кросс-ускорительное обучение (NVIDIA и Moore Threads) с близкой сходимостью. Это  сигнал, что модель действительно готовят как производственный артефакт, который можно переносить между платформами.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.14352v1/x2.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Распределение обучающих данных: общий домен, пространственные задачи и крупный блок временной разметки, включая Dense Value Estimation.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Что получилось на проверках</h2>
+                <p class="article-p fade-in">По 2D-пространственным бенчмаркам RoboBrain 2.5 заметно обгоняет предшественника RoboBrain 2.0 и ряд универсальных моделей. Но главное —  <strong class="font-semibold text-black dark:text-white">3D-метрика</strong> и задачи с физическими ограничениями. На VABench-V и ShareRobot-T (где важна ошибка расстояния, и меньше — лучше) модель показывает лучшие значения среди сравниваемых.</p>
+                <p class="article-p fade-in">Во временной части результаты выглядят особенно убедительно из-за проверки «на обратимость времени»: если прокрутить видео назад, адекватная модель должна менять знак прогресса. У многих сильных моделей VOC+ высокий, а VOC- нет — они угадывают направление вместо понимания. RoboBrain 2.5 держится ровно на обоих направлениях на реальных, синтетических и человеческих датасетах, что важно для надёжной обратной связи.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.14352v1/x11.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Устойчивость оценок прогресса при разной частоте кадров: кривые хорошо совпадают, модель не привязана к конкретной дискретизации.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Почему это важно</h2>
+                <p class="article-p fade-in">RoboBrain 2.5 помогает роботам быть устойчивыми, метрически точными и способными понять, что действие пошло не туда — прямо в процессе. Связка 3D-трасс (как понятного промежуточного плана) и плотной оценки прогресса (как постоянного сигнала качества) выглядит хорошей основой для систем, которые должны работать не в лабораторной среде, а в реальном доме, мастерской, заводе или магазине.</p>
+                <p class="article-p fade-in"><a href="https://arxiv.org/html/2601.14352v1" target="_blank" rel="noopener" class="underline underline-offset-2 hover:opacity-70 transition-opacity">📜 Полная статья</a></p>
+                <p class="article-p fade-in"><a href="https://superrobobrain.github.io/" target="_blank" rel="noopener" class="underline underline-offset-2 hover:opacity-70 transition-opacity">💾 Код</a></p>
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-16 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i></div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">Обзоры ИИ простыми словами</h2>
+                        </div>
+                        <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium mb-10">Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.</p>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">Новые обзоры — каждый день.</p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span><i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50"><div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div></div>
+    <script>
+        lucide.createIcons();
+        const themeToggleBtn=document.getElementById('theme-toggle'), html=document.documentElement;
+        function applyTheme(d){ if(d){html.classList.add('dark');localStorage.setItem('theme','dark');}else{html.classList.remove('dark');localStorage.setItem('theme','light');} setTimeout(()=>lucide.createIcons(),50); }
+        const tg=window.Telegram?.WebApp;
+        if(tg&&tg.initData){ tg.ready();tg.expand(); if(tg.colorScheme){ applyTheme(tg.colorScheme==='dark'); tg.onEvent('themeChanged',()=>applyTheme(tg.colorScheme==='dark')); } }
+        themeToggleBtn.addEventListener('click',()=>applyTheme(!html.classList.contains('dark')));
+        window.addEventListener('scroll',()=>{ let h=document.documentElement.scrollHeight-document.documentElement.clientHeight; document.getElementById("progress-bar").style.width=((document.documentElement.scrollTop/h)*100)+"%"; });
+        document.addEventListener("DOMContentLoaded",function(){ const o=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');o.unobserve(e.target);}});},{threshold:0.05}); document.querySelectorAll('.fade-in').forEach(el=>o.observe(el)); });
+    </script>
+</body>
+</html>
