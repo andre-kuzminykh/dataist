@@ -22,13 +22,13 @@ const PHRASES = {
   1: ['Хватит самому', 'писать промты', 'Loop Engineering', 'Harness Engineering',
       'Context Engineering', 'Prompt Engineering', 'промптят агентов вместо нас'],
   2: ['1. Prompt Engineering', 'Учимся правильно просить модель', 'ПРОМТ', 'Роль', 'Формат',
-      'Ограничения', 'Примеры', 'ОТВЕТ', 'Ручное управление моделью', 'Один промт', 'итоговый результат'],
+      'Ограничения', 'Примеры', 'ОТВЕТ', 'Один промт', 'итоговый результат'],
   3: ['2. Context Engineering', 'правильную информацию', 'Документы', 'Память', 'История', 'Правила',
       'Данные', 'КОНТЕКСТ', 'МОДЕЛЬ', 'не заполнять окно модели'],
   4: ['3. Harness Engineering', 'среду вокруг агента', 'АГЕНТ', 'Инструменты', 'MCP', 'Разрешения',
       'Guardrails', 'Логи', 'без обёртки', 'умеет действовать'],
-  5: ['4. Loop Engineering', 'делает это вместо нас', 'Цель', 'Контекст', 'Действие', 'Наблюдение',
-      'Корректировка', 'Фидбек', 'не один запуск', 'повторяет цикл'],
+  5: ['4. Loop Engineering', 'делает это вместо нас', 'Цель', 'Действие',
+      'Фидбек', 'Память', 'не один запуск', 'повторяет цикл'],
   6: ['Из чего состоит', 'хороший loop', 'Автоматизация', 'когда запускать', 'Правила', 'Навыки',
       'Коннекторы', 'Агенты', 'Состояния', 'когда остановиться'],
   7: ['Для чего лучше', 'использовать loop', 'Исправление', 'Сортировка', 'Обновление',
@@ -113,14 +113,16 @@ for (let n = 1; n <= 8; n++) {
 // 8. диаграммы построены скриптом (коннекторы/поток/орбита)
 const diag = await page.evaluate(() => ({
   spokes4: document.querySelectorAll('#s4radial .spoke').length,
-  spokes6: document.querySelectorAll('#s6radial .dashspoke').length,
+  hex6: document.querySelectorAll('#s6radial .hex').length,
+  arrows6: document.querySelectorAll('#s6radial .cyc .ar').length,
   flow3: document.querySelectorAll('#s3lines .flowdot').length,
   tools4: document.querySelectorAll('#s4radial .tool').length,
 }));
 check('слайд 3: 5 текущих точек-потока', () => assert.equal(diag.flow3, 5));
 check('слайд 4: 6 карточек-инструментов', () => assert.equal(diag.tools4, 6));
-check('слайд 4: 6 коннекторов к инструментам', () => assert.ok(diag.spokes4 >= 6));
-check('слайд 6: 6 пунктир-коннекторов', () => assert.ok(diag.spokes6 >= 6));
+check('слайд 4: 6 текущих спиц к агенту', () => assert.ok(diag.spokes4 >= 6));
+check('слайд 6: 6 карточек цикла', () => assert.equal(diag.hex6, 6));
+check('слайд 6: вращающиеся стрелки цикла', () => assert.ok(diag.arrows6 >= 3));
 
 // 9. палитра: только фиолетовый + оранжевый (никаких green/blue/sky)
 const src = readFileSync(resolve(root, 'index.html'), 'utf8');

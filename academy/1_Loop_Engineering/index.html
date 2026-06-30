@@ -126,18 +126,13 @@ body.export .card{position:relative;opacity:1;visibility:visible;transform:none;
 .cover .ctitle{position:absolute;left:0;right:0;top:172px;z-index:5;text-align:center;
   font-size:72px;font-weight:800;line-height:1.05;letter-spacing:-.03em}
 .cover .ctitle .em{color:var(--flame)}
-/* margin-centred (NOT translate) — so the spin animation's transform doesn't drop the centring */
-.cover-glow{position:absolute;left:50%;top:632px;width:760px;height:760px;margin-left:-380px;margin-top:-380px;z-index:2;
-  border-radius:50%;filter:blur(80px);opacity:.22;
-  background:conic-gradient(from 0deg,var(--flame),var(--plum),var(--green),var(--blue),var(--flame));
-  animation:spin 18s linear infinite}
 .rings{position:absolute;left:50%;top:632px;transform:translate(-50%,-50%);z-index:4;width:772px;height:452px}
 .ring{position:absolute;border-radius:26px;display:flex;align-items:flex-start;justify-content:center;
   animation:ringpulse 3.2s ease-in-out infinite}
 .ring .rlab{display:flex;align-items:center;gap:16px;margin-top:15px;font-size:23px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
 .ring .rlab svg{width:28px;height:28px}
-@keyframes ringpulse{0%,100%{box-shadow:0 0 0 0 transparent;filter:brightness(1)}
-  50%{box-shadow:0 0 34px 1px var(--c);filter:brightness(1.15)}}
+/* без свечения: рамки лишь слегка «дышат» прозрачностью, без glow-теней */
+@keyframes ringpulse{0%,100%{opacity:.78}50%{opacity:1}}
 .r1{inset:0;border:2.4px solid var(--flame);--c:rgba(249,115,22,.5);animation-delay:0s;color:var(--flame)}
 .r2{inset:64px;border:2.4px solid var(--plum);--c:rgba(136,84,243,.5);animation-delay:.4s;color:var(--plum)}
 .r3{inset:128px;border:2.4px solid var(--green);--c:rgba(249,115,22,.5);animation-delay:.8s;color:var(--green)}
@@ -172,7 +167,7 @@ body.export .card{position:relative;opacity:1;visibility:visible;transform:none;
 .s2-arrow .chev svg:nth-child(2){animation-delay:.18s}
 .s2-arrow .chev svg:nth-child(3){animation-delay:.36s}
 @keyframes chev{0%,100%{opacity:.25;transform:translateX(-4px)}50%{opacity:1;transform:translateX(4px)}}
-.s2-under{position:absolute;left:72px;right:72px;top:702px;z-index:4;text-align:center}
+.s2-under{position:absolute;left:72px;right:72px;top:752px;z-index:4;text-align:center}
 .s2-fb{display:flex;align-items:center;justify-content:center;gap:14px;color:rgba(10,10,10,.5);font-size:20px;margin-bottom:14px}
 .s2-fb svg{width:230px;height:18px;overflow:visible}
 .s2-fb .ln{stroke:rgba(10,10,10,.35);stroke-width:2.2;stroke-dasharray:8 8;animation:dash 4s linear infinite}
@@ -224,11 +219,14 @@ body.export .card{position:relative;opacity:1;visibility:visible;transform:none;
 /* compact tool card (icon over label) — slide 4 */
 .tool{position:absolute;width:188px;border-radius:18px;border:2px solid;background:#fff;z-index:5;
   display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 12px;font-size:20px;font-weight:700;
-  box-shadow:0 8px 22px rgba(20,20,40,.08);animation:floatY 4.4s ease-in-out infinite}
+  box-shadow:0 8px 22px rgba(20,20,40,.08)}
 .tool .ti{width:50px;height:50px;border-radius:13px;display:grid;place-items:center}
 .tool .ti svg{width:30px;height:30px}
-.spoke{position:absolute;left:50%;top:50%;height:0;border-top:2px dashed rgba(136,84,243,.42);transform-origin:left center;z-index:2;
-  animation:pulse 2.6s ease-in-out infinite}
+/* спица: пунктир ТЕЧЁТ от карточки к агенту (внутрь) */
+.spoke{position:absolute;left:50%;top:50%;height:3px;transform-origin:left center;z-index:2;border-radius:2px;
+  background:repeating-linear-gradient(90deg,var(--plum) 0 7px,transparent 7px 16px);background-size:16px 3px;opacity:.5;
+  animation:spokeflow .6s linear infinite}
+@keyframes spokeflow{to{background-position:-16px 0}}
 
 /* ===================================================================================
    SLIDE 5 — Loop
@@ -240,7 +238,7 @@ body.export .card{position:relative;opacity:1;visibility:visible;transform:none;
 @keyframes chainglow{0%,100%{opacity:.55}50%{opacity:1}}
 .chain .sep{color:var(--flame);display:flex}
 .chain .sep svg{width:20px;height:20px}
-.loopwrap{position:absolute;left:50%;top:628px;transform:translate(-50%,-50%);z-index:4;width:360px;height:360px}
+.loopwrap{position:absolute;left:50%;top:600px;transform:translate(-50%,-50%);z-index:4;width:380px;height:380px}
 .s5-ring{position:absolute;inset:0;border-radius:50%;border:3px dashed var(--flame);animation:spin 22s linear infinite;z-index:3}
 .lnode{position:absolute;width:152px;height:104px;border-radius:18px;border:2px solid;background:#fff;z-index:6;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:20px;font-weight:700;
@@ -251,21 +249,23 @@ body.export .card{position:relative;opacity:1;visibility:visible;transform:none;
 /* ===================================================================================
    SLIDE 6 — what makes a good loop
    =================================================================================== */
-.hex{position:absolute;width:228px;border-radius:20px;border:2px solid;background:#fff;z-index:5;padding:16px 16px 18px;
-  display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;box-shadow:0 8px 22px rgba(20,20,40,.07);
-  animation:floatY 5s ease-in-out infinite}
-.hex .hi{width:54px;height:54px;border-radius:14px;display:grid;place-items:center}
-.hex .hi svg{width:32px;height:32px}
-.hex .ht{font-size:22px;font-weight:800}
-.hex .hd{font-size:16.5px;font-weight:500;line-height:1.35;color:rgba(10,10,10,.55)}
-.hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;width:154px;height:154px;border-radius:50%;
-  background:linear-gradient(135deg,var(--flame),var(--plum));color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  box-shadow:0 14px 40px rgba(136,84,243,.32)}
-.hub svg{width:52px;height:52px;animation:spin 9s linear infinite}
-.hub b{font-size:22px;font-weight:800;letter-spacing:.04em}
-.dashspoke{position:absolute;left:50%;top:50%;height:0;border-top:2px dashed rgba(136,84,243,.4);transform-origin:left center;z-index:2;
-  background:none;animation:dashmove 1.8s linear infinite}
-@keyframes dashmove{to{background-position:20px 0}}
+/* единый размер карточек, без «болтания» — ровный круг (раскладка через JS placeEllipse) */
+.hex{position:absolute;width:206px;height:158px;border-radius:20px;border:2px solid;background:#fff;z-index:5;padding:14px 14px 16px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px;box-shadow:0 8px 22px rgba(20,20,40,.07)}
+.hex .hi{width:50px;height:50px;border-radius:13px;display:grid;place-items:center}
+.hex .hi svg{width:30px;height:30px}
+.hex .ht{font-size:21px;font-weight:800}
+.hex .hd{font-size:15.5px;font-weight:500;line-height:1.3;color:rgba(10,10,10,.55)}
+.hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;width:128px;height:128px;border-radius:50%;
+  background:linear-gradient(135deg,var(--flame),var(--plum));color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  box-shadow:0 14px 40px rgba(136,84,243,.3)}
+.hub svg{width:44px;height:44px;animation:spin 9s linear infinite}
+.hub b{font-size:19px;font-weight:800;letter-spacing:.04em}
+/* вращающееся кольцо стрелок (вместо прямых спиц) */
+.cyc{position:absolute;left:50%;top:50%;width:212px;height:212px;margin-left:-106px;margin-top:-106px;z-index:4;animation:spin 14s linear infinite}
+.cyc::before{content:"";position:absolute;inset:0;border-radius:50%;border:2px dashed rgba(136,84,243,.4)}
+.cyc .ar{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px;color:var(--flame)}
+.cyc .ar svg{width:30px;height:30px;stroke-width:2.6}
 
 /* ===================================================================================
    SLIDE 7 — when to use loop (2×3 grid)
@@ -288,7 +288,16 @@ body.export .card{position:relative;opacity:1;visibility:visible;transform:none;
 .li8 .l8i{width:96px;align-self:stretch;display:grid;place-items:center;color:#fff}
 .li8 .l8i svg{width:40px;height:40px}
 .li8 .l8t{padding:0 28px;font-size:27px;font-weight:700}
-.li8 .l8n{margin-left:auto;padding-right:28px;font-size:34px;font-weight:800;color:rgba(10,10,10,.12)}
+.li8 .l8n{margin-left:auto;padding-right:28px;font-size:34px;font-weight:800;color:var(--ac,#F97316);
+  animation:numpop 5.4s ease-in-out infinite}
+/* цифры появляются по порядку 1→6 и зацикливаются */
+@keyframes numpop{0%{opacity:0;transform:translateY(6px) scale(.7)}10%{opacity:1;transform:none}80%{opacity:1}100%{opacity:.14;transform:none}}
+.list8 .li8:nth-child(1) .l8n{animation-delay:0s}
+.list8 .li8:nth-child(2) .l8n{animation-delay:.45s}
+.list8 .li8:nth-child(3) .l8n{animation-delay:.9s}
+.list8 .li8:nth-child(4) .l8n{animation-delay:1.35s}
+.list8 .li8:nth-child(5) .l8n{animation-delay:1.8s}
+.list8 .li8:nth-child(6) .l8n{animation-delay:2.25s}
 
 /* ---------- on-screen navigation (hidden in export) ---------- */
 #nav{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:14px;
@@ -365,7 +374,6 @@ body.export #nav,body.export #count,body.export .hint{display:none}
 
     <h1 class="ctitle">Хватит самому<br><span class="em">писать промты</span></h1>
 
-    <div class="cover-glow"></div>
     <div class="rings">
       <div class="ring r1"><span class="rlab"><svg class="ico"><use href="#i-loop"/></svg>Loop Engineering</span></div>
       <div class="ring r2"><span class="rlab"><svg class="ico"><use href="#i-gear"/></svg>Harness Engineering</span></div>
@@ -386,7 +394,7 @@ body.export #nav,body.export #count,body.export .hint{display:none}
       <h2 class="title">1. Prompt Engineering</h2>
       <p class="subtitle">Учимся правильно просить модель</p>
     </div>
-    <div class="stage" style="top:300px;bottom:392px">
+    <div class="stage" style="top:362px;bottom:360px">
       <div class="s2-wrap">
         <div class="pcard prompt">
           <div class="ph"><svg class="ico"><use href="#i-chat"/></svg>ПРОМТ</div>
@@ -408,9 +416,6 @@ body.export #nav,body.export #count,body.export .hint{display:none}
       </div>
     </div>
     <div class="s2-under">
-      <div class="s2-fb"><span class="muted">Ручное управление моделью</span>
-        <svg viewBox="0 0 230 18"><path class="ln" d="M2 9 H228"/></svg>
-      </div>
       <span class="s2-chip">Один промт <svg class="ico" style="width:20px;height:20px;color:var(--flame)"><use href="#i-arrow"/></svg> один ответ</span>
     </div>
     <div class="insight"><span class="bulb"><svg class="ico"><use href="#i-bulb"/></svg></span>
@@ -483,13 +488,6 @@ body.export #nav,body.export #count,body.export .hint{display:none}
       <h2 class="title">4. Loop Engineering</h2>
       <p class="subtitle">Строим цикл, который делает это вместо нас</p>
     </div>
-    <div class="chain">
-      <span class="ch">Цель</span><span class="sep"><svg class="ico"><use href="#i-chevron"/></svg></span>
-      <span class="ch" style="animation-delay:.4s">Контекст</span><span class="sep"><svg class="ico"><use href="#i-chevron"/></svg></span>
-      <span class="ch" style="animation-delay:.8s">Действие</span><span class="sep"><svg class="ico"><use href="#i-chevron"/></svg></span>
-      <span class="ch" style="animation-delay:1.2s">Наблюдение</span><span class="sep"><svg class="ico"><use href="#i-chevron"/></svg></span>
-      <span class="ch" style="animation-delay:1.6s">Корректировка</span>
-    </div>
     <div class="loopwrap">
       <div class="s5-ring"></div>
       <div class="center-node"><svg class="ico"><use href="#i-bot"/></svg><b>АГЕНТ</b></div>
@@ -512,23 +510,29 @@ body.export #nav,body.export #count,body.export .hint{display:none}
     </div>
     <div class="stage" style="top:300px;bottom:236px">
       <div class="radial" id="s6radial">
+        <div class="cyc">
+          <span class="ar" style="transform:rotate(0deg) translateY(-106px)"><svg class="ico"><use href="#i-chevron"/></svg></span>
+          <span class="ar" style="transform:rotate(90deg) translateY(-106px)"><svg class="ico"><use href="#i-chevron"/></svg></span>
+          <span class="ar" style="transform:rotate(180deg) translateY(-106px)"><svg class="ico"><use href="#i-chevron"/></svg></span>
+          <span class="ar" style="transform:rotate(270deg) translateY(-106px)"><svg class="ico"><use href="#i-chevron"/></svg></span>
+        </div>
         <div class="hub"><svg class="ico"><use href="#i-loop"/></svg><b>Loop</b></div>
-        <div class="hex" style="border-color:var(--flame);left:50%;top:-6px;transform:translateX(-50%)">
+        <div class="hex" style="border-color:var(--flame)">
           <span class="hi" style="background:rgba(249,115,22,.14);color:var(--flame)"><svg class="ico"><use href="#i-play"/></svg></span>
           <span class="ht">Автоматизация</span><span class="hd">когда запускать</span></div>
-        <div class="hex" style="border-color:var(--plum);right:-8px;top:80px;animation-delay:.5s">
+        <div class="hex" style="border-color:var(--plum)">
           <span class="hi" style="background:rgba(136,84,243,.14);color:var(--plum)"><svg class="ico"><use href="#i-flow"/></svg></span>
           <span class="ht">Правила</span><span class="hd">что делать дальше</span></div>
-        <div class="hex" style="border-color:var(--green);right:-8px;bottom:80px;animation-delay:1s">
-          <span class="hi" style="background:rgba(249,115,22,.14);color:var(--green)"><svg class="ico"><use href="#i-briefcase"/></svg></span>
+        <div class="hex" style="border-color:var(--flame)">
+          <span class="hi" style="background:rgba(249,115,22,.14);color:var(--flame)"><svg class="ico"><use href="#i-briefcase"/></svg></span>
           <span class="ht">Навыки</span><span class="hd">как выполнять задачи</span></div>
-        <div class="hex" style="border-color:var(--blue);left:50%;bottom:-6px;transform:translateX(-50%);animation-delay:1.5s">
-          <span class="hi" style="background:rgba(136,84,243,.14);color:var(--blue)"><svg class="ico"><use href="#i-link"/></svg></span>
+        <div class="hex" style="border-color:var(--plum)">
+          <span class="hi" style="background:rgba(136,84,243,.14);color:var(--plum)"><svg class="ico"><use href="#i-link"/></svg></span>
           <span class="ht">Коннекторы</span><span class="hd">куда подключаться</span></div>
-        <div class="hex" style="border-color:var(--flame);left:-8px;bottom:80px;animation-delay:2s">
+        <div class="hex" style="border-color:var(--flame)">
           <span class="hi" style="background:rgba(249,115,22,.14);color:var(--flame)"><svg class="ico"><use href="#i-bot"/></svg></span>
           <span class="ht">Агенты</span><span class="hd">кто делает и кто проверяет</span></div>
-        <div class="hex" style="border-color:var(--plum);left:-8px;top:80px;animation-delay:2.5s">
+        <div class="hex" style="border-color:var(--plum)">
           <span class="hi" style="background:rgba(136,84,243,.14);color:var(--plum)"><svg class="ico"><use href="#i-db"/></svg></span>
           <span class="ht">Состояния</span><span class="hd">что уже сделано и что дальше</span></div>
       </div>
@@ -641,13 +645,26 @@ body.export #nav,body.export #count,body.export .hint{display:none}
       host.appendChild(d);
     });
   }
+  /* ---- place N cards evenly on an ellipse around the centre (slide 6 cycle) ---- */
+  function placeEllipse(radialSel, cardSel, rx, ry){
+    var radial = document.querySelector(radialSel); if(!radial) return;
+    var cards = radial.querySelectorAll(cardSel); if(!cards.length) return;
+    var cx = radial.clientWidth/2, cy = radial.clientHeight/2;
+    cards.forEach(function(c,k){
+      var a = (-90 + k*(360/cards.length)) * Math.PI/180;
+      var x = cx + rx*Math.cos(a), y = cy + ry*Math.sin(a);
+      c.style.left = (x - c.offsetWidth/2)+'px';
+      c.style.top  = (y - c.offsetHeight/2)+'px';
+      c.style.right=''; c.style.bottom=''; c.style.transform='none';
+    });
+  }
   function layoutDiagrams(){
     // clear anything from a previous pass so re-layout never duplicates
-    document.querySelectorAll('.spoke,.dashspoke').forEach(function(s){ s.remove(); });
+    document.querySelectorAll('.spoke').forEach(function(s){ s.remove(); });
     var sl = document.getElementById('s3lines'); if(sl) sl.innerHTML='';
     buildFlow();
     buildSpokes('#s4radial','.tool');
-    buildSpokes('#s6radial','.hex');
+    placeEllipse('#s6radial','.hex', 330, 188);
   }
 
   /* ---- carousel ---- */

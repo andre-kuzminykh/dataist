@@ -18,7 +18,7 @@ const SLIDE = {
   2: ['.logo', '.head', '.pcard.prompt', '.pcard.answer', '.s2-arrow', '.s2-under', '.insight'],
   3: ['.logo', '.head', '.src', '.funnel', '.modelbox', '.insight'],
   4: ['.logo', '.head', '.tool', '.center-node', '.insight'],
-  5: ['.logo', '.head', '.chain', '.lnode', '.center-node', '.insight'],
+  5: ['.logo', '.head', '.lnode', '.center-node', '.insight'],
   6: ['.logo', '.head', '.hex', '.hub', '.insight'],
   7: ['.logo', '.head', '.uc', '.insight'],
   8: ['.logo', '.head', '.li8', '.insight'],
@@ -67,8 +67,8 @@ for (let n = 1; n <= 8; n++) {
         out.outOfBounds.push(`${A.name} @ [${Math.round(A.x)},${Math.round(A.y)} ${Math.round(A.w)}×${Math.round(A.h)}]`);
       if (A.el.scrollWidth > A.el.clientWidth + 2) out.clipped.push(`${A.name} (текст шире блока на ${A.el.scrollWidth - A.el.clientWidth}px)`);
     });
-    // count dashed rings
-    out.rings = card.querySelectorAll('.halo, .s5-ring, .orbit').length;
+    // count dashed rings (декоративные пунктирные круги)
+    out.rings = card.querySelectorAll('.halo, .s5-ring, .orbit, .cyc').length;
     return out;
   }, { n, sels: SLIDE[n], TOL, SAFE });
 
