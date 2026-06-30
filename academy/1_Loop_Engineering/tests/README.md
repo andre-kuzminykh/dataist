@@ -11,8 +11,10 @@ npm install            # ставит playwright (браузер Chromium тян
 
 ## Запуск
 ```bash
-npm test     # tests/verify.mjs — проверяет контракт из SPEC.md (структура, фон, анимация, текст, шрифт, диаграммы)
-npm run shots  # tests/screenshot.mjs — генерит screenshots/slide-1..8.png (1080×1080 @2x) + contact-sheet.png
+npm test       # tests/verify.mjs — контент-контракт из SPEC.md (структура, фон, анимация, текст, шрифт, палитра)
+npm run layout # tests/layout.mjs — вёрстка: нет наложений/вылетов/обрезки текста, ≤1 пунктирного круга (SPEC §6)
+npm run qa     # verify + layout вместе
+npm run shots  # tests/screenshot.mjs — генерит screenshots/slide-1..8.png (1080×1080; SHOT_SCALE=2 → 2160)
 ```
 
 Или напрямую (если playwright стоит глобально):

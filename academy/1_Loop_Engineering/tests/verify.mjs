@@ -115,11 +115,11 @@ const diag = await page.evaluate(() => ({
   spokes4: document.querySelectorAll('#s4radial .spoke').length,
   spokes6: document.querySelectorAll('#s6radial .dashspoke').length,
   flow3: document.querySelectorAll('#s3lines .flowdot').length,
-  env4: document.querySelectorAll('#s4radial .orbit .env').length,
+  tools4: document.querySelectorAll('#s4radial .tool').length,
 }));
 check('слайд 3: 5 текущих точек-потока', () => assert.equal(diag.flow3, 5));
+check('слайд 4: 6 карточек-инструментов', () => assert.equal(diag.tools4, 6));
 check('слайд 4: 6 коннекторов к инструментам', () => assert.ok(diag.spokes4 >= 6));
-check('слайд 4: 6 иконок среды на орбите', () => assert.equal(diag.env4, 6));
 check('слайд 6: 6 пунктир-коннекторов', () => assert.ok(diag.spokes6 >= 6));
 
 // 9. палитра: только фиолетовый + оранжевый (никаких green/blue/sky)
