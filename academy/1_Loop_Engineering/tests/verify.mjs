@@ -4,6 +4,7 @@
 import { chromium } from 'playwright';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -56,7 +57,7 @@ for (let n = 1; n <= 8; n++) {
 for (let n = 1; n <= 8; n++) {
   const has = await page.locator(`#card-${n} .logo img`).count();
   const onerr = await page.locator(`#card-${n} .logo img`).first().getAttribute('onerror');
-  check(`#card-${n}: логотип AIT + fallback`, () => { assert.equal(has, 1); assert.ok(onerr && /ait-logo\.svg/.test(onerr)); });
+  check(`#card-${n}: логотип AIT + fallback`, () => { assert.equal(has, 1); assert.ok(onerr && /ait-logo\.png/.test(onerr)); });
 }
 
 // 3. фон: слайд 1 тёмный, 2..8 светлый
@@ -120,6 +121,13 @@ check('слайд 3: 5 текущих точек-потока', () => assert.equ
 check('слайд 4: 6 коннекторов к инструментам', () => assert.ok(diag.spokes4 >= 6));
 check('слайд 4: 6 иконок среды на орбите', () => assert.equal(diag.env4, 6));
 check('слайд 6: 6 пунктир-коннекторов', () => assert.ok(diag.spokes6 >= 6));
+
+// 9. палитра: только фиолетовый + оранжевый (никаких green/blue/sky)
+const src = readFileSync(resolve(root, 'index.html'), 'utf8');
+const banned = ['#10B981', '#3B82F6', '#0EA5E9', '16,185,129', '59,130,246', '14,165,233'];
+for (const b of banned) {
+  check(`палитра: нет постороннего цвета «${b}»`, () => assert.ok(!src.includes(b), 'найден в index.html'));
+}
 
 await browser.close();
 console.log(`\n${fail === 0 ? '✓ ВСЕ ТЕСТЫ ПРОШЛИ' : '✗ ЕСТЬ ПАДЕНИЯ'} — pass: ${pass}, fail: ${fail}\n`);

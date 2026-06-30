@@ -16,8 +16,16 @@ const N = 8;
 const DSF = Number(process.env.SHOT_SCALE || 1);        // 1 → 1080px (IG native), 2 → 2160px
 const url = 'file://' + resolve(root, 'index.html') + '?export';
 
-const browser = await chromium.launch();
-const page = await browser.newPage({ viewport: { width: 1160, height: 1200 }, deviceScaleFactor: DSF });
+// В песочнице у браузера нет прямого интернета — пускаем его через тот же прокси, что и curl,
+// чтобы реальный логотип (raw.githubusercontent) подтянулся в скриншоты. На обычной машине
+// HTTPS_PROXY не задан → запускаем браузер напрямую (логотип грузится сам).
+const PROXY = process.env.HTTPS_PROXY || process.env.https_proxy;
+const browser = await chromium.launch(PROXY ? { proxy: { server: PROXY } } : {});
+const page = await browser.newPage({
+  viewport: { width: 1160, height: 1200 },
+  deviceScaleFactor: DSF,
+  ignoreHTTPSErrors: true,
+});
 await page.goto(url, { waitUntil: 'load' });
 // дать шрифтам/раскладке/диаграммам устаканиться + поймать «живой» кадр анимации
 await page.evaluate(() => document.fonts && document.fonts.ready);
