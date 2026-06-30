@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<title>AIT Academy · Урок 1 — Loop Engineering</title>
+<meta name="description" content="Loop Engineering — анимированные карточки урока: от Prompt Engineering к системам, которые промптят агентов вместо нас.">
+<meta property="og:title" content="Урок 1 — Loop Engineering · AIT Academy">
+<meta property="og:description" content="Хватит самому писать промты. Строим системы, которые промптят агентов вместо нас.">
+<meta property="og:type" content="article">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* Local JetBrains Mono — self-hosted so карточки рендерятся офлайн и при экспорте
+   (Google Fonts выше — как онлайн-улучшение/прелоад). */
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;src:url('assets/fonts/JetBrainsMono-400.ttf') format('truetype')}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:500;font-display:swap;src:url('assets/fonts/JetBrainsMono-500.ttf') format('truetype')}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:700;font-display:swap;src:url('assets/fonts/JetBrainsMono-700.ttf') format('truetype')}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:800;font-display:swap;src:url('assets/fonts/JetBrainsMono-800.ttf') format('truetype')}
+
+/* ============================================================================
+   AIT Academy · Урок 1 — Loop Engineering
+   8 квадратных слайдов 1080×1080 для Instagram. Обложка — тёмная, слайды 2–8 —
+   светлые. Шрифт JetBrains Mono. Иконки — inline-SVG (без CDN). На КАЖДОМ слайде
+   есть постоянная анимация. См. SPEC.md.
+   ?export → все карточки в столбик, без масштаба (для скриншотов).
+   ============================================================================ */
+:root{
+  --flame:#F97316; --plum:#8854F3; --green:#10B981; --blue:#3B82F6; --sky:#0EA5E9; --ink:#0A0A0A;
+  --bg-dark:#050505; --bg-light:#FAFAFA;
+  --scale:1;
+  --mono:'JetBrains Mono','SFMono-Regular',ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:#111114; color:#0A0A0A; font-family:var(--mono);
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  -webkit-tap-highlight-color:transparent; overflow-x:hidden;
+}
+.sr{position:absolute;width:0;height:0;overflow:hidden}
+
+/* ---------- deck / carousel ---------- */
+#deck{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden}
+.card{
+  position:absolute; width:1080px; height:1080px; overflow:hidden;
+  transform:scale(var(--scale)) translateY(14px); transform-origin:center center;
+  opacity:0; visibility:hidden; transition:opacity .5s ease, transform .5s ease;
+  border-radius:10px;
+}
+.card.active{opacity:1;visibility:visible;transform:scale(var(--scale)) translateY(0)}
+/* export mode: every card visible, full size, stacked */
+body.export{background:#1b1b20;color:#0A0A0A;overflow:auto}
+body.export #deck{position:static;display:block;height:auto;padding:24px 0}
+body.export .card{position:relative;opacity:1;visibility:visible;transform:none;margin:0 auto 30px;box-shadow:0 18px 60px rgba(0,0,0,.45)}
+
+/* ---------- shared chrome ---------- */
+.card .bg{position:absolute;inset:0;z-index:0}
+.dark{background:var(--bg-dark);color:#F4F4F5}
+.light{background:var(--bg-light);color:#0A0A0A}
+.grain{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.06;mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px}
+.light .grain{opacity:.4;mix-blend-mode:multiply}
+.logo{position:absolute;top:58px;left:64px;z-index:5;height:60px;display:flex;align-items:center}
+.logo img{height:60px;width:auto;object-fit:contain;display:block;filter:drop-shadow(0 3px 8px rgba(0,0,0,.18))}
+.idx{position:absolute;top:74px;right:66px;z-index:5;font-size:20px;font-weight:700;letter-spacing:.18em;color:rgba(10,10,10,.32)}
+.dark .idx{color:rgba(255,255,255,.4)}
+
+/* titles */
+.head{position:absolute;left:72px;right:72px;top:158px;z-index:5}
+.kicker{font-size:21px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--flame);margin:0 0 14px}
+.title{font-size:54px;font-weight:800;letter-spacing:-.02em;line-height:1.04;margin:0}
+.subtitle{font-size:26px;font-weight:500;margin:16px 0 0;color:rgba(10,10,10,.55)}
+.dark .subtitle{color:rgba(255,255,255,.6)}
+
+/* stage for diagrams */
+.stage{position:absolute;left:72px;right:72px;top:300px;bottom:236px;z-index:4}
+
+/* insight block */
+.insight{position:absolute;left:72px;right:72px;bottom:66px;z-index:5;display:flex;gap:22px;align-items:center;
+  background:rgba(249,115,22,.08);border:1.5px solid rgba(249,115,22,.28);border-radius:22px;padding:26px 30px}
+.insight .bulb{flex:0 0 auto;width:58px;height:58px;border-radius:16px;display:grid;place-items:center;
+  background:rgba(249,115,22,.16);color:var(--flame)}
+.insight .bulb svg{width:32px;height:32px;animation:blink 2.2s ease-in-out infinite}
+.insight p{margin:0;font-size:23.5px;line-height:1.5;font-weight:500;color:#1c1207}
+.insight b{font-weight:700;color:var(--flame)}
+
+/* generic card / pill / icon */
+.box{border:1.8px solid rgba(10,10,10,.12);background:#fff;border-radius:20px;box-shadow:0 6px 22px rgba(20,20,40,.06)}
+.ico{display:inline-block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+.label{font-weight:700;letter-spacing:.04em}
+.muted{color:rgba(10,10,10,.5)}
+.dark .muted{color:rgba(255,255,255,.55)}
+
+/* ============================ KEYFRAMES (постоянная анимация) ============================ */
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spinrev{to{transform:rotate(-360deg)}}
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-13px)}}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes ping{0%{transform:scale(.55);opacity:.55}100%{transform:scale(2.3);opacity:0}}
+@keyframes dash{to{stroke-dashoffset:-260}}
+@keyframes shimmer{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+@keyframes flowdown{0%{transform:translate(0,0);opacity:0}12%{opacity:1}88%{opacity:1}100%{transform:translate(var(--dx,0px),var(--len,118px));opacity:0}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,0)}50%{box-shadow:0 0 30px 2px rgba(249,115,22,.35)}}
+@keyframes sweepcard{0%,100%{border-color:rgba(10,10,10,.12);box-shadow:0 6px 22px rgba(20,20,40,.06);transform:translateY(0)}
+  18%{border-color:var(--ac,#F97316);box-shadow:0 0 0 3px color-mix(in srgb,var(--ac,#F97316) 22%,transparent);transform:translateY(-6px)}}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-4px) rotate(-3deg)}75%{transform:translateY(4px) rotate(3deg)}}
+@keyframes drawline{to{stroke-dashoffset:0}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.spin{animation:spin 16s linear infinite}
+.float{animation:floatY 4s ease-in-out infinite}
+
+/* ===================================================================================
+   SLIDE 1 — COVER (dark)
+   =================================================================================== */
+.cover .ctitle{position:absolute;left:0;right:0;top:172px;z-index:5;text-align:center;
+  font-size:72px;font-weight:800;line-height:1.05;letter-spacing:-.03em}
+.cover .ctitle .em{color:var(--flame)}
+/* margin-centred (NOT translate) — so the spin animation's transform doesn't drop the centring */
+.cover-glow{position:absolute;left:50%;top:632px;width:760px;height:760px;margin-left:-380px;margin-top:-380px;z-index:2;
+  border-radius:50%;filter:blur(80px);opacity:.22;
+  background:conic-gradient(from 0deg,var(--flame),var(--plum),var(--green),var(--blue),var(--flame));
+  animation:spin 18s linear infinite}
+.rings{position:absolute;left:50%;top:632px;transform:translate(-50%,-50%);z-index:4;width:680px;height:456px}
+.ring{position:absolute;border-radius:26px;display:flex;align-items:flex-start;justify-content:center;
+  animation:ringpulse 3.2s ease-in-out infinite}
+.ring .rlab{display:flex;align-items:center;gap:14px;margin-top:16px;font-size:26px;font-weight:700;letter-spacing:.02em}
+.ring .rlab svg{width:30px;height:30px}
+@keyframes ringpulse{0%,100%{box-shadow:0 0 0 0 transparent;filter:brightness(1)}
+  50%{box-shadow:0 0 34px 1px var(--c);filter:brightness(1.15)}}
+.r1{inset:0;border:2.4px solid var(--flame);--c:rgba(249,115,22,.5);animation-delay:0s;color:var(--flame)}
+.r2{inset:64px;border:2.4px solid var(--plum);--c:rgba(136,84,243,.5);animation-delay:.4s;color:var(--plum)}
+.r3{inset:128px;border:2.4px solid var(--green);--c:rgba(16,185,129,.5);animation-delay:.8s;color:var(--green)}
+.r4{inset:192px;border:2.4px solid var(--blue);--c:rgba(59,130,246,.5);animation-delay:1.2s;color:var(--blue);align-items:center}
+.r4 .rlab{margin-top:0}
+.ring .rlab{font-size:24px}
+.cover .cfoot{position:absolute;left:80px;right:80px;bottom:70px;z-index:5;text-align:center;
+  font-size:27px;font-weight:600;line-height:1.5;color:rgba(255,255,255,.82)}
+.cover .cfoot .arr{display:inline-block;color:var(--flame);animation:nudge 1.4s ease-in-out infinite}
+@keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(12px)}}
+.spark{position:absolute;border-radius:50%;z-index:3;background:#fff;opacity:.0;animation:twinkle 3.4s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(.6)}50%{opacity:.8;transform:scale(1)}}
+
+/* ===================================================================================
+   SLIDE 2 — Prompt Engineering
+   =================================================================================== */
+.s2-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:34px}
+.pcard{width:368px;border-radius:24px;border:2.2px solid;padding:26px 24px 28px;background:#fff;position:relative}
+.pcard.prompt{border-color:var(--blue);box-shadow:0 10px 30px rgba(59,130,246,.12)}
+.pcard.answer{border-color:var(--green);box-shadow:0 10px 30px rgba(16,185,129,.12)}
+.pcard .ph{display:flex;align-items:center;gap:14px;font-size:27px;font-weight:800;letter-spacing:.08em;margin-bottom:22px}
+.pcard.prompt .ph{color:var(--blue)} .pcard.answer .ph{color:var(--green)}
+.pcard .ph svg{width:34px;height:34px}
+.prow{display:flex;align-items:center;gap:12px;border:1.6px solid;border-radius:13px;padding:13px 16px;margin-bottom:13px;font-size:21px;font-weight:600;
+  animation:rowsweep 4s ease-in-out infinite}
+@keyframes rowsweep{0%,100%{transform:translateX(0);filter:brightness(1)}20%{transform:translateX(6px);filter:brightness(1.06)}}
+.prow .dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+.aline{height:14px;border-radius:7px;background:rgba(10,10,10,.1);margin-bottom:14px;animation:type 2.6s ease-in-out infinite}
+@keyframes type{0%{width:30%;opacity:.5}50%{opacity:1}100%{width:92%;opacity:.7}}
+.s2-arrow{display:flex;flex-direction:column;align-items:center;gap:8px;color:var(--flame)}
+.s2-arrow .chev{display:flex}
+.s2-arrow .chev svg{width:30px;height:30px;animation:chev 1.4s ease-in-out infinite}
+.s2-arrow .chev svg:nth-child(2){animation-delay:.18s}
+.s2-arrow .chev svg:nth-child(3){animation-delay:.36s}
+@keyframes chev{0%,100%{opacity:.25;transform:translateX(-4px)}50%{opacity:1;transform:translateX(4px)}}
+.s2-under{position:absolute;left:72px;right:72px;top:702px;z-index:4;text-align:center}
+.s2-fb{display:flex;align-items:center;justify-content:center;gap:14px;color:rgba(10,10,10,.5);font-size:20px;margin-bottom:14px}
+.s2-fb svg{width:230px;height:18px;overflow:visible}
+.s2-fb .ln{stroke:rgba(10,10,10,.35);stroke-width:2.2;stroke-dasharray:8 8;animation:dash 4s linear infinite}
+.s2-chip{display:inline-flex;align-items:center;gap:10px;background:rgba(10,10,10,.05);border:1.5px solid rgba(10,10,10,.12);
+  border-radius:999px;padding:11px 22px;font-size:21px;font-weight:700}
+
+/* ===================================================================================
+   SLIDE 3 — Context Engineering
+   =================================================================================== */
+.s3-src{position:absolute;left:0;right:0;top:0;display:flex;justify-content:center;gap:20px;z-index:5}
+.src{width:120px;height:116px;border-radius:20px;border:2px solid;background:#fff;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;font-size:17px;font-weight:700;position:relative;
+  animation:srcsweep 4.5s ease-in-out infinite}
+@keyframes srcsweep{0%,100%{transform:translateY(0);filter:brightness(1)}16%{transform:translateY(-7px);filter:brightness(1.08)}}
+.src svg{width:38px;height:38px}
+.s3-lines{position:absolute;left:0;right:0;top:116px;height:118px;z-index:3}
+.flowdot{position:absolute;top:0;width:12px;height:12px;border-radius:50%;background:var(--flame);
+  filter:drop-shadow(0 0 6px rgba(249,115,22,.7));--len:118px;animation:flowdown 1.7s linear infinite}
+.funnel{position:absolute;left:50%;top:234px;transform:translateX(-50%);z-index:5;width:360px;height:120px;
+  border-radius:22px;border:2.4px solid var(--flame);background:linear-gradient(180deg,rgba(249,115,22,.1),rgba(249,115,22,.03));
+  display:flex;align-items:center;justify-content:center;gap:16px;animation:glow 3s ease-in-out infinite}
+.funnel .fl{display:flex;flex-direction:column;align-items:center;gap:6px}
+.funnel svg{width:42px;height:42px;color:var(--flame);animation:breathe 3s ease-in-out infinite}
+.funnel .ft{font-size:30px;font-weight:800;letter-spacing:.06em;color:#7c3a0c}
+.funnel .lines{display:flex;flex-direction:column;gap:7px}
+.funnel .lines i{display:block;height:8px;border-radius:4px;background:rgba(124,58,12,.25)}
+.s3-mid{position:absolute;left:50%;top:358px;transform:translateX(-50%);z-index:4;width:4px;height:46px}
+.s3-mid svg{width:30px;height:46px;color:var(--flame);animation:pulse 1.6s ease-in-out infinite}
+.modelbox{position:absolute;left:0;right:0;margin:0 auto;top:404px;z-index:5;width:300px;height:92px;border-radius:20px;
+  border:2.4px solid var(--ink);background:#0A0A0A;color:#fff;display:flex;align-items:center;justify-content:center;gap:16px;
+  font-size:28px;font-weight:800;letter-spacing:.08em;animation:breathe 4s ease-in-out infinite}
+.modelbox svg{width:36px;height:36px}
+
+/* ===================================================================================
+   SLIDE 4 — Harness Engineering  &  SLIDE 5/6 radial
+   =================================================================================== */
+.radial{position:absolute;inset:0;z-index:4}
+.center-node{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;width:188px;height:188px;border-radius:28px;
+  background:linear-gradient(135deg,var(--plum),var(--flame));color:#fff;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:10px;box-shadow:0 16px 44px rgba(136,84,243,.34)}
+.center-node svg{width:62px;height:62px}
+.center-node b{font-size:25px;font-weight:800;letter-spacing:.1em}
+.center-node .ring-ping{position:absolute;inset:-6px;border-radius:32px;border:2px solid var(--flame);animation:ping 3s ease-out infinite}
+.center-node .ring-ping.b{animation-delay:1.5s}
+.orbit{position:absolute;left:50%;top:50%;width:520px;height:520px;margin-left:-260px;margin-top:-260px;z-index:3;
+  border-radius:50%;border:2px dashed rgba(136,84,243,.35);animation:spin 26s linear infinite}
+.orbit .env{position:absolute;width:58px;height:58px;border-radius:14px;background:#fff;border:1.6px solid rgba(10,10,10,.1);
+  display:grid;place-items:center;color:rgba(10,10,10,.6);box-shadow:0 4px 14px rgba(0,0,0,.08);animation:spinrev 26s linear infinite}
+.orbit .env svg{width:30px;height:30px}
+.tool{position:absolute;width:176px;height:96px;border-radius:18px;border:2px solid;background:#fff;z-index:5;
+  display:flex;align-items:center;gap:14px;padding:0 16px;font-size:20px;font-weight:700;box-shadow:0 8px 22px rgba(20,20,40,.08);
+  animation:floatY 4.4s ease-in-out infinite}
+.tool svg{width:34px;height:34px;flex:0 0 auto}
+.spoke{position:absolute;left:50%;top:50%;height:2px;transform-origin:left center;z-index:2;
+  background:linear-gradient(90deg,rgba(136,84,243,.05),rgba(136,84,243,.5));animation:pulse 2.4s ease-in-out infinite}
+
+/* ===================================================================================
+   SLIDE 5 — Loop
+   =================================================================================== */
+.chain{position:absolute;left:72px;right:72px;top:300px;z-index:5;display:flex;align-items:center;justify-content:center;
+  gap:10px;flex-wrap:nowrap;background:rgba(249,115,22,.06);border:1.5px solid rgba(249,115,22,.2);border-radius:16px;padding:16px 12px}
+.chain .ch{font-size:18.5px;font-weight:700;white-space:nowrap;color:#7c3a0c;animation:chainglow 5s ease-in-out infinite}
+.chain .ch svg{color:var(--flame)}
+@keyframes chainglow{0%,100%{opacity:.55}50%{opacity:1}}
+.chain .sep{color:var(--flame);display:flex}
+.chain .sep svg{width:20px;height:20px}
+.loopwrap{position:absolute;left:50%;top:642px;transform:translate(-50%,-50%);z-index:4;width:480px;height:480px}
+.loop-arrows{position:absolute;inset:0;animation:spin 22s linear infinite;color:var(--flame)}
+.loop-arrows svg{width:100%;height:100%}
+.loop-arrows .lp{stroke:var(--flame);stroke-width:3;fill:none;stroke-dasharray:14 12;animation:dash 6s linear infinite}
+.orbit-dot{position:absolute;left:50%;top:50%;width:480px;height:480px;margin-left:-240px;margin-top:-240px;animation:spin 8s linear infinite;z-index:5}
+.orbit-dot i{position:absolute;left:50%;top:-2px;transform:translateX(-50%);width:20px;height:20px;border-radius:50%;
+  background:var(--flame);filter:drop-shadow(0 0 10px rgba(249,115,22,.9))}
+.lnode{position:absolute;width:150px;height:108px;border-radius:18px;border:2px solid;background:#fff;z-index:6;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;font-size:20px;font-weight:700;
+  box-shadow:0 8px 22px rgba(20,20,40,.08)}
+.lnode svg{width:34px;height:34px}
+
+/* ===================================================================================
+   SLIDE 6 — what makes a good loop
+   =================================================================================== */
+.hex{position:absolute;width:228px;border-radius:20px;border:2px solid;background:#fff;z-index:5;padding:16px 16px 18px;
+  display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;box-shadow:0 8px 22px rgba(20,20,40,.07);
+  animation:floatY 5s ease-in-out infinite}
+.hex .hi{width:54px;height:54px;border-radius:14px;display:grid;place-items:center}
+.hex .hi svg{width:32px;height:32px}
+.hex .ht{font-size:22px;font-weight:800}
+.hex .hd{font-size:16.5px;font-weight:500;line-height:1.35;color:rgba(10,10,10,.55)}
+.hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:6;width:154px;height:154px;border-radius:50%;
+  background:linear-gradient(135deg,var(--flame),var(--plum));color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  box-shadow:0 14px 40px rgba(136,84,243,.32)}
+.hub svg{width:52px;height:52px;animation:spin 9s linear infinite}
+.hub b{font-size:22px;font-weight:800;letter-spacing:.04em}
+.dashspoke{position:absolute;left:50%;top:50%;height:0;border-top:2px dashed rgba(136,84,243,.4);transform-origin:left center;z-index:2;
+  background:none;animation:dashmove 1.8s linear infinite}
+@keyframes dashmove{to{background-position:20px 0}}
+
+/* ===================================================================================
+   SLIDE 7 — when to use loop (2×3 grid)
+   =================================================================================== */
+.grid7{position:absolute;inset:0;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);
+  gap:24px;z-index:4}
+.uc{border-radius:22px;border:2px solid rgba(10,10,10,.12);background:#fff;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:18px;box-shadow:0 6px 22px rgba(20,20,40,.06);position:relative;
+  animation:sweepcard 5.4s ease-in-out infinite}
+.uc .uci{width:84px;height:84px;border-radius:20px;display:grid;place-items:center}
+.uc .uci svg{width:46px;height:46px;animation:bob 4.5s ease-in-out infinite}
+.uc .uct{font-size:23px;font-weight:700;text-align:center;line-height:1.25}
+
+/* ===================================================================================
+   SLIDE 8 — best practices (vertical list)
+   =================================================================================== */
+.list8{position:absolute;left:72px;right:72px;top:300px;bottom:236px;z-index:4;display:flex;flex-direction:column;gap:14px;justify-content:space-between}
+.li8{display:flex;align-items:center;gap:0;border:2px solid rgba(10,10,10,.12);border-radius:18px;background:#fff;
+  box-shadow:0 6px 18px rgba(20,20,40,.05);overflow:hidden;flex:1;animation:sweepcard 6s ease-in-out infinite}
+.li8 .l8i{width:96px;align-self:stretch;display:grid;place-items:center;color:#fff}
+.li8 .l8i svg{width:40px;height:40px}
+.li8 .l8t{padding:0 28px;font-size:27px;font-weight:700}
+.li8 .l8n{margin-left:auto;padding-right:28px;font-size:34px;font-weight:800;color:rgba(10,10,10,.12)}
+
+/* ---------- on-screen navigation (hidden in export) ---------- */
+#nav{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:14px;
+  background:rgba(20,20,26,.72);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);border-radius:999px;
+  padding:10px 16px;color:#fff}
+#nav button{background:rgba(255,255,255,.1);border:0;color:#fff;width:42px;height:42px;border-radius:50%;font-size:18px;cursor:pointer;
+  display:grid;place-items:center;transition:background .2s}
+#nav button:hover{background:rgba(255,255,255,.22)}
+#dots{display:flex;gap:9px}
+#dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .2s}
+#dots i.on{background:var(--flame);width:26px;border-radius:6px}
+#count{position:fixed;top:18px;right:20px;z-index:50;color:rgba(255,255,255,.85);font-weight:700;letter-spacing:.14em;font-size:15px;
+  background:rgba(20,20,26,.55);padding:7px 14px;border-radius:999px;backdrop-filter:blur(8px)}
+.hint{position:fixed;top:18px;left:20px;z-index:50;color:rgba(255,255,255,.6);font-size:13px;letter-spacing:.06em;
+  background:rgba(20,20,26,.45);padding:7px 14px;border-radius:999px;backdrop-filter:blur(8px)}
+body.export #nav,body.export #count,body.export .hint{display:none}
+
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ============================ INLINE SVG ICON SPRITE ============================ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<symbol id="i-loop" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3"/><path d="M12 19v3"/><path d="M2 12h3"/><path d="M19 12h3"/><path d="m4.9 4.9 2.1 2.1"/><path d="m17 17 2.1 2.1"/><path d="m19.1 4.9-2.1 2.1"/><path d="m7 17-2.1 2.1"/></symbol>
+<symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h6"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/></symbol>
+<symbol id="i-chat-check" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H8l-4 4V5a2 2 0 0 1 2-2h13a2 2 0 0 1 2 2z"/><path d="m8.5 9.6 2.2 2.2 4.4-4.4"/></symbol>
+<symbol id="i-bot" viewBox="0 0 24 24"><rect x="4" y="9" width="16" height="11" rx="2.6"/><path d="M12 9V5.4"/><circle cx="12" cy="3.6" r="1.5"/><circle cx="9" cy="14.4" r="1.1"/><circle cx="15" cy="14.4" r="1.1"/><path d="M2 13v3"/><path d="M22 13v3"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></symbol>
+<symbol id="i-brain" viewBox="0 0 24 24"><path d="M12 5a3 3 0 0 0-5.6-1.5A3 3 0 0 0 4 6.5a3 3 0 0 0-1 5.6V14a3 3 0 0 0 4 2.8A3 3 0 0 0 12 19z"/><path d="M12 5a3 3 0 0 1 5.6-1.5A3 3 0 0 1 20 6.5a3 3 0 0 1 1 5.6V14a3 3 0 0 1-4 2.8A3 3 0 0 1 12 19z"/><path d="M12 5v14"/></symbol>
+<symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 2v6"/><path d="M15 2v6"/><path d="M7 8h10v3a5 5 0 0 1-10 0z"/><path d="M12 16v6"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 3 7.6 7 9 4-1.4 7-4.5 7-9V6z"/></symbol>
+<symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M12 3 5 6v5c0 4.5 3 7.6 7 9 4-1.4 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="5"/><path d="m11.5 11.5 8-8"/><path d="m17 4 3 3"/><path d="m14 7 3 3"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+<symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="8" ry="3"/><path d="M4 6v12c0 1.6 3.6 3 8 3s8-1.4 8-3V6"/><path d="M4 12c0 1.6 3.6 3 8 3s8-1.4 8-3"/></symbol>
+<symbol id="i-history" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 4v4h4"/><path d="M12 8v4l3 2"/></symbol>
+<symbol id="i-flow" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/><path d="M7 10v3.4a2.6 2.6 0 0 0 2.6 2.6H14"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a4 4 0 0 0 6 .5l3-3a4 4 0 0 0-5.7-5.7l-1.5 1.5"/><path d="M14 11a4 4 0 0 0-6-.5l-3 3a4 4 0 0 0 5.7 5.7l1.5-1.5"/></symbol>
+<symbol id="i-bug" viewBox="0 0 24 24"><rect x="8" y="6" width="8" height="13" rx="4"/><path d="M8 11H4"/><path d="M20 11h-4"/><path d="M8 15H4.5"/><path d="M19.5 15H16"/><path d="m9 6-1.5-2.5"/><path d="m15 6 1.5-2.5"/><path d="m8 18.5-2 2"/><path d="m16 18.5 2 2"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20.5 20.5-3.8-3.8"/></symbol>
+<symbol id="i-server" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="7" rx="2"/><rect x="3" y="13" width="18" height="7" rx="2"/><path d="M7 7.5h.01"/><path d="M7 16.5h.01"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2.5h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V11"/><path d="M9 20V6"/><path d="M14 20v-5"/><circle cx="18" cy="9" r="3.4"/><path d="m22 13-1.6-1.6"/></symbol>
+<symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.4 12 2.5 2.5 5-5"/></symbol>
+<symbol id="i-steps" viewBox="0 0 24 24"><path d="M3 18h4v-4h4v-4h4v-4h4"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="7" cy="7" r="3"/><path d="M2 20a5 5 0 0 1 10 0"/><circle cx="17" cy="7" r="3"/><path d="M12 20a5 5 0 0 1 10 0"/></symbol>
+<symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M8.5 14.5C7 13.5 6 11.9 6 10a6 6 0 0 1 12 0c0 1.9-1 3.5-2.5 4.5-.6.4-1 .9-1 1.6v.4H9.5v-.4c0-.7-.4-1.2-1-1.6z"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h15"/><path d="m13 6 6 6-6 6"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+<symbol id="i-monitor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M9 20h6"/><path d="M12 16v4"/></symbol>
+<symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M3 10h18"/></symbol>
+<symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></symbol>
+<symbol id="i-github" viewBox="0 0 24 24"><path d="M9 19c-4 1.4-4-1.8-6-2m12 5v-3.3c0-1 .3-1.6-.4-2.3 2.4-.3 4.9-1.2 4.9-5.4a4.2 4.2 0 0 0-1.2-2.9 3.9 3.9 0 0 0-.1-2.9s-1-.3-3.2 1.2a11 11 0 0 0-5.6 0C7.2 3.4 6.2 3.7 6.2 3.7a3.9 3.9 0 0 0-.1 2.9A4.2 4.2 0 0 0 5 9.6c0 4.2 2.5 5.1 4.9 5.4-.6.6-.6 1.2-.5 2.1V22"/></symbol>
+<symbol id="i-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h12"/><path d="M8 12h12"/><path d="M8 18h12"/><path d="M4 6h.01"/><path d="M4 12h.01"/><path d="M4 18h.01"/></symbol>
+<symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M5 21a7 7 0 0 1 14 0"/></symbol>
+<symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></symbol>
+</defs>
+</svg>
+
+<div id="deck">
+
+  <!-- ===================== SLIDE 1 — COVER (dark) ===================== -->
+  <section class="card cover active dark" id="card-1" data-n="1">
+    <div class="bg dark"></div><div class="grain"></div>
+    <div class="logo"><img src="https://i.ibb.co/gn7SmgY/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.svg'"></div>
+    <div class="idx">01 / 08</div>
+    <div class="spark" style="left:160px;top:300px;width:8px;height:8px;animation-delay:.2s"></div>
+    <div class="spark" style="left:900px;top:360px;width:6px;height:6px;animation-delay:1.1s"></div>
+    <div class="spark" style="left:240px;top:780px;width:7px;height:7px;animation-delay:.7s"></div>
+    <div class="spark" style="left:880px;top:760px;width:6px;height:6px;animation-delay:1.6s"></div>
+
+    <h1 class="ctitle">Хватит самому<br><span class="em">писать промты</span></h1>
+
+    <div class="cover-glow"></div>
+    <div class="rings">
+      <div class="ring r1"><span class="rlab"><svg class="ico"><use href="#i-loop"/></svg>Loop Engineering</span></div>
+      <div class="ring r2"><span class="rlab"><svg class="ico"><use href="#i-gear"/></svg>Harness Engineering</span></div>
+      <div class="ring r3"><span class="rlab"><svg class="ico"><use href="#i-doc"/></svg>Context Engineering</span></div>
+      <div class="ring r4"><span class="rlab"><svg class="ico"><use href="#i-chat"/></svg>Prompt Engineering</span></div>
+    </div>
+
+    <p class="cfoot">Теперь мы строим системы, которые<br>промптят агентов вместо нас <span class="arr">→</span></p>
+  </section>
+
+  <!-- ===================== SLIDE 2 — Prompt Engineering ===================== -->
+  <section class="card light" id="card-2" data-n="2">
+    <div class="bg light"></div><div class="grain"></div>
+    <div class="logo"><img src="https://i.ibb.co/gn7SmgY/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.svg'"></div>
+    <div class="idx">02 / 08</div>
+    <div class="head">
+      <p class="kicker" style="color:var(--blue)">Уровень 1</p>
+      <h2 class="title">1. Prompt Engineering</h2>
+      <p class="subtitle">Учимся правильно просить модель</p>
+    </div>
+    <div class="stage" style="top:300px;bottom:392px">
+      <div class="s2-wrap">
+        <div class="pcard prompt">
+          <div class="ph"><svg class="ico"><use href="#i-chat"/></svg>ПРОМТ</div>
+          <div class="prow" style="border-color:var(--blue);color:var(--blue)"><span class="dot" style="background:var(--blue)"></span>Роль</div>
+          <div class="prow" style="border-color:var(--green);color:var(--green);animation-delay:.5s"><span class="dot" style="background:var(--green)"></span>Формат</div>
+          <div class="prow" style="border-color:var(--flame);color:var(--flame);animation-delay:1s"><span class="dot" style="background:var(--flame)"></span>Ограничения</div>
+          <div class="prow" style="border-color:var(--plum);color:var(--plum);animation-delay:1.5s"><span class="dot" style="background:var(--plum)"></span>Примеры</div>
+        </div>
+        <div class="s2-arrow">
+          <div class="chev"><svg class="ico"><use href="#i-chevron"/></svg><svg class="ico"><use href="#i-chevron"/></svg><svg class="ico"><use href="#i-chevron"/></svg></div>
+        </div>
+        <div class="pcard answer">
+          <div class="ph"><svg class="ico"><use href="#i-chat-check"/></svg>ОТВЕТ</div>
+          <div class="aline" style="width:90%"></div>
+          <div class="aline" style="width:70%;animation-delay:.4s"></div>
+          <div class="aline" style="width:84%;animation-delay:.8s"></div>
+          <div class="aline" style="width:60%;animation-delay:1.2s"></div>
+        </div>
+      </div>
+    </div>
+    <div class="s2-under">
+      <div class="s2-fb"><span class="muted">Ручное управление моделью</span>
+        <svg viewBox="0 0 230 18"><path class="ln" d="M2 9 H228"/></svg>
+      </div>
+      <span class="s2-chip">Один промт <svg class="ico" style="width:20px;height:20px;color:var(--flame)"><use href="#i-arrow"/></svg> один ответ</span>
+    </div>
+    <div class="insight"><span class="bulb"><svg class="ico"><use href="#i-bulb"/></svg></span>
+      <p><b>Хороший промт улучшает ответ ИИ.</b> Но хороший ответ — это ещё не итоговый результат.</p></div>
+  </section>
+
+  <!-- ===================== SLIDE 3 — Context Engineering ===================== -->
+  <section class="card light" id="card-3" data-n="3">
+    <div class="bg light"></div><div class="grain"></div>
+    <div class="logo"><img src="https://i.ibb.co/gn7SmgY/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.svg'"></div>
+    <div class="idx">03 / 08</div>
+    <div class="head">
+      <p class="kicker" style="color:var(--green)">Уровень 2</p>
+      <h2 class="title">2. Context Engineering</h2>
+      <p class="subtitle">Даём модели правильную информацию</p>
+    </div>
+    <div class="stage" style="top:332px;bottom:228px">
+      <div class="s3-src">
+        <div class="src" style="border-color:var(--flame);color:var(--flame)"><svg class="ico"><use href="#i-doc"/></svg>Документы</div>
+        <div class="src" style="border-color:var(--plum);color:var(--plum);animation-delay:.4s"><svg class="ico"><use href="#i-brain"/></svg>Память</div>
+        <div class="src" style="border-color:var(--green);color:var(--green);animation-delay:.8s"><svg class="ico"><use href="#i-history"/></svg>История</div>
+        <div class="src" style="border-color:var(--blue);color:var(--blue);animation-delay:1.2s"><svg class="ico"><use href="#i-flow"/></svg>Правила</div>
+        <div class="src" style="border-color:var(--ink);color:var(--ink);animation-delay:1.6s"><svg class="ico"><use href="#i-db"/></svg>Данные</div>
+      </div>
+      <div class="s3-lines" id="s3lines"></div>
+      <div class="funnel">
+        <div class="fl"><svg class="ico"><use href="#i-layers"/></svg></div>
+        <div class="ft">КОНТЕКСТ</div>
+        <div class="lines"><i style="width:74px"></i><i style="width:60px"></i><i style="width:68px"></i></div>
+      </div>
+      <div class="s3-mid"><svg class="ico"><use href="#i-arrow" transform="rotate(90 12 12)"/></svg></div>
+      <div class="modelbox"><svg class="ico"><use href="#i-chat"/></svg>МОДЕЛЬ</div>
+    </div>
+    <div class="insight"><span class="bulb"><svg class="ico"><use href="#i-bulb"/></svg></span>
+      <p><b>Контекст должен не заполнять окно модели,</b> а объяснять, как работает система.</p></div>
+  </section>
+
+  <!-- ===================== SLIDE 4 — Harness Engineering ===================== -->
+  <section class="card light" id="card-4" data-n="4">
+    <div class="bg light"></div><div class="grain"></div>
+    <div class="logo"><img src="https://i.ibb.co/gn7SmgY/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.svg'"></div>
+    <div class="idx">04 / 08</div>
+    <div class="head">
+      <p class="kicker" style="color:var(--plum)">Уровень 3</p>
+      <h2 class="title">3. Harness Engineering</h2>
+      <p class="subtitle">Строим среду вокруг агента</p>
+    </div>
+    <div class="stage" style="top:300px;bottom:228px">
+      <div class="radial" id="s4radial">
+        <div class="orbit">
+          <div class="env" style="left:50%;top:0;transform:translate(-50%,-50%) " data-i="0"><svg class="ico"><use href="#i-monitor"/></svg></div>
+          <div class="env" data-i="1"><svg class="ico"><use href="#i-db"/></svg></div>
+          <div class="env" data-i="2"><svg class="ico"><use href="#i-calendar"/></svg></div>
+          <div class="env" data-i="3"><svg class="ico"><use href="#i-mail"/></svg></div>
+          <div class="env" data-i="4"><svg class="ico"><use href="#i-github"/></svg></div>
+          <div class="env" data-i="5"><svg class="ico"><use href="#i-doc"/></svg></div>
+        </div>
+        <div class="center-node">
+          <div class="ring-ping"></div><div class="ring-ping b"></div>
+          <svg class="ico"><use href="#i-bot"/></svg><b>АГЕНТ</b>
+        </div>
+        <div class="tool" style="border-color:var(--blue);color:var(--blue);left:8px;top:14px"><svg class="ico"><use href="#i-key"/></svg>Инструменты</div>
+        <div class="tool" style="border-color:var(--plum);color:var(--plum);right:8px;top:14px;animation-delay:.4s"><svg class="ico"><use href="#i-brain"/></svg>Память</div>
+        <div class="tool" style="border-color:var(--green);color:var(--green);left:8px;top:50%;transform:translateY(-50%);animation-delay:.8s"><svg class="ico"><use href="#i-plug"/></svg>MCP</div>
+        <div class="tool" style="border-color:var(--flame);color:var(--flame);right:8px;top:50%;transform:translateY(-50%);animation-delay:1.2s"><svg class="ico"><use href="#i-shield"/></svg>Разрешения</div>
+        <div class="tool" style="border-color:var(--sky);color:var(--sky);left:8px;bottom:14px;animation-delay:1.6s"><svg class="ico"><use href="#i-shield-check"/></svg>Guardrails</div>
+        <div class="tool" style="border-color:var(--ink);color:var(--ink);right:8px;bottom:14px;animation-delay:2s"><svg class="ico"><use href="#i-doc"/></svg>Логи</div>
+      </div>
+    </div>
+    <div class="insight"><span class="bulb"><svg class="ico"><use href="#i-bulb"/></svg></span>
+      <p><b>Модель без обёртки даёт ответ.</b> Модель с обёрткой умеет действовать.</p></div>
+  </section>
+
+  <!-- ===================== SLIDE 5 — Loop Engineering ===================== -->
+  <section class="card light" id="card-5" data-n="5">
+    <div class="bg light"></div><div class="grain"></div>
+    <div class="logo"><img src="https://i.ibb.co/gn7SmgY/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.svg'"></div>
+    <div class="idx">05 / 08</div>
+    <div class="head">
+      <p class="kicker">Уровень 4</p>
+      <h2 class="title">4. Loop Engineering</h2>
+      <p class="subtitle">Строим цикл, который делает это вместо нас</p>
+    </div>
+    <div class="chain">
+      <span class="ch">Цель</span><span class="sep"><svg class="ico"><use href="#i-chevron"/></svg></span>
+      <span class="ch" style="animation-delay:.4s">Контекст</span><span class="sep"><svg class="ico"><use href="#i-chevron"/></svg></span>
+      <span class="ch" style="animation-delay:.8s">Действие</span><span class="sep"><svg class="ico"><use href="#i-chevron"/></svg></span>
+      <span class="ch" style="animation-delay:1.2s">Наблюдение</span><span class="sep"><svg class="ico"><use href="#i-chevron"/></svg></span>
+      <span class="ch" style="animation-delay:1.6s">Корректировка</span>
+    </div>
+    <div class="loopwrap">
+      <div class="loop-arrows">
+        <svg viewBox="0 0 200 200"><path class="lp" d="M100 18a82 82 0 1 1-58 24" marker-end=""/></svg>
+      </div>
+      <div class="orbit-dot"><i></i></div>
+      <div class="center-node" style="width:160px;height:160px"><svg class="ico"><use href="#i-bot"/></svg><b>АГЕНТ</b></div>
+      <div class="lnode" style="left:50%;top:-12px;transform:translateX(-50%);border-color:var(--flame);color:var(--flame)"><svg class="ico"><use href="#i-target"/></svg>Цель</div>
+      <div class="lnode" style="right:-18px;top:50%;transform:translateY(-50%);border-color:var(--blue);color:var(--blue)"><svg class="ico"><use href="#i-bolt"/></svg>Действие</div>
+      <div class="lnode" style="left:50%;bottom:-12px;transform:translateX(-50%);border-color:var(--green);color:var(--green)"><svg class="ico"><use href="#i-chat-check"/></svg>Фидбек</div>
+      <div class="lnode" style="left:-18px;top:50%;transform:translateY(-50%);border-color:var(--plum);color:var(--plum)"><svg class="ico"><use href="#i-brain"/></svg>Память</div>
+    </div>
+    <div class="insight"><span class="bulb"><svg class="ico"><use href="#i-bulb"/></svg></span>
+      <p><b>Loop — это не один запуск.</b> Система действует, получает фидбек и повторяет цикл.</p></div>
+  </section>
+
+  <!-- ===================== SLIDE 6 — what makes a good loop ===================== -->
+  <section class="card light" id="card-6" data-n="6">
+    <div class="bg light"></div><div class="grain"></div>
+    <div class="logo"><img src="https://i.ibb.co/gn7SmgY/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.svg'"></div>
+    <div class="idx">06 / 08</div>
+    <div class="head">
+      <h2 class="title">Из чего состоит<br>хороший loop</h2>
+    </div>
+    <div class="stage" style="top:300px;bottom:236px">
+      <div class="radial" id="s6radial">
+        <div class="hub"><svg class="ico"><use href="#i-loop"/></svg><b>Loop</b></div>
+        <div class="hex" style="border-color:var(--flame);left:50%;top:-6px;transform:translateX(-50%)">
+          <span class="hi" style="background:rgba(249,115,22,.14);color:var(--flame)"><svg class="ico"><use href="#i-play"/></svg></span>
+          <span class="ht">Автоматизация</span><span class="hd">когда запускать</span></div>
+        <div class="hex" style="border-color:var(--plum);right:-8px;top:96px;animation-delay:.5s">
+          <span class="hi" style="background:rgba(136,84,243,.14);color:var(--plum)"><svg class="ico"><use href="#i-flow"/></svg></span>
+          <span class="ht">Правила</span><span class="hd">что делать дальше</span></div>
+        <div class="hex" style="border-color:var(--green);right:-8px;bottom:96px;animation-delay:1s">
+          <span class="hi" style="background:rgba(16,185,129,.14);color:var(--green)"><svg class="ico"><use href="#i-briefcase"/></svg></span>
+          <span class="ht">Навыки</span><span class="hd">как выполнять задачи</span></div>
+        <div class="hex" style="border-color:var(--blue);left:50%;bottom:-6px;transform:translateX(-50%);animation-delay:1.5s">
+          <span class="hi" style="background:rgba(59,130,246,.14);color:var(--blue)"><svg class="ico"><use href="#i-link"/></svg></span>
+          <span class="ht">Коннекторы</span><span class="hd">куда подключаться</span></div>
+        <div class="hex" style="border-color:var(--ink);left:-8px;bottom:96px;animation-delay:2s">
+          <span class="hi" style="background:rgba(10,10,10,.08);color:var(--ink)"><svg class="ico"><use href="#i-bot"/></svg></span>
+          <span class="ht">Агенты</span><span class="hd">кто делает и кто проверяет</span></div>
+        <div class="hex" style="border-color:var(--sky);left:-8px;top:96px;animation-delay:2.5s">
+          <span class="hi" style="background:rgba(14,165,233,.14);color:var(--sky)"><svg class="ico"><use href="#i-db"/></svg></span>
+          <span class="ht">Состояния</span><span class="hd">что уже сделано и что дальше</span></div>
+      </div>
+    </div>
+    <div class="insight"><span class="bulb"><svg class="ico"><use href="#i-bulb"/></svg></span>
+      <p><b>Хороший loop не просто повторяет команду.</b> Он знает, когда запускаться, что делать, чем проверять результат, где сохранить прогресс и когда остановиться.</p></div>
+  </section>
+
+  <!-- ===================== SLIDE 7 — when to use loop ===================== -->
+  <section class="card light" id="card-7" data-n="7">
+    <div class="bg light"></div><div class="grain"></div>
+    <div class="logo"><img src="https://i.ibb.co/gn7SmgY/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.svg'"></div>
+    <div class="idx">07 / 08</div>
+    <div class="head">
+      <h2 class="title">Для чего лучше<br>использовать loop</h2>
+      <p class="subtitle">Когда есть повторяемая работа и понятная проверка результата</p>
+    </div>
+    <div class="stage" style="top:360px;bottom:236px">
+      <div class="grid7">
+        <div class="uc" style="--ac:var(--flame)"><span class="uci" style="background:rgba(249,115,22,.13);color:var(--flame)"><svg class="ico"><use href="#i-bug"/></svg></span><span class="uct">Исправление<br>ошибок</span></div>
+        <div class="uc" style="--ac:var(--plum);animation-delay:.6s"><span class="uci" style="background:rgba(136,84,243,.13);color:var(--plum)"><svg class="ico"><use href="#i-server"/></svg></span><span class="uct">Сортировка<br>проблем</span></div>
+        <div class="uc" style="--ac:var(--green);animation-delay:1.2s"><span class="uci" style="background:rgba(16,185,129,.13);color:var(--green)"><svg class="ico"><use href="#i-doc"/></svg></span><span class="uct">Обновление<br>документации</span></div>
+        <div class="uc" style="--ac:var(--blue);animation-delay:1.8s"><span class="uci" style="background:rgba(59,130,246,.13);color:var(--blue)"><svg class="ico"><use href="#i-folder"/></svg></span><span class="uct">Обработка<br>файлов</span></div>
+        <div class="uc" style="--ac:var(--sky);animation-delay:2.4s"><span class="uci" style="background:rgba(14,165,233,.13);color:var(--sky)"><svg class="ico"><use href="#i-chart"/></svg></span><span class="uct">Исследовательский<br>проект</span></div>
+        <div class="uc" style="--ac:var(--ink);animation-delay:3s"><span class="uci" style="background:rgba(10,10,10,.07);color:var(--ink)"><svg class="ico"><use href="#i-check-circle"/></svg></span><span class="uct">Проверка<br>результатов</span></div>
+      </div>
+    </div>
+    <div class="insight"><span class="bulb"><svg class="ico"><use href="#i-bulb"/></svg></span>
+      <p><b>Loop хорош там, где есть фидбек:</b> тесты, логи, метрики, скриншоты или проверка человеком.</p></div>
+  </section>
+
+  <!-- ===================== SLIDE 8 — best practices ===================== -->
+  <section class="card light" id="card-8" data-n="8">
+    <div class="bg light"></div><div class="grain"></div>
+    <div class="logo"><img src="https://i.ibb.co/gn7SmgY/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.svg'"></div>
+    <div class="idx">08 / 08</div>
+    <div class="head">
+      <h2 class="title">Лучшие практики<br>Loop Engineering</h2>
+    </div>
+    <div class="list8">
+      <div class="li8" style="--ac:var(--flame)"><span class="l8i" style="background:var(--flame)"><svg class="ico"><use href="#i-target"/></svg></span><span class="l8t">Задайте проверяемую цель</span><span class="l8n">01</span></div>
+      <div class="li8" style="--ac:var(--green);animation-delay:.5s"><span class="l8i" style="background:var(--green)"><svg class="ico"><use href="#i-chat"/></svg></span><span class="l8t">Дайте правильный контекст</span><span class="l8n">02</span></div>
+      <div class="li8" style="--ac:var(--blue);animation-delay:1s"><span class="l8i" style="background:var(--blue)"><svg class="ico"><use href="#i-steps"/></svg></span><span class="l8t">Делайте маленькие шаги</span><span class="l8n">03</span></div>
+      <div class="li8" style="--ac:var(--plum);animation-delay:1.5s"><span class="l8i" style="background:var(--plum)"><svg class="ico"><use href="#i-users"/></svg></span><span class="l8t">Разделите создателя и проверяющего</span><span class="l8n">04</span></div>
+      <div class="li8" style="--ac:var(--sky);animation-delay:2s"><span class="l8i" style="background:var(--sky)"><svg class="ico"><use href="#i-db"/></svg></span><span class="l8t">Сохраняйте состояния</span><span class="l8n">05</span></div>
+      <div class="li8" style="--ac:var(--ink);animation-delay:2.5s"><span class="l8i" style="background:var(--ink)"><svg class="ico"><use href="#i-shield-check"/></svg></span><span class="l8t">Ограничьте автономность guardrails</span><span class="l8n">06</span></div>
+    </div>
+    <div class="insight"><span class="bulb"><svg class="ico"><use href="#i-bulb"/></svg></span>
+      <p><b>ИИ-агент может быть автономным ровно настолько,</b> насколько система умеет проверять его работу.</p></div>
+  </section>
+
+</div><!-- /#deck -->
+
+<!-- on-screen nav -->
+<div class="hint">← → / свайп</div>
+<div id="count">01 / 08</div>
+<nav id="nav">
+  <button id="prev" aria-label="Назад">‹</button>
+  <div id="dots"></div>
+  <button id="next" aria-label="Вперёд">›</button>
+</nav>
+
+<script>
+(function(){
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
+  var N = cards.length, i = 0;
+  var isExport = /[?&]export/.test(location.search);
+
+  /* ---- build spoke connectors for radial slides (agent ↔ tools / hub ↔ hex).
+         Uses layout offsets (transform-independent) so geometry is correct at any --scale. ---- */
+  function buildSpokes(stageSel, cls){
+    var radial = document.querySelector(stageSel);
+    if(!radial) return;
+    var nodes = radial.querySelectorAll(cls);
+    var cx = radial.clientWidth/2, cy = radial.clientHeight/2;
+    nodes.forEach(function(n,k){
+      var nx = n.offsetLeft + n.offsetWidth/2, ny = n.offsetTop + n.offsetHeight/2;
+      var dx = nx-cx, dy = ny-cy, len = Math.sqrt(dx*dx+dy*dy);
+      if(len < 80) return;
+      var ang = Math.atan2(dy,dx)*180/Math.PI;
+      var s = document.createElement('div');
+      s.className = (cls==='.hex'?'dashspoke':'spoke');
+      s.style.width = (len-78)+'px';
+      s.style.transform = 'rotate('+ang+'deg)';
+      s.style.animationDelay = (k*0.25)+'s';
+      radial.insertBefore(s, radial.firstChild);
+    });
+  }
+  /* ---- slide-3: a flow line + travelling dot under each source card, into the funnel.
+         Lines fan in toward the funnel centre so it reads as "источники → контекст". ---- */
+  function buildFlow(){
+    var host = document.getElementById('s3lines'); if(!host) return;
+    var srcs = document.querySelectorAll('#card-3 .src');
+    var H = host.clientHeight, cx = host.clientWidth/2;
+    srcs.forEach(function(s,k){
+      var x = s.offsetLeft + s.offsetWidth/2;            // card centre, same origin as host
+      var dx = (cx - x) * 0.42;                          // slight fan-in toward funnel
+      var len = Math.sqrt(dx*dx + H*H), ang = Math.atan2(H, dx)*180/Math.PI - 90;
+      var line = document.createElement('div');
+      line.style.cssText = 'position:absolute;top:0;left:'+x+'px;width:2px;height:'+len+'px;'+
+        'transform-origin:top center;transform:rotate('+ang+'deg);'+
+        'background:linear-gradient(180deg,rgba(10,10,10,.16),rgba(249,115,22,.45))';
+      host.appendChild(line);
+      var d = document.createElement('div');
+      d.className='flowdot';
+      d.style.left=(x-6)+'px'; d.style.top='0';
+      d.style.setProperty('--len', H+'px');
+      d.style.setProperty('--dx', dx+'px');
+      d.style.animationDelay=(k*0.3)+'s';
+      host.appendChild(d);
+    });
+  }
+  /* ---- position orbit env icons evenly around the dashed ring ---- */
+  function placeOrbit(){
+    document.querySelectorAll('#s4radial .orbit').forEach(function(orbit){
+      var envs = orbit.querySelectorAll('.env'); var R = orbit.clientWidth/2;
+      envs.forEach(function(e,k){
+        var a = (-90 + k*(360/envs.length))*Math.PI/180;
+        e.style.left = (R + R*Math.cos(a) - 29)+'px';
+        e.style.top  = (R + R*Math.sin(a) - 29)+'px';
+        e.style.transform='';
+      });
+    });
+  }
+
+  function layoutDiagrams(){
+    // clear anything from a previous pass so re-layout never duplicates
+    document.querySelectorAll('.spoke,.dashspoke').forEach(function(s){ s.remove(); });
+    var sl = document.getElementById('s3lines'); if(sl) sl.innerHTML='';
+    buildFlow();
+    placeOrbit();
+    buildSpokes('#s4radial','.tool');
+    buildSpokes('#s6radial','.hex');
+  }
+
+  /* ---- carousel ---- */
+  var dotsWrap = document.getElementById('dots');
+  for(var k=0;k<N;k++){ var d=document.createElement('i'); d.dataset.k=k; dotsWrap.appendChild(d); }
+  var dots = dotsWrap.querySelectorAll('i');
+  var countEl = document.getElementById('count');
+  function pad(n){ return (n<10?'0':'')+n; }
+  function show(n){
+    i = (n+N)%N;
+    cards.forEach(function(c,k){ c.classList.toggle('active', k===i); });
+    dots.forEach(function(dt,k){ dt.classList.toggle('on', k===i); });
+    countEl.textContent = pad(i+1)+' / '+pad(N);
+  }
+  document.getElementById('next').onclick=function(){ show(i+1); };
+  document.getElementById('prev').onclick=function(){ show(i-1); };
+  dots.forEach(function(dt){ dt.onclick=function(){ show(+dt.dataset.k); }; });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' ') show(i+1);
+    else if(e.key==='ArrowLeft') show(i-1);
+  });
+  var sx=0;
+  document.addEventListener('touchstart',function(e){ sx=e.touches[0].clientX; },{passive:true});
+  document.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>50) show(i+(dx<0?1:-1));
+  },{passive:true});
+
+  /* ---- responsive scaling (one card fits the viewport) ---- */
+  function fit(){
+    if(isExport){ document.documentElement.style.setProperty('--scale',1); return; }
+    var s = Math.min((innerWidth-40)/1080, (innerHeight-150)/1080, 1.45);
+    document.documentElement.style.setProperty('--scale', s.toFixed(4));
+  }
+  window.addEventListener('resize', fit);
+
+  /* ---- init (guarded: runs once) ---- */
+  var inited=false;
+  function init(){
+    if(inited) return; inited=true;
+    if(isExport){ document.body.classList.add('export'); }
+    fit();
+    show(0);
+    layoutDiagrams();
+    // re-run once fonts settle (sizes used for spokes can shift after font swap)
+    setTimeout(layoutDiagrams, 400);
+    window.addEventListener('load', layoutDiagrams);
+  }
+  if(document.fonts && document.fonts.ready){ document.fonts.ready.then(init); }
+  setTimeout(init,1200);
+})();
+</script>
+</body>
+</html>
