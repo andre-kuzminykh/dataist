@@ -21,9 +21,11 @@ tests/
   layout.mjs            ← автопроверка вёрстки: наложения/вылеты/обрезка (npm run layout)
   screenshot.mjs        ← рендер screenshots/slide-N.png (npm run shots)
   gif.mjs               ← 8 циклических GIF gifs/slide-N.gif (npm run gif)
+  mp4.mjs               ← 8 циклических MP4 1080×1080 mp4/slide-N.mp4 (npm run mp4)
   README.md
 screenshots/            ← готовые PNG карточек (1080×1080)
 gifs/                   ← 8 бесшовно-циклических GIF (600×600, loop=∞)
+mp4/                    ← 8 бесшовно-циклических MP4 (1080×1080, H.264) — качество лучше GIF
 package.json
 ```
 
@@ -44,6 +46,12 @@ package.json
 - Как получается бесшовный цикл: все анимации приводятся к одному периоду `GIF_T`, и
   через `document.getAnimations()` кадр за кадром снимается ровно один период (первый и
   «следующий» кадр совпадают). Шум‑grain на время съёмки выключается (сильно уменьшает вес).
+
+## Циклические MP4 (H.264) — лучше качество, чем GIF
+- Готовые лежат в `mp4/` (`slide-1..8.mp4`, **1080×1080**, полный цвет, бесшовный цикл).
+- Перегенерировать: `npm install && npm run mp4`.
+- Настройки: `MP4_SIZE=1080 MP4_FPS=25 MP4_T=4000 MP4_QP=20 npm run mp4` (QP меньше = лучше качество/больше вес).
+- Для бесшовного повтора включай у видео `loop` (в HTML `<video loop muted autoplay playsinline>`).
 
 > Логотип: основной источник — реальный логотип AIT с GitHub
 > (`raw.githubusercontent.com/andre-kuzminykh/andre-ait-page/...png`); если он недоступен
