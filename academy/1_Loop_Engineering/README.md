@@ -17,10 +17,13 @@ assets/
   ait-logo.png          ← локальная копия логотипа AIT (fallback, если GitHub недоступен)
   fonts/*.ttf           ← JetBrains Mono (400/500/700/800), self-hosted
 tests/
-  verify.mjs            ← автотесты контракта (npm test)
+  verify.mjs            ← автотесты контента (npm test)
+  layout.mjs            ← автопроверка вёрстки: наложения/вылеты/обрезка (npm run layout)
   screenshot.mjs        ← рендер screenshots/slide-N.png (npm run shots)
+  gif.mjs               ← 8 циклических GIF gifs/slide-N.gif (npm run gif)
   README.md
-screenshots/            ← готовые PNG карточек (1080×1080 @2x) + contact-sheet
+screenshots/            ← готовые PNG карточек (1080×1080)
+gifs/                   ← 8 бесшовно-циклических GIF (600×600, loop=∞)
 package.json
 ```
 
@@ -33,6 +36,14 @@ package.json
 - В удвоенном разрешении (2160×2160): `SHOT_SCALE=2 npm run shots`.
 - Контактный лист всей колоды одним файлом: `SHOT_SHEET=1 npm run shots` → `screenshots/contact-sheet.png`.
 - Или вручную: открыть `index.html?export` и заскринить каждую карточку.
+
+## Циклические GIF
+- Готовые лежат в `gifs/` (`slide-1..8.gif`, 600×600, бесшовный цикл, loop=∞).
+- Перегенерировать: `npm install && npm run gif`.
+- Настройки через env: `GIF_SIZE=600 GIF_FPS=15 GIF_T=4000 GIF_COLORS=128 npm run gif`.
+- Как получается бесшовный цикл: все анимации приводятся к одному периоду `GIF_T`, и
+  через `document.getAnimations()` кадр за кадром снимается ровно один период (первый и
+  «следующий» кадр совпадают). Шум‑grain на время съёмки выключается (сильно уменьшает вес).
 
 > Логотип: основной источник — реальный логотип AIT с GitHub
 > (`raw.githubusercontent.com/andre-kuzminykh/andre-ait-page/...png`); если он недоступен

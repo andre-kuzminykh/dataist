@@ -29,7 +29,9 @@ const page = await browser.newPage({
 await page.goto(url, { waitUntil: 'load' });
 // дать шрифтам/раскладке/диаграммам устаканиться + поймать «живой» кадр анимации
 await page.evaluate(() => document.fonts && document.fonts.ready);
-await page.waitForTimeout(2200);
+// для статичных PNG показываем все цифры слайда 8 (их «появление» живёт в GIF)
+await page.addStyleTag({ content: '.li8 .l8n{animation:none !important;opacity:1 !important;transform:none !important}' });
+await page.waitForTimeout(2400);
 
 for (let n = 1; n <= N; n++) {
   const el = page.locator('#card-' + n);
