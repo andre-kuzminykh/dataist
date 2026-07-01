@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как ИИ научился читать мысли без имплантов</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как ИИ научился читать мысли без имплантов" />
+    <meta property="og:description" content="Оказывается, ИИ уже может довольно точно восстанавливать фразы по сигналам мозга — и для этого не нужно ничего вживлять в голову.
+
+Авторы показали способ, который пытается понять, что человек собирается написать, по активности мозга, пока он набирает запомненную фразу на клавиатуре. Для этого они использовали безопасные методы считывания сигналов снаружи головы и обучили модель переводить эти сигналы в текст. Это важно, потому что такой подход может помочь людям, которые не могут говорить или двигаться, общаться без тяжёлой операции.
+
+В этом обзоре разбираем, как именно ИИ превращает сигналы мозга в предложения, почему одни способы считывания работают лучше других и насколько близко мы подошли к безопасной связи между мозгом и компьютером." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/kak-ii-nauchilsia-chitat-mysli-bez-implantov/kak-ii-nauchilsia-chitat-mysli-bez-implantov_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-07-01/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-01/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-07-01</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Как ИИ научился читать мысли без имплантов
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-01/cover.png"
+                         alt="Обложка: Как ИИ научился читать мысли без имплантов"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда мозг уже пишет текст, а руки нам больше не нужны</h2>
+<p>Идея “читать мысли” обычно звучит как что-то из фантастики. Но у этой фантастики есть очень практическая цель: помочь людям, которые не могут говорить или двигаться, снова общаться с миром. Сегодня лучшие интерфейсы мозг—компьютер умеют довольно неплохо превращать нейронную активность в текст или речь. Проблема в том, что почти все по-настоящему сильные системы <strong>инвазивные</strong>. То есть требуют операции на мозге.</p>
+<p>Новая работа Meta и академических партнеров предлагает другой путь. Исследователи показали, что текст можно декодировать из активности мозга <strong>без операции</strong> — по сигналам ЭЭГ и МЭГ, пока человек печатает запомненное предложение на клавиатуре. Их модель называется Brain2Qwerty. И это один из самых сильных результатов для неинвазивного декодирования именно <strong>порождения текста</strong>, а не просто распознавания простых команд или реакций на стимулы.</p>
+<p>Важно сразу не завышать ожидания. Это не устройство, которое уже сегодня “читает мысли” у пациента в реальном времени. Но это очень заметный шаг. Разрыв между инвазивными и неинвазивными системами все еще большой, однако он стал меньше.</p>
+</section>
+<section>
+<h2>Что именно сделали исследователи</h2>
+<p>Эксперимент был устроен довольно изящно. Участникам — всего их было 35 — показывали короткие предложения по словам на экране. Потом предложение исчезало. После небольшой паузы человек должен был напечатать его по памяти на клавиатуре, почти без зрительной обратной связи. В этот момент исследователи записывали активность мозга с помощью ЭЭГ или МЭГ.</p>
+<p>Почему такой сценарий интересен? Потому что он ближе к реальному порождению языка, чем типичные задачи интерфейсов мозг—компьютер. Тут человек не просто воображает движение рукой и не выбирает буквы глазами в медленном меню. Он вспоминает фразу, удерживает ее в памяти, планирует печать и нажимает клавиши. То есть в сигнале смешиваются и моторика, и языковые процессы, и контроль ошибок.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-01/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема эксперимента и архитектуры Brain2Qwerty: от сигналов ЭЭГ/МЭГ к тексту через сверточный блок, трансформер и языковую модель.</p>
+</div></figure>
+<p>Сама система состоит из трех частей.</p>
+<p>Первая — сверточный модуль. Он берет короткие окна сигнала мозга длиной 500 миллисекунд вокруг каждого нажатия клавиши и пытается извлечь полезные признаки.</p>
+<p>Вторая — трансформер. Он смотрит уже не на отдельную клавишу в вакууме, а на целое предложение. Это важно: в реальном языке соседние символы и слова помогают друг другу. Если модель сомневается между несколькими буквами, контекст часто подсказывает правильный вариант.</p>
+<p>Третья часть — отдельная языковая модель символьного уровня. Она исправляет результат, используя статистику языка. Грубо говоря, если нейросеть выдала что-то шумное, а рядом есть более правдоподобная последовательность символов, языковая модель может подтолкнуть ответ в правильную сторону.</p>
+<p>Качество измеряли через <strong>частоту символьных ошибок</strong>: сколько вставок, удалений и замен нужно, чтобы превратить предсказанный текст в правильный.</p>
+</section>
+<section>
+<h2>Почему это важно</h2>
+<p>Главный смысл работы не в красивом трюке, а в клинической перспективе. Сегодня лучшие нейропротезы общения обычно строятся на имплантах. Они дают отличный сигнал, но требуют нейрохирургии, а значит несут риски: инфекция, кровоизлияние, деградация импланта со временем.</p>
+<p>Неинвазивные подходы безопаснее, но до сих пор слишком сильно уступали по качеству. Особенно если речь не о выборе одного из нескольких вариантов, а о свободном тексте. Поэтому вопрос звучал так: можно ли вообще приблизить неинвазивные системы к чему-то полезному, если взять хорошие датчики и современные модели?</p>
+<p>Эта статья отвечает: <strong>да, можно</strong>. Пока не до уровня имплантов, но уже далеко не на уровне старых ЭЭГ-спеллеров.</p>
+<p>Есть и второй важный момент. Работа показывает, что декодировать можно не только восприятие речи или текста, но и <strong>активное порождение</strong>. Это намного интереснее для будущих средств общения.</p>
+</section>
+<section>
+<h2>Главные результаты: МЭГ сильно лучше ЭЭГ</h2>
+<p>Самая яркая цифра статьи — разница между МЭГ и ЭЭГ.</p>
+<p>В среднем Brain2Qwerty получил:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">для МЭГ — <strong>32% символьных ошибок</strong>;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">для ЭЭГ — <strong>67% символьных ошибок</strong>.</span></div>
+<p>Разница огромная. По сути, МЭГ оказался примерно вдвое полезнее для этой задачи. У лучших участников результат на МЭГ доходил до <strong>19%</strong> ошибок. Это уже уровень, на котором часть предложений декодируется очень хорошо, иногда вообще без ошибок.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-01/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Сравнение качества декодирования: МЭГ заметно обгоняет ЭЭГ, а полная версия Brain2Qwerty — базовые модели и упрощенные варианты.</p>
+</div></figure>
+<p>Прежде чем запускать большую модель, авторы проверили более простой вопрос: видно ли в сигнале мозга хоть что-то, связанное с печатью? Да, видно. Даже линейные классификаторы могли различать, нажата клавиша левой или правой рукой, а также угадывать символ заметно лучше случайного уровня. И здесь МЭГ снова выигрывал.</p>
+<p>Потом исследователи сравнили Brain2Qwerty с базовыми моделями — линейной моделью и EEGNet, популярной архитектурой для интерфейсов мозг—компьютер. Новая система обошла обе. Причем не слегка, а уверенно. Особенно на МЭГ.</p>
+<p>Еще интереснее — разбор по частям. Если оставить только сверточный модуль, уже получается лучше, чем у базовых систем. Если добавить трансформер, качество растет еще. Если сверху подключить языковую модель, становится лучше еще раз. Это хороший признак: архитектура не случайная, каждая ее часть реально приносит пользу.</p>
+</section>
+<section>
+<h2>Что модель на самом деле декодирует</h2>
+<p>Самый тонкий вопрос в таких работах: что именно читает модель из мозга? Собственно язык? Движение пальцев? Память? Смесь всего сразу?</p>
+<p>Авторы аккуратно показывают, что очень многое завязано на <strong>моторный компонент</strong>. Если модель ошибается, она часто путает буквы, которые физически расположены рядом на клавиатуре. Чем ближе клавиши, тем чаще путаница между ними.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-01/fig_4.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Ошибки модели связаны с раскладкой клавиатуры: близкие клавиши путаются чаще, а опечатки человека ухудшают декодирование.</p>
+</div></figure>
+<p>Это важный результат. Он говорит, что система в значительной степени опирается на мозговые сигналы, связанные с движениями при печати. То есть пока это скорее “мозг в процессе набора текста”, чем прямое чтение абстрактной языковой мысли.</p>
+<p>Но картина не сводится только к моторике. Исследователи посмотрели на опечатки. Когда человек ошибался при наборе, интервалы между нажатиями заметно увеличивались — типичный признак колебания или внутреннего контроля ошибок. И в такие моменты качество декодирования падало. Это логично: если моторная программа выполнена нечетко, по мозгу ее тоже труднее восстановить.</p>
+<p>В то же время языковая модель иногда умела <strong>исправлять</strong> даже реальные опечатки участника. То есть система не просто копирует нажатые клавиши, а использует знание структуры языка, чтобы восстановить более правдоподобный текст.</p>
+</section>
+<section>
+<h2>Где модель сильна, а где пока спотыкается</h2>
+<p>Авторы подробно разобрали, от чего зависит качество.</p>
+<p>Частые слова декодируются лучше редких. Частые символы — лучше редких. Например, редкие для испанского буквы вроде “k” или “w” распознаются заметно хуже. Это неудивительно: модели банально не хватает примеров.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-01/fig_3.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Качество зависит от типа и частоты слов и символов, а также заметно улучшается с ростом объема обучающих данных.</p>
+</div></figure>
+<p>Еще один ожидаемый, но важный вывод: чем больше данных для обучения, тем ниже ошибка. Для таких систем это почти всегда главный ресурс. Исследователи записывали примерно по часу данных на человека, и уже этого хватило для заметного результата. Но статья ясно показывает: если данных станет больше, качество должно расти дальше.</p>
+<p>Есть и приятный момент: система иногда справлялась со словами, которых не было в обучении. Да, хуже, чем со знакомыми. Но сам факт важен. Значит, модель не просто запоминает набор готовых фраз, а действительно учится работать на уровне символов и последовательностей.</p>
+<p>На уровне конкретных предложений разброс между участниками большой. У лучших — почти чистые фразы. У худших — текст может сильно расползаться. Это тоже типично для нейродекодирования: качество сигнала и индивидуальные различия пока играют огромную роль.</p>
+</section>
+<section>
+<h2>Ограничения, о которых нельзя забывать</h2>
+<p>Работа сильная, но до готового продукта еще далеко.</p>
+<p>Во-первых, система <strong>не работает в реальном времени</strong>. Трансформер и языковая модель обрабатывают предложение целиком, уже после завершения набора. Кроме того, входные окна привязаны к моментам нажатия клавиш. В настоящем интерфейсе для пациента нужно уметь декодировать непрерывный поток и сразу.</p>
+<p>Во-вторых, все эксперименты сделаны на <strong>здоровых участниках</strong>, которые реально печатали на клавиатуре. Это важное ограничение. Для полностью парализованного человека такой сценарий не подходит. Значит, в будущем придется либо переходить к воображаемой печати, либо строить модели, которые хорошо переносятся между людьми и требуют минимум персональной калибровки.</p>
+<p>В-третьих, лучший сигнал здесь дает МЭГ. А МЭГ сегодня — это не носимое устройство, а большая и дорогая лабораторная система. Для клиники и тем более дома это неудобно. В статье, правда, есть разумный мостик в будущее: новые датчики МЭГ на оптически накачиваемых магнитометрах могут со временем сделать такие системы компактнее и практичнее.</p>
+<p>И наконец, даже лучший результат здесь все еще хуже, чем у инвазивных систем. Для сравнения: у имплантов уже есть работы с очень высокой скоростью и гораздо меньшей ошибкой. Так что это не замена, а скорее новый класс компромисса между безопасностью и качеством.</p>
+</section>
+<section>
+<h2>Что в итоге</h2>
+<p>Brain2Qwerty — это не магическое “чтение мыслей”, а очень конкретный инженерный шаг вперед. Исследователи показали, что неинвазивное декодирование текста из мозговой активности может быть <strong>содержательным, масштабируемым и удивительно сильным</strong>, если сочетать хороший сигнал, аккуратно поставленный эксперимент и современную архитектуру модели.</p>
+<p>Главный вывод простой: <strong>МЭГ плюс глубокое обучение уже позволяют восстанавливать предложения из активности мозга заметно лучше, чем многие ожидали</strong>. Ошибок еще много. До реального общения пациентов в живом режиме еще далеко. Но направление стало гораздо серьезнее.</p>
+<p>Если смотреть шире, эта работа хороша именно своей приземленностью. Авторы не обещают телепатию. Они честно показывают: вот где система сильна, вот где она упирается в моторику, вот что мешает переносу в клинику. И именно поэтому результат выглядит убедительно.</p>
+<p>Для области интерфейсов мозг—компьютер это важный сигнал. Похоже, безопасные системы общения без операции больше не выглядят как вечная мечта. Теперь это уже инженерная задача. Сложная, дорогая, местами сырая — но вполне реальная.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2502.17480" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
