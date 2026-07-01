@@ -23,7 +23,7 @@ tests/
   gif.mjs               ← 8 циклических GIF gifs/slide-N.gif (npm run gif)
   mp4.mjs               ← 8 циклических MP4 1080×1080 mp4/slide-N.mp4 (npm run mp4)
   README.md
-screenshots/            ← готовые PNG карточек (1080×1080)
+screenshots/            ← чистые статичные PNG карточек (1080×1080, анимации заморожены)
 gifs/                   ← 8 бесшовно-циклических GIF (600×600, loop=∞)
 mp4/                    ← 8 бесшовно-циклических MP4 (1080×1080, H.264) — качество лучше GIF
 package.json

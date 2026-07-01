@@ -29,9 +29,16 @@ const page = await browser.newPage({
 await page.goto(url, { waitUntil: 'load' });
 // дать шрифтам/раскладке/диаграммам устаканиться + поймать «живой» кадр анимации
 await page.evaluate(() => document.fonts && document.fonts.ready);
-// для статичных PNG показываем все цифры слайда 8 (их «появление» живёт в GIF)
-await page.addStyleTag({ content: '.li8 .l8n{animation:none !important;opacity:1 !important;transform:none !important}' });
-await page.waitForTimeout(2400);
+// СТАТИЧНЫЕ PNG: замораживаем ВСЕ анимации на «покойном» кадре — никаких объектов на лету.
+// + прячем летящие точки, возвращаем статичные тени, показываем все цифры слайда 8.
+await page.addStyleTag({ content: `
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .flowdot { display: none !important; }                        /* точки-потока — только в анимации */
+  .center-node { box-shadow: 0 16px 44px rgba(136,84,243,.34) !important; }
+  .funnel { box-shadow: 0 12px 30px rgba(249,115,22,.14) !important; }
+  .li8 .l8n { opacity: 1 !important; transform: none !important; }  /* все цифры 01–06 видны */
+` });
+await page.waitForTimeout(1200);
 
 for (let n = 1; n <= N; n++) {
   const el = page.locator('#card-' + n);
