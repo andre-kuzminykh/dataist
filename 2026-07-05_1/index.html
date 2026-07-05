@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Почему ИИ-агентам вредно давать слишком много инструментов сразу</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Почему ИИ-агентам вредно давать слишком много инструментов сразу" />
+    <meta property="og:description" content="Иногда ИИ-агенту мешает не нехватка возможностей, а их избыток.
+
+Исследователи посмотрели, как на деле устроены связки между моделью и внешними сервисами, и выделили несколько повторяющихся способов сборки таких систем. Они также показали простую, но важную вещь: когда в одном окне у модели слишком много доступных действий, она начинает чаще ошибаться и хуже выбирает, что делать. Это важно, потому что сегодня многие стараются дать ИИ-агенту всё сразу, хотя для пользы ему часто нужен не максимум, а порядок и ясные границы.
+
+В обзоре разберём, какие подходы к устройству таких систем уже сложились, какие типичные ошибки делают команды и почему слишком большой набор инструментов может вредить качеству работы." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/pochemu-ii-agentam-vredno-davat-slishkom-mnogo-instrumentov-srazu/pochemu-ii-agentam-vredno-davat-slishkom-mnogo-instrumentov-srazu_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-07-05_1/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-05_1/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-07-05</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Почему ИИ-агентам вредно давать слишком много инструментов сразу
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-05_1/cover.png"
+                         alt="Обложка: Почему ИИ-агентам вредно давать слишком много инструментов сразу"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда у ИИ появляются инструменты, начинается настоящая инженерия</h2>
+<p>Пока все обсуждали, как LLM научились вызывать функции, рядом тихо выросла другая важная история: <strong>как вообще строить серверы, которые дают ИИ доступ к инструментам, данным и внешним сервисам</strong>. Это уже не вопрос красивых демонстраций. Это вопрос продакшена.</p>
+<p>Именно про это статья <strong>Архитектурные паттерны MCP-серверов для приложений, интегрированных с LLM</strong>. Авторы разбирают экосистему MCP — протокола, который стандартизирует связь между моделью и внешним миром. И делают то, чего рынку явно не хватало: не очередной список «лучших практик», а <strong>нормальную карту архитектурных паттернов</strong>.</p>
+<p>Почему это важно? Потому что сегодня MCP-серверов уже сотни. Кто-то подключает базы данных, кто-то — GitHub, кто-то — браузер, память, CRM, телефонию. Но как только LLM начинает пользоваться десятками инструментов, быстро выясняется неприятная вещь: <strong>модели не читают документацию как люди</strong>. Они выбирают инструменты по названию, описанию и схеме. И очень легко ошибаются, если архитектура сервера сделана неудачно.</p>
+<p>Эта работа интересна тем, что смотрит не со стороны клиента, а со стороны сервера. И показывает: у MCP уже формируются повторяющиеся архитектурные формы. А значит, из хаоса начинает складываться настоящая инженерная дисциплина.</p>
+</section>
+<section>
+<h2>Что вообще изучали авторы</h2>
+<p>Авторы взяли корпус из 15 MCP-серверов. Пять — из продакшена голосовой платформы ANSYR. Еще десять — публичные серверы из официального реестра MCP. Среди них были файловые системы, базы данных, GitHub, Slack, браузерная автоматизация, память и другие типичные интеграции.</p>
+<p>Дальше они вручную разбирали, как устроен каждый сервер:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">какие инструменты он публикует;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">какие ресурсы отдает;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">как обрабатывает состояние;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">делегирует ли вызовы другим серверам;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">где находится предметная логика и валидация.</span></div>
+<p>Из этого они вывели <strong>пять повторяющихся паттернов</strong>. Плюс отдельно собрали <strong>четыре антипаттерна</strong> — типичные ошибки, которые почти гарантированно портят работу ИИ-агента.</p>
+<p>Важно и то, что авторы попытались проверить, не является ли их таксономия чисто субъективной. Для этого они дали 54 другим серверам нейтральные описания и попросили две модели независимо отнести их к паттернам. Согласованность получилась вполне приличная: коэффициент Коэна — 0,76. Для такого рода классификации это хороший результат. Значит, схема не высосана из пальца.</p>
+</section>
+<section>
+<h2>Пять паттернов, которые уже стали базовыми</h2>
+<p>Главный вклад статьи — очень приземленный и полезный: <strong>она называет вещи своими именами</strong>. Вот какие паттерны выделили авторы.</p>
+</section>
+<section>
+<h2>1. Шлюз к ресурсам</h2>
+<p>Это сервер, который в первую очередь <strong>дает модели читать данные</strong>: документы, записи из базы, содержимое файлов, результаты запросов. Идея простая: LLM не должна лезть в сырые внутренние системы напрямую. Между моделью и данными стоит слой, который аккуратно все выдает.</p>
+<p>Такой сервер особенно хорош там, где нужно заземление на фактах: CRM, база знаний, документооборот, внутренние справочники.</p>
+<p>Ключевая мысль статьи здесь такая: <strong>данные для LLM — это не просто данные, это еще и потенциальные инструкции</strong>. Если в документе лежит фраза вроде «игнорируй предыдущие указания», модель может воспринять ее как команду, а не как текст. Поэтому шлюз к ресурсам должен не только читать данные, но и <strong>очищать их от инъекций</strong> до того, как они попадут в контекст модели.</p>
+<p>Это важное напоминание: в мире MCP безопасность — не отдельная функция после релиза. Она закладывается в архитектуру.</p>
+</section>
+<section>
+<h2>2. Оркестратор инструментов</h2>
+<p>Этот паттерн нужен, когда задача для ИИ состоит не в одном действии, а в <strong>цепочке шагов через несколько систем</strong>. Например: создать тикет, уведомить исполнителя, отправить письмо и записать событие в журнал.</p>
+<p>Вместо того чтобы заставлять модель вызывать четыре разных инструмента и помнить промежуточные результаты, сервер прячет эту сложность внутрь одного составного инструмента.</p>
+<p>И это очень практичный ход. Авторы прямо говорят: <strong>чем меньше модель должна держать в голове про внутренние API, тем надежнее она работает</strong>. Для LLM один хорошо описанный составной инструмент часто лучше, чем россыпь низкоуровневых вызовов.</p>
+<p>Но тут есть и цена. Такой сервер хуже переиспользуется, если бизнес-процесс часто меняется. Кроме того, вся логика частичных ошибок ложится на сервер. Если второй шаг выполнился, а третий — нет, разруливать это уже должен не агент, а разработчик сервера.</p>
+</section>
+<section>
+<h2>3. Сервер с состоянием сессии</h2>
+<p>Многие демонстрации MCP выглядят как системы без состояния: вызвал инструмент, получил ответ, пошел дальше. Но в реальных задачах часто нужно состояние. Например, агент открыл файл, потом несколько раз редактирует его, потом сохраняет. Или ведет диалог по одному звонку. Или держит транзакцию в базе.</p>
+<p>Для этого нужен сервер, который хранит <strong>контекст сессии между вызовами</strong>.</p>
+<p>Статья честно показывает, что это полезно, но опасно. Польза понятна: меньше лишней передачи данных, естественные многошаговые сценарии, возможность транзакций. Опасности тоже прозаичны: утечки памяти, сложность горизонтального масштабирования, необходимость аккуратно очищать «мертвые» сессии.</p>
+<p>И есть еще тонкий момент. Авторы заметили, что <strong>состояние часто не видно снаружи</strong>. Если смотреть только на список функций, такой сервер легко спутать с оркестратором инструментов. Это одна из причин, почему классификация серверов не всегда однозначна.</p>
+</section>
+<section>
+<h2>4. Прокси-агрегатор</h2>
+<p>Это, пожалуй, самый современный и самый болезненный паттерн. Представьте, что у компании не один MCP-сервер, а десятки: для кода, задач, документов, мониторинга, CRM, биллинга. Хочется дать агенту одну точку входа. Так появляется прокси-агрегатор — сервер, который <strong>подключается к нескольким другим MCP-серверам и объединяет их возможности</strong>.</p>
+<p>Звучит логично. Но именно здесь статья делает одно из самых важных наблюдений: <strong>простое объединение всех инструментов в одну кучу быстро ломает качество выбора</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-05_1/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Чем больше инструментов видно модели одновременно, тем сильнее проседает точность выбора и растет задержка.</p>
+</div></figure>
+<p>Если инструментов слишком много, модель начинает путаться. Поэтому авторы различают два варианта агрегатора. Первый — «статическое слияние», когда наружу выставляется весь набор инструментов. Второй — «суженный» вариант, когда для каждой задачи наружу показывается только релевантное подмножество.</p>
+<p>И вот второй вариант авторы явно рекомендуют. Это важный инженерный вывод: <strong>агрегация нужна не для того, чтобы показать модели всё, а для того, чтобы умно скрыть лишнее</strong>.</p>
+</section>
+<section>
+<h2>5. Предметно-ориентированный адаптер</h2>
+<p>Последний паттерн — это прослойка над неудобным или слишком низкоуровневым API. Допустим, у вас есть сложная система с машинными идентификаторами, хитрой аутентификацией, странными форматами ошибок и полями, понятными только внутренней команде. Модель с таким API будет работать плохо.</p>
+<p>Тогда сервер берет на себя перевод с «языка системы» на «язык модели»: принимает человеческие формулировки, нормализует вход, расшифровывает идентификаторы, переписывает ошибки простыми словами.</p>
+<p>Это не просто косметика. Для LLM <strong>понятность интерфейса напрямую влияет на точность выбора инструмента</strong>. Там, где человек-разработчик быстро разберется по документации, модель может споткнуться о неудачное описание поля.</p>
+<p>Такой адаптер особенно полезен для CRM, финансовых систем, медицины, телефонии — словом, везде, где предметная логика сложна и насыщена исключениями.</p>
+</section>
+<section>
+<h2>Где разработчики чаще всего стреляют себе в ногу</h2>
+<p>Помимо паттернов, статья очень удачно собирает антипаттерны. Это, возможно, самый прикладной кусок работы.</p>
+<p>Первый — <strong>«бог-инструмент»</strong>. Один универсальный вызов в духе «сделай что угодно», где модель сама должна догадаться, какой режим нужен. Для LLM это почти всегда плохая идея. Чем абстрактнее и шире инструмент, тем ниже точность.</p>
+<p>Второй — <strong>неочищенное содержимое ресурсов</strong>. То есть когда внешние тексты подмешиваются в контекст модели без фильтрации. Это прямая дорога к инъекциям.</p>
+<p>Третий — <strong>долгие синхронные операции</strong>. Если инструмент кодирует видео или обрабатывает большой файл дольше нескольких секунд, клиент может просто дождаться тайм-аута. Нормальное решение — запускать задачу отдельно и возвращать идентификатор, по которому потом можно опрашивать статус.</p>
+<p>Четвертый — <strong>невнятные описания инструментов</strong>. Для обычного API это неприятно. Для MCP это критично. Модель выбирает инструмент по описанию, а не по интуиции разработчика. Если описание слабое, инструмент как будто не существует.</p>
+</section>
+<section>
+<h2>Что показали измерения: не только архитектура, но и цифры</h2>
+<p>Самое ценное в статье — она не заканчивается на качественных рассуждениях, а пытается дать измеримую опору.</p>
+<p>Во-первых, авторы посмотрели на задержки транспорта MCP. Вывод здесь простой и полезный: <strong>сам протокол почти не тормозит</strong>. Если сервер и клиент работают на одной машине, разница между вариантами транспорта измеряется долями миллисекунды.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-05_1/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Задержка MCP в локальном режиме почти незаметна, а в удаленном сценарии все решает сеть, а не сам протокол.</p>
+</div></figure>
+<p>Как только появляется удаленный вызов, все начинает определять сеть. То есть спорить о мелких различиях транспорта часто бессмысленно. Куда важнее другой вопрос: <strong>где физически расположен сервер и сколько сетевых переходов добавляет архитектура</strong>. Например, прокси-агрегатор может быть удобен, но каждый дополнительный переход добавляет заметную задержку.</p>
+<p>Во-вторых, авторы изучили, как число инструментов в контексте влияет на точность выбора. И здесь вывод очень прикладной. Для Claude Haiku 4.5 точность падает ниже 90% где-то между 10 и 15 инструментами. Для Sonnet 4 запас больше, но после 20–30 инструментов качество тоже начинает проседать.</p>
+<p>Это, по сути, одна из главных инженерных констант статьи: <strong>не показывайте модели слишком много инструментов одновременно</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-05_1/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Практический предел для контекста — около 10 инструментов: дальше качество выбора начинает заметно падать.</p>
+</div></figure>
+<p>Да, это наблюдение основано на продакшен-логах одной компании, а не на идеальном лабораторном эксперименте. Но именно поэтому оно и интересно. Это не абстрактный бенчмарк, а след реального поведения моделей в рабочей системе.</p>
+</section>
+<section>
+<h2>Почему эта статья важнее, чем кажется</h2>
+<p>На первый взгляд перед нами просто аккуратная инженерная систематизация. Но на деле статья делает шаг к тому, что скоро станет нормой: <strong>серверы для ИИ будут проектировать так же осознанно, как когда-то проектировали REST API, сервисные шины и редакторные протоколы</strong>.</p>
+<p>Авторы удачно проводят параллель с протоколом языковых серверов. Когда-то редакторы кода тоже жили в мире разрозненных плагинов. Потом появился единый протокол, и экосистема резко ускорилась. MCP пытается сделать то же самое для инструментов ИИ.</p>
+<p>Но есть важное отличие. В обычных API клиент — это разработчик или программа, которая точно знает контракт. В MCP клиент — это модель, которая <strong>читает описания на естественном языке и на их основе принимает решения</strong>. Это переворачивает привычную инженерию. Здесь описание инструмента — не документация на потом, а часть исполняемой системы.</p>
+<p>И именно поэтому такие вещи, как размер набора инструментов, качество описаний, фильтрация ресурсов и разбиение функций по смыслу, становятся не «деталями реализации», а ключевыми архитектурными решениями.</p>
+</section>
+<section>
+<h2>Выводы</h2>
+<p>У этой статьи нет громких заявлений про «новую эпоху». И это ее плюс. Она делает что-то полезнее: <strong>дает рабочий словарь для проектирования MCP-серверов</strong>.</p>
+<p>Главные выводы можно сжать так:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">если ИИ в основном читает данные, стройте <strong>шлюз к ресурсам</strong>;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">если он выполняет цепочки действий, нужен <strong>оркестратор инструментов</strong>;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">если сценарий многошаговый и зависит от прошлого, без <strong>состояния сессии</strong> не обойтись;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">если серверов много, используйте <strong>агрегатор</strong>, но показывайте модели только нужные инструменты;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">если внешняя система слишком сложна, спасает <strong>предметно-ориентированный адаптер</strong>.</span></div>
+<p>И, возможно, самый практичный совет из всей работы: <strong>держите число инструментов в одном контексте маленьким</strong>. Не потому, что так красивее. А потому, что модель иначе начинает ошибаться.</p>
+<p>Это как раз тот случай, когда архитектура для ИИ перестает быть разговором «про будущее» и становится обычной инженерией. С ограничениями, компромиссами, задержками, отказами и ценой плохих интерфейсов. А значит, с этого момента побеждать будут не только лучшие модели, но и <strong>лучше спроектированные серверы вокруг них</strong>.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2606.30317" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/rodriguescarson/mcp-patterns-icsme2026" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
