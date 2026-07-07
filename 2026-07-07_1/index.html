@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Оказалось память можно прокачать отдельно от интеллекта</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Оказалось память можно прокачать отдельно от интеллекта" />
+    <meta property="og:description" content="Похоже, у ИИ можно заметно улучшить память, даже если сам по себе он не стал умнее.
+
+Исследователи предлагают учить модель не только решать задачу, но и самой разбираться, что стоит сохранить, когда к этому вернуться и как разложить знания по понятным местам. Для этого команда отдельно развивает у ИИ навык работы с памятью: сначала помогает ему лучше устроить свои записи, а потом учит на удачных примерах того, как он уже сам принимал хорошие решения. В итоге ИИ начинает меньше терять полезные детали на длинной дистанции и лучше справляется со сложными задачами, где легко забыть что-то по пути.
+
+В этом обзоре разбираем, как память у ИИ превратили в отдельный навык и почему одна только работа с ней может сильно поднять результат." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/okazalos-pamiat-mozhno-prokachat-otdelno-ot-intellekta/okazalos-pamiat-mozhno-prokachat-otdelno-ot-intellekta_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-07-07_1/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-07_1/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-07-07</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Оказалось память можно прокачать отдельно от интеллекта
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-07_1/cover.jpg"
+                         alt="Обложка: Оказалось память можно прокачать отдельно от интеллекта"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Память как навык, а не как костыль</h2>
+<p>У LLM есть старая и неприятная проблема: они неплохо думают на короткой дистанции, но часто разваливаются на длинных задачах. Не потому, что совсем «глупые», а потому что <strong>плохо распоряжаются памятью</strong>. Что записать? Когда перечитать? Как не захламить заметки мусором? Где держать карту, а где список целей?</p>
+<p>Авторы работы <strong>AutoMem</strong> предлагают посмотреть на это не как на вопрос архитектуры, а как на вопрос навыка. Человеку ведь тоже мало просто выдать блокнот. Надо уметь вести записи так, чтобы они помогали, а не мешали. С моделями то же самое.</p>
+<p>Это и есть главная идея статьи: <strong>управление памятью — отдельный обучаемый навык</strong>. Его можно улучшать независимо от остального поведения модели. И, что особенно интересно, прирост от этого оказывается огромным: в длинных игровых задачах производительность выросла примерно в <strong>2–4 раза</strong>, причем без изменения весов основной модели, которая действует в мире.</p>
+<p>Звучит как техническая деталь. На деле — очень важный сдвиг. Если работа выдержит проверку временем, она может поменять то, как вообще будут строить ИИ-агентов для долгих и сложных сценариев.</p>
+</section>
+<section>
+<h2>Что именно сделали исследователи</h2>
+<p>Вместо очередной «памяти сбоку» авторы дали модели простой, но мощный инструмент: <strong>файловую систему как внешнюю память</strong>. Буквально набор файлов, с которыми агент может работать сам: читать, писать, искать, создавать, дописывать, обновлять.</p>
+<p>Это важно. Обычно память у ИИ-агента — заранее зафиксированный модуль. Здесь же модель <strong>сама решает</strong>, когда сделать запись, когда поискать старую информацию и как организовать файлы. Операции с памятью становятся полноправными действиями наравне с игровыми действиями.</p>
+<p>Например, агент может не только «пойти вверх» или «взять предмет», но и:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">записать новую координату на карту;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">обновить инвентарь;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">поискать в заметках, где уже был;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">перечитать стратегию.</span></div>
+<p>Авторы разделили улучшение памяти на две части.</p>
+<p>Первая — <strong>структура памяти</strong>. Это формат файлов, подсказки в промптах, допустимые операции, правила обновления записей. Проще говоря, сам «каркас» памяти.</p>
+<p>Вторая — <strong>владение памятью</strong>. То есть насколько хорошо модель умеет пользоваться этим каркасом на практике.</p>
+<p>И тут появляется AutoMem: система из двух внешних циклов оптимизации. Один переписывает каркас памяти. Второй обучает модель лучше с этим каркасом работать.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-07_1/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема AutoMem: один цикл улучшает устройство памяти, второй обучает модель пользоваться этой памятью точнее.</p>
+</div></figure>
+<p>Логика красивая. Сначала сильная LLM смотрит на полные трассы прохождения и как ревизор разбирает, где память мешала агенту. После этого она предлагает правки: поменять формат карты, добавить файл статуса, убрать лишние записи, уточнить инструкции. Затем, когда каркас уже стал лучше, запускается второй этап: из удачных эпизодов отбираются хорошие решения по работе с памятью, и на них дообучают отдельного «специалиста по памяти».</p>
+<p>Ключевой момент: <strong>основная модель, которая делает действия в мире, остается нетронутой</strong>. Файн-тюнинг идет только по части, связанной с памятью. Это снижает риск сломать остальное поведение агента.</p>
+</section>
+<section>
+<h2>Почему здесь выбрали игры — и почему это правильно</h2>
+<p>Работу проверяли не на игрушечных вопросах, а на длинных игровых средах: Crafter, MiniHack и NetHack. Это хороший выбор.</p>
+<p>Во-первых, там действительно длинный горизонт. В NetHack один эпизод может тянуться <strong>десятки тысяч шагов</strong>. Никакое контекстное окно в лоб такое не вывезет.</p>
+<p>Во-вторых, эти миры случайны. Каждая партия новая. Значит, нельзя просто вытянуть из предобучения готовый ответ.</p>
+<p>В-третьих, такие игры естественно требуют того, что и человек делал бы на бумаге: вести карту, помнить опасные места, следить за инвентарем, держать цель в голове.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-07_1/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Три длинных игровых мира для проверки памяти: выживание, навигация и особенно сложный NetHack.</p>
+</div></figure>
+<p>Это делает результаты особенно убедительными. Здесь память — не декоративная надстройка, а реальный рабочий инструмент.</p>
+</section>
+<section>
+<h2>Главный результат: одна только память может дать скачок сильнее, чем рост размера модели</h2>
+<p>Самая сильная часть статьи — результаты. Исследователи взяли Qwen2.5-32B-Instruct и улучшали <strong>только память</strong>. Без изменения модели, отвечающей за игровые действия.</p>
+<p>И получили следующее:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">в Crafter прогресс вырос с 25.0% до 47.27% после оптимизации каркаса и до 51.36% после обучения памяти;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">в MiniHack — с 7.5% до 27.5%, затем до 30.0%;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">в NetHack — с 0.42% до 1.57%, затем до 1.85%.</span></div>
+<p>То есть прирост действительно кратный. Причем оптимизированная версия на 32B <strong>уверенно обходит</strong> Qwen2.5-72B-Instruct на тех же задачах.</p>
+<p>Вот это уже серьезный сигнал. Получается, что на длинных сценариях <strong>хорошо организованная память может быть важнее, чем просто взять модель побольше</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-07_1/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Память улучшается поэтапно: сначала за счет переработки каркаса, потом за счет обучения самой памяти как навыку.</p>
+</div></figure>
+<p>Более того, итоговая система приблизилась к уровню сильных закрытых моделей вроде Claude Opus 4.5 и Gemini 3.1 Pro Thinking. Не везде она первая, но сам факт показателен: <strong>часть разрыва между открытыми и закрытыми моделями можно сократить не масштабом, а хорошей памятью</strong>.</p>
+</section>
+<section>
+<h2>Что именно менялось в памяти</h2>
+<p>Авторы не ограничились абстрактным «мы улучшили промпт». В статье хорошо видно, какие конкретные изменения давали эффект.</p>
+<p>Самый наглядный пример — NetHack. В базовой версии агент вел карту как бесконечный текстовый файл, куда просто дописывались координаты. Если он возвращался в уже известное место, запись появлялась снова. В итоге файл разрастался, дубли копились, полезная информация тонула в шуме.</p>
+<p>Потом исследователи поменяли схему. Вместо бесконечного списка сделали формат, где каждой координате соответствует одна актуальная запись. Новая информация не дописывается рядом, а <strong>обновляет существующую</strong>. Плюс автоматически поддерживаются отдельные файлы статуса и инвентаря, чтобы модель не тратила силы на ручную сверку.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-07_1/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Как изменилась память в NetHack: вместо бесконечных дублей — обновляемая карта, отдельные файлы статуса и инвентаря.</p>
+</div></figure>
+<p>На первый взгляд это почти скучная инженерия. Но именно из таких деталей складывается поведение агента на длинной дистанции.</p>
+<p>После оптимизации:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">доля бесполезных действий в игре упала на <strong>32–65%</strong>;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">число лишних записей в память снизилось на <strong>68–83%</strong>;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">число пустых поисков по памяти тоже заметно уменьшилось;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">объем контекста на шаг сократился, потому что память стала компактнее.</span></div>
+<p>Это очень важный результат. Улучшение памяти не просто «красиво выглядит в журналах». Оно напрямую меняет действие агента в мире: меньше топтания на месте, меньше бессмысленных повторов, меньше повторного исследования уже известных зон.</p>
+<p>Иначе говоря, <strong>хорошая память улучшает не только память, но и поведение</strong>.</p>
+</section>
+<section>
+<h2>Зачем понадобился отдельный специалист по памяти</h2>
+<p>После того как каркас памяти стал лучше, авторы пошли дальше. Они решили, что даже идеальная структура мало помогает, если сама модель не умеет ею пользоваться дисциплинированно.</p>
+<p>Поэтому появился второй этап: обучение отдельного модуля, который отвечает за операции с памятью. Он работает в связке с базовой моделью. Специалист по памяти решает, что читать и что записывать, а базовая модель делает действия в игре.</p>
+<p>Это разделение выглядит разумно. Во-первых, сигнал обучения становится чище. Во-вторых, не страдает способность базовой модели выдавать корректные действия. В-третьих, можно отдельно улучшать именно то место, где сейчас узкое место.</p>
+<p>И тут исследователи заметили красивый поведенческий сдвиг: обученный специалист стал чаще <strong>сначала искать в памяти, а потом писать</strong>. То есть перестал слепо плодить заметки и начал сначала проверять, нет ли нужной информации уже в файлах.</p>
+<p>Это почти человеческая привычка. Хороший инженер ведь тоже не создает новый документ каждый раз, а сначала ищет, не существует ли он уже.</p>
+</section>
+<section>
+<h2>Почему эта работа важнее, чем кажется</h2>
+<p>На поверхности перед нами статья про игры и файлы. Но на самом деле она про более общий вопрос: <strong>что ограничивает ИИ-агентов в длинных задачах</strong>.</p>
+<p>Последние пару лет индустрия часто отвечала просто: больше контекста, больше параметров, больше рассуждений. AutoMem предлагает другой ответ: возможно, проблема не в том, что модель мало знает, а в том, что она <strong>не умеет грамотно организовать то, что уже узнала по ходу задачи</strong>.</p>
+<p>Это важный поворот по нескольким причинам.</p>
+<p>Первое. Он дешевле, чем бесконечно наращивать размер модели. Если память можно улучшить отдельно, это практичный путь для открытых моделей.</p>
+<p>Второе. Он лучше объясняет, почему агенты ломаются на длинных горизонтах. Часто ошибка возникает не прямо сейчас, а из-за неверной записи тысячу шагов назад. Значит, оценивать такие системы надо не только финальным счетом, но и по полной траектории.</p>
+<p>Третье. Подход хорошо переносится на реальные задачи. Не только игры, но и исследовательские агенты, помощники для разработки, сложные рабочие процессы — везде, где важно помнить историю, карту решений, промежуточные находки и ограничения.</p>
+<p>Конечно, до реального универсального решения еще далеко. В статье память <strong>эпизодическая</strong>: она обнуляется между запусками. Кроме того, для каждой среды авторы отдельно подбирали каркас и отдельно обучали специалиста. Единой памяти «на все случаи» тут пока нет.</p>
+<p>Но даже с этими ограничениями работа дает ясный посыл: <strong>память — это не аксессуар, а одна из главных способностей агента</strong>.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>AutoMem — это одна из тех работ, которые не обещают магии, но аккуратно двигают область в правильную сторону. Авторы не изобрели новую гигантскую модель. Они сделали более тонкий ход: выделили память в отдельный, обучаемый навык и показали, что на длинных задачах это дает очень большой выигрыш.</p>
+<p>Главный вывод звучит просто: <strong>если ИИ-агенту предстоит долгая работа, ему мало иметь большую модель — ему нужна хорошая память и умение ею пользоваться</strong>.</p>
+<p>И, возможно, это один из самых недооцененных рычагов в сегодняшних агентных системах. Пока все спорят о размере контекста и силе рассуждения, AutoMem напоминает о почти банальной вещи: побеждает не тот, кто записывает все подряд, а тот, кто умеет <strong>помнить полезное</strong>.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.01224" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/autoLearnMem/AutoMem" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
