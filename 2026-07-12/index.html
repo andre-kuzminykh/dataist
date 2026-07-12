@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как сократить расходы на ИИ без потери качества</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как сократить расходы на ИИ без потери качества" />
+    <meta property="og:description" content="Мы привыкли думать, что сильный ИИ всегда стоит дороже, но часто деньги уходят не на ум модели, а на плохо устроенный процесс вокруг неё.
+
+Авторы показывают простую мысль: экономить можно не за счёт более слабой модели, а за счёт того, как именно ей дают задачу, какие данные подсовывают, когда подключают инструменты и сколько лишних шагов заставляют делать. Они сравнили один и тот же набор задач на одних и тех же моделях, меняя только этот управляющий слой вокруг ИИ, и получили меньше расходов и более быструю работу без заметной потери качества.
+
+В этом обзоре разбираем, почему главный запас экономии в ИИ часто спрятан не в самой модели, а в том, как устроена вся работа с ней." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/kak-sokratit-raskhody-na-ii-bez-poteri-kachestva/kak-sokratit-raskhody-na-ii-bez-poteri-kachestva_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-07-12/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-12/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-07-12</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Как сократить расходы на ИИ без потери качества
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-12/cover.jpg"
+                         alt="Обложка: Как сократить расходы на ИИ без потери качества"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда дело не в модели, а в «обвязке»</h2>
+<p>В индустрии ИИ есть почти религиозная привычка: если агент не справляется, ему добавляют токенов. Делают подсказку длиннее. Добавляют больше шагов. Больше инструментов. Больше повторного воспроизведения истории. Больше «подумать». На бумаге это часто выглядит как прогресс. В счёте за инфраструктуру — как катастрофа.</p>
+<p>Новая работа Writer с говорящим названием <strong>The Harness Effect</strong> бьёт ровно по этой болевой точке. Её главная мысль проста: <strong>стоимость и скорость ИИ-агента определяет не только модель, но и слой оркестрации вокруг неё</strong>. То, как система собирает контекст, когда вызывает инструменты, как хранит историю, что повторяет на каждом ходе, а что нет, может менять экономику сильнее, чем выбор между самими моделями.</p>
+<p>И это не теория. Авторы взяли шесть моделей, 22 корпоративные задачи и провели почти лабораторный эксперимент: оставили модели и задачи прежними, а поменяли только «обвязку» агента. Результат получился неприятно наглядным для всей индустрии: <strong>минус 38% токенов, минус 41% стоимости и минус 44% времени — без заметной потери качества</strong>.</p>
+<p>Для рынка ИИ это очень важный сигнал. Мы привыкли обсуждать, какая LLM умнее. Эта статья напоминает: иногда правильный вопрос — <strong>насколько умно вы вообще запускаете эту LLM</strong>.</p>
+</section>
+<section>
+<h2>Что авторы называют «разгоном токенов»</h2>
+<p>Авторы вводят удачный термин: <strong>разгон токенов</strong>. Это ситуация, когда полезность системы растёт медленнее, чем число токенов на задачу. Грубо говоря, вы покупаете чуть-чуть качества ценой сильно большего расхода.</p>
+<p>У ИИ-агентов это происходит естественно. Одна пользовательская просьба — не один вызов модели, а целая цепочка. Системная инструкция. Схемы инструментов. Документы из поиска. Промежуточные ответы. Результаты работы инструментов. И если система устроена наивно, всё это целиком снова отправляется модели на каждом следующем шаге.</p>
+<p>Отсюда и главная проблема: стоимость растёт не линейно, а иногда почти квадратично. Чем больше шагов делает агент, тем больше он тащит за собой «хвост» прошлых сообщений.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-12/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Почему у ИИ-агентов так быстро раздувается счёт за токены: наивное повторное воспроизведение истории растёт почти квадратично, а аккуратная оркестрация — ближе к линейному сценарию.</p>
+</div></figure>
+<p>Это, пожалуй, самый полезный концептуальный вклад статьи. Авторы показывают: токены «съедает» не только сама модель и не только её склонность к длинным ответам. Огромную часть счёта создаёт именно оркестрация — код вокруг модели. Он решает, что попадёт в контекст, что будет закэшировано, что нужно сжать, а что можно вынести за пределы текущего окна.</p>
+<p>И это важный разворот мысли. Последние два года рынок в основном искал оптимизацию внутри одного вызова модели: ужать подсказку, ускорить инференс, ограничить длину рассуждения. Здесь же фокус на другом уровне — <strong>между вызовами</strong>. На том, как из многих вызовов собирается работающий агент.</p>
+</section>
+<section>
+<h2>Как был устроен эксперимент</h2>
+<p>Методология у статьи сильная. Авторы не сравнивали «нашу хорошую систему» с «чужой плохой системой» в общем виде. Они сделали контролируемую замену оркестрации.</p>
+<p>Что именно сравнивали:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">один и тот же набор из 22 задач;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">одни и те же шесть моделей: Claude Sonnet 4.6, Gemini 3.1, Gemini Flash 3.5, Qwen 3.6, GLM 5.1 и Palmyra X6;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">одни и те же правила оценки;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">одна и та же таблица цен;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">менялся только слой оркестрации.</span></div>
+<p>С одной стороны был обычный производственный цикл агента: большая системная инструкция, повтор всей истории, не очень аккуратная работа с переполнением контекста, ожидание через опрос и другие привычные для индустрии компромиссы. С другой — Writer Agent Harness, то есть более строгая и экономная система исполнения.</p>
+<p>Задачи тоже не игрушечные. Это корпоративный профиль: поиск и привязка к документам, создание контента, выполнение рабочих сценариев, работа с внешними инструментами, презентации, голос, изображения. То есть то, ради чего компании вообще и покупают ИИ-агентов.</p>
+<p>Важно и то, как измеряли качество. Авторы честно пишут: при 22 задачах делать громкие выводы о небольшом росте качества нельзя. Поэтому итог <strong>0,78 против 0,81</strong> они называют не улучшением, а <strong>паритетом</strong>. Это хороший признак. В статье нет попытки выдать статистически шаткий плюс за прорыв.</p>
+</section>
+<section>
+<h2>Что именно изменили в оркестрации</h2>
+<p>Самая интересная часть работы — не цифры, а инженерные механизмы, которые эти цифры дали.</p>
+<p>Первый ключевой приём — <strong>двухзонная подсказка</strong>. Всё, что может быть стабильным между ходами, складывается в устойчивый префикс: каталог инструментов, системная инструкция, долговечная часть переписки. А всё, что меняется на каждом шаге, уходит в изменчивый хвост.</p>
+<p>Зачем это нужно? Ради кэширования. Если начало подсказки байт в байт одинаково, поставщики моделей часто отдают его из кэша по сильно сниженной цене. Авторы показывают, что в одном из вызовов <strong>99,9% токенов подсказки</strong> пришли из кэша.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-12/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Двухзонная подсказка: стабильный префикс для кэширования и изменчивый хвост для всего, что меняется от шага к шагу.</p>
+</div></figure>
+<p>На практике это означает не магию, а инженерную дисциплину. Нельзя просто надеяться, что кэш «как-нибудь сработает». Нужно проектировать структуру подсказки так, чтобы почти всё дорогое и длинное оставалось неизменным.</p>
+<p>Второй механизм — <strong>структурированное сжатие истории</strong>. Вместо тупого обрезания середины контекста система собирает контрольные сводки: что уже решено, какие ограничения есть, что пробовали и почему отказались, какие файлы затронуты, что делать дальше. Причём не каждый раз с нуля, а нарастающим итогом.</p>
+<p>Третий — <strong>вынос тяжёлого контекста наружу</strong>. Большие результаты инструментов не обязательно держать внутри окна модели. Их можно сохранять в файлы, передавать в виде кратких выдержек, а при необходимости подгружать по ссылке. Аналогично работают и подагенты: дочерний агент может провести широкий поиск внутри своего локального контекста, а родителю вернуть только краткий итог.</p>
+<p>Четвёртый — <strong>ожидание без токенов</strong>. Если агент ждёт одобрения человека или завершения долгой фоновой операции, он не должен бессмысленно опрашивать систему и жечь токены. Он должен «уснуть» и проснуться по событию.</p>
+<p>Пятый — <strong>управление расходами при сбоях</strong>. Повторы, зацикливания, повторные неудачные вызовы инструментов — это скрытая чёрная дыра бюджета. Хорошая оркестрация должна различать типы ошибок и не позволять агенту трижды подряд покупать один и тот же провал.</p>
+<p>Если всё это свести в одну фразу, получается очень практичный принцип: <strong>максимум токенов должен либо приходить из кэша, либо нести новую полезную информацию, либо тратиться только на действительно нужные шаги</strong>.</p>
+</section>
+<section>
+<h2>Главные результаты: экономия почти везде и для всех</h2>
+<p>Теперь к цифрам. В смешанном результате по всем шести моделям и 22 задачам замена оркестрации дала:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>стоимость на задачу: минус 41%</strong> — с 0,21 до 0,12 доллара;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>время выполнения: минус 44%</strong> — с 48 до 27 секунд;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>токены на задачу: минус 38%</strong> — с 14,2 до 8,8 тысячи;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">качество по завершению задач — примерно на том же уровне.</span></div>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-12/fig_2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Главный итог статьи: при той же модели новая оркестрация заметно снижает стоимость, задержку и расход токенов.</p>
+</div></figure>
+<p>Это уже само по себе сильный результат. Но ещё интереснее другое: <strong>эффект оказался почти независим от модели</strong>.</p>
+<p>У всех шести моделей стоимость упала. Диапазон — от 33% до 61%. То есть выиграл не один удачный поставщик и не один конкретный класс моделей. Выиграла сама архитектура исполнения.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-12/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Снижение стоимости и задержки наблюдается у всех моделей: эффект идёт от слоя оркестрации, а не от конкретной LLM.</p>
+</div></figure>
+<p>Это, возможно, самый неприятный вывод для команд, которые бесконечно спорят о выборе модели, но мало думают об инфраструктуре агента. Авторы прямо пишут: <strong>на их наборе задач слой оркестрации влиял на стоимость сильнее, чем переход от самой дорогой модели к самой дешёвой</strong>.</p>
+<p>Очень отрезвляющая мысль. Можно неделями выбирать между поставщиками, экономя десятки процентов на цене токена, и при этом терять больше из-за небрежно устроенного цикла работы агента.</p>
+</section>
+<section>
+<h2>А что с качеством?</h2>
+<p>Здесь статья аккуратнее, и это правильно. В среднем качество не просело. Более того, в 48 ячейках «модель × способность» улучшений было больше, чем ухудшений: 30 улучшений, 11 без изменений, 7 ухудшений.</p>
+<p>Но эти ухудшения распределены не случайно. Они почти все пришлись на более слабые модели и на те сценарии, где оркестрация особенно нагружает модель: сложные рабочие сценарии, работа с внешними инструментами, презентации.</p>
+<p>Из этого авторы выводят интересную идею: <strong>сильные модели лучше извлекают пользу из хорошей оркестрации</strong>. Они называют это эффектом рычага оркестрации. То есть одна и та же инфраструктурная надстройка для мощной модели может дать и экономию, и рост качества, а для слабой — только экономию, а иногда даже дополнительную когнитивную нагрузку.</p>
+<p>Это важный нюанс. Статья не говорит, что хорошая оркестрация автоматически делает любую модель лучше. Она говорит другое: <strong>хорошая оркестрация почти всегда делает систему дешевле, но качество сверху зависит от того, насколько модель вообще способна использовать эту структуру</strong>.</p>
+<p>Для практики это очень полезно. Можно отдельно считать две вещи:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">безусловный выигрыш в экономике;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">условный выигрыш в качестве, зависящий от класса модели.</span></div>
+</section>
+<section>
+<h2>Почему это важно для рынка ИИ уже сейчас</h2>
+<p>У этой работы есть понятная бизнес-мораль. Пока индустрия радуется падению цен за токен, команды начинают тратить токенов ещё больше. Это классический эффект «стало дешевле — стали потреблять больше». В статье прямо проводят аналогию с парадоксом Джевонса.</p>
+<p>Поэтому снижение цены за токен само по себе не спасает. Если агент на каждую новую способность отвечает просто ростом длины контекста и числа шагов, общий счёт всё равно уедет вверх.</p>
+<p>Отсюда главный практический вывод: <strong>метрикой зрелости ИИ-агента должно быть не только качество, но и «завершений задач на миллион токенов»</strong>. Или, ещё проще, сколько полезной работы вы получаете на единицу расхода.</p>
+<p>Авторы показывают хороший пример: число завершений на миллион токенов выросло с 54,9 до 92. Это уже не косметическая оптимизация, а смена экономического режима.</p>
+<p>Для компаний с большим потоком задач выгода быстро становится материальной. Авторы оценивают, что на миллионе агентных задач в месяц разница между двумя подходами — порядка <strong>90 тысяч долларов в месяц</strong>. Даже если относиться к этим оценкам осторожно, масштаб понятен: оркестрация перестаёт быть «внутренней инженерной деталью» и становится строкой в отчёте о прибылях и убытках.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>Эта статья ценна не тем, что предлагает очередной трюк для подсказок. Она меняет угол зрения.</p>
+<p>Мы привыкли думать об ИИ-агенте как о модели плюс инструменты. Авторы убедительно показывают: <strong>между моделью и продуктом есть ещё один критически важный слой — оркестрация</strong>. Именно он во многом решает, будет ли ваш агент разумно расходовать токены или бездумно их жечь.</p>
+<p>Главный вывод звучит почти приземлённо, но в этом его сила: <strong>если хотите сделать ИИ-агента дешевле и быстрее, не спешите менять модель — сначала посмотрите, как устроен сам цикл её работы</strong>.</p>
+<p>Конечно, у работы есть ограничения. Набор задач не огромный. Авторы сами представляют компанию, чью систему тестируют. Сравнение с внешними каркасами здесь в основном архитектурное, а не экспериментальное. Но даже с этими оговорками результат выглядит серьёзно.</p>
+<p>И, возможно, это один из самых полезных текстов про ИИ-агентов за последнее время. Потому что он напоминает простую вещь: <strong>прорыв в ИИ — это не только новая LLM. Иногда это ещё и умение не платить дважды за один и тот же контекст</strong>.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.06906" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
