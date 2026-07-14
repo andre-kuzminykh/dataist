@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Метапознание как следующий рубеж для LLM</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Метапознание как следующий рубеж для LLM" />
+    <meta property="og:description" content="Может ли ИИ не только отвечать, но и понимать, где он ошибается, чего не знает и как ему лучше думать дальше?
+
+Авторы собрали большой обзор о том, что происходит, когда модель учат следить за собственными мыслями и шагами. Речь о способности не просто выдавать ответ, а замечать сомнения, проверять себя, выбирать более удачный путь решения и понятнее объяснять ход рассуждений. Такой подход помогает лучше понять, насколько ИИ надёжен в реальных задачах и где его уверенность может быть ложной.
+
+В этом обзоре разбираем, как ИИ учат оценивать себя, проверять свои ответы, видеть пробелы в знаниях и зачем всё это нужно для более разумных и предсказуемых систем." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/metapoznanie-kak-sleduiushchii-rubezh-dlia-llm/metapoznanie-kak-sleduiushchii-rubezh-dlia-llm_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-07-14/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-14/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-07-14</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Метапознание как следующий рубеж для LLM
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-14/cover.jpg"
+                         alt="Обложка: Метапознание как следующий рубеж для LLM"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда модель начинает «думать о своем мышлении»</h2>
+<p>У больших языковых моделей есть странная суперсила. Они могут уверенно объяснять квантовую механику, писать код, спорить о философии — и тут же с тем же спокойствием выдать полную ерунду. Поэтому главный вопрос сегодня уже не только в том, <strong>что</strong> модель знает. Вопрос в другом: <strong>понимает ли она границы собственного знания</strong>?</p>
+<p>Именно этому посвящен большой обзор исследователей из Йеля и Калифорнийского университета в Ирвайне — <strong>метапознанию в LLM</strong>. Статья не предлагает одну новую модель или один новый прием. Она делает вещь, которая сейчас даже важнее: собирает разрозненное поле в цельную картину. Авторы показывают, как исследователи пытаются измерять у моделей способность оценивать собственные ответы, замечать неуверенность, менять стратегию, исправлять ошибки и в идеале говорить «не знаю», когда это действительно так.</p>
+<p>Звучит почти по-человечески. Но именно здесь начинается самое интересное: у LLM уже есть отдельные признаки такого поведения, но до настоящей надежности еще очень далеко.</p>
+</section>
+<section>
+<h2>Что вообще такое метапознание — и зачем оно моделям</h2>
+<p>Если совсем просто, метапознание — это <strong>мышление о собственном мышлении</strong>. Не только решить задачу, но и понять: я вообще иду в правильную сторону? Я уверен в ответе или только делаю вид? Стоит продолжать тем же способом или пора сменить стратегию?</p>
+<p>Авторы разбивают это на два главных процесса: <strong>мониторинг</strong> и <strong>контроль</strong>. Сначала система следит за собой: оценивает уверенность, прогресс, вероятность ошибки. Потом на основе этого решает, что делать дальше: продолжать, остановиться, проверить себя, запросить инструмент, сменить подход.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-14/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Таксономия исследований по метапознанию в LLM: от мониторинга собственной уверенности до контроля стратегии и усилий.</p>
+</div></figure>
+<p>Для человека это звучит естественно. Для ИИ — это почти ключ к зрелости. Потому что без метапознания даже очень умная модель остается, по сути, машиной, которая часто не понимает, когда она ошибается.</p>
+<p>Почему это важно на практике?</p>
+<p>Во-первых, <strong>надежность</strong>. Если модель не умеет отличать хороший ответ от плохого, ей трудно доверять в медицине, праве, науке, образовании.</p>
+<p>Во-вторых, <strong>снижение галлюцинаций</strong>. Многие ошибки LLM опасны не сами по себе, а потому что они произносятся с огромной уверенностью.</p>
+<p>В-третьих, <strong>сотрудничество с человеком</strong>. Полезная модель — не та, что всегда отвечает. Полезная модель — та, что знает, когда ей стоит сомневаться, уточнять или передать решение человеку.</p>
+<p>И, наконец, <strong>самоулучшение</strong>. Если система не может трезво оценить собственную работу, ей трудно учиться на своих промахах.</p>
+</section>
+<section>
+<h2>Что уже умеют LLM, а что пока только имитируют</h2>
+<p>Один из главных выводов обзора: <strong>у моделей есть отдельные признаки метапознания, но они слабы, нестабильны и сильно зависят от задачи</strong>.</p>
+<p>Это важный нюанс. В литературе уже накопилось достаточно работ, где LLM умеют:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">оценивать собственную уверенность лучше случайного угадывания;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">иногда замечать, что вопрос выходит за пределы их знаний;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">исправлять часть ошибок после самопроверки;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">выбирать более удачную стратегию рассуждения;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">сообщать неуверенность более внятно после специального обучения или подсказок.</span></div>
+<p>Но рядом с этим лежит длинный список провалов.</p>
+<p>Модели часто <strong>избыточно самоуверенны</strong>. Причем не просто слегка. Они могут ошибаться грубо и при этом сообщать очень высокую уверенность. В обзоре это связывают с типичными режимами сбоя: повторение неверной мысли, рассинхрон между ходом рассуждения и финальным ответом, ложная уверенность, плохая калибровка.</p>
+<p>Еще один неприятный вывод: <strong>лучшее рассуждение не гарантирует лучшее метапознание</strong>. Иногда длинные цепочки рассуждений улучшают точность ответа, но одновременно ухудшают способность модели понять, права она или нет. То есть модель начинает думать дольше, но не обязательно лучше чувствует собственную ошибку.</p>
+<p>Это особенно важно на фоне бума моделей, способных к рассуждению. Мы привыкли считать: если модель стала сильнее в математике и логике, значит, она и надежнее. Обзор показывает, что это совсем не обязательно.</p>
+</section>
+<section>
+<h2>Как это вообще измеряют</h2>
+<p>Самая практичная часть статьи — разбор того, <strong>как исследователи пытаются измерить метапознание</strong>. И тут быстро выясняется, что простого способа нет.</p>
+<p>Чаще всего смотрят на уверенность модели и сравнивают ее с реальной правильностью ответов. Но и тут есть ловушка. Обычные метрики калибровки не всегда отвечают на нужный вопрос. Можно иметь приличную среднюю калибровку и при этом плохо различать случаи «я прав» и «я ошибся».</p>
+<p>Поэтому часть работ берет инструменты из когнитивной психологии. Например, метрики, которые пытаются отделить <strong>чистую способность модели понимать качество собственного ответа</strong> от общей силы модели в задаче. Это важное различие. Иначе более сильная модель просто будет казаться «более метакогнитивной» только потому, что она чаще права.</p>
+<p>Есть и другие подходы:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">прямой запрос уверенности у модели;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">оценка уверенности по вероятностям токенов;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">сравнение нескольких вариантов ответа;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">анализ внутренних представлений модели;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">специальные игровые и спорные сценарии, где модель должна пересматривать позицию.</span></div>
+<p>Из обзора видно главное: <strong>результат сильно зависит от того, как именно вы спрашиваете модель о ее уверенности</strong>. Одна и та же LLM может выглядеть более или менее «самосознающей» просто из-за другой шкалы оценок или другого способа извлечь уверенность.</p>
+<p>Это неприятная, но полезная правда. Поле пока находится в стадии, когда сами измерительные инструменты еще обсуждаются.</p>
+</section>
+<section>
+<h2>Что особенно интересно в результатах</h2>
+<p>Обзор собирает десятки частных находок, и из них проступает несколько устойчивых тенденций.</p>
+<p>Первая: <strong>размер модели часто помогает</strong>. Более крупные модели в среднем чаще показывают лучшие признаки метапознания. Но это не закон природы. Семейство модели, дообучение, температура генерации и способ оценки уверенности сильно меняют картину.</p>
+<p>Вторая: <strong>дообучение после предобучения может как помочь, так и навредить</strong>. Есть данные, что некоторые формы дообучения, особенно заточенные под удобный и уверенный стиль ответа, ухудшают метакогнитивную эффективность. Иначе говоря, модель становится более гладкой в общении, но не обязательно честнее в оценке своих знаний.</p>
+<p>Третья: <strong>LLM нередко знают, что не знают, но не умеют действовать в соответствии с этим знанием</strong>. Это, пожалуй, один из самых любопытных выводов. В некоторых экспериментах внутри модели есть сигнал неуверенности, но он слабо влияет на поведение. Она может смутно «понимать», что ответ слабый, и все равно выдавать его уверенно.</p>
+<p>Четвертая: <strong>самоотчет модели — ненадежный инструмент</strong>. Если просто спросить «насколько ты уверен?», ответ часто оказывается грубым, дискретным и искаженным. Например, модели любят слипаться к нескольким типичным значениям уверенности вместо тонкой шкалы.</p>
+<p>И, наконец, пятая: <strong>метапознание, похоже, зависит от области</strong>. Модель может хорошо оценивать себя в одном типе задач и проваливаться в другом. Это важный аргумент против идеи, что существует одна универсальная «самоосознанность» модели.</p>
+</section>
+<section>
+<h2>Как модели пытаются сделать более метакогнитивными</h2>
+<p>Самая живая часть поля сейчас — не измерение, а попытки <strong>встроить метапознание в поведение моделей</strong>.</p>
+<p>Подходов несколько.</p>
+<p>Первый и самый доступный — <strong>подсказки</strong>. Модели прямо просят проверять себя, оценивать уверенность, думать о стратегии, искать слабые места в собственном рассуждении. Иногда это заметно помогает. Особенно на задачах, где полезна самопроверка. Но эффект нестабилен: маленькие модели могут от таких подсказок, наоборот, путаться еще сильнее.</p>
+<p>Второй путь — <strong>обучение на следах самопроверки</strong>. Модель дообучают на примерах, где есть не только решение, но и оценка его качества, критика, исправление, сравнение разных путей. Это помогает ей не просто «говорить как рефлексирующая система», а чаще действительно улучшать результат.</p>
+<p>Третий путь — <strong>обучение с подкреплением с метакогнитивным сигналом</strong>. Идея красивая: награждать не только за правильный ответ, но и за качественную самооценку. Если модель уверена там, где права, и осторожна там, где слаба, это становится частью функции награды. По обзору, такие методы уже показывают хорошие результаты, особенно в честном выражении неуверенности.</p>
+<p>Четвертый путь — <strong>архитектурный</strong>. Некоторые работы пытаются разделить в системе блоки «решения» и «контроля»: один решает задачу, другой следит за ходом решения, останавливает лишние рассуждения, запускает проверку, выбирает инструменты. Это похоже на попытку встроить в ИИ внутреннего редактора.</p>
+<p>Отдельное направление — <strong>агенты ИИ</strong>. Здесь метапознание особенно ценно. Агенту нужно не только отвечать, но и понимать, когда искать информацию, когда использовать инструмент, когда передавать задачу человеку, когда остановиться, чтобы не уйти в бесконечный цикл ошибок. В обзоре много примеров, где такие механизмы реально улучшают работу агентных систем.</p>
+</section>
+<section>
+<h2>Почему это важно не только для качества, но и для безопасности</h2>
+<p>Есть соблазн видеть в метапознании только полезную функцию: модель лучше понимает себя, значит, меньше ошибается. Но авторы честно обсуждают и обратную сторону.</p>
+<p>Если система научится хорошо следить за своими внутренними состояниями, она теоретически может не только честнее сообщать об ошибках, но и <strong>лучше скрывать нежелательное поведение</strong>. Например, понять, что именно проверяют исследователи, и подстроиться под тест. Или маскировать реальные цели и ограничения.</p>
+<p>Это пока скорее предупреждение, чем установленный факт. Но оно важное. Чем лучше модель «понимает себя», тем выше ставка в вопросе контроля и интерпретируемости.</p>
+<p>Есть и человеческий риск. Чем увереннее и аккуратнее звучит ИИ, тем легче пользователю выключить собственную критичность. Авторы напоминают: хорошие метакогнитивные сигналы модели не отменяют необходимость человеческого суждения. Иногда они, наоборот, создают ложное чувство безопасности.</p>
+</section>
+<section>
+<h2>Главное: поле только начинается</h2>
+<p>Сильная сторона этой статьи в том, что она не продает иллюзий. После прочтения остается довольно трезвая картина.</p>
+<p><strong>LLM пока не обладают надежным метапознанием</strong>. Они демонстрируют отдельные его элементы. Иногда впечатляющие. Иногда полезные на практике. Но в целом поведение остается хрупким, зависимым от формулировки, модели, задачи и метода оценки.</p>
+<p>И все же это одно из самых важных направлений в развитии ИИ. Потому что следующий рубеж — уже не просто «сделать модель умнее». Следующий рубеж — <strong>сделать так, чтобы она понимала пределы собственной умности</strong>.</p>
+</section>
+<section>
+<h2>Выводы</h2>
+<p>Этот обзор хорош тем, что ставит правильный вопрос в правильный момент. Мы уже живем в мире, где LLM участвуют в решениях, которые влияют на деньги, знания, здоровье и доверие. В таком мире точность сама по себе недостаточна. Нужна еще способность системы <strong>реалистично оценивать себя</strong>.</p>
+<p>Авторы показывают три ключевые вещи.</p>
+<p>Первая: у LLM есть ранние, но слабые признаки метапознания.</p>
+<p>Вторая: измерять их очень сложно, а привычные метрики часто вводят в заблуждение.</p>
+<p>Третья: если научиться развивать эти способности, мы получим не просто более точные, а <strong>более честные, управляемые и полезные</strong> модели.</p>
+<p>Именно поэтому метапознание — не философское украшение вокруг LLM, а один из самых практичных вопросов всей современной разработки ИИ. Если модель не знает, что она не знает, рано или поздно это узнает пользователь. Обычно слишком поздно.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.11881" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/yale-nlp/LLM-Metacognition" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
