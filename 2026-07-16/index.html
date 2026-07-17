@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ИИ чинит код лучше, если сначала задаёт вопросы</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="ИИ чинит код лучше, если сначала задаёт вопросы" />
+    <meta property="og:description" content="ИИ лучше чинит чужой код, когда сначала не спешит с ответом, а задаёт правильные вопросы.
+
+Исследователи предложили подход, в котором модель сначала разбирается в незнакомом проекте, а уже потом пытается исправить ошибку. Для этого одна часть системы задаёт точные вопросы о том, как устроен код, другая сама ищет ответы в файлах и собирает понятную картину, и только после этого модель пишет исправление. Так она реже додумывает наугад и чаще опирается на то, что действительно есть в проекте.
+
+В обзоре разберём, как работает такой способ починки кода через вопросы и ответы и почему он помогает находить более точные исправления." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/ii-chinit-kod-luchshe-esli-snachala-zadaet-voprosy/ii-chinit-kod-luchshe-esli-snachala-zadaet-voprosy_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-07-16/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-16/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-07-16</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    ИИ чинит код лучше, если сначала задаёт вопросы
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-16/cover.png"
+                         alt="Обложка: ИИ чинит код лучше, если сначала задаёт вопросы"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Прежде чем чинить код, неплохо бы его понять</h2>
+<p>У ИИ-агентов для программирования есть старая и очень человеческая проблема: они часто начинают <strong>чинить слишком рано</strong>. Видят описание ошибки, хватаются за знакомые слова, бегут по репозиторию и быстро вносят правку — но не туда и не о том. В итоге тесты падают, шаги множатся, токены сгорают, а агент ходит кругами.</p>
+<p>Авторы работы <strong>Know Before Fix</strong> предлагают простую, но сильную идею: перед тем как писать патч, агент должен сначала задать правильные вопросы о кодовой базе и получить на них ответы, опираясь на реальные файлы репозитория. Не “как бы я это починил”, а “чего мне не хватает, чтобы вообще понять, что происходит”.</p>
+<p>Из этого выросла система <strong>ACQUIRE</strong> — двухэтапный конвейер для решения задач из SWE-bench Verified. Идея оказалась не просто красивой. На практике она поднимает качество исправлений и делает это без безумного роста цены и времени.</p>
+</section>
+<section>
+<h2>В чём здесь главная мысль</h2>
+<p>Большие модели уже умеют неплохо рассуждать о коде. Но когда дело доходит до реальных репозиториев, проблема часто не в логике как таковой, а в <strong>нехватке фактов</strong>. Описание задачи редко содержит всё важное: где реально живёт нужная логика, какие есть скрытые зависимости между модулями, какие ограничения диктует внутренний API, какие допущения заложены в коде.</p>
+<p>Многие существующие методы пытаются это лечить через предварительный обход репозитория. Но обычно они всё равно “заточены под исправление”: найти подозрительные файлы, собрать сводку, подсветить релевантные места. Это полезно, но не отвечает на ключевой вопрос: <strong>что именно агент не понимает</strong>?</p>
+<p>ACQUIRE разворачивает процесс в сторону, более похожую на работу сильного разработчика. Сначала — понимание. Потом — правка.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-16/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема ACQUIRE: сначала агент формулирует вопросы и получает ответы по репозиторию, потом отдельный агент строит патч.</p>
+</div></figure>
+<p>Система делит работу на два этапа:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Сбор знаний</strong>: один агент формулирует вопросы, другой отдельно ищет ответы в репозитории.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Исправление</strong>: третий агент получает описание ошибки плюс набор вопрос–ответ и уже после этого пишет патч.</span></div>
+<p>Это важное разделение. Оно не даёт агенту смешивать догадки о причине ошибки с ранним редактированием кода.</p>
+</section>
+<section>
+<h2>Как устроен ACQUIRE</h2>
+<p>Внутри у ACQUIRE три роли.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>Спрашивающий</strong> разбирает задачу и придумывает прицельные вопросы.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>Отвечающий</strong> идёт в репозиторий, изучает файлы и даёт ответы с опорой на конкретные артефакты: пути, функции, поведение кода.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>Решатель</strong> берёт собранные знания и делает исправление.</span></div>
+<p>Вопросы строятся не хаотично. Авторы выделили четыре типа пробелов в знаниях, которые чаще всего мешают починке:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Механизм и поведение</strong> — как реально работает нужная логика, как текут данные, где ломается поведение.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Дизайн и использование</strong> — какие есть контракты API, соглашения, ограничения классов и интерфейсов.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Расположение и структура</strong> — где находится нужный код и как связаны модули.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Экосистема и стандарты</strong> — внешние библиотеки, протоколы, языковые правила.</span></div>
+<p>Это, по сути, шаблон для любопытства. Агент не просто ищет “подозрительный файл”, а задаёт вопросы в духе: как здесь вообще устроен этот механизм? где реализована нужная часть? какой контракт нельзя нарушать?</p>
+<p>Есть ещё один важный момент. Для каждого вопроса создаётся отдельный экземпляр отвечающего агента, и они работают <strong>параллельно</strong>. Это снижает задержку и не даёт одному поисковому следу заразить другой. Один агент ищет одно, другой — другое.</p>
+<p>По умолчанию система задаёт <strong>два вопроса</strong> на задачу. Как выяснилось позже, это почти оптимальная точка.</p>
+</section>
+<section>
+<h2>Почему это вообще должно работать</h2>
+<p>Авторы сначала устроили почти “магический” эксперимент. Они взяли 116 задач, которые базовый агент не смог решить, и подбросили ему <strong>идеальную</strong> пару вопрос–ответ: вопрос был составлен с учётом эталонного патча, а ответ строился по файлам из правильного исправления.</p>
+<p>Результат: <strong>26 из 116</strong> ранее проваленных задач удалось спасти.</p>
+<p>Это не финальная система, а скорее доказательство идеи. Но оно хорошо показывает суть: если дать агенту правильное знание до начала исправления, часто оказывается, что думать он умеет — ему просто не хватало опоры в самом репозитории.</p>
+<p>Дальше авторы убрали эту “магию” и автоматизировали процесс: вопросы начал генерировать сам агент, а ответы — добываться реальным поиском по коду.</p>
+</section>
+<section>
+<h2>Что получилось на SWE-bench Verified</h2>
+<p>Главный эксперимент шёл на SWE-bench Verified — это 500 реальных задач из GitHub, где исправление проверяется тестами.</p>
+<p>По сравнению с базовым Mini-SWE-Agent, ACQUIRE даёт:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>+3,8 процентного пункта</strong> по Pass@1 с GPT-5-mini</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>+4,4 процентного пункта</strong> по Pass@1 с DeepSeek-V3.2</span></div>
+<p>И это лучший на данный момент результат среди сравниваемых методов предварительного анализа.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-16/fig_3.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Качество и средняя стоимость при разном числе пар вопрос–ответ: лучший баланс достигается на двух вопросах.</p>
+</div></figure>
+<p>Особенно интересно здесь не только качество, но и <strong>цена улучшения</strong>. Некоторые конкуренты тоже помогают, но делают это дорого: больше обходов, больше шагов, больше времени. ACQUIRE добавляет умеренные накладные расходы. Например, с DeepSeek-V3.2 средняя стоимость растёт с 0,055 до 0,073 доллара на задачу, а время — с 815 до 1042 секунд. Рост заметный, но не драматичный.</p>
+<p>На фоне методов, которые в 2–14 раз дороже, это выглядит очень разумным компромиссом.</p>
+<p>Почему так? Потому что ACQUIRE не пытается вычитать весь репозиторий. Он собирает <strong>узкие, осмысленные знания</strong>, которые действительно помогают принять решение.</p>
+</section>
+<section>
+<h2>Не просто точнее, но и короче</h2>
+<p>Одна из самых сильных частей статьи — разбор того, <strong>как именно</strong> меняется поведение агента.</p>
+<p>Когда в систему добавляют блок вопрос–ответ, агент делает меньше бесполезных кругов. На всём наборе задач число раундов снижается в среднем на 7,1%. А на тех 44 случаях, где был переход из “не решил” в “решил”, сокращение уже 17,1%.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-16/fig_2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Состав шагов траектории на задачах, где ACQUIRE перевёл решение из провала в успех: меньше времени уходит на поиск и правку вслепую.</p>
+</div></figure>
+<p>Авторы разбили траекторию работы на четыре стадии: воспроизведение, поиск нужного места, исправление, проверка. И увидели очень показательный сдвиг:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 стадия <strong>поиска</strong> сокращается примерно на 24%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 стадия <strong>исправления</strong> сокращается примерно на 24%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 доля усилий на <strong>проверку</strong> и воспроизведение, наоборот, растёт</span></div>
+<p>Это похоже на поведение хорошего инженера: меньше слепого блуждания, больше времени на осмысленную проверку.</p>
+<p>Ещё важнее то, что собранные знания действительно используются по делу. Около 40% шагов в успешных траекториях были связаны с вопросами и ответами. Причём сильнее всего это видно именно в поиске и правке, где знание репозитория критично.</p>
+</section>
+<section>
+<h2>Насколько этим ответам можно верить</h2>
+<p>У такого подхода есть очевидный риск: а вдруг агент сам себе напридумывает неверные “факты”, а потом другой агент на них опрётся?</p>
+<p>Авторы это отдельно проверили вручную. Они просмотрели 232 пары вопрос–ответ. Итог очень сильный: <strong>99,1%</strong> ответов признаны поддержанными репозиторием. Из них:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 42,2% были полностью точными</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 56,9% содержали мелкие неточности вроде неверной строки или не совсем точного владельца функции, но не ломали общий вывод</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 только 0,9% содержали по-настоящему неподкреплённые утверждения</span></div>
+<p>Это важный результат. Он показывает, что разбиение задачи на маленькие, конкретные вопросы действительно уменьшает склонность модели фантазировать. Ответить на узкий вопрос по коду проще, чем сразу “понять и починить всё”.</p>
+<p>Но есть нюанс. Даже фактически верный ответ может <strong>сместить фокус не туда</strong>. Авторы нашли 22 случая, где базовый агент решал задачу, а ACQUIRE — уже нет. При ручном разборе выяснилось, что только 5 таких регрессий были связаны с реально сбивающим знанием. Остальные происходили потому, что решающий агент неправильно использовал в целом полезную подсказку: слишком широко обобщал, чинил только часть проблемы или добавлял лишние изменения.</p>
+<p>Вывод простой: узкое место здесь уже не столько в качестве собранных знаний, сколько в том, <strong>как агент умеет с ними спорить и перепроверять их</strong>.</p>
+</section>
+<section>
+<h2>Почему два вопроса лучше, чем один или три</h2>
+<p>Авторы отдельно проверили, сколько вообще нужно пар вопрос–ответ.</p>
+<p>Результат оказался очень жизненным:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 без вопросов — базовый уровень, 66,4% Pass@1</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 один вопрос — уже 69,0%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 два вопроса — пик, 70,8%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 три вопроса — снова 69,0%, а стоимость растёт</span></div>
+<p>То есть больше контекста — не всегда лучше. После двух вопросов начинает работать знакомая проблема длинного контекста: часть информации дублируется, внимание рассеивается, и агенту сложнее выделить главное.</p>
+<p>Это одна из самых практичных находок статьи. Не надо заваливать модель всеми возможными справками. Лучше дать <strong>две хорошие подсказки</strong>, чем пять средних.</p>
+</section>
+<section>
+<h2>Самый показательный пример</h2>
+<p>Один из кейсов в статье хорошо показывает, в чём сила подхода. В задаче по Sphinx ошибка выглядела как проблема рендеринга параметров документации. Базовый агент цеплялся за слова из описания и бегал по файлам, связанным с отображением. Правильный файл он вообще не открыл.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-16/fig_4.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Разбор примера со Sphinx: ACQUIRE находит корневую причину через вопрос о механизме разбора, а не по совпадению ключевых слов.</p>
+</div></figure>
+<p>ACQUIRE пошёл иначе. Спрашивающий сформулировал вопрос не про “где ломается рендеринг”, а про <strong>механизм разбора типа параметра</strong>. Это сместило поиск в сторону причин, а не симптомов. Отвечающий агент в итоге нашёл файл `docfields.py`, где `split` неверно обрабатывал пробелы внутри скобок типа.</p>
+<p>Дальше решающий агент сразу открыл правильный файл, внёс точечную правку и закрыл задачу за 52 шага вместо 117.</p>
+<p>Очень показательно: проблема была не в том, что агент не умеет написать нужный код. Он просто изначально смотрел не туда.</p>
+</section>
+<section>
+<h2>Что это значит для ИИ-агентов для программирования</h2>
+<p>Эта работа важна не только как ещё один плюсик на SWE-bench. Она бьёт в одно из самых слабых мест нынешних ИИ-агентов: <strong>они плохо отличают нехватку знаний от ошибки в рассуждении</strong>.</p>
+<p>Если агент не понимает репозиторий, он обычно не говорит “мне не хватает фактов”. Он начинает импровизировать. ACQUIRE вводит полезную дисциплину: сначала сформулируй пробелы в знаниях, потом закрой их, и только затем редактируй код.</p>
+<p>Для отрасли это важный сдвиг:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 от поиска по ключевым словам — к явному пониманию пробелов в знаниях</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 от монолитного “сразу почини” — к разделению на понимание и действие</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 от непрозрачного поведения агента — к более интерпретируемым промежуточным артефактам в виде вопрос–ответ</span></div>
+<p>И это особенно ценно на реальных кодовых базах, где ошибки часто сидят не в одном файле и не лежат на поверхности.</p>
+</section>
+<section>
+<h2>Выводы</h2>
+<p>ACQUIRE показывает простую вещь: <strong>для хорошего исправления кода мало уметь генерировать патч</strong>. Нужно ещё уметь понять, чего ты не знаешь о репозитории, и быстро добыть именно это знание.</p>
+<p>Подход с вопросами и ответами дал стабильный прирост на двух разных моделях, сократил число лишних шагов и оказался заметно дешевле тяжёлых схем с глубоким предварительным обходом. Самое важное — он меняет сам стиль работы агента: меньше суеты, больше понимания.</p>
+<p>Главный урок отсюда звучит почти по-человечески. Хороший ИИ-агент для программирования должен не только чинить. Он должен сначала <strong>задавать правильные вопросы</strong>.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.11111" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/LionLin2003/ACQUIRE" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
