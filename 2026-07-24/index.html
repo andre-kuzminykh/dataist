@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Дата-пайплайны надёжнее и дешевле, чем Claude Code, без потери качества</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Дата-пайплайны надёжнее и дешевле, чем Claude Code, без потери качества" />
+    <meta property="og:description" content="Оказывается, ИИ может собирать рабочие цепочки для обработки данных не только быстро, но и заметно аккуратнее и дешевле, чем когда он просто пишет код.
+
+Исследователи предлагают дать модели не свободу писать всё с нуля, а понятную среду, где она шаг за шагом собирает процесс из готовых частей и сразу видит, что уже построено. Такой результат не пропадает в виде разового текста: его можно сохранить, открыть в наглядном виде и спокойно править дальше руками или через диалог. За счёт этого меньше лишней работы, меньше ошибок и проще довести всё до рабочего состояния.
+
+В этом обзоре разбираем, как устроен такой способ сборки процессов для данных, почему он оказывается надёжнее обычной генерации кода и за счёт чего помогает экономить время и деньги." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/data-paiplainy-nadezhnee-i-deshevle-chem-claude-code-bez-poteri-kachestva/data-paiplainy-nadezhnee-i-deshevle-chem-claude-code-bez-poteri-kachestva_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-07-24/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-24/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-07-24</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Дата-пайплайны надёжнее и дешевле, чем Claude Code, без потери качества
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-24/cover.jpg"
+                         alt="Обложка: Дата-пайплайны надёжнее и дешевле, чем Claude Code, без потери качества"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда ИИ строит конвейер, а не одноразовый скрипт</h2>
+<p>LLM уже неплохо пишут код по описанию на естественном языке. Но в рабочей среде этого часто мало. Пользователь просит: «собери конвейер для очистки данных, фильтрации, генерации вопросов и проверки качества». Агент для программирования отвечает Python-скриптом. Скрипт запускается. Иногда даже работает. А потом начинается знакомая боль: его неудобно править в интерфейсе платформы, он не живёт как постоянный объект системы, его трудно проверять, переиспользовать и передавать дальше команде.</p>
+<p>Авторы статьи называют это разрывом между «текстом на естественном языке» и «настоящим платформенным конвейером». Они дают этому имя: <strong>разрыв NL2Pipeline</strong>. И предлагают не просить модель сразу писать свободный код, а заставить её собирать конвейер по частям, как структуру из операторов, связей и проверок.</p>
+<p>Идея кажется приземлённой. Но именно она может отделять красивую демоверсию от инструмента, который вы реально включите в рабочую платформу данных.</p>
+</section>
+<section>
+<h2>В чём проблема со скриптами</h2>
+<p>Если коротко, свободная генерация кода хороша для одноразовых задач. Но плоха там, где нужен жизненный цикл артефакта.</p>
+<p>В реальных системах конвейер — это не просто текстовый файл. Это объект, который:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 можно открыть в визуальном редакторе</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 можно поправить руками без переписывания всего заново</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 можно проверить на совместимость шагов</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 можно сохранить, переиспользовать и отдать другой команде</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 можно встроить в правила платформы и журнал изменений</span></div>
+<p>Обычный агент для программирования этого не гарантирует. Он может сослаться на несуществующий оператор, неверно угадать формат данных между шагами или придумать поведение, которого на платформе просто нет.</p>
+<p>Поэтому задача тут не в том, чтобы сделать модель «умнее вообще». Задача уже. Нужно приземлить её в конкретную среду: показать ей, какие операторы доступны сейчас, какое состояние у конвейера уже есть и какие изменения допустимы.</p>
+</section>
+<section>
+<h2>Что такое DataFlow-Harness</h2>
+<p>DataFlow-Harness — это платформа, в которой ИИ-агент не пишет свободный скрипт, а постепенно собирает платформенный DAG, то есть ациклический граф шагов обработки данных.</p>
+<p>Важный момент: агент не создаёт всё одним большим куском. Он вносит <strong>типизированные изменения</strong>. Добавляет оператор. Меняет параметр. Соединяет два узла. Удаляет лишний шаг. После каждого действия система проверяет, что граф остаётся корректным.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-24/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Архитектура DataFlow-Harness: агент, общая модель конвейера, навыки, слой инструментов и проверка изменений.</p>
+</div></figure>
+<p>Внутри у системы четыре главные части.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Хранилище конвейера</strong> — единый источник истины о текущем состоянии графа</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>Слой инструментов</strong> — интерфейс, через который агент получает состояние конвейера и вносит изменения</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Навыки DataFlow-Skills</strong> — процедурные подсказки о том, как обычно строятся такие конвейеры</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>DataFlow-WebUI</strong> — интерфейс, где разговор с агентом синхронизирован с визуальным редактором DAG</span></div>
+<p>Это важный сдвиг. Вместо «вот вам запрос, напишите код» получается «вот вам живая платформа, реестр операторов, текущее состояние и набор допустимых действий».</p>
+</section>
+<section>
+<h2>Почему здесь важны навыки, а не только инструменты</h2>
+<p>Можно подумать: если агент уже видит список операторов, зачем ещё какие-то навыки? Разве не достаточно дать ему доступ к платформе?</p>
+<p>Оказалось, нет.</p>
+<p>Слой инструментов показывает агенту, <strong>что доступно</strong>. Но не объясняет, <strong>как это обычно собирать</strong>. Модель может увидеть оператор извлечения текста, оператор разметки, фильтр и оценщик качества, но не понять порядок действий, скрытые зависимости и типичные цепочки.</p>
+<p>Для этого и нужны DataFlow-Skills. Это не магия и не дополнительная модель мира. Это набор процедурных знаний:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 как обычно строится цепочка для конкретного класса задач</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 какие шаги обязательны до следующего этапа</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 какие операторы совместимы по модальности и схеме данных</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 какие поля должны проходить по конвейеру дальше</span></div>
+<p>Иначе говоря, инструменты дают факты о платформе, а навыки дают рабочую практику.</p>
+</section>
+<section>
+<h2>Как это выглядит для пользователя</h2>
+<p>Один из самых практичных элементов статьи — связка диалога и визуального редактора. Пользователь может описать задачу словами, агент предложит изменения, а результат сразу появится как граф. После этого можно вручную подправить узлы, связи и параметры. И агент в следующем ходе уже увидит обновлённое состояние.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-24/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Два синхронизированных режима работы: диалог с агентом и визуальный редактор графа.</p>
+</div></figure>
+<p>Это снимает типичную проблему ИИ-инструментов: «модель что-то сгенерировала, а дальше или принимай как есть, или переписывай всё сам». Здесь конвейер остаётся живым объектом. Вы можете редактировать его руками, а агент продолжит работу с последней версией.</p>
+<p>Для рабочей среды это не косметика, а базовое требование.</p>
+</section>
+<section>
+<h2>Как проверяли систему</h2>
+<p>Авторы собрали бенчмарк из 12 задач по инженерии данных. Туда вошли разные сценарии: генерация вопросов и ответов, обработка длинных документов, фильтрация мусора, нормализация схем, оценка по нескольким полям и другие типовые задачи.</p>
+<p>Сравнение шло между четырьмя настройками:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 обычный Claude Code без специальных знаний о платформе</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Claude Code с доступом к кодовой базе платформы</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 вариант только с инструментами платформы, но без навыков</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 полный DataFlow-Harness: инструменты плюс навыки</span></div>
+<p>Во всех случаях использовали одну и ту же базовую модель, чтобы сравнивать именно систему вокруг неё, а не разницу между моделями.</p>
+<p>Метрики тоже выбраны практичные:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 прошёл ли конвейер задачу целиком</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 сколько токенов ушло</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 сколько это стоило в деньгах</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 сколько заняло по времени</span></div>
+</section>
+<section>
+<h2>Главные результаты</h2>
+<p>Цифры здесь интересны именно балансом, а не одной максимальной строкой в таблице.</p>
+<p>Полный DataFlow-Harness дал <strong>93,3%</strong> успешных прогонов. Это почти на уровне лучшего скриптового базового варианта с доступом к контексту платформы, у которого <strong>94,2%</strong>. Разница очень небольшая. Но при этом DataFlow-Harness работал заметно дешевле и быстрее.</p>
+<p>Если сравнивать с обычным Claude Code без контекста платформы:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 стоимость ниже на <strong>72,5%</strong></span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 задержка генерации ниже на <strong>49,9%</strong></span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 успешность при этом даже выше</span></div>
+<p>Если сравнивать с более сильной базой, где агенту дали кодовую базу платформы:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 стоимость ниже на <strong>42,8%</strong></span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 время ниже на <strong>17,6%</strong></span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 успешность почти та же</span></div>
+<p>Что особенно показательно: вариант только с инструментами без навыков просел до <strong>83,3%</strong>. То есть просто подключить агент к платформе недостаточно. Нужна ещё процедурная опора.</p>
+<p>Здесь и проявляется тот самый разрыв NL2Pipeline: написать исполняемый скрипт модели легче, чем собрать корректный платформенный DAG. Но если дать ей правильные ограничения и знания о процессе, разрыв почти закрывается.</p>
+</section>
+<section>
+<h2>Где навыки реально помогают</h2>
+<p>Авторы отдельно разобрали задачи по типам. Это одна из самых полезных частей работы.</p>
+<p>Навыки сильнее всего помогли там, где успех зависит от неявного порядка действий. Например, в задачах генерации вопросов и цепочках обработки текста. В таких случаях агенту недостаточно просто выбрать «подходящие» операторы. Нужно ещё понимать процедуру сборки.</p>
+<p>На простых задачах — переименовать поле, расплющить вложенную структуру, отфильтровать по длине — разницы почти не было. Оба варианта справлялись идеально.</p>
+<p>А там, где узкое место уже не в построении графа, а в качестве работы самой модели или в численных ограничениях на выходе, навыки тоже не делали чуда. Это честный результат: хороший каркас не исправляет всё подряд.</p>
+<p>Итог выглядит так:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 навыки нужны там, где есть скрытое процедурное знание</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 на прямолинейных задачах хватает и описания операторов</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 если проблема вне сборки конвейера, навыки мало помогут</span></div>
+</section>
+<section>
+<h2>Кейс посложнее: извлечение вопросов и ответов из учебников</h2>
+<p>Авторы отдельно проверили систему на более жизненной задаче: извлечь пары «вопрос—ответ» из учебных материалов. Это тяжёлый сценарий. Документы длинные, структура ломанная, рядом могут быть рисунки, таблицы, решения, подписи, куски с разной логикой.</p>
+<p>Здесь DataFlow-Harness показал лучшие результаты сразу по двум метрикам:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 точность — <strong>97,2%</strong></span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 полнота — <strong>87,3%</strong></span></div>
+<p>У базовых вариантов цифры были заметно ниже. Особенно важна полнота: система не просто осторожнее фильтровала результат, а действительно извлекала больше корректных пар.</p>
+<p>Это хорошо показывает, где платформенный подход выигрывает. В сложной задаче уже мало просто «уметь писать код». Нужно находить и правильно связывать специализированные компоненты: разбор PDF, восстановление структуры страницы, OCR, извлечение рисунков, мультимодальный анализ, сопоставление вопроса и ответа на расстоянии.</p>
+<p>Именно здесь повторное использование готовой экосистемы операторов становится важнее, чем попытка сгенерировать всё с нуля.</p>
+</section>
+<section>
+<h2>Самая интересная проверка: влияет ли это на качество данных дальше</h2>
+<p>Авторы пошли ещё дальше и спросили: хорошо, конвейер можно построить. А станет ли лучше результат на следующем этапе? Например, если этим конвейером сгенерировать обучающие данные и потом дообучить модель.</p>
+<p>Они провели два таких сценария.</p>
+<p>Первый — математический конвейер очистки и синтеза задач. Второй — генерация общего набора инструкций для дообучения модели с нуля, включая критику, переписывание и автоматическую оценку качества.</p>
+<p>Смысл проверки простой: если конвейер собран лучше, то и данные на выходе должны быть полезнее. А значит, модель после файн-тюнинга должна показывать более высокие результаты.</p>
+<p>И это в целом подтвердилось. В математическом сценарии данные, полученные через DataFlow-Harness, дали лучший средний результат при одинаковом бюджете обучения. В общем сценарии особенно заметен выигрыш на задачах по программированию: модель, обученная на данных из такого конвейера, лучше решала HumanEval и MBPP.</p>
+<p>Это не означает, что платформа автоматически делает лучшие датасеты всегда и везде. Авторы сами осторожны в выводах: кейсов пока два, прогонов немного. Но направление важное. Вопрос уже не только в том, «умеет ли агент собрать граф», а в том, «ведёт ли этот граф к более полезным данным».</p>
+</section>
+<section>
+<h2>Почему это важно</h2>
+<p>У этой работы есть практическая мысль, которая легко переносится и за пределы инженерии данных.</p>
+<p>Если вы хотите встроить LLM в рабочую платформу, то свободная генерация текста или кода — не конец задачи, а начало. Нужен слой, который:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 заземляет модель в текущем состоянии системы</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 ограничивает её действия понятными типами изменений</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 проверяет результат до фиксации</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 оставляет после работы не одноразовый ответ, а редактируемый артефакт</span></div>
+<p>Это можно применить не только к конвейерам данных. Та же логика годится для внутренних бизнес-процессов, визуальных редакторов, систем автоматизации, возможно, и для части инструментов в робототехнике или многопользовательских средах, где важен общий объект состояния.</p>
+<p>Главная идея тут не в «более умном агенте». А в том, что агенту нужна правильно устроенная среда.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>Разрыв между текстовой инструкцией и настоящим платформенным конвейером — отдельная инженерная проблема. Её нельзя закрыть только более мощной LLM.</p>
+<p>DataFlow-Harness показывает более практичный путь: агент должен работать не со свободным кодом, а с живым представлением конвейера; не с абстрактными знаниями, а с реестром доступных операторов; не с одним ответом, а с цепочкой проверяемых изменений.</p>
+<p>Результат выглядит так: почти та же успешность, что у скриптовых базовых подходов, но заметно ниже цена и задержка, плюс на выходе остаётся не одноразовый скрипт, а редактируемый DAG внутри платформы.</p>
+<p>Для команд, которые хотят использовать ИИ не как генератор демонстрационного кода, а как часть реальной среды разработки данных, это может оказаться более важным, чем очередные проценты на абстрактном бенчмарке.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.16617" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/OpenDCAI/DataFlow-WebUI" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
