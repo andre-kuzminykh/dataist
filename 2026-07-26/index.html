@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как один разбор ИИ-агента исправил втрое больше задач, чем прежние методы</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как один разбор ИИ-агента исправил втрое больше задач, чем прежние методы" />
+    <meta property="og:description" content="У ИИ-агентов сбой часто видно в одном месте, а настоящая причина прячется совсем в другом — и именно из-за этого их так трудно чинить.
+
+Исследователи предлагают систему, которая не просто прокручивает шаги назад, а по кругу делает четыре вещи: находит сбой, ищет его настоящую причину, предлагает способ починки и заново запускает задачу. Команда учит её смотреть на весь ход работы целиком, задавать уточняющие вопросы к своим же выводам и проверять, не ошиблась ли она с диагнозом, поэтому ИИ-агенту чаще удаётся не только понять, что пошло не так, но и реально исправиться.
+
+В этом обзоре разбираем, как устроен такой разбор ошибок у ИИ-агентов и почему один хороший диагноз может дать больше пользы, чем несколько попыток починки вслепую." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/kak-odin-razbor-ii-agenta-ispravil-vtroe-bolshe-zadach-chem-prezhnie-metody/kak-odin-razbor-ii-agenta-ispravil-vtroe-bolshe-zadach-chem-prezhnie-metody_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-07-26/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-26/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-07-26</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Как один разбор ИИ-агента исправил втрое больше задач, чем прежние методы
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-26/cover.jpg"
+                         alt="Обложка: Как один разбор ИИ-агента исправил втрое больше задач, чем прежние методы"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда ИИ-агент ошибся, искать виноватый шаг уже поздно</h2>
+<p>С ИИ-агентами есть неприятная правда: сбой почти никогда не случается там, где вы его видите. Финальный ответ может быть неверным, потому что 20 шагов назад агент пропустил ограничение в задаче, не ту запись вытащил из памяти или передал эстафету другому агенту без важного контекста. В журналах вы видите симптом. Причина сидит раньше.</p>
+<p>Именно в этот разрыв и целится AgentDebugX — открытый набор инструментов для отладки ИИ-агентов от исследователей из Университета Иллинойса, Торонто, Google и Стэнфорда. Идея простая: не просто показывать трассу выполнения, а замыкать цикл целиком — найти сбой, понять его причину, предложить исправление и сразу же перезапустить задачу с этой правкой.</p>
+<p>Для сегодняшних ИИ-агентов это очень практичная вещь. Чем длиннее цепочка действий, чем больше инструментов, памяти, браузера, внешних API и мультиагентной координации, тем сложнее понять, где именно всё пошло не туда. Наблюдаемость без диагностики тут уже мало помогает.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-26/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Общая схема AgentDebugX: замкнутый цикл из поиска сбоя, поиска причины, предложения исправления и повторного запуска.</p>
+</div></figure>
+</section>
+<section>
+<h2>Что такое AgentDebugX</h2>
+<p>AgentDebugX устроен как замкнутый цикл из четырёх шагов:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Обнаружить</strong>: система находит, где в трассе проявился сбой.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Атрибутировать</strong>: пытается установить, какой агент и какой шаг на самом деле привёл к провалу.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Исправить</strong>: формулирует конкретную правку для следующей попытки.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Перезапустить</strong>: делает новую ветку выполнения и сравнивает её с исходной.</span></div>
+<p>Это важное отличие от обычных инструментов наблюдаемости. Те обычно умеют аккуратно собрать следы: вызовы LLM, обращения к инструментам, переходы между агентами, действия в интерфейсе, результаты поиска. Но дальше разработчик остаётся один на один с вопросами: кто ошибся, почему именно это было критично и как теперь это чинить.</p>
+<p>Здесь авторы пытаются сделать из отладки не просмотр журнала, а рабочий процесс.</p>
+<p>Внутри у системы есть единый переносимый формат трассы. Это тоже не мелочь. Сегодня один агент живёт в одном фреймворке, другой — в другом, третий вообще пишет сырые события. Если вы хотите сравнивать поломки, хранить их, возвращаться к ним и прогонять через разные методы диагностики, нужен общий формат. AgentDebugX именно это и предлагает.</p>
+<p>Ещё одна деталь: диагноз не вшивается в исходную трассу. Сама история выполнения остаётся как есть, а поверх неё можно накладывать разные версии анализа. Для инженерной работы это удобно: можно перепроверять спорные случаи, сравнивать методы и собирать регрессионные тесты.</p>
+</section>
+<section>
+<h2>Почему корневая причина так трудно ловится</h2>
+<p>Авторы очень точно формулируют главную проблему. В ИИ-агентах видимый сбой и причинный шаг часто не совпадают.</p>
+<p>Простой пример: агент в конце дал неверный ответ. Но финальная ошибка могла начаться раньше:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 на этапе планирования агент выбрал неверную стратегию;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 в памяти была поднята устаревшая информация;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 вызов инструмента был формально корректным, но с неправильными параметрами;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 в мультиагентной системе один агент передал задачу дальше без критической детали.</span></div>
+<p>Из-за этого просмотр трассы целиком не всегда помогает. Если читать её один раз от начала до конца, модель или человек часто цепляется за самый громкий симптом внизу. Например, за неудачный вызов инструмента. Но причина может быть не в вызове инструмента, а в том, что двумя блоками выше был принят неверный промежуточный вывод.</p>
+<p>Отсюда и главный технический ход статьи: диагностика должна быть не одношаговой, а многокруговой.</p>
+</section>
+<section>
+<h2>Как работает DeepDebug</h2>
+<p>Сердце системы называется DeepDebug. Это отдельный агент-диагност, который не просто читает трассу, а проводит небольшое расследование в несколько проходов.</p>
+<p>Логика такая.</p>
+<p>Сначала DeepDebug читает всю траекторию целиком и выдвигает первую гипотезу: какой шаг был решающей ошибкой. Это полезно, потому что глобальный просмотр держит в голове цель задачи и общий контекст.</p>
+<p>Потом идёт второй проход, но уже более структурный. Если система мультиагентная, DeepDebug идёт по цепочке передач назад: кто кому что передал, где информация исказилась, на каком переходе задача фактически была обречена. Если агент один, применяется что-то вроде деления пополам по шагам: диагност постепенно сужает участок поиска, чтобы не терять фокус.</p>
+<p>Дальше — самое интересное. Если две гипотезы совпали, система принимает их. Если нет, запускается перекрёстная проверка: DeepDebug сравнивает двух кандидатов бок о бок и выбирает тот, чьё исправление с наибольшей вероятностью предотвратило бы провал.</p>
+<p>На выходе получается не просто метка «ошибка на шаге 17», а структурированный отчёт:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 какой агент ответственен;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 какой именно шаг был решающим;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 какие есть текстовые свидетельства в трассе;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 почему этот шаг причинно важен;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 какую одну правку стоит попробовать в следующем запуске.</span></div>
+<p>Это хороший инженерный формат. Он пригоден и человеку, и автоматическому контуру повторного запуска.</p>
+</section>
+<section>
+<h2>Как это выглядит в работе</h2>
+<p>У AgentDebugX есть консольный интерфейс и веб-интерфейс. Сценарий выглядит знакомо для любого, кто хоть раз разбирал провалившийся запуск агента: открыть трассу, перейти от видимого симптома к реальной причине, прочитать диагноз, сделать новую ветку выполнения и сравнить результат с исходной.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-26/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Интерфейс AgentDebugX: от выбора неудачного запуска до перехода к причинному шагу и создания новой ветки с исправлением.</p>
+</div></figure>
+<p>Важно, что авторы держат систему «локальной по умолчанию». Все артефакты остаются локально, пока вы сами не решите их экспортировать. Это разумно, потому что в трассах агентов часто лежат чувствительные данные: промпты, аргументы инструментов, снимки экрана, пользовательские файлы, токены доступа.</p>
+<p>Есть и ещё одна любопытная часть — хранилище ошибок. В AgentDebugX можно сохранять очищенные пакеты вида «поломка — диагноз — исправление» и потом переиспользовать их как память отладки. Это уже похоже на базу инцидентов для ИИ-агентов. Одна команда починила редкий случай, другая потом может наткнуться на похожий.</p>
+<p>Авторы, правда, честно отмечают: эффект такой памяти они пока не измеряли. Механизм есть, но его вклад в качество ещё не доказан.</p>
+</section>
+<section>
+<h2>Что показали эксперименты</h2>
+<p>У статьи два главных вопроса.</p>
+<p>Первый: может ли система точнее находить виновный шаг и виновного агента?</p>
+<p>Второй: помогает ли это реально исправлять неудачные запуски, а не только писать красивые отчёты?</p>
+<p>Для первого вопроса использовали бенчмарк Who&When. В нём у каждой трассы размечено, <strong>кто</strong> ошибся и <strong>когда</strong> именно произошёл решающий сбой. Это хороший тест, потому что он требует не просто заметить проблему, а локализовать её причинный источник.</p>
+<p>На модели qwen3.5-9b метод DeepDebug показал лучший на данный момент результат среди сравниваемых подходов. По самой строгой метрике — нужно правильно назвать и агента, и точный шаг — он получил <strong>28,8%</strong>. Лучший одношаговый базовый метод набрал <strong>21,7%</strong>.</p>
+<p>На первый взгляд цифры могут показаться скромными. Но здесь как раз важно не ждать магии. Задача действительно трудная: длинные трассы, много промежуточных действий, причинная связь часто размыта. На таком фоне разница в несколько процентных пунктов означает заметный прирост в реальной диагностике.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-26/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Точность поиска виновного агента и точного шага в зависимости от длины трассы: преимущество DeepDebug особенно заметно на длинных траекториях.</p>
+</div></figure>
+<p>Интереснее другое: выигрыш DeepDebug особенно проявился на длинных трассах, где больше 40 событий. Это логично. На коротких задачах часто хватает и одного внимательного прочтения. На длинных уже нужен второй проход, структурный поиск и сверка гипотез.</p>
+<p>По токенам многокруговая схема оказалась не такой дорогой, как можно подумать. Один глобальный проход в среднем требовал 8,1 тысячи токенов, DeepDebug — 12,8 тысячи. То есть примерно в 1,6 раза больше, а не в 5–10 раз. Причина в том, что последующие шаги читают уже не всю трассу, а узкие окна вокруг подозрительных мест.</p>
+</section>
+<section>
+<h2>Помогает ли это чинить задачи</h2>
+<p>Самая прикладная часть статьи — эксперимент на GAIA. Здесь авторы взяли агента Open-Deep-Research на qwen3.5-9b, который с первого раза решил <strong>55,8%</strong> задач валидации, а <strong>73</strong> задачи провалил. Затем каждый неудачный запуск попытались диагностировать и переиграть один раз.</p>
+<p>Результат получился наглядный.</p>
+<p>Базовые методы исправления самой себя, которые просто получают общий разбор провала, смогли починить от <strong>4</strong> до <strong>6</strong> задач из 73.</p>
+<p>DeepDebug с локализацией причины и конкретной правкой починил <strong>13</strong> задач.</p>
+<p>Общая точность выросла с <strong>55,8%</strong> до <strong>63,6%</strong>.</p>
+<p>Это уже не разговор о том, «умеет ли система красиво объяснять». Это разговор о том, меняет ли диагностика итоговый ответ. В данном случае — да.</p>
+<p>Особенно заметен рост на задачах средней сложности, где нужно сделать несколько логических и инструментальных шагов подряд. Там точная локализация ошибки особенно полезна: вместо общего «подумай ещё раз» агент получает указание, где именно была неверная развилка.</p>
+<p>Важно и то, с чем здесь сравнивают DeepDebug. Базовые подходы к исправлению видят общий контекст провала, но не получают точную локализацию причинного шага, доказательства и сформулированную правку. То есть статья на деле показывает простую вещь: если вы знаете, где ошибка, исправлять её заметно легче.</p>
+</section>
+<section>
+<h2>Где здесь границы</h2>
+<p>У работы есть ограничения, и их стоит держать в голове.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Точность атрибуции пока далека от идеала. Даже лучший результат на строгой метрике — это не «задача решена», а «задача стала заметно лучше».</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Выигрыш зависит от модели. Для некоторых закрытых моделей один глобальный проход уже работал так хорошо, что многокруговая схема почти не помогала.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Эксперимент на GAIA проверяет полный контур целиком, а не изолирует вклад одного только шага атрибуции.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Повторный запуск не должен быть полностью автоматическим. Если агент взаимодействует с внешним миром, любое исправление лучше пропускать через человека или политику безопасности.</span></div>
+<p>И это, пожалуй, правильная постановка. Авторы не обещают автоматическую отладку как волшебную кнопку. Они предлагают инфраструктуру, где диагностика становится системной, проверяемой и повторяемой.</p>
+</section>
+<section>
+<h2>Почему это важно</h2>
+<p>Если вы строите ИИ-агентов всерьёз, проблема уже не в том, как собрать длинную трассу. Проблема в том, как из этой трассы извлечь ответ на три вопроса:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 что именно сломалось;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 где была причина;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 что менять в следующем запуске.</span></div>
+<p>AgentDebugX показывает, что эти три вопроса можно связать в один инженерный цикл. И это важнее, чем кажется. Пока отладка ИИ-агентов часто живёт как кустарное ремесло: кто-то посмотрел журнал, догадался, поправил промпт, забыл. Такой процесс плохо масштабируется, плохо проверяется и почти ничего не оставляет после себя.</p>
+<p>Здесь предлагается другой подход: хранить поломки как артефакты, писать для них диагнозы, строить повторный запуск как новую ветку, собирать память об ошибках и постепенно превращать надёжность агентов в обычную инженерную дисциплину.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>ИИ-агенты ломаются не там, где это видно. Поэтому одной наблюдаемости уже мало. Нужна система, которая умеет пройти путь от симптома к причине, от причины к исправлению, а затем проверить исправление в новом запуске.</p>
+<p>AgentDebugX строит именно такой цикл. DeepDebug ищет не просто сбойный шаг, а причинный шаг. На бенчмарке Who&When это даёт более точную атрибуцию, особенно на длинных трассах. На GAIA эта точность превращается в дополнительные исправленные задачи после одного повторного запуска.</p>
+<p>По сути, работа двигает отладку ИИ-агентов из режима «посмотрели журнал и прикинули» в режим воспроизводимой инженерной процедуры. А по мере того как агенты получают больше инструментов, памяти, браузера и мультиагентной координации, именно такая процедура становится не роскошью, а базовой необходимостью.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.18754" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/AgentDebugX/AgentDebugX" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
