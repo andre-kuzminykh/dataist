@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ИИ-агентов научили управлять памятью во время долгих задач</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="ИИ-агентов научили управлять памятью во время долгих задач" />
+    <meta property="og:description" content="Когда ИИ-агент долго решает задачу, он легко тонет в собственных заметках и начинает путаться в том, что было важным.
+
+Исследователи предлагают дать агенту более человеческий способ работы с памятью: не тащить всё перед собой, а самому решать, что можно свернуть, убрать во внешнее хранилище и потом вернуть по мере надобности. Так он меньше захлёбывается в лишних деталях, дольше держит ход мысли и стабильнее доводит сложные задачи до конца.
+
+В этом обзоре разбираем, как ИИ-агента научили управлять своей памятью во время длинной работы и почему это помогает ему лучше искать решения и писать код." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/ii-agentov-nauchili-upravliat-pamiatiu-vo-vremia-dolgikh-zadach/ii-agentov-nauchili-upravliat-pamiatiu-vo-vremia-dolgikh-zadach_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-07-28/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-28/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-07-28</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    ИИ-агентов научили управлять памятью во время долгих задач
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-28/cover.jpg"
+                         alt="Обложка: ИИ-агентов научили управлять памятью во время долгих задач"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда у ИИ-агента кончается память посреди дела</h2>
+<p>У длинных задач у ИИ-агентов есть очень земная проблема: они забываются в собственных шагах. Поиск в интернете, чтение документов, попытки, откаты, новые гипотезы — всё это накапливается в контексте. В какой-то момент история становится слишком длинной. Модель либо упирается в лимит, либо начинает хуже соображать просто потому, что вокруг слишком много шума.</p>
+<p>Новая работа Carnegie Mellon University и Meta предлагает не просто ещё один способ сжимать историю, а другой взгляд на проблему. Авторы называют его ACM — агентное управление контекстом. Идея простая: не внешний костыль решает, когда урезать историю, а сам ИИ-агент. И делает это без потери исходных данных.</p>
+<p>Это важный сдвиг. Сегодня много разговоров о миллионных окнах контекста, но на практике длинный контекст не отменяет перегрузку. Если вы хотите, чтобы ИИ-агент часами искал ответ, писал код или разбирал репозиторий, ему нужна не просто большая память, а умение ей управлять.</p>
+</section>
+<section>
+<h2>Что не так с обычным сжатием контекста</h2>
+<p>Стандартный рецепт выглядит так: когда история разрастается до порога, внешний модуль делает сводку, старые сообщения выбрасываются, агент продолжает работать по короткому пересказу. Это лучше, чем ничего, но тут сразу две проблемы.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 При сжатии теряются детали. Если позже понадобится конкретная строчка из старого документа, её уже может не быть.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Решение о сжатии принимает не сам агент, а жёсткое правило вроде «сжать на 90% окна».</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Такое правило не понимает, что сейчас происходит в рассуждении: агент может быть на важном повороте и как раз использовать старый контекст.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Чем длиннее задача, тем выше шанс, что сводка упростит историю слишком грубо.</span></div>
+<p>Авторы противопоставляют этому подходу модель, похожую на человеческую память: есть рабочая память для того, что нужно прямо сейчас, и есть внешняя память, куда можно убрать лишнее, но не навсегда.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-28/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема ACM: обычный агент упирается в лимит, агент со сводкой принудительно сжимает историю, а ACM сам решает, когда убрать контекст без потери исходных сообщений.</p>
+</div></figure>
+<p>В ACM у агента всего два специальных инструмента:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Управление контекстом — сжать часть прошлой истории в короткую сводку и сохранить исходные сообщения во внешнее хранилище.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Запрос к памяти — при необходимости достать из внешней памяти ровно тот фрагмент, который нужен сейчас.</span></div>
+<p>Ключевой момент: исходная история не пропадает. Она просто уезжает из рабочего окна во внешнюю память. Поэтому сжатие здесь фактически без потерь.</p>
+</section>
+<section>
+<h2>Что именно предлагают авторы</h2>
+<p>Главная идея статьи не в самом факте сжатия, а в том, что управление контекстом становится действием агента. То есть таким же осознанным шагом, как поиск по вебу, открытие документа или отправка патча в задаче по программированию.</p>
+<p>Агент сам решает:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 когда пора расчистить рабочий контекст;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 что именно можно убрать из текущего окна;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 когда стоит обратиться к архиву;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 когда сжатие не нужно и лучше продолжать поиск.</span></div>
+<p>Это звучит естественно, но для современных моделей это неочевидный навык. Даже очень большие модели, как показывают авторы, сами по себе редко начинают грамотно управлять контекстом. Им нужно это отдельно показывать и дообучать на таких траекториях.</p>
+</section>
+<section>
+<h2>Как их этому учат</h2>
+<p>Здесь самая интересная часть работы. Авторы не просто прикрутили к модели два инструмента, а придумали, как научить её пользоваться ими вовремя.</p>
+<p>Схема обучения устроена как связка «ученик — учитель». В роли ученика выступает Qwen3.5-9B, в роли учителя — намного более крупная Qwen3.5-397B-A17B.</p>
+<p>Процесс идёт в два прохода:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Ученик решает задачу без инструментов управления контекстом.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Ученик решает ту же задачу с инструментами управления контекстом.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Учитель просматривает обе траектории и исправляет их.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 После этого ученик дообучается на исправленных примерах.</span></div>
+<p>Но важна тонкость. Учитель делает два типа правок.</p>
+<p>В первом случае он смотрит на траекторию без ACM и вставляет момент, где управление контекстом стоило бы вызвать. Например, когда агент зациклился, повторяет одни и те же поиски или накопил слишком много лишней истории.</p>
+<p>Во втором случае он смотрит на траекторию с ACM и, наоборот, убирает лишнее сжатие. То есть учит модель не только тому, когда надо чистить контекст, но и когда этого делать не надо.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-28/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема генерации данных для обучения: ученик проходит задачу с инструментами и без них, а учитель добавляет или убирает вызовы управления контекстом.</p>
+</div></figure>
+<p>Это разумный ход. ИИ-агенту недостаточно сказать «чаще сжимай историю». Тогда он начнёт делать это слишком рано и сам себе мешать. Здесь модель учат балансу: где расчистка помогает, а где ломает ход решения.</p>
+</section>
+<section>
+<h2>Что получилось на практике</h2>
+<p>Авторы проверили ACM на трёх длинных бенчмарках:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 BrowseComp-Plus — сложный агентный поиск;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 DeepSearchQA — многошаговые поисковые вопросы;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 SWE-Bench Verified — задачи по программированию на реальных репозиториях.</span></div>
+<p>Базовое сравнение идёт с ReAct, обычным агентом без управления контекстом, а также с системами, где есть внешнее сжатие по порогу.</p>
+<p>Результаты выглядят так: уже просто добавление ACM улучшает поведение агента, а дообучение на специальных траекториях даёт ещё заметный прирост.</p>
+<p>Для Qwen3.5-9B авторы сообщают:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 рост качества на 27% относительно ReAct на BrowseComp-Plus;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 рост на 16% на DeepSearchQA;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 рост на 8% на SWE-Bench Verified.</span></div>
+<p>На BrowseComp-Plus точность Pass@1 поднимается с 0.570 у ReAct до 0.727 у версии с ACM после дообучения. При этом модель остаётся на порядок меньше некоторых открытых и закрытых лучших на данный момент систем.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-28/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Точность Qwen3.5-9B на BrowseComp-Plus: ReAct, базовый ACM и три эпохи дообучения с ACM. После дообучения растут и средняя точность, и стабильность ответов.</p>
+</div></figure>
+<p>Ещё один важный результат: ACM снижает пиковое давление на контекст. В среднем пиковое число токенов уменьшается примерно на 20% по сравнению с обычным агентом. Это важно не только для качества, но и для стоимости инференса: меньше пик — меньше нагрузка на память сервера и на кэш модели.</p>
+</section>
+<section>
+<h2>Почему качество растёт</h2>
+<p>Авторы отдельно разбирают поведение агентов, и там видна понятная механика. ACM не просто «экономит токены». Он позволяет агенту дольше исследовать задачу, не захламляя рабочее окно.</p>
+<p>На графике роста контекста это выглядит как зубчатая линия: агент периодически сам сокращает историю до того, как упрётся в потолок. В отличие от ReAct, который только накапливает сообщения, ACM делает паузы на уборку и продолжает поиск.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-28/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Рост числа входных токенов по ходу решения: у ACM контекст периодически сокращается, поэтому агент может работать дольше и не упирается в лимит так быстро.</p>
+</div></figure>
+<p>Из этого следуют три эффекта.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Агент может делать больше шагов поиска и проверки.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 В рабочем контексте меньше мусора от старых тупиковых веток.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Ответы становятся стабильнее между разными прогонами одной и той же задачи.</span></div>
+<p>Последний пункт особенно интересен. Авторы смотрят не только на Pass@1, но и на метрики, которые показывают согласованность между несколькими независимыми запусками. ACM улучшает не только «потолок возможностей», но и повторяемость. Проще говоря, модель не просто иногда находит правильный путь, а чаще удерживает его до конца.</p>
+</section>
+<section>
+<h2>Один показательный пример</h2>
+<p>В статье есть наглядный кейс с многошаговым вопросом из BrowseComp-Plus, где нужно связать несколько ограничений из биографии автора, диссертации, соавторства и даты основания ресторана. Без управления контекстом базовая модель во всех четырёх прогонах не справилась.</p>
+<p>Версия с ACM вела себя иначе:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 следила за размером текущего контекста;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 несколько раз вызывала управление контекстом;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 по мере надобности обращалась к внешней памяти;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 продолжала поиск, пока не собрала все подтверждения;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 завершила решение только когда контекст снова стал компактным.</span></div>
+<p>В этой траектории «сырая» история разрослась до 222 тысяч токенов, но рабочее окно оставалось ниже лимита базовой модели. То есть агент фактически решил задачу, которая без внешней памяти развалилась бы задолго до финиша.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-28/fig_5.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Пример длинной траектории с ACM: агент сам следит за размером контекста, чередует сжатие и запросы к памяти и проходит путь, который без этого превысил бы лимит окна.</p>
+</div></figure>
+<p>Это, пожалуй, самый убедительный фрагмент статьи. Здесь видно, что речь не о косметическом улучшении запроса к модели, а о новой рабочей привычке агента.</p>
+</section>
+<section>
+<h2>Что важно в сравнении с большими моделями</h2>
+<p>Есть ещё одно любопытное наблюдение. Даже GPT-5.5 в этой архитектуре почти не пользуется инструментами управления контекстом. То есть сама по себе большая модель не обязательно начинает грамотно чистить память, даже если такая возможность у неё есть.</p>
+<p>Это важно по двум причинам.</p>
+<p>Во-первых, навык управления контекстом не появляется автоматически вместе с ростом модели.</p>
+<p>Во-вторых, просто дистиллировать решения от сильной модели недостаточно. Если учитель решил задачу без вызова памяти, ученик не увидит нужного поведения. Поэтому авторы и делают ставку на специальные данные, где моменты для сжатия и для отказа от сжатия размечаются явно.</p>
+<p>Кстати, отдельный эксперимент это подтверждает. Простая дистилляция от GPT-5.5 не даёт такого же прироста, как обучение именно на данных ACM. А комбинация обоих подходов работает лучше всего на части задач.</p>
+</section>
+<section>
+<h2>Где у подхода границы</h2>
+<p>Авторы честно показывают и ограничение: ACM полезен не для любой модели. Если модель слишком слабая и сдаётся после двух-трёх шагов, ей нечем управлять. Контекст просто не успевает стать длинным.</p>
+<p>Они приводят пример с более маленькой моделью на 4B параметров. Та почти всегда делает один поиск, затем быстро угадывает ответ и завершает траекторию. До проблем длинного горизонта она просто не доходит. Значит, инструменты памяти здесь бесполезны не потому, что плохи, а потому что базовая способность держать длинное рассуждение ещё не дотягивает.</p>
+<p>Это важное уточнение для рынка ИИ-агентов. Управление контекстом — не замена способностям модели, а надстройка над ними. Сначала агент должен уметь долго и осмысленно работать, и только потом ему начинает всерьёз помогать память.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>Длинные задачи ломают ИИ-агентов не только размером окна, но и беспорядком внутри него. ACM предлагает простой и практичный ответ: превратить управление контекстом в собственное действие агента, а не во внешний таймер со сводкой.</p>
+<p>Из результатов видно несколько вещей:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 без потерь хранить старую историю лучше, чем безвозвратно заменять её сводкой;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 решение о сжатии должно зависеть от хода рассуждения, а не только от процента заполнения окна;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 отдельное обучение моментам «когда сжимать» и «когда не сжимать» даёт заметный прирост на длинных задачах;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 управление контекстом улучшает не только точность, но и длину исследования, и повторяемость решений.</span></div>
+<p>Если ИИ-агенты и дальше будут двигаться в сторону долгих автономных задач — глубокого поиска, работы с кодом, сложных цепочек инструментов, — такие механики почти неизбежно станут базовой частью стека. Не потому, что контекстные окна маленькие, а потому, что даже большое окно нужно уметь держать в порядке.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.23809" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/lixiaochuan2020/agentic-context-management" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
