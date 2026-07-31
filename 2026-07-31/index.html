@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Что помогает ИИ лучше писать код с нуля</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Что помогает ИИ лучше писать код с нуля" />
+    <meta property="og:description" content="ИИ неплохо чинит и дописывает чужой код, но когда нужно написать программу с нуля, он вдруг начинает теряться.
+
+Исследователи предлагают не бросать модель сразу в написание кода, а сначала заставить её отдельно понять, что именно должна делать программа. Для этого один ИИ-агент изучает описание и проверяет поведение готового файла через запуски, а потом собирает из этого ясный план требований. После этого другой ИИ-агент пишет код уже не вслепую, а опираясь на такой план, поэтому реже уходит не туда и лучше держит смысл задачи.
+
+В этом обзоре разбираем, почему написание кода с нуля так часто ломается у ИИ и как отдельный шаг с прояснением требований помогает получить более точный результат." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/chto-pomogaet-ii-luchshe-pisat-kod-s-nulia/chto-pomogaet-ii-luchshe-pisat-kod-s-nulia_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-07-31/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-31/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-07-31</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Что помогает ИИ лучше писать код с нуля
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-31/cover.jpg"
+                         alt="Обложка: Что помогает ИИ лучше писать код с нуля"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Сначала понять, потом писать</h2>
+<p>ИИ-агенты уже неплохо чинят код, дописывают функции и разбираются в чужих репозиториях. Но если попросить их собрать программу с нуля, ситуация резко меняется. Особенно когда исходников нет, а есть только README и готовый бинарник, который можно запускать как черный ящик. На таких задачах даже лучшие на данный момент модели часто проваливаются.</p>
+<p>Авторы работы SpecFirst предлагают идею: прежде чем писать код, сначала разберись, что программа вообще должна делать. Не по верхам, не на лету, а в отдельной фазе. Сначала спецификация поведения, потом реализация.</p>
+<p>И это меняет результат заметно сильнее, чем можно было ожидать от такого простого шага.</p>
+</section>
+<section>
+<h2>В чем проблема у обычных агентов</h2>
+<p>Сегодняшний стандартный конвейер агента для программирования устроен так: он читает документацию, запускает бинарник, что-то пробует, тут же начинает писать код, потом снова что-то проверяет, опять пишет, снова исправляет. Все вперемешку.</p>
+<p>На бумаге это выглядит разумно. На практике ломается сразу в нескольких местах.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Агент слишком рано начинает писать код и не успевает нормально исследовать поведение программы.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 По ходу длинной сессии он теряет важные детали, которые сам же выяснил в начале.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Ранняя ошибка в понимании задачи тянется через весь проект и заражает последующие решения.</span></div>
+<p>Авторы показывают это на бенчмарке ProgramBench. Там задача жесткая: нужно восстановить программу с нуля, имея только текстовое описание и исполняемый файл без исходников. Скрытые тесты потом проверяют, насколько новая реализация повторяет поведение оригинала.</p>
+<p>Результат отрезвляет: даже очень сильные модели полностью решают меньше 1% задач. То есть дело не в том, что моделям не хватает «еще немного интеллекта». Проблема в самом способе работы.</p>
+</section>
+<section>
+<h2>Что предлагает SpecFirst</h2>
+<p>Идея SpecFirst проста: разделить одну большую задачу на две отдельные.</p>
+<p>Сначала работает специальный агент спецификации. Его единственная цель — понять поведение программы. Он читает документацию, запускает бинарник разными способами, вызывает команды с разными флагами, проверяет ошибки, редкие случаи, формат вывода. И по итогам пишет структурированный файл `SPEC.md`.</p>
+<p>Потом подключается агент для программирования. Он получает документацию, бинарник и уже готовую спецификацию поведения. И только после этого начинает писать реализацию.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-31/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема SpecFirst: поверх обычного конвейера добавляется отдельный агент спецификации, который сначала собирает требования к поведению программы.</p>
+</div></figure>
+<p>В обычном режиме агенту приходится одновременно исследовать систему и строить ее копию. В SpecFirst эти роли разведены. Один агент отвечает за понимание, другой — за код.</p>
+<p>Зачем это нужно:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Спецификация становится внешней опорой. Важные детали не растворяются в длинном контексте.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Неясности в документации можно снять до начала реализации.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Агент для программирования меньше гадает и больше реализует уже выясненное поведение.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Если что-то было понято правильно на раннем этапе, это остается в `SPEC.md` и не теряется через 50 ходов.</span></div>
+</section>
+<section>
+<h2>Как агент собирает спецификацию</h2>
+<p>Авторы не ограничились общей идеей «пусть агент поизучает бинарник». Они описали, как именно он это делает.</p>
+<p>Агент спецификации работает через обычную оболочку. Он запускает программу с разными аргументами, подает ввод через стандартный поток, читает `stdout`, `stderr` и код завершения. Для интерактивных программ используют виртуальный терминал.</p>
+<p>Главное здесь — сами шаблоны исследования. Агент не просто хаотично тыкает в команды, а целится в те зоны, которые документация почти всегда описывает плохо.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Проверка границ: пустой ввод, слишком длинные строки, специальные символы, предельные значения.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Проверка ошибок: неверные аргументы, конфликтующие флаги, отсутствующие обязательные параметры.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Проверка сочетаний флагов: что происходит, когда опции используются вместе.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Уточнение формата вывода: порядок полей, разделители, пробелы, переводы строк.</span></div>
+<p>Итогом становится не сырая стенограмма сессии, а компактный структурированный документ из шести разделов: обзор, флаги, ввод, формат вывода, ошибки, редкие случаи.</p>
+<p>Это важно, потому что для следующего агента нужна не просто куча наблюдений, а рабочая инструкция по поведению программы.</p>
+<p>Авторы отдельно запрещают короткие пути. Агент не может искать исходники в сети, скачивать пакет из реестра, запускать декомпиляторы или как-то анализировать бинарник изнутри. Только черный ящик: запускай, смотри, записывай выводы. Иначе задача теряет смысл.</p>
+</section>
+<section>
+<h2>Как это проверяли</h2>
+<p>Оценка сделана на всех 200 задачах ProgramBench. Это реальные консольные программы из открытых проектов: от утилит на Go и Rust до более крупных инструментов вроде SQLite, FFmpeg и интерпретатора PHP.</p>
+<p>Сравнение честное: один и тот же базовый агент, те же модели, те же условия. Меняется только одно — есть ли перед написанием кода отдельная фаза спецификации.</p>
+<p>Проверяли четыре модели:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Qwen3.5-397B-A17B</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Qwen3.6-35B-A3B</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 GPT-5.5-high</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 GPT-5.4-mini</span></div>
+<p>Главная метрика — доля скрытых тестов, которые проходит восстановленная программа. Это разумный выбор: полное совпадение с оригиналом здесь редкость, поэтому важно видеть и частичный прогресс.</p>
+</section>
+<section>
+<h2>Что получилось</h2>
+<p>Результат у SpecFirst стабильно лучше на всех четырех моделях. Прирост по средней доле пройденных тестов составил от 6,9% до 21,3%.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2 flex justify-between items-center"><span class="font-mono font-bold text-sm">🟠 Qwen3.5-397B</span><span class="font-mono text-sm"><span class="opacity-50">33,66%</span> → <span class="text-cyber-orange font-bold">40,84%</span></span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2 flex justify-between items-center"><span class="font-mono font-bold text-sm">🟠 Qwen3.6-35B</span><span class="font-mono text-sm"><span class="opacity-50">27,51%</span> → <span class="text-cyber-orange font-bold">31,40%</span></span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2 flex justify-between items-center"><span class="font-mono font-bold text-sm">🟠 GPT-5.5-high</span><span class="font-mono text-sm"><span class="opacity-50">59,02%</span> → <span class="text-cyber-orange font-bold">65,14%</span></span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2 flex justify-between items-center"><span class="font-mono font-bold text-sm">🟠 GPT-5.4-mini</span><span class="font-mono text-sm"><span class="opacity-50">39,09%</span> → <span class="text-cyber-orange font-bold">41,78%</span></span></div>
+<p>У GPT-5.5-high картина особенно интересная не только по среднему баллу. SpecFirst заметно увеличивает долю почти идеальных решений:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 задач с результатом не ниже 90% стало 16,5% вместо 5,5%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 задач с результатом не ниже 95% стало 6,5% вместо 1,5%</span></div>
+<p>То есть подход не просто немного поднимает среднее. Он чаще доводит решения до состояния, когда программа повторяет почти все поведение оригинала.</p>
+</section>
+<section>
+<h2>Почему это работает</h2>
+<p>Авторы показывают, что дело не только в «дополнительном шаге», а в изменении поведения агента во время работы.</p>
+<p>Во-первых, SpecFirst действительно исследует программу шире. Для этого измеряли покрытие исследования: какую долю строк в исходной программе агент вообще затронул через свои запросы к бинарнику. Понятно, что агент не видит исходники, но исследователи инструментировали эталонные программы и смотрели, какие участки кода были реально вызваны во время зондирования.</p>
+<p>SpecFirst выигрывает и здесь: итоговое покрытие исследования выше на 9,4–18,5% в зависимости от модели.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 У Qwen3.5-397B суммарное покрытие: 59,8% против 51,9%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 У Qwen3.6-35B: 58,3% против 49,2%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 У GPT-5.5-high: 60,3% против 55,1%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 У GPT-5.4-mini: 58,6% против 52,1%</span></div>
+<p>Важно и то, откуда берется этот прирост. Его дает именно агент спецификации. Агент для программирования потом исследует меньше, потому что ему уже есть на что опереться.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-31/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Размер восстановленной кодовой базы по ходу работы: с предварительной спецификацией агент раньше начинает писать код и дольше держится в фазе реализации.</p>
+</div></figure>
+<p>Во-вторых, меняется сам ритм работы. Когда у агента есть `SPEC.md`, он начинает писать код раньше и пишет его дольше, без постоянных возвратов в режим разведки. Грубо говоря, обычный агент много мечется между «еще чуть-чуть проверить» и «пора уже писать код». SpecFirst убирает эту дерготню.</p>
+<p>Авторы измерили это по росту размера кодовой базы в ходе сессии. С предварительной спецификацией кривая роста поднимается раньше, а итоговый размер реализации получается больше. Финальные кодовые базы были на 7–29% крупнее в зависимости от модели. Это похоже не на бессмысленный раздув, а на более полную реализацию функций.</p>
+</section>
+<section>
+<h2>Пример, где обычный подход путается</h2>
+<p>В статье есть показательный случай с утилитой `gomplate`. Это шаблонизатор командной строки с кучей пространств имен, функций, флагов и вариантов поведения. README описывает общую идею, но не может перечислить все детали: сигнатуры, ошибки, особенности формата, совместимость флагов.</p>
+<p>Обычный агент в таких задачах часто цепляется только за примеры из документации и не идет дальше. Он может исследовать `env` и `data`, но почти не трогать другие пространства имен. Или один раз увидеть важную информацию, а потом просто забыть про нее через десятки ходов.</p>
+<p>SpecFirst в таком случае сначала собирает карту поведения и фиксирует ее в `SPEC.md`: какие есть функции, как работают флаги, какие сочетания запрещены, какие ошибки и где печатаются. После этого агент для программирования получает уже не расплывчатое описание, а рабочую спецификацию.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-31/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">В четырех примерах с GPT-5.5 видно, что без отдельной спецификации агент дольше исследует и позже переходит к реализации.</p>
+</div></figure>
+</section>
+<section>
+<h2>Где остаются проблемы</h2>
+<p>При всех улучшениях задача все еще далека от решения. Авторы вручную разобрали 50 провалов и увидели несколько типов ошибок.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Спецификация что-то не нашла вовсе.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Спецификация описала поведение неверно.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Спецификация нашла поведение, но описала его слишком расплывчато.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Реализация не смогла точно выполнить даже корректную спецификацию.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Часть ошибок связана со средой выполнения, а не с самим агентом.</span></div>
+<p>Самый частый случай — последний шаг все равно ломается на реализации. То есть знать поведение программы недостаточно: нужно еще аккуратно и полно перенести это знание в код.</p>
+<p>Это хорошо показывает, куда двигаться дальше. Одной фазы спецификации мало для полного решения задачи. Нужны еще более надежные механизмы проверки реализации по этой спецификации, самопроверки и исправления самой себя.</p>
+</section>
+<section>
+<h2>Цена вопроса</h2>
+<p>За улучшение приходится платить. SpecFirst почти всегда дороже обычного режима, потому что добавляет еще одного агента и еще одну фазу инференса.</p>
+<p>В среднем рост стоимости на задачу составил от 48% до 130% в зависимости от модели. Для GPT-5.5-high разница особенно заметна: много денег уходит именно на фазу спецификации.</p>
+<p>Но тут важен нюанс. Базовый агент не упирался в лимит ходов. Он почти всегда завершал работу сам раньше времени. Значит, проблема была не в недостатке бюджета как таковом. Просто дать обычному агенту еще больше шагов — не то же самое, что дать ему отдельную фазу понимания задачи.</p>
+</section>
+<section>
+<h2>Почему это важно</h2>
+<p>В программировании с нуля это почти очевидно: сначала требования, потом код. Для ИИ-агентов мы почему-то долго делали наоборот и надеялись, что модель сама удержит все в голове по ходу длинной сессии.</p>
+<p>SpecFirst показывает более общий принцип. Если задача длинная, неоднозначная и требует исследования среды, полезно выносить понимание задачи в отдельный артефакт. Не держать все в контексте, а создавать внешний документ, на который можно опираться дальше.</p>
+<p>Это может быть полезно не только для восстановления программ по бинарнику.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Для работы с API, где документация неполная и многое приходится выяснять экспериментально.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Для миграции старых систем, когда поведение живет в работающем сервисе, а не в исходниках.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Для тестирования и интеграции, где нужно сначала понять контракт системы.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Для сложных мультиагентных конвейеров, где один агент собирает требования, а другой реализует.</span></div>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>Если вы хотите, чтобы ИИ-агент писал программу с нуля, мало просто дать ему README и доступ к терминалу. Нужна отдельная фаза, где агент сначала выясняет, что именно должна делать программа, и фиксирует это в явном виде.</p>
+<p>SpecFirst показывает, что такая декомпозиция дает стабильный выигрыш: больше покрытие исследования, раньше старт реализации, крупнее и полнее кодовая база, выше доля пройденных тестов. Причем эффект виден на разных моделях и на задачах разной сложности.</p>
+<p>В длинных задачах программирования ИИ-агенту нужен не только код, но и память в виде спецификации. Без нее он запутывается в собственных шагах. С ней у него появляется опора, от которой уже можно строить реализацию.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.27167" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
