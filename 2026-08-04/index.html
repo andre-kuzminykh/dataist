@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как один ИИ-агент работает в телефоне, браузере и на компьютере</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как один ИИ-агент работает в телефоне, браузере и на компьютере" />
+    <meta property="og:description" content="Один ИИ-агент, который одинаково уверенно действует в телефоне, браузере и на компьютере, уже выглядит не как трюк, а как будущий цифровой помощник.
+
+Исследователи предлагают систему, которая умеет нажимать кнопки на экране, вводить команды и доводить длинные дела до конца даже при переходе между разными устройствами. Команда учила такого агента не в игрушечных примерах, а в условиях, близких к жизни: он сам получает новые задания, разбирает свои ошибки и шаг за шагом становится полезнее почти без ручной настройки.
+
+В этом обзоре разбираем, как устроен такой универсальный ИИ-агент, за счёт чего он работает сразу в нескольких цифровых средах и почему это приближает нас к по-настоящему самостоятельным помощникам." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/kak-odin-ii-agent-rabotaet-v-telefone-brauzere-i-na-kompiutere/kak-odin-ii-agent-rabotaet-v-telefone-brauzere-i-na-kompiutere_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-08-04/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-04/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-08-04</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Как один ИИ-агент работает в телефоне, браузере и на компьютере
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-04/cover.jpg"
+                         alt="Обложка: Как один ИИ-агент работает в телефоне, браузере и на компьютере"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Qwen-UI-Agent: ИИ-агент, который пользуется телефоном и компьютером</h2>
+<p>Все хотят универсального ИИ-агента. Такого, которому можно сказать: «Разберись». Он сам откроет приложения, найдёт нужные кнопки, сравнит варианты, поправит файл на компьютере, а если прилетело уведомление об отмене рейса — предложит готовый план действий.</p>
+<p>Проблема в том, что почти все такие демонстрации хорошо выглядят на вылизанных тестах и заметно хуже — в живых приложениях. На настоящем смартфоне всё мешает: всплывающие окна, слетевшие логины, капча, странная вёрстка, медленная сеть, неожиданные экраны подтверждения. На компьютере другая проблема: одних кликов мало. Иногда быстрее и надёжнее сделать часть работы через командную строку.</p>
+<p>Именно эту проблему решает команда Alibaba в большом техническом отчёте про <strong>Qwen-UI-Agent</strong>. Это ИИ-агент для графических интерфейсов, который работает сразу в нескольких средах: на телефоне, на компьютере, в браузере и в режиме поиска по интернету. Если вы хотите полезного ИИ-агента, мало обучить модель нажимать на кнопки. Нужно строить всю систему целиком — среду, данные, обучение, проверку и продуктовую обвязку.</p>
+</section>
+<section>
+<h2>Что здесь сделали</h2>
+<p>Qwen-UI-Agent — это не просто ещё одна модель, которая умеет кликать по экрану. Это целый стек.</p>
+<p>🟠 Агент работает с мобильными приложениями, настольными программами, браузером и внешними сервисами поиска.</p>
+<p>🟠 Он умеет не только нажимать и печатать в интерфейсе, но и выполнять команды в командной строке, а также обращаться к API.</p>
+<p>🟠 Он может выдавать не одно действие за шаг, а пачку действий, если между ними не нужно каждый раз ждать новый экран.</p>
+<p>🟠 Его обучали не только на коротких сценариях, но и на длинных траекториях — больше 100 шагов.</p>
+<p>🟠 Поверх агента есть отдельный слой, который позволяет запускать задачи по уведомлениям и переносить работу между телефоном и компьютером.</p>
+<p>У обычных демонстраций ИИ-агентов часто одна и та же слабость: они выглядят как набор отдельных фокусов. Здесь авторы пытаются собрать из этого рабочую операционную систему для агента.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-04/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+</section>
+<section>
+<h2>Почему упор на реальные устройства</h2>
+<p>Разрыв между симуляцией и реальностью для мобильных агентов большой.</p>
+<p>В песочнице всё удобно. Приложение можно сбросить в начальное состояние. Нужные данные уже лежат на месте. Нет внезапной капчи. Нет рекламы. Нет нестабильной сети. Но пользователь живёт не в песочнице.</p>
+<p>Авторы поэтому построили парк из более чем 100 физических телефонов и более 150 приложений. Это не просто набор гаджетов на столе. Там есть диспетчер, который следит, какой телефон исправен, где какой аккаунт залогинен, какая сеть доступна, где сломалась среда, а где ошибся сам агент.</p>
+<p>Система умеет различать ошибку модели и ошибку среды. Если приложение зависло или сеть отвалилась, это не должно записываться в промах агента. Для этого они отдельно анализируют полную траекторию выполнения.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-04/fig_6.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>Отсюда же появился новый бенчмарк <strong>MobileWorld-Real</strong> — 409 задач в 104 приложениях на живых Android-устройствах. Это один из вкладов работы. Он показывает, насколько тяжело ИИ-агенту в обычной мобильной жизни. И именно там Qwen-UI-Agent набрал <strong>92,2%</strong> успешных выполнений. Для сравнения, у закрытых моделей результат ниже: Gemini 3.1 Pro — 86,2%, GPT-5.6 Sol — 85,4%, Claude Opus 4.8 — 84,7%.</p>
+<p>Это важно. Это проверка того, переносится ли навык из лаборатории на реальный экран.</p>
+</section>
+<section>
+<h2>Как агент действует: интерфейс, командная строка и пачки действий</h2>
+<p>У Qwen-UI-Agent единое пространство действий. Он может:</p>
+<p>🟣 кликать, свайпать, печатать, открывать приложения и нажимать системные кнопки;</p>
+<p>🟣 выполнять команды в командной строке;</p>
+<p>🟣 вызывать API;</p>
+<p>🟣 спрашивать пользователя, если нужно подтверждение или не хватает данных;</p>
+<p>🟣 завершать задачу с результатом.</p>
+<p>На бумаге это выглядит очевидно. Вместо логики «всё делаем только мышкой и глазами» здесь есть несколько способов действия. Но часть задач через интерфейс делать долго и бессмысленно.</p>
+<p>Пример из статьи: если надо найти правильную фотографию среди множества похожих, агент не открывает каждую по отдельности. Он может одной командой в командной строке собрать коллаж из миниатюр, быстро посмотреть на него, а потом уже через интерфейс выбрать нужное. То есть командная строка становится быстрыми руками, а графический интерфейс — глазами для проверки.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-04/fig_8.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>Это даёт два эффекта сразу.</p>
+<p>🟠 Задачи решаются быстрее, потому что часть рутины уходит в командную строку.</p>
+<p>🟠 Агент покрывает больше типов задач: от визуальной навигации до обработки файлов и данных.</p>
+<p>Ещё одна деталь — <strong>пакетные действия</strong>. Если агент понимает, что может подряд сделать несколько предсказуемых шагов, он не тратит отдельный шаг модели на каждый клик. Например, открыть поиск по странице, ввести запрос и нажать Enter. Или пройти длинную последовательность заполнения формы, пока не появится место, где снова нужно подумать.</p>
+<p>На сложном компьютерном бенчмарке OSWorld-v2 это дало заметную экономию шагов. У Qwen-UI-Agent среднее число шагов на задачу — 135,8. Это меньше, чем у ряда открытых моделей, которые тратят 170–320 шагов.</p>
+</section>
+<section>
+<h2>Как его обучали</h2>
+<p>Архитектура здесь интересна, но основной вклад всё же в дата-пайплайн и обучение.</p>
+<p>Сначала авторы собирают данные для обучения с учителем: траектории, где агент шаг за шагом решает задачи. Но они не полагаются только на ручную разметку. У них есть автоматический цикл улучшения данных — своего рода маховик.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-04/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>Схема примерно такая:</p>
+<p>🟣 сильные модели помогают придумывать новые задачи;</p>
+<p>🟣 агенты создают состояния среды под эти задачи;</p>
+<p>🟣 затем другие агенты или проверяющие модели анализируют, где текущая версия проваливается;</p>
+<p>🟣 после этого система генерирует новую порцию данных ровно под слабые места;</p>
+<p>🟣 следующая итерация обучения использует эти данные.</p>
+<p>Поверх обычного обучения с учителем идут два слоя обучения с подкреплением.</p>
+<p>Первый слой — исправление типовых локальных ошибок. Авторы перечисляют шесть повторяющихся паттернов: агент путает похожие кнопки, ошибается в сортировке, не добирает все нужные элементы, слишком рано объявляет успех, зацикливается на одном действии, плохо использует редкие, но важные действия вроде долгого нажатия или запроса к пользователю.</p>
+<p>Под это они собрали отдельные данные и обучили политику штрафовать такие ошибки. Результат — меньше циклов и меньше ложных завершений.</p>
+<p>Второй слой — длинные траектории. Здесь агента учат доводить задачу до конца, а не просто красиво делать отдельные шаги. Для этого используют обучение с подкреплением по итоговому результату задачи. Среда запускается параллельно примерно в 10 тысячах экземпляров, чтобы ускорить сбор опыта.</p>
+<p>Ключевой эффект такого обучения: агент начинает чаще <strong>проверять</strong>, что задача реально выполнена. Не «я вроде создал файл, значит всё в порядке», а «я снова открою файл и посмотрю, есть ли там нужный график». Это улучшение поведения, близкое к человеческому.</p>
+</section>
+<section>
+<h2>Что получилось в цифрах</h2>
+<p>С результатами здесь всё довольно убедительно. Qwen-UI-Agent оказался не узким мобильным агентом, а системой сразу в нескольких режимах.</p>
+<p>На мобильных задачах:</p>
+<p>🟠 82,1% на MobileWorld</p>
+<p>🟠 92,2% на MobileWorld-Real</p>
+<p>🟠 97,5% на AndroidDaily</p>
+<p>На компьютерных задачах:</p>
+<p>🟠 79,5% на OSWorld-Verified</p>
+<p>🟠 40,0% по метрике частичного прогресса на OSWorld-v2</p>
+<p>На браузерных задачах:</p>
+<p>🟠 73,6% на WebArena</p>
+<p>На привязке к элементам интерфейса:</p>
+<p>🟠 81,5% на ScreenSpot-Pro в режиме с увеличением</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-04/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>Особенно показателен не один рекорд, а разброс. Обычно модели хороши либо в мобильных задачах, либо в браузере, либо в компьютерных сценариях. Здесь видно, что авторы строили базового агента для цифровой среды в целом.</p>
+</section>
+<section>
+<h2>Самая интересная часть: проактивность и работа между устройствами</h2>
+<p>Поверх модели авторы добавили отдельный слой, который превращает набор действий в помощника.</p>
+<p>Пример из статьи: на телефон приходит уведомление об отмене рейса. Вместо того чтобы ждать команду пользователя, система связывает это событие с поездкой, встречами в календаре и личными предпочтениями. Потом ищет альтернативные перелёты и поезда, проверяет, на что вы успеваете, и готовит вариант решения. А уже действия с последствиями — например, перебронирование — просит подтвердить.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-04/fig_10.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>Это уже похоже на продуктовую логику помощника. Там есть понятия события, текущего дела, памяти о пользователе и состояния задачи.</p>
+<p>Похожая идея работает и для задач между устройствами. Агент может что-то найти на телефоне, продолжить обработку на компьютере, отправить результат и потом вернуть финальный выбор обратно в мобильное приложение. Контекст при этом не теряется.</p>
+<p>Для пользователя это важнее, чем ещё плюс 2% на бенчмарке. Большая часть реальной цифровой жизни размазана между приложениями и устройствами. Если агент не умеет переносить состояние между ними, он быстро упирается в потолок пользы.</p>
+</section>
+<section>
+<h2>Где пока есть ограничения</h2>
+<p>Авторы сами честно показывают ограничения.</p>
+<p>🟣 На реальных устройствах успех оценивает не жёсткий программный проверяющий модуль, а автоматический судья по траектории. Он точен, но не идеален.</p>
+<p>🟣 Полная автоматизация улучшения агента пока не работает. Люди всё равно следят за пайплайном и вмешиваются.</p>
+<p>🟣 Реальные устройства сложно масштабировать. Они дорогие, нестабильные и требуют постоянного обслуживания.</p>
+<p>🟣 Даже с пакетными действиями задержка остаётся проблемой. Длинные задачи всё ещё занимают много времени.</p>
+<p>Вокруг ИИ-агентов часто много разговоров про универсальность, но меньше — про операционную реальность. А здесь видно, где система упирается в инфраструктуру, а не только в качество модели.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>Если вы хотите понять, куда движутся ИИ-агенты для интерфейсов, смотреть нужно не только на то, как модель находит кнопку на скриншоте. Смотреть нужно на всю систему.</p>
+<p>Qwen-UI-Agent показывает три вещи.</p>
+<p>🟠 Реальные устройства важнее красивых симуляций, если вы хотите довести агента до живого применения.</p>
+<p>🟠 Гибрид из графического интерфейса, командной строки и API работает лучше, чем ставка на один способ действия.</p>
+<p>🟠 Длинные задачи требуют не только рассуждения, но и проверки результата, исправления ошибок, памяти о состоянии и хорошего дата-пайплайна.</p>
+<p>В этом направлении ИИ-агенты становятся ближе к полезному цифровому помощнику. К системе, которая умеет последовательно доводить дело до конца на реальных экранах.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.28227" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
