@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Игра в шпиона помогает ИИ улучшать тексты и рассуждения</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Игра в шпиона помогает ИИ улучшать тексты и рассуждения" />
+    <meta property="og:description" content="Можно ли научить ИИ писать и рассуждать лучше, если превратить обучение в игру про шпиона?
+
+Исследователи предлагают способ, при котором модель сама получает понятный сигнал, справилась она или нет, даже в задачах без одного точного ответа — вроде пересказа текста или свободного письма. Для этого несколько ИИ-агентов делают одно и то же задание, но одному дают особую роль, а остальные потом пытаются вычислить «шпиона» по его ответу. Если его легко распознали, значит текст или ход мысли выдали слабое место, и модель может на этом учиться дальше.
+
+В этом обзоре разбираем, как игра с тайной ролью помогает ИИ улучшать тексты, рассуждения и обучение без постоянной опоры на оценку человека." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/igra-v-shpiona-pomogaet-ii-uluchshat-teksty-i-rassuzhdeniia/igra-v-shpiona-pomogaet-ii-uluchshat-teksty-i-rassuzhdeniia_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-08-05/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-05/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-08-05</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Игра в шпиона помогает ИИ улучшать тексты и рассуждения
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-05/cover.jpg"
+                         alt="Обложка: Игра в шпиона помогает ИИ улучшать тексты и рассуждения"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда у задачи нет правильного ответа</h2>
+<p>У больших языковых моделей есть старая проблема. Они хорошо учатся там, где можно точно проверить ответ: в математике, в задачах по программированию, в формальных головоломках. Ответ либо верный, либо нет. Машина получает понятный сигнал и улучшается.</p>
+<p>Но как только задача становится открытой — написать рассказ, сделать хорошее резюме документа, подготовить связное объяснение, — всё усложняется. Кто решает, что текст «хороший»? Человек? Другая модель? Набор критериев? Во всех случаях появляется шум, смещение и дополнительные расходы на инференс.</p>
+<p>Авторы предлагают неожиданный ход: не пытаться напрямую измерять качество открытого ответа, а <strong>переделать саму задачу</strong> так, чтобы внутри неё появился проверяемый сигнал. Из этой идеи вырос новый подход — RLSVR, то есть обучение с подкреплением с самопроверяемыми наградами, и его конкретная реализация SpyRL. По сути, модель учат через игру в «кто здесь шпион?».</p>
+<p>Результаты показывают, что это способ перенести обучение с проверяемыми наградами в открытые задачи.</p>
+</section>
+<section>
+<h2>Что такое RLSVR</h2>
+<p>Обычный режим обучения с проверяемыми наградами работает просто: модель решает задачу, проверяющий модуль сравнивает результат с правильным ответом, дальше модель получает награду. Это удобно, дёшево и масштабируется. Но только там, где «правильный ответ» вообще существует.</p>
+<p>RLSVR предлагает другой путь. Если у задачи нет встроенного проверяющего механизма, его можно <strong>сконструировать через преобразование задачи</strong>. Идея пришла из самосупервизии: там тоже нет разметки, но исследователи придумывают прокси-задачу, где метки рождаются автоматически из самих данных.</p>
+<p>Здесь происходит примерно то же самое, только вместо меток появляются награды.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-05/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>Схема такая:</p>
+<p>🟠 Берётся исходная открытая задача — например, суммаризация длинного текста.</p>
+<p>🟠 Среда заранее скрывает часть информации и запоминает, что именно было скрыто.</p>
+<p>🟠 Модели выполняют ту же задачу, но в немного разных условиях.</p>
+<p>🟠 Потом возникает дополнительный вопрос, на который можно ответить точно: кто работал с неполной информацией?</p>
+<p>🟠 Этот ответ проверяется по записи среды, а значит награда получается без человека и без внешнего судьи.</p>
+<p>Ключевой момент: прокси-задача должна быть связана с реальным качеством. Если плохой текст не помогает обнаружить скрытую нехватку информации, вся схема разваливается. Поэтому авторы показывают, как именно сделать такую связь плотной.</p>
+</section>
+<section>
+<h2>SpyRL: игра в шпиона</h2>
+<p>Конкретная реализация называется SpyRL. Здесь несколько копий модели играют в социальную игру.</p>
+<p>Одному участнику назначают роль шпиона. Остальные — «мирные». Мирные получают полный вход. Шпион — испорченную версию: часть текста скрыта, контекст урезан или замаскирован. После этого все делают одну и ту же целевую задачу: пишут резюме, рассказ или математическое решение.</p>
+<p>Потом начинается второй этап: все смотрят на ответы друг друга и голосуют, кто из них шпион.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-05/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>И вот здесь появляется проверяемая награда.</p>
+<p>Личность шпиона известна среде заранее. Значит, можно точно посчитать:</p>
+<p>🟣 Кто правильно вычислил шпиона</p>
+<p>🟣 Кто получил больше подозрений</p>
+<p>🟣 Насколько хорошо шпион «смешался с толпой»</p>
+<p>🟣 Насколько убедительно мирные участники отличили плохой ответ от хорошего</p>
+<p>Для этапа распознавания награда совсем жёсткая: угадал шпиона — получил плюс, нет — ноль. Для этапа генерации награда зависит от числа голосов подозрения. Если вас часто принимают за шпиона, ваш ответ, скорее всего, выглядел хуже других.</p>
+<p>Это и есть центральная идея: <strong>оценка качества текста превращается в задачу распознавания скрытого дефицита информации</strong>.</p>
+</section>
+<section>
+<h2>Почему это должно работать</h2>
+<p>Главный вопрос: правда ли подозрение в «шпионстве» связано с качеством текста? Может, игроки просто угадывают по поверхностным признакам.</p>
+<p>Авторы специально проверяют именно это.</p>
+<p>Они запускают 100 игровых эпизодов на задачах творческого письма и суммаризации. Для каждого ответа считают, сколько подозрительных голосов он набрал. А отдельно просят GPT-4o ранжировать ответы по качеству — от лучшего к худшему.</p>
+<p>Получается почти прямой тест метода: если голосов больше, а качество ниже, то внутренняя награда действительно попадает в цель.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-05/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>Именно это и видно на графике. Больше подозрений — хуже качество. Не идеально линейно, но связь стабильная. Для такого рода работ это важнее, чем красивое объяснение: внутренняя механика не просто существует, а согласуется с внешней оценкой.</p>
+<p>Большая часть открытых задач сегодня учится либо по человеческим предпочтениям, либо по модели-судье. И там всегда есть риск, что вы оптимизируете не качество текста, а вкусы или слабости судьи.</p>
+<p>SpyRL предлагает другой источник сигнала: игровую ситуацию, где правильный ответ встроен в саму среду.</p>
+</section>
+<section>
+<h2>Что делали в экспериментах</h2>
+<p>Авторы проверили метод на трёх типах задач:</p>
+<p>🟠 Суммаризация длинных документов</p>
+<p>🟠 Творческое письмо</p>
+<p>🟠 Математическое рассуждение</p>
+<p>В суммаризации и письме шпион видел текст с замаскированными фрагментами. В математике ему убирали часть контекста задачи. После этого все участники должны были выдать результат, а затем по этим результатам вычислить шпиона.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-05/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>Обучение шло попеременно в двух режимах:</p>
+<p>🟣 Сначала улучшается этап выполнения задачи</p>
+<p>🟣 Потом улучшается этап распознавания шпиона</p>
+<p>🟣 Затем цикл повторяется</p>
+<p>Это важная деталь. Если одновременно обновлять и «исполнителя», и «детектор», система становится слишком нестабильной: один модуль меняет распределение ответов, другой в этот же момент пытается к нему приспособиться. Авторы показывают, что совместное обновление заметно хуже, чем попеременное.</p>
+<p>Ещё одна техническая деталь — коррекция по ролям. У шпиона и у обычных игроков условия неравны: шпион изначально в худшей позиции. Поэтому сырые награды нельзя просто складывать вместе. Для этого в методе есть отдельная оценка преимущества по ролям, чтобы модель не училась наказывать себя просто за то, что оказалась шпионом.</p>
+</section>
+<section>
+<h2>Что получилось на практике</h2>
+<p>На открытых задачах эффект заметный.</p>
+<p>В суммаризации SpyRL стабильно обходит базовые модели и два self-play-бейзлайна — R-Zero и Absolute Zero. На Qwen3-8B средняя победа над своей базовой версией в A/B-сравнениях доходит до 75,4%. Для Qwen3-4B — 73,9%.</p>
+<p>В творческом письме картина ещё интереснее. На Qwen3-8B метод получает около 77,3% побед над базовой моделью на одном наборе и 78,1% на другом. Причём преимущество видно не только в «общем качестве», но и в более скользких категориях вроде новизны и эмоциональности.</p>
+<p>Авторы отдельно проверили оценки у людей. Десять аспирантов сравнивали анонимные тексты моделей. SpyRL там тоже впереди почти по всем измерениям.</p>
+<p>На математике метод тоже не проваливается, хотя там уже есть обычные проверяемые награды. Но и здесь SpyRL выигрывает. Для Qwen3-4B средний прирост по семи бенчмаркам составил 8,97%, для Qwen3-8B — 6,16%. Особенно заметны скачки на более сложных экзаменационных задачах вроде AIME.</p>
+<p>Подход, придуманный для открытых задач, помогает и там, где проверяемые ответы уже были. Похоже, дело не только в наличии награды, но и в том, насколько она богата и конкурентна.</p>
+</section>
+<section>
+<h2>Что показали дополнительные разборы</h2>
+<p>Авторы сделали набор абляций, и там видно, за счёт чего метод держится.</p>
+<p>🟠 Если обучать только этап выполнения задачи, без улучшения детектора, рост быстро выходит на плато.</p>
+<p>🟠 Если обучать только детектор, целевая способность почти не улучшается.</p>
+<p>🟠 Если убрать шпиона, то есть асимметрию информации, качество тоже быстро перестаёт расти.</p>
+<p>🟠 Если убрать поправку на роль шпиона и обычного игрока, результаты местами падают даже ниже базовой модели.</p>
+<p>Ещё одна полезная деталь — размер группы. Лучший скачок получается при переходе от 3 игроков к 5. Дальше отдача уменьшается.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-05/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>Это хороший практический вывод: не нужно бесконечно раздувать мультиагентный сценарий. Достаточно добиться такой сложности игры, при которой ответы уже трудно отличать, но ещё можно стабильно учить детектор.</p>
+</section>
+<section>
+<h2>Почему это важно</h2>
+<p>Если вы обучаете модели на математике, всё более-менее понятно: есть проверяющий код, есть ответ, есть награда. Но большая часть интересных продуктовых задач живёт в другой зоне. Суммаризация, письмо, исследование, подготовка черновиков, длинные объяснения — там нет эталона в одну строку.</p>
+<p>Сегодня индустрия в таких местах в основном опирается на три вещи:</p>
+<p>🟣 Человеческие предпочтения</p>
+<p>🟣 Наградные модели</p>
+<p>🟣 Модели-судьи</p>
+<p>У всех трёх подходов есть ограничения. Люди дорогие и медленные. Наградные модели наследуют смещения из обучающей выборки. Модели-судьи стоят денег на каждый инференс и часто оценивают хуже, чем хотелось бы.</p>
+<p>RLSVR показывает другой маршрут: можно не искать идеального внешнего судью, а менять структуру самой задачи так, чтобы сигнал рождался из среды. Это не убирает все проблемы. Нужно аккуратно проектировать игру, следить, чтобы участники не начали использовать поверхностные признаки, и проверять, что игровая награда правда связана с качеством. Но направление здесь понятное и практическое.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>У открытых задач может появиться проверяемая награда, если правильно перестроить среду. В этом главный смысл RLSVR.</p>
+<p>SpyRL делает это через простую механику: один участник видит испорченный вход, остальные — полный, а потом все пытаются вычислить шпиона по результату работы. Личность шпиона известна заранее, значит награда точная. При этом сама игра заставляет модель писать лучше, потому что плохой ответ выдаёт нехватку информации.</p>
+<p>Из этого следуют три вывода.</p>
+<p>🟠 Обучение с подкреплением не обязано ограничиваться математикой и задачами по программированию.</p>
+<p>🟠 Открытые задачи можно учить без постоянной опоры на внешнего судью.</p>
+<p>🟠 Преобразование задачи становится таким же важным инструментом, как архитектура модели или выбор алгоритма оптимизации.</p>
+<p>Если вы хотите понять, куда может пойти следующее поколение самообучения LLM, смотреть стоит именно сюда: не только на более умных судей, но и на более умные игровые среды, где правильный сигнал рождается сам.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.23802" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/wangqinsi1/RLSVR/tree/SpyRL" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
