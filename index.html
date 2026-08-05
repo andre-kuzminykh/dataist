@@ -13,8 +13,8 @@
     <meta property="og:url" content="https://dataist.ai" />
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
-    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
 
     <!-- Инициализация темы -->
     <script>
@@ -40,7 +40,7 @@
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <script>
-        tailwind.config = {
+        if (window.tailwind) tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
@@ -102,6 +102,63 @@
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
         .custom-scroll::-webkit-scrollbar-thumb { @apply bg-black/10 dark:bg-white/10; border-radius: 4px; }
+
+        /* Тег-фильтры: одинаковая ширина у всех */
+        .tag-chip {
+            @apply shrink-0 w-28 inline-flex items-center justify-center px-2 py-1.5 rounded-full border border-black/10 dark:border-white/20 bg-black/5 dark:bg-white/5 text-apple-textMutedLight dark:text-apple-textMutedDark text-[10px] md:text-xs font-mono font-bold tracking-[0.08em] uppercase cursor-pointer select-none transition-all hover:scale-[1.03] active:scale-95;
+        }
+        .tag-chip.tag-active {
+            @apply bg-black text-white border-black dark:bg-white dark:text-black dark:border-white;
+        }
+    </style>
+
+    <!-- Стили, не зависящие от Tailwind (спиннер, градиенты тегов, скрытие скроллбара) -->
+    <style>
+        /* Кружок загрузки — чистый CSS, работает даже если CDN не загрузился */
+        .spinner {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            border: 2.5px solid rgba(0, 0, 0, 0.12);
+            border-top-color: rgba(0, 0, 0, 0.55);
+            border-radius: 9999px;
+            animation: spinner-rotate 0.8s linear infinite;
+        }
+        .dark .spinner {
+            border-color: rgba(255, 255, 255, 0.15);
+            border-top-color: rgba(255, 255, 255, 0.65);
+        }
+        .spinner-sm { width: 1.1rem; height: 1.1rem; border-width: 2px; }
+        @keyframes spinner-rotate { to { transform: rotate(360deg); } }
+
+        /* Плавный градиент по краям строки тегов: из цвета фона в прозрачность */
+        .tag-fade {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2.75rem;
+            pointer-events: none;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .tag-fade.fade-on { opacity: 1; }
+        .tag-fade-l { left: 0; background: linear-gradient(to right, #F5F5F7 20%, rgba(245, 245, 247, 0)); }
+        .tag-fade-r { right: 0; background: linear-gradient(to left, #F5F5F7 20%, rgba(245, 245, 247, 0)); }
+        .dark .tag-fade-l { background: linear-gradient(to right, #000000 20%, rgba(0, 0, 0, 0)); }
+        .dark .tag-fade-r { background: linear-gradient(to left, #000000 20%, rgba(0, 0, 0, 0)); }
+
+        .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* Критичная геометрия тегов — в чистом CSS, чтобы одинаковая ширина
+           и прокрутка работали даже до/без загрузки Tailwind */
+        #tags-row { display: flex; gap: 0.5rem; overflow-x: auto; }
+        .tag-chip { flex: 0 0 auto; width: 7rem; box-sizing: border-box; }
+
+        /* Плавное появление картинок после загрузки */
+        .img-fade { opacity: 0; transition: opacity 0.5s ease; }
+        .img-fade.img-loaded { opacity: 1; }
     </style>
 </head>
 <body class="font-sans antialiased h-[100dvh] w-screen flex flex-col relative">
@@ -130,21 +187,69 @@
         </div>
     </header>
 
-    <main class="flex-1 w-full flex flex-col relative px-4 md:px-16 py-4 md:py-8 max-w-7xl mx-auto min-h-0">
-        <div class="absolute top-4 md:top-8 left-0 w-full text-center z-0 pointer-events-none select-none">
+    <main class="flex-1 w-full flex flex-col relative px-4 md:px-16 py-3 md:py-6 max-w-7xl mx-auto min-h-0">
+        <div class="hidden md:block w-full text-center pointer-events-none select-none shrink-0 mb-4">
             <span class="font-mono text-[11px] md:text-xs text-apple-textMutedLight dark:text-apple-textMutedDark opacity-70 font-bold tracking-[0.4em] md:tracking-[0.5em] uppercase">Обзор научных статей</span>
+        </div>
+
+        <!-- Панель управления: поиск, теги, календарь -->
+        <div id="controls" class="relative z-30 w-full flex items-center gap-2 md:gap-3 shrink-0 mb-3 md:mb-5">
+
+            <!-- Кнопка-иконка поиска (только мобилка) -->
+            <button id="search-toggle" class="md:hidden p-2.5 rounded-full glass-panel shrink-0 text-black dark:text-white active:scale-95 transition-all" title="Поиск" aria-label="Поиск">
+                <i data-lucide="search" class="w-4 h-4"></i>
+            </button>
+
+            <!-- Поле поиска: на мобилке скрыто до нажатия на иконку, на десктопе видно всегда -->
+            <div id="search-box" class="hidden md:flex items-center gap-2 flex-1 md:flex-none md:w-72 px-4 py-2 rounded-full glass-panel min-w-0">
+                <i data-lucide="search" class="w-4 h-4 shrink-0 hidden md:block text-apple-textMutedLight dark:text-apple-textMutedDark"></i>
+                <input id="search-input" type="text" inputmode="search" autocomplete="off" placeholder="Поиск статей…"
+                       class="bg-transparent outline-none border-none w-full min-w-0 text-sm font-sans text-black dark:text-white placeholder:text-apple-textMutedLight dark:placeholder:text-apple-textMutedDark">
+                <button id="search-clear" class="shrink-0 hidden p-0.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-apple-textMutedLight dark:text-apple-textMutedDark" title="Очистить" aria-label="Очистить поиск">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Теги с плавным градиентом по краям -->
+            <div id="tags-wrap" class="relative flex-1 min-w-0">
+                <div id="tag-fade-l" class="tag-fade tag-fade-l"></div>
+                <div id="tag-fade-r" class="tag-fade tag-fade-r"></div>
+                <div id="tags-row" class="flex gap-2 overflow-x-auto no-scrollbar md:justify-center py-0.5">
+                    <button class="tag-chip tag-active" data-tag="all">Все</button>
+                    <button class="tag-chip" data-tag="learning">Обучение</button>
+                    <button class="tag-chip" data-tag="agents">Агенты</button>
+                    <button class="tag-chip" data-tag="llm">LLM</button>
+                    <button class="tag-chip" data-tag="science">Наука</button>
+                    <button class="tag-chip" data-tag="robots">Роботы</button>
+                </div>
+            </div>
+
+            <!-- Календарь-иконка (нативный выбор даты) -->
+            <button id="calendar-btn" class="relative p-2.5 rounded-full glass-panel shrink-0 text-black dark:text-white active:scale-95 transition-all overflow-hidden" title="Выбрать дату" aria-label="Выбрать дату">
+                <i data-lucide="calendar" class="w-4 h-4 pointer-events-none"></i>
+                <input type="date" id="date-picker" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" aria-label="Выбрать дату">
+            </button>
+
+            <!-- Результаты поиска / фильтра -->
+            <div id="search-results" class="hidden absolute left-0 right-0 top-full mt-2 mx-auto w-full max-w-xl glass-panel rounded-2xl overflow-hidden z-50">
+                <div id="results-list" class="max-h-[52vh] overflow-y-auto custom-scroll"></div>
+                <div id="results-status" class="hidden items-center justify-center gap-3 px-4 py-3 border-t border-black/5 dark:border-white/10">
+                    <span class="spinner spinner-sm"></span>
+                    <span id="results-status-text" class="font-mono text-[11px] text-apple-textMutedLight dark:text-apple-textMutedDark tracking-widest uppercase">Ищем…</span>
+                </div>
+            </div>
         </div>
 
         <button disabled class="btn-prev nav-btn hidden md:flex absolute left-2 lg:left-8 top-1/2 -translate-y-1/2 z-40 p-4 rounded-full glass-panel hover:scale-105 transition-all group text-black dark:text-white">
             <i data-lucide="chevron-left" class="w-6 h-6 group-hover:-translate-x-1 transition-transform"></i>
         </button>
 
-        <div class="flex-1 w-full flex flex-col min-h-0 z-10 pt-8 md:pt-0">
-            <div id="slide-container" class="m-auto glass-panel w-full max-w-5xl rounded-[2rem] overflow-hidden flex flex-col md:flex-row relative slide-content slide-visible h-auto max-h-full md:max-h-none md:h-[550px] shrink-0">
-                <div class="w-full md:w-1/2 h-52 sm:h-64 md:h-full relative overflow-hidden bg-black/5 dark:bg-white/5 shrink-0">
-                    <img id="article-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" alt="Cover" class="absolute inset-0 w-full h-full object-cover object-center transition-transform duration-700 hover:scale-105 opacity-0">
+        <div class="flex-1 w-full flex flex-col min-h-0 z-10">
+            <div id="slide-container" class="m-auto glass-panel w-full max-w-5xl rounded-[2rem] overflow-hidden flex flex-col md:flex-row relative slide-content slide-visible h-auto max-h-full md:h-[550px] shrink-0">
+                <div class="w-full md:w-1/2 h-48 sm:h-64 md:h-full relative overflow-hidden bg-black/5 dark:bg-white/5 shrink-0">
+                    <img id="article-img" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1 1'%3E%3C/svg%3E" alt="Cover" class="img-fade absolute inset-0 w-full h-full object-cover object-center">
                     <div class="absolute inset-0 flex items-center justify-center" id="img-loader">
-                        <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-black/40 dark:text-white/40"></i>
+                        <span class="spinner"></span>
                     </div>
                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 md:hidden"></div>
 
@@ -155,9 +260,9 @@
                     </div>
                 </div>
 
-                <div class="w-full md:w-1/2 p-5 sm:p-6 md:p-10 lg:p-12 flex flex-col overflow-y-auto custom-scroll bg-white dark:bg-[#1C1C1E] relative min-h-[250px] md:min-h-0">
+                <div class="w-full md:w-1/2 p-5 sm:p-6 md:p-10 lg:p-12 flex flex-col overflow-y-auto custom-scroll bg-white dark:bg-[#1C1C1E] relative min-h-[230px] md:min-h-0">
                     <div id="content-loader" class="absolute inset-0 z-20 bg-white dark:bg-[#1C1C1E] flex flex-col items-center justify-center gap-4 transition-opacity duration-300">
-                        <i data-lucide="loader-2" class="w-8 h-8 text-black/40 dark:text-white/40 animate-spin"></i>
+                        <span class="spinner"></span>
                         <span class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark tracking-widest uppercase">Поиск статьи...</span>
                     </div>
 
@@ -188,7 +293,7 @@
             <i data-lucide="chevron-right" class="w-6 h-6 group-hover:translate-x-1 transition-transform"></i>
         </button>
 
-        <div class="flex md:hidden w-full justify-between items-center mt-4 z-20 shrink-0">
+        <div class="flex md:hidden w-full justify-between items-center mt-3 z-20 shrink-0">
             <button disabled class="btn-prev nav-btn p-3.5 rounded-full glass-panel active:scale-95 transition-all text-black dark:text-white">
                 <i data-lucide="chevron-left" class="w-6 h-6"></i>
             </button>
@@ -199,7 +304,10 @@
     </main>
 
     <script>
-        lucide.createIcons();
+        function refreshIcons() {
+            if (window.lucide && lucide.createIcons) { try { lucide.createIcons(); } catch (e) {} }
+        }
+        refreshIcons();
 
         function formatDateStr(dateObj) {
             const y = dateObj.getFullYear();
@@ -222,6 +330,11 @@
             return d;
         }
 
+        function parseDateStr(str) {
+            const [y, m, d] = str.split('-').map(Number);
+            return new Date(y, m - 1, d);
+        }
+
         const localMocks = {
             "2026-03-03": {
                 title: "Context Engineering: новая дисциплина для автономных ИИ-агентов",
@@ -237,10 +350,13 @@
 
         const MAX_LOOKBACK_DAYS = 365;
         const NAV_SCAN_DAYS = 30;
+        const EARLIEST_ARTICLE = new Date(2025, 7, 23); // первая статья: 2025-08-23
+        const FALLBACK_IMG = 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1200&auto=format&fit=crop';
 
         let currentViewDate = startOfDay(new Date());
         let latestAvailableDate = null;
         const articleCache = {};
+        const missingDates = new Set();
 
         const container = document.getElementById('slide-container');
         const elTitle = document.getElementById('article-title');
@@ -256,29 +372,49 @@
         const btnsLeft = document.querySelectorAll('.btn-prev');
         const btnsRight = document.querySelectorAll('.btn-next');
 
+        const searchToggle = document.getElementById('search-toggle');
+        const searchBox = document.getElementById('search-box');
+        const searchInput = document.getElementById('search-input');
+        const searchClear = document.getElementById('search-clear');
+        const tagsWrap = document.getElementById('tags-wrap');
+        const tagsRow = document.getElementById('tags-row');
+        const tagFadeL = document.getElementById('tag-fade-l');
+        const tagFadeR = document.getElementById('tag-fade-r');
+        const calendarBtn = document.getElementById('calendar-btn');
+        const datePicker = document.getElementById('date-picker');
+        const resultsPanel = document.getElementById('search-results');
+        const resultsList = document.getElementById('results-list');
+        const resultsStatus = document.getElementById('results-status');
+        const resultsStatusText = document.getElementById('results-status-text');
+
         async function fetchArticleData(dateObj) {
             const safeDate = startOfDay(dateObj);
             const dateStr = formatDateStr(safeDate);
 
             if (articleCache[dateStr]) return articleCache[dateStr];
+            if (missingDates.has(dateStr)) throw new Error('Статья не найдена');
 
-            const url = `https://dataist.ai/${dateStr}/`;
+            const url = `/${dateStr}/`;
+            let notFound = false;
 
             try {
                 const res = await fetch(url, { method: 'GET' });
-                if (!res.ok) throw new Error('Not found');
+                if (!res.ok) { notFound = true; throw new Error('Not found'); }
 
                 const html = await res.text();
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
 
                 const getMeta = (prop) => doc.querySelector(`meta[property="${prop}"]`)?.content;
+                const title = getMeta('og:title') || (doc.title || '').trim();
+                if (!title) throw new Error('Not an article');
 
                 const data = {
-                    title: getMeta('og:title') || doc.title || 'Статья без названия',
+                    title: title,
                     desc: getMeta('og:description') || 'Описание временно недоступно.',
-                    img: getMeta('og:image') || 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1200&auto=format&fit=crop',
+                    img: getMeta('og:image') || FALLBACK_IMG,
                     url: url,
+                    dateStr: dateStr,
                     displayDate: formatDisplayDate(safeDate)
                 };
 
@@ -289,11 +425,15 @@
                     const data = {
                         ...localMocks[dateStr],
                         url: url,
+                        dateStr: dateStr,
                         displayDate: formatDisplayDate(safeDate)
                     };
                     articleCache[dateStr] = data;
                     return data;
                 }
+                // Запоминаем отсутствие статьи только при настоящем 404,
+                // чтобы временный сбой сети не прятал статью до перезагрузки
+                if (notFound) missingDates.add(dateStr);
                 throw new Error('Статья не найдена');
             }
         }
@@ -326,6 +466,7 @@
 
         function applyDataToUI(data) {
             if (!data) return;
+            if (!applyDataToUI._imgToken) applyDataToUI._imgToken = 0;
 
             elTitle.textContent = data.title;
             elDesc.textContent = data.desc;
@@ -336,17 +477,22 @@
             elLink.classList.remove('pointer-events-none', 'opacity-50');
 
             imgLoader.style.display = 'flex';
-            elImg.classList.add('opacity-0');
+            elImg.classList.remove('img-loaded');
 
+            // Токен защищает от гонки: при быстрой листке колбэк устаревшей
+            // обложки не должен перезаписать более новую
+            const token = ++applyDataToUI._imgToken;
             const nextImg = new Image();
             nextImg.onload = () => {
+                if (token !== applyDataToUI._imgToken) return;
                 elImg.src = data.img;
-                elImg.classList.remove('opacity-0');
+                elImg.classList.add('img-loaded');
                 imgLoader.style.display = 'none';
             };
             nextImg.onerror = () => {
-                elImg.src = 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1200&auto=format&fit=crop';
-                elImg.classList.remove('opacity-0');
+                if (token !== applyDataToUI._imgToken) return;
+                elImg.src = FALLBACK_IMG;
+                elImg.classList.add('img-loaded');
                 imgLoader.style.display = 'none';
             };
             nextImg.src = data.img;
@@ -359,7 +505,7 @@
             loader.style.display = 'flex';
             loader.style.opacity = '1';
             imgLoader.style.display = 'flex';
-            elImg.classList.add('opacity-0');
+            elImg.classList.remove('img-loaded');
             elLink.classList.add('pointer-events-none', 'opacity-50');
         }
 
@@ -395,6 +541,22 @@
             }
         }
 
+        async function goToDate(dateObj, data) {
+            hideResults();
+            collapseMobileSearch();
+            showLoading();
+            try {
+                const articleData = data || await fetchArticleData(dateObj);
+                currentViewDate = startOfDay(dateObj);
+                applyDataToUI(articleData);
+                await updateButtons();
+            } catch (e) {
+                const currentData = articleCache[formatDateStr(currentViewDate)];
+                if (currentData) applyDataToUI(currentData);
+                await updateButtons();
+            }
+        }
+
         async function initApp() {
             showLoading();
             try {
@@ -402,6 +564,10 @@
                 latestAvailableDate = new Date(result.date);
                 currentViewDate = new Date(result.date);
                 applyDataToUI(result.data);
+                if (datePicker) {
+                    datePicker.max = formatDateStr(latestAvailableDate);
+                    datePicker.min = formatDateStr(EARLIEST_ARTICLE);
+                }
                 await updateButtons();
             } catch (e) {
                 elTitle.textContent = "Нет доступных статей";
@@ -419,6 +585,7 @@
         btnsRight.forEach(btn => btn.addEventListener('click', () => { if (!btn.disabled) navigate('older'); }));
 
         document.addEventListener('keydown', (e) => {
+            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
             if (e.key === 'ArrowLeft' && !btnsLeft[0].disabled) navigate('newer');
             else if (e.key === 'ArrowRight' && !btnsRight[0].disabled) navigate('older');
         });
@@ -437,16 +604,350 @@
         const html = document.documentElement;
 
         function applyTheme(isDark) {
-            if (isDark) { html.classList.add('dark'); localStorage.setItem('theme', 'dark'); }
-            else { html.classList.remove('dark'); localStorage.setItem('theme', 'light'); }
-            setTimeout(() => lucide.createIcons(), 50);
+            if (isDark) { html.classList.add('dark'); try { localStorage.setItem('theme', 'dark'); } catch (e) {} }
+            else { html.classList.remove('dark'); try { localStorage.setItem('theme', 'light'); } catch (e) {} }
+            setTimeout(refreshIcons, 50);
         }
 
         themeToggleBtn.addEventListener('click', () => {
             applyTheme(!html.classList.contains('dark'));
         });
 
-        document.addEventListener('DOMContentLoaded', initApp);
+        /* ============================================================
+           ПОИСК, ТЕГИ, КАЛЕНДАРЬ
+           ============================================================ */
+
+        // Ключевые слова тегов (поиск по заголовку и описанию статьи)
+        const TAG_KEYWORDS = {
+            learning: ['обучени', 'обучаем', 'обучать', 'обучил', 'учится', 'учатся', 'дообуч', 'подкреплен', 'fine-tun', 'finetun', 'sft', 'rlhf', 'дистилл', 'distill', 'learning', 'train'],
+            agents:   ['агент', 'agent', 'мультиагент'],
+            llm:      ['llm', 'языковая', 'языковые', 'языковых', 'языковой', 'gpt', 'трансформер', 'transformer', 'токен'],
+            science:  ['исследован', 'научн', 'наука', 'бенчмарк', 'benchmark', 'архитектур', 'эксперимент', 'arxiv'],
+            robots:   ['робот', 'robot', 'воплощ', 'embodied', 'манипулятор']
+        };
+        const TAG_LABELS = { learning: 'Обучение', agents: 'Агенты', llm: 'LLM', science: 'Наука', robots: 'Роботы' };
+
+        function keywordRegex(word) {
+            const esc = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            if (word.length <= 4 && /^[a-z]+$/i.test(word)) {
+                return new RegExp('(^|[^a-zA-Z])' + esc + '([^a-zA-Z]|$)', 'i');
+            }
+            return new RegExp(esc, 'i');
+        }
+        const TAG_MATCHERS = {};
+        for (const key in TAG_KEYWORDS) TAG_MATCHERS[key] = TAG_KEYWORDS[key].map(keywordRegex);
+
+        function articleText(data) {
+            return (data.title + ' ' + data.desc);
+        }
+
+        function matchesTag(data, tagKey) {
+            const text = articleText(data);
+            return TAG_MATCHERS[tagKey].some(rx => rx.test(text));
+        }
+
+        function matchesQuery(data, query) {
+            return articleText(data).toLowerCase().includes(query.toLowerCase());
+        }
+
+        /* ---------- Индекс статей (строится в фоне при первом поиске) ---------- */
+
+        let indexPromise = null;
+        let indexDone = false;
+        const indexedArticles = [];
+
+        function buildIndex() {
+            if (indexPromise) return indexPromise;
+            indexPromise = (async () => {
+                const start = latestAvailableDate ? new Date(latestAvailableDate) : startOfDay(new Date());
+                const dates = [];
+                const d = new Date(start);
+                while (d >= EARLIEST_ARTICLE) {
+                    dates.push(formatDateStr(d));
+                    d.setDate(d.getDate() - 1);
+                }
+                let i = 0;
+                const CONCURRENCY = 6;
+                async function worker() {
+                    while (i < dates.length) {
+                        const ds = dates[i++];
+                        try {
+                            const data = await fetchArticleData(parseDateStr(ds));
+                            indexedArticles.push(data);
+                        } catch (e) {}
+                    }
+                }
+                await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+                indexedArticles.sort((a, b) => (a.dateStr < b.dateStr ? 1 : -1));
+                indexDone = true;
+            })();
+            return indexPromise;
+        }
+
+        /* ---------- Панель результатов ---------- */
+
+        let searchGeneration = 0;
+        let activeTag = 'all';
+
+        function hideResults() {
+            searchGeneration++;
+            resultsPanel.classList.add('hidden');
+            resultsList.innerHTML = '';
+            setResultsStatus(null);
+        }
+
+        function setResultsStatus(text) {
+            if (text) {
+                resultsStatus.classList.remove('hidden');
+                resultsStatus.classList.add('flex');
+                resultsStatusText.textContent = text;
+            } else {
+                resultsStatus.classList.add('hidden');
+                resultsStatus.classList.remove('flex');
+            }
+        }
+
+        function escapeHtml(s) {
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        function renderResults(items, emptyText) {
+            resultsList.innerHTML = '';
+            if (!items.length) {
+                if (emptyText) {
+                    resultsList.innerHTML = '<div class="px-5 py-6 text-center font-mono text-xs text-apple-textMutedLight dark:text-apple-textMutedDark tracking-widest uppercase">' + escapeHtml(emptyText) + '</div>';
+                }
+                return;
+            }
+            const frag = document.createDocumentFragment();
+            items.forEach(data => {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'w-full text-left flex items-center gap-3 px-3.5 py-3 hover:bg-black/5 dark:hover:bg-white/10 transition-colors border-b border-black/5 dark:border-white/5';
+                item.innerHTML =
+                    '<span class="relative w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-black/5 dark:bg-white/10 flex items-center justify-center">' +
+                        '<span class="spinner spinner-sm absolute"></span>' +
+                        '<img loading="lazy" class="img-fade absolute inset-0 w-full h-full object-cover" alt="">' +
+                    '</span>' +
+                    '<span class="min-w-0 flex flex-col gap-1">' +
+                        '<span class="font-mono text-[10px] text-apple-textMutedLight dark:text-apple-textMutedDark tracking-widest uppercase">' + escapeHtml(data.displayDate) + '</span>' +
+                        '<span class="font-sans text-sm font-semibold leading-snug text-black dark:text-white" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">' + escapeHtml(data.title) + '</span>' +
+                    '</span>';
+                const img = item.querySelector('img');
+                img.onload = () => img.classList.add('img-loaded');
+                img.onerror = () => { img.style.display = 'none'; };
+                img.src = data.img;
+                item.addEventListener('click', () => goToDate(parseDateStr(data.dateStr), data));
+                frag.appendChild(item);
+            });
+            resultsList.appendChild(frag);
+        }
+
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+        // Общий цикл: строит индекс в фоне и постепенно показывает совпадения
+        async function runFilter(matcher, emptyText) {
+            const generation = ++searchGeneration;
+            resultsPanel.classList.remove('hidden');
+            setResultsStatus('Ищем…');
+            buildIndex();
+
+            let lastCount = -1;
+            while (true) {
+                if (generation !== searchGeneration) return;
+                const matched = indexedArticles.filter(matcher);
+                if (matched.length !== lastCount) {
+                    lastCount = matched.length;
+                    renderResults(matched, null);
+                }
+                if (indexDone) break;
+                await sleep(350);
+            }
+            if (generation !== searchGeneration) return;
+            setResultsStatus(null);
+            const matched = indexedArticles
+                .slice()
+                .sort((a, b) => (a.dateStr < b.dateStr ? 1 : -1))
+                .filter(matcher);
+            renderResults(matched, emptyText || 'Ничего не найдено');
+        }
+
+        /* ---------- Поиск ---------- */
+
+        let searchDebounce = null;
+
+        searchInput.addEventListener('input', () => {
+            const q = searchInput.value.trim();
+            searchClear.classList.toggle('hidden', q.length === 0);
+            clearTimeout(searchDebounce);
+            if (q.length < 2) {
+                hideResults();
+                return;
+            }
+            clearActiveTagUI();
+            searchDebounce = setTimeout(() => {
+                runFilter(data => matchesQuery(data, q), 'Ничего не найдено');
+            }, 350);
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                searchInput.value = '';
+                searchClear.classList.add('hidden');
+                hideResults();
+                collapseMobileSearch();
+                searchInput.blur();
+            }
+        });
+
+        searchClear.addEventListener('click', () => {
+            searchInput.value = '';
+            searchClear.classList.add('hidden');
+            hideResults();
+            if (isMobile()) collapseMobileSearch();
+            else searchInput.focus();
+        });
+
+        /* ---------- Мобильный режим поиска (иконка -> поле) ---------- */
+
+        function isMobile() {
+            return window.matchMedia && window.matchMedia('(max-width: 767px)').matches;
+        }
+
+        let mobileSearchOpen = false;
+
+        function expandMobileSearch() {
+            mobileSearchOpen = true;
+            searchBox.classList.remove('hidden');
+            searchBox.classList.add('flex');
+            tagsWrap.classList.add('hidden');
+            calendarBtn.classList.add('hidden');
+            setTimeout(() => searchInput.focus(), 50);
+        }
+
+        function collapseMobileSearch() {
+            if (!mobileSearchOpen) return;
+            mobileSearchOpen = false;
+            if (isMobile()) {
+                searchBox.classList.add('hidden');
+                searchBox.classList.remove('flex');
+            }
+            tagsWrap.classList.remove('hidden');
+            calendarBtn.classList.remove('hidden');
+            requestAnimationFrame(updateTagFades);
+        }
+
+        searchToggle.addEventListener('click', () => {
+            if (mobileSearchOpen) {
+                hideResults();
+                collapseMobileSearch();
+            } else {
+                expandMobileSearch();
+            }
+        });
+
+        // При смене ориентации/размера возвращаем корректное состояние
+        window.addEventListener('resize', () => {
+            if (!isMobile()) {
+                searchBox.classList.remove('hidden');
+                searchBox.classList.add('flex');
+                tagsWrap.classList.remove('hidden');
+                calendarBtn.classList.remove('hidden');
+                mobileSearchOpen = false;
+            } else if (!mobileSearchOpen) {
+                searchBox.classList.add('hidden');
+                searchBox.classList.remove('flex');
+            }
+            updateTagFades();
+        });
+
+        /* ---------- Теги ---------- */
+
+        function clearActiveTagUI() {
+            activeTag = 'all';
+            tagsRow.querySelectorAll('.tag-chip').forEach(chip => {
+                chip.classList.toggle('tag-active', chip.dataset.tag === 'all');
+            });
+        }
+
+        tagsRow.querySelectorAll('.tag-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                const tag = chip.dataset.tag;
+                tagsRow.querySelectorAll('.tag-chip').forEach(c => c.classList.toggle('tag-active', c === chip));
+                searchInput.value = '';
+                searchClear.classList.add('hidden');
+                if (tag === 'all') {
+                    activeTag = 'all';
+                    hideResults();
+                    return;
+                }
+                activeTag = tag;
+                runFilter(data => matchesTag(data, tag), 'Статей с тегом «' + TAG_LABELS[tag] + '» не найдено');
+            });
+        });
+
+        /* ---------- Градиенты по краям строки тегов ---------- */
+
+        function updateTagFades() {
+            if (!tagsRow || tagsWrap.classList.contains('hidden')) return;
+            const maxScroll = tagsRow.scrollWidth - tagsRow.clientWidth;
+            const x = tagsRow.scrollLeft;
+            tagFadeL.classList.toggle('fade-on', maxScroll > 8 && x > 4);
+            tagFadeR.classList.toggle('fade-on', maxScroll > 8 && x < maxScroll - 4);
+        }
+        tagsRow.addEventListener('scroll', updateTagFades, { passive: true });
+        window.addEventListener('load', updateTagFades);
+
+        /* ---------- Календарь ---------- */
+
+        calendarBtn.addEventListener('click', () => {
+            if (datePicker.showPicker) { try { datePicker.showPicker(); } catch (e) {} }
+        });
+
+        datePicker.addEventListener('change', async () => {
+            if (!datePicker.value) return;
+            hideResults();
+            collapseMobileSearch();
+            const picked = parseDateStr(datePicker.value);
+            showLoading();
+            try {
+                const data = await fetchArticleData(picked);
+                currentViewDate = startOfDay(picked);
+                applyDataToUI(data);
+                await updateButtons();
+            } catch (e) {
+                // На выбранную дату статьи нет — показываем ближайшую более раннюю
+                const older = await findAdjacentArticle(picked, 'older', 60);
+                if (older) {
+                    currentViewDate = new Date(older.date);
+                    applyDataToUI(older.data);
+                    await updateButtons();
+                } else {
+                    const currentData = articleCache[formatDateStr(currentViewDate)];
+                    if (currentData) applyDataToUI(currentData);
+                    await updateButtons();
+                }
+            }
+        });
+
+        /* ---------- Закрытие панели результатов ---------- */
+
+        document.addEventListener('click', (e) => {
+            const controls = document.getElementById('controls');
+            if (!controls.contains(e.target)) {
+                hideResults();
+                if (mobileSearchOpen && !searchInput.value.trim()) collapseMobileSearch();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') hideResults();
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
+            updateTagFades();
+        });
     </script>
 </body>
 </html>
