@@ -466,6 +466,7 @@
 
         function applyDataToUI(data) {
             if (!data) return;
+            if (!applyDataToUI._imgToken) applyDataToUI._imgToken = 0;
 
             elTitle.textContent = data.title;
             elDesc.textContent = data.desc;
@@ -478,13 +479,18 @@
             imgLoader.style.display = 'flex';
             elImg.classList.remove('img-loaded');
 
+            // Токен защищает от гонки: при быстрой листке колбэк устаревшей
+            // обложки не должен перезаписать более новую
+            const token = ++applyDataToUI._imgToken;
             const nextImg = new Image();
             nextImg.onload = () => {
+                if (token !== applyDataToUI._imgToken) return;
                 elImg.src = data.img;
                 elImg.classList.add('img-loaded');
                 imgLoader.style.display = 'none';
             };
             nextImg.onerror = () => {
+                if (token !== applyDataToUI._imgToken) return;
                 elImg.src = FALLBACK_IMG;
                 elImg.classList.add('img-loaded');
                 imgLoader.style.display = 'none';
