@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Почему лучший ИИ собрал ответ из разных данных с точностью лишь 66%</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Почему лучший ИИ собрал ответ из разных данных с точностью лишь 66%" />
+    <meta property="og:description" content="Почему даже лучший ИИ часто спотыкается, когда ответ нужно собрать не из одного места, а по кусочкам из таблиц, файлов, документов и видео?
+
+Исследователи предложили новую проверку для ИИ-агентов: они дают вопрос и целую рабочую папку с разными данными, а на выходе ждут готовую таблицу с точным ответом. Такой формат ближе к реальной работе, где нужные сведения разбросаны по разным источникам, и сразу видно, умеет ли модель не просто искать по одному файлу, а действительно собирать всё вместе без потерь и путаницы.
+
+В этом обзоре разбираем, почему даже сильные модели пока часто ошибаются в таких задачах, как устроена эта проверка и что она показывает о будущем ИИ для работы с данными." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="http://localhost:8004/static/pochemu-luchshii-ii-sobral-otvet-iz-raznykh-dannykh-s-tochnostiu-lish-66/pochemu-luchshii-ii-sobral-otvet-iz-raznykh-dannykh-s-tochnostiu-lish-66_ru.html" />
+    <meta property="og:image" content="https://dataist.ai/2026-08-09/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-09/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-08-09</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Почему лучший ИИ собрал ответ из разных данных с точностью лишь 66%
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-09/cover.jpg"
+                         alt="Обложка: Почему лучший ИИ собрал ответ из разных данных с точностью лишь 66%"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда ИИ-агенту мало одной таблицы</h2>
+<p>Представьте обычный рабочий запрос: посчитать риск фонда, найти нужные записи по акциям или собрать медицинскую сводку. В жизни ответ редко лежит в одной чистой таблице. Что-то спрятано в SQLite, что-то — в длинном PDF, часть условий диктор проговаривает в видео, а вопрос вообще может быть на другом языке. Для человека это уже неприятная рутина. Для ИИ-агента — частый провал.</p>
+<p>DataSpace — новый бенчмарк для ИИ-агентов, которые должны работать с разнородным рабочим пространством, а не с игрушечной задачей «сделай один SQL-запрос». Авторы собрали 410 задач, 7439 файлов, около 15 ГБ данных и заставили агента решать задачу целиком: найти нужные источники, вытащить факты, сопоставить сущности, посчитать метрики и вернуть готовую таблицу.</p>
+<p>Ключевой результат: даже лучшие современные системы пока далеки от уверенной работы в таком режиме. Максимальная точность — 66,34%. То есть лучший участник ошибается примерно в каждой третьей задаче.</p>
+<p>Это важно, если вы строите ИИ-агентов для аналитики, внутренних данных компании, финансовых сценариев или автоматизации дата-пайплайна. На аккуратных демонстрациях все выглядит убедительно. В реальном рабочем пространстве — уже нет.</p>
+<p>🟠 DataSpace проверяет полный аналитический цикл</p>
+<p>🟣 Лучший результат — 66,34%</p>
+<p>🟠 Ошибка — примерно в каждой третьей задаче</p>
+<p>🟣 Основной сценарий — разнородные локальные данные, а не один SQL-запрос</p>
+</section>
+<section>
+<h2>Что такое DataSpace</h2>
+<p>DataSpace — это бенчмарк, где ИИ-агент получает только вопрос на естественном языке и папку с локальным рабочим пространством. Внутри могут лежать CSV, JSON, SQLite, Markdown, PDF и видео. Задача агента — вернуть полную итоговую таблицу, которую можно проверить автоматически.</p>
+<p>Это отличие от многих старых бенчмарков. Раньше один тест проверял SQL, другой — поиск по документам, третий — ответы по видео. Здесь все это склеено в один сценарий.</p>
+<p>Условия у задач тоже ближе к реальности:</p>
+<p>🟠 вопрос и данные могут быть на разных языках, включая китайский и английский</p>
+<p>🟣 нужные артефакты не выделены заранее — агент сам должен понять, куда смотреть</p>
+<p>🟠 ответом считается полная таблица</p>
+<p>🟣 проверка детерминированная: либо таблица совпала по смыслу, либо нет</p>
+<p>Авторы называют такого агента «решателем рабочего пространства». Он должен не просто извлечь факт, а разобраться в окружении.</p>
+</section>
+<section>
+<h2>Коротко по масштабу</h2>
+<p>🟠 410 задач</p>
+<p>🟣 7439 артефактов</p>
+<p>🟠 15,01 ГБ данных</p>
+<p>🟣 6 типов носителей: CSV, JSON, SQLite, Markdown, PDF, видео</p>
+<p>🟠 265 кросс-языковых задач</p>
+<p>🟣 126 409 строк в эталонных ответах</p>
+</section>
+<section>
+<h2>Почему старых бенчмарков уже мало</h2>
+<p>У DataSpace практичная претензия к прежним тестам. Они обычно проверяют отдельную способность, а не полный аналитический цикл.</p>
+<p>Если вы тестируете только Text-to-SQL, модель работает в почти стерильной среде: схема уже дана, релевантная база известна, ответ можно получить одним запросом. Если вы тестируете только длинные документы, проверяется в основном поиск и извлечение. Если вы делаете открытый аналитический отчет, то проверка часто расплывчатая.</p>
+<p>В реальном бизнес-сценарии проблема сложнее:</p>
+<p>🟠 нужные факты разбросаны по разным типам файлов</p>
+<p>🟣 часть данных надо сначала найти, а потом еще сопоставить</p>
+<p>🟠 документы и видео могут содержать не ответ, а только условия фильтрации</p>
+<p>🟣 пользователь ждет готовую таблицу, а не свободный текст</p>
+<p>Поэтому DataSpace фиксирует единый контракт: на выходе всегда должна быть полная таблица, а оценка должна быть формальной, без судьи-модели.</p>
+</section>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-09/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Figure 1 . The DataSpace task interface, illustrated with a fund-risk task. The agent combines an alert rule from video, category benchmarks extracted from a long PDF, and daily NAV queried from SQLite, then aligns entities, computes the…</p></div></figure>
+<section>
+<h2>Как этот бенчмарк строили</h2>
+<p>Самая интересная техническая часть — не только сами задачи, но и то, как их сделали. Авторы не создавали все вручную с нуля. Вместо этого они взяли исполнимые наборы Text-to-SQL из медицины и финансов, а затем превратили их в более грязные и реалистичные рабочие пространства.</p>
+<p>Этот пайплайн называется DataSpace-Builder. У него четыре шага.</p>
+</section>
+<section>
+<h2>Как устроен пайплайн сборки</h2>
+<p>Сначала исходные задачи переводили в кросс-языковый режим. Причем переводили не только вопрос, но и саму базу, значения в колонках и SQL-логику. Это важный момент: если отдельно перевести вопрос и отдельно базу, можно сломать связи между сущностями, значениями и условиями.</p>
+<p>Потом авторы делали локальную выборку данных для каждой задачи. Чтобы не использовать одни и те же базы в десятках похожих примеров. Но простая случайная выборка здесь опасна: можно выкинуть строку, которая нужна для соединения таблиц, или убрать значение из фильтра. Поэтому они добавили защитные ограничения, чтобы критичные связи и условия не пропадали.</p>
+<p>Дальше данные раскладывали по носителям. Одни таблицы оставляли в CSV и JSON, другие упаковывали в SQLite, третьи превращали в длинные документы в Markdown и PDF. В отдельной ветке делали видео, куда могли уехать условия задачи или части ответа.</p>
+<p>И наконец, каждую задачу проверяли люди. В работе участвовали 11 доменных экспертов. Они независимо решали задачу, сверяли эталонный ответ, настраивали правила проверки и исправляли проблемные случаи.</p>
+</section>
+<section>
+<h2>Из чего состоит пайплайн</h2>
+<p>🟠 кросс-языковая трансформация вопроса, базы и SQL</p>
+<p>🟣 выборка строк с сохранением важных связей</p>
+<p>🟠 маршрутизация по носителям: таблицы, документы, SQLite, видео</p>
+<p>🟣 ручная проверка и исправление задач экспертами</p>
+</section>
+<section>
+<h2>Что именно проверяет DataSpace</h2>
+<p>Бенчмарк нагружает сразу несколько способностей, которые по отдельности часто кажутся уже решенными.</p>
+<p>Во-первых, это поиск по рабочему пространству. Агент должен понять, какие файлы вообще нужны.</p>
+<p>Во-вторых, извлечение и сопоставление. Нужно правильно вытащить поля из документа, понять, что одинаковые сущности могут называться по-разному, не перепутать единицы измерения и язык.</p>
+<p>В-третьих, собственно аналитика: фильтрация, агрегация, сортировка, соединения таблиц, временные условия.</p>
+<p>В-четвертых, материализация ответа. Это недооцененная часть. Даже если агент правильно понял задачу, он может вернуть не ту форму таблицы: потерять колонку, добавить лишнюю, перепутать порядок строк, сорвать формат дат или процентов.</p>
+<p>По статистике самих задач:</p>
+<p>🟠 фильтрация нужна в 78,3% задач</p>
+<p>🟣 проекция колонок — в 82,4%</p>
+<p>🟠 сортировка — в 51,0%</p>
+<p>🟣 агрегация — в 35,6%</p>
+<p>🟠 соединения — в 27,6%</p>
+<p>🟣 понимание документов — в 135 задачах</p>
+<p>🟠 понимание видео — в 97 задачах</p>
+<p>Особенно показательно, что 60,5% задач требуют как минимум пять нетривиальных типов операций сразу. Это уже маленькая аналитическая цепочка.</p>
+<p>🟠 DataSpace проверяет не один навык, а связку шагов</p>
+<p>🟣 Частая проблема — не вычисление, а форма итоговой таблицы</p>
+<p>🟠 В большинстве задач нужно несколько типов операций сразу</p>
+</section>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-09/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">(a) Available and required modalities.</p></div></figure>
+<section>
+<h2>Что показали эксперименты</h2>
+<p>Авторы протестировали шесть передовых мультимодальных моделей и пять агентных оболочек. В первом наборе они фиксировали одну и ту же агентную логику и меняли только базовую модель. Во втором — наоборот, фиксировали модель MiMo-V2.5 и меняли оболочку агента.</p>
+<p>Главный факт: никто этот бенчмарк не закрыл.</p>
+</section>
+<section>
+<h2>Результаты по моделям</h2>
+<p>🟠 Grok 4.5 — 66,34%</p>
+<p>🟣 GPT-5.6 Sol — 64,63%</p>
+<p>🟠 Kimi K3 — 53,41%</p>
+<p>🟣 MiMo-V2.5 — 39,27%</p>
+<p>🟠 Claude Sonnet 5 — 32,93%</p>
+<p>🟣 MiniMax M3 — 28,54%</p>
+<p>Разброс большой, но важнее другое: даже лидер решает только две трети задач.</p>
+<p>Есть и второй результат. GPT-5.6 Sol почти догоняет Grok 4.5 по точности, но тратит заметно меньше ресурсов: на 74,2% меньше токенов, на 50,3% меньше действий и на 39,2% меньше времени. То есть близкий результат можно получить гораздо компактнее.</p>
+</section>
+<section>
+<h2>Результаты по агентным оболочкам</h2>
+<p>Когда фиксировали одну и ту же модель, разброс между оболочками составил 15,36 процентного пункта. Это много.</p>
+<p>Проще говоря: важно не только то, какая у вас LLM, но и как устроен сам агент — его системный промт, инструменты, управление контекстом, логика шагов, способ завершения задачи.</p>
+<p>Для прикладной разработки это почти прямое указание: улучшать стоит не только модель, но и оболочку вокруг нее.</p>
+<p>🟠 Лидер — Grok 4.5 с 66,34%</p>
+<p>🟣 GPT-5.6 Sol почти не уступает по качеству, но заметно экономнее</p>
+<p>🟠 Разница между оболочками — 15,36 п.п.</p>
+<p>🟣 Конструкция агента влияет почти так же заметно, как базовая модель</p>
+</section>
+<section>
+<h2>Где системы проваливаются</h2>
+<p>Самая полезная часть — разбор ошибок. Авторы отдельно посмотрели на 136 провалов Grok 4.5, лучшей модели в контролируемом сравнении.</p>
+<p>Картина получилась неожиданной. Основная проблема — не поиск источника и даже не вычисления.</p>
+<p>Чаще всего агент проваливает задачу на последнем этапе:</p>
+<p>🟠 в 52,2% ошибок проблема была в материализации ответа</p>
+<p>🟣 в 44,1% всех разобранных провалов агент добавлял или терял колонки</p>
+<p>🟠 еще 22,8% ошибок шли от неверного понимания того, какой именно результат просит задача</p>
+<p>🟣 только 3 случая из 136 были связаны с выбором совсем не того источника данных</p>
+<p>Часто главным барьером для ИИ-агента кажется поиск нужного файла. Но здесь видно другое: даже найдя правильные данные и иногда вычислив верный внутренний результат, агент не может надежно отдать точную финальную таблицу.</p>
+<p>Если переводить на язык продукта, агенту мало понять смысл. Он должен еще строго соблюдать контракт ответа.</p>
+<p>🟠 Главный тип ошибки — материализация ответа</p>
+<p>🟣 Потеря или добавление колонок — 44,1% разобранных провалов</p>
+<p>🟠 Неверный выбор источника данных — редкий случай</p>
+</section>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-09/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">(b) Required carrier-family intersections.</p></div></figure>
+<section>
+<h2>Какие задачи самые трудные</h2>
+<p>Авторы отдельно разложили результаты по типам задач. Два фактора ухудшают качество почти у всех моделей.</p>
+<p>Первый — мультимодальность. Если нужно объединять несколько типов носителей, точность падает у всех моделей на 1,8–14 процентных пунктов.</p>
+<p>Второй — соединения таблиц. Если задача требует join, качество падает на 9,7–19,8 пункта.</p>
+<p>Самый проблемный момент — не отдельный PDF и не отдельное видео, а сборка ответа из нескольких источников сразу.</p>
+</section>
+<section>
+<h2>Что сильнее всего бьет по качеству</h2>
+<p>🟠 объединение нескольких модальностей</p>
+<p>🟣 соединения таблиц и сущностей</p>
+<p>🟠 кросс-языковое сопоставление</p>
+<p>🟣 точная сборка итоговой таблицы</p>
+<p>При этом размер ответа сам по себе не всегда все объясняет. Многострочные или многоколоночные ответы не обязательно хуже. Гораздо важнее путь, которым к ним нужно прийти.</p>
+</section>
+<section>
+<h2>Почему это важно для практики</h2>
+<p>DataSpace полезен не только как еще один академический набор задач. Он точно проверяет тот сценарий, где сегодня пытаются применять ИИ-агентов в компаниях.</p>
+<p>Если вы хотите, чтобы агент разбирал внутренние данные, финансовые документы, отчеты, регламенты и мультимедийные артефакты, вам нужен тест, где все это уже смешано. И где ошибка — это неверная таблица, из-за которой можно принять плохое решение.</p>
+<p>Этот бенчмарк показывает несколько практических вещей:</p>
+<p>🟠 одной умной модели недостаточно</p>
+<p>🟣 дизайн агентной оболочки меняет результат почти так же заметно, как смена модели</p>
+<p>🟠 мультимодальная интеграция пока остается узким местом</p>
+<p>🟣 проверка должна учитывать типы, точность чисел, порядок строк и эквивалентные форматы</p>
+<p>Еще один вывод: для надежной аналитики нужна не только генерация, но и строгая система проверки. Авторы сделали детерминированный оценщик, который умеет сравнивать таблицы по смыслу, а не только по буквальному виду заголовков. Это похоже на то, что потом понадобится и в продакшене.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>DataSpace показывает простой факт: ИИ-агенты пока заметно хуже справляются с реальной аналитикой, чем с изолированными демонстрационными задачами. Когда данные разбросаны по SQLite, документам, таблицам и видео, а ответ нужно собрать в точную итоговую таблицу, качество быстро падает.</p>
+<p>Лучший результат в 66,34% означает, что до надежного рабочего режима еще далеко. Главные узкие места уже видны: интеграция нескольких модальностей, соединения таблиц, кросс-языковое сопоставление и точная материализация ответа.</p>
+<p>Для разработчиков ИИ-агентов это прямой ориентир. Следующий шаг — улучшать не только базовые модели, но и агентные оболочки, инструменты, правила вывода и контроль того, в каком виде агент отдает результат. В задачах аналитики именно это решает, получится ли у вас полезный помощник или система, которая уверенно ошибается в каждой третьей задаче.</p>
+<p>🟠 Лучший результат — 66,34%</p>
+<p>🟣 Основные узкие места — мультимодальность, соединения, кросс-языковое сопоставление</p>
+<p>🟠 Надежность зависит не только от модели, но и от устройства агента</p>
+</section>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-09/fig_6.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Figure 5 . Backbone accuracy–efficiency trade-offs with DataSpace-Agent fixed. Dashed lines connect Pareto-efficient points (higher accuracy, lower resource use).</p></div></figure>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2608.03451" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/HKUSTDial/DataSpace" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                    <a href="https://huggingface.co/datasets/HKUSTDial/DataSpace" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <span class="text-xl leading-none">🤗</span>
+                        <span class="font-sans text-sm md:text-base font-medium">Датасет / модель на HuggingFace</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
