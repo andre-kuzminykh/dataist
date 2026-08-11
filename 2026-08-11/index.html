@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как миллионы виртуальных пользователей помогают заменить дорогие тесты на людях</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как миллионы виртуальных пользователей помогают заменить дорогие тесты на людях" />
+    <meta property="og:description" content="Можно ли проверять ИИ и цифровые сервисы на миллионах «людей», не собирая каждый раз дорогие и долгие отзывы у живых пользователей?
+
+Исследователи предлагают большую систему с виртуальными пользователями, у каждого из которых свой характер, привычки, терпение и реакции. Эти пользователи могут отвечать на вопросы, общаться с ИИ-помощником, пользоваться сайтом или приложением и показывать, где человек уйдёт, где засомневается, а где простит ошибку. Такой подход помогает увидеть не среднюю температуру по больнице, а то, как один и тот же продукт воспринимают очень разные люди.
+
+В этом обзоре разбираем, как устроена такая проверка на виртуальных пользователях, откуда берутся их профили и насколько их поведение похоже на поведение реальных людей." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2026-08-11/" />
+    <meta property="og:image" content="https://dataist.ai/2026-08-11/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-11/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/dataism_science" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-08-11</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Как миллионы виртуальных пользователей помогают заменить дорогие тесты на людях
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-11/cover.jpg"
+                         alt="Обложка: Как миллионы виртуальных пользователей помогают заменить дорогие тесты на людях"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда «средний пользователь» мешает понять продукт</h2>
+<p>Почти все оценки ИИ-систем и цифровых продуктов страдают одной и той же болезнью. Они проверяют усреднённую абстракцию. Как будто у всех один и тот же уровень опыта, один и тот же стиль общения, одна и та же терпимость к ошибкам, задержкам и странным ответам.</p>
+<p>На практике это ломает картину. Новичок в задаче по программированию хочет пояснений и подтверждений. Опытный разработчик — короткий ответ и больше самостоятельности от агента. Один пользователь уйдёт после первой галлюцинации чат-бота. Другой даст ещё шанс. Если вы меряете всё одним числом, вы этого не увидите.</p>
+<p>Работа <strong>MatrAIx: Simulating the World with 8.3 Billion Persona Agents</strong> предлагает другой путь: тестировать продукты на большой популяции симулированных пользователей, у которых есть разные биографии, привычки, ценности, навыки и ограничения. Вместо одного «типичного пользователя» — целый мир персон.</p>
+<p>Если вы делаете чат-бота, сайт, приложение или ИИ-ассистента, вам мало знать, «решает ли система задачу». Нужно понимать, <strong>для кого именно она решает её хорошо, а для кого — нет</strong>.</p>
+</section>
+<section>
+<h2>Что такое MatrAIx</h2>
+<p>MatrAIx — это большой пайплайн для оценки продуктов с помощью симулированных пользователей. У него три главные части.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-11/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Общая схема MatrAIx: как из большой базы персон собрать когорту, прогнать задачи и получить отчёт по подгруппам.</p>
+</div></figure>
+<p>Первая часть — <strong>Persona 8B</strong>. Это база из 8,3 миллиарда персон. Каждая описана по 1290 категориальным признакам. Там есть базовые вещи вроде возраста, региона, языка и образования. Есть и более тонкие: стиль общения, склонность к риску, интересы, здоровье, цифровые привычки, отношение к ИИ, опыт в инструментах и так далее.</p>
+<p>Вторая часть — <strong>среды исполнения</strong>. Их четыре:</p>
+<p>🟠 обзор — персона отвечает на вопросы и анкеты</p>
+<p>🟠 чат-бот — персона разговаривает с ИИ-системой</p>
+<p>🟠 веб — персона ходит по сайтам</p>
+<p>🟠 приложение — персона пользуется настольным или мобильным приложением</p>
+<p>Третья часть — <strong>библиотека задач</strong>. В работе их 1010. Это сценарии для торговли, финансов, медицины, софта и ещё пары десятков областей. Например: как пользователь отреагирует на повышение цены, продолжит ли разговор после ошибки чат-бота, сможет ли найти нужную функцию в приложении, насколько он терпим к задержке ответа.</p>
+<p>Коротко:</p>
+<p>🟣 8,3 млрд персон в полной популяции</p>
+<p>🟣 почти 1 млн персон в открытом наборе</p>
+<p>🟣 1290 признаков на одну персону</p>
+<p>🟣 4 среды оценки</p>
+<p>🟣 1010 задач</p>
+<p>🟣 18 189 прогонов в основных экспериментах</p>
+</section>
+<section>
+<h2>Откуда взялись эти «люди»</h2>
+<p>Здесь самая интересная инженерная часть. Авторы не просто сгенерировали миллиарды случайных профилей. Они старались сохранить зависимости между признаками.</p>
+<p>Если выбирать всё независимо, получится чепуха. Например, язык, регион и уровень владения английским начнут сочетаться нелепо. Возраст перестанет согласовываться с образованием и карьерой. Профиль будет выглядеть правдоподобно по отдельным полям, но странно целиком.</p>
+<p>Чтобы этого избежать, авторы строят ориентированный ациклический граф зависимостей. У каждого признака есть «родители». Скажем, уровень английского зависит от основного языка и региона. Образование — от возраста. Навыки — от карьеры, среды и других признаков. Потом персона собирается шаг за шагом, по топологическому порядку.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-11/fig_5.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Граф зависимостей между признаками персон: демография и образование тянут за собой навыки, интересы и поведение.</p>
+</div></figure>
+<p>Этот ход не делает симуляцию «настоящими людьми», но не даёт системе массово штамповать внутренне противоречивые профили.</p>
+<p>Кроме синтетических персон, есть и <strong>персоны с опорой на реальные источники</strong>. Их собирали из шести типов данных: биографии из Википедии, истории отзывов Amazon, опрос разработчиков Stack Overflow, General Social Survey, профили PRISM и добровольный опрос самой команды MatrAIx.</p>
+<p>В открытый набор попали около миллиона персон:</p>
+<p>🟠 599 847 персон с опорой на реальные источники</p>
+<p>🟠 400 000 синтетических персон</p>
+<p>Прямые идентификаторы удалены. Имена, контакты и прочие явные привязки не публикуются. Остаются только извлечённые признаки и текстовые описания.</p>
+</section>
+<section>
+<h2>Почему 1290 признаков — это не перебор</h2>
+<p>На бумаге число выглядит почти комично. Но логика понятна: если вы хотите проверять разные группы людей, описание должно быть достаточно подробным.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-11/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Трёхслойная таксономия Persona 8B: пять верхних групп признаков, 16 подгрупп и 55 категорий.</p>
+</div></figure>
+<p>Все признаки разбиты на пять верхних блоков:</p>
+<p>🟣 фон: демография, язык, образование, карьера</p>
+<p>🟣 психология: ценности, черты личности, взгляды, мотивация</p>
+<p>🟣 возможности: доменные знания, навыки, инструменты, программирование</p>
+<p>🟣 поведение и взаимодействие: привычки, стиль работы, принятие ИИ</p>
+<p>🟣 образ жизни: интересы, культура, еда, здоровье, спорт</p>
+<p>Это нужно не для красоты схемы. Идея в том, что вы можете собрать когорту не только по простым фильтрам вроде возраста и региона. Можно выбрать, например, людей с низким доверием к ИИ, высокой ценовой чувствительностью, средним техническим уровнем и предпочтением коротких ответов. Или, наоборот, пользователей, которые любят подробные объяснения и готовы терпеть задержку.</p>
+<p>Для продуктовой команды это почти замена хорошему исследовательскому брифу.</p>
+</section>
+<section>
+<h2>Как это проверяли</h2>
+<p>Одна из главных проблем всех симуляторов пользователей проста: они могут красиво говорить, но не следовать выданной персоне. Модель получает профиль «любит шутки, пишет многословно, избегает жаргона», а потом отвечает своим обычным голосом.</p>
+<p>Авторы отдельно проверяют именно это — <strong>придерживается ли ИИ-агент назначенной персоны</strong>.</p>
+<p>Они взяли 10 поведенческих атрибутов. Среди них — вежливость, чувство юмора, многословность, использование жаргона, любовь к эмодзи, стиль комментариев в коде, длина имён переменных и другие. Для каждого атрибута сделали испытания во всех четырёх средах: обзор, чат-бот, веб, приложение. Всего вышло 400 прогонов.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-11/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Проверка следования персоне: по атрибутам и по средам исполнения.</p>
+</div></figure>
+<p>Результат:</p>
+<p>🟣 366 из 400 прогонов</p>
+<p>🟣 91,5% случаев</p>
+<p>🟣 нужное поведение либо проявлялось, либо правильно подавлялось</p>
+<p>Но здесь важны детали.</p>
+<p>🟠 лучше всего всё работало в обзоре, чат-боте и вебе</p>
+<p>🟠 хуже — в среде приложения</p>
+<p>🟠 легче заставить модель что-то выразить, чем от чего-то отказаться</p>
+<p>🟠 особенно трудно подавлять «вежливость», если базовая модель по умолчанию воспитанная</p>
+<p>Последний пункт показателен. Если персона должна быть резкой и невежливой, модель нередко всё равно скатывается в безопасный, сглаженный тон. То есть персона конкурирует с базовой настройкой модели — и не всегда побеждает.</p>
+<p>Это ограничение. Симулятор пользователя здесь зависит от того, какая LLM играет эту персону.</p>
+</section>
+<section>
+<h2>Что показали прикладные задачи</h2>
+<p>Дальше начинается самое полезное: <strong>помогает ли симулятор увидеть различия между группами пользователей</strong>.</p>
+<p>Авторы прогнали 18 189 испытаний на восьми задачах. Использовали три модели в роли персона-агентов: Claude Opus 4.8, GPT 5.5 и Claude Haiku 4.5.</p>
+<p>Один из примеров — чат-бот для планирования питания. Персоны разговаривали с фиксированным помощником и оценивали, готовы ли следовать предложенному плану. Здесь интересно не только итоговое число, но и сами траектории диалога: кто просит замены, кто спорит из-за цены, кто задаёт вопросы о порциях, кто дольше уточняет ограничения.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-11/fig_14.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Графы переходов в диалоге о планировании питания: разговоры по-разному развиваются у групп с разной экономической мотивацией.</p>
+</div></figure>
+<p>Разница между группами видна не только в финальном ответе, но и в том, <strong>как они идут к этому ответу</strong>. Пользователи с более сильной чувствительностью к цене чаще отвергают предложения как нереалистичные и просят замену. Более обеспеченные пользователи больше обсуждают формат ответа и варианты питания вне дома.</p>
+<p>Это шаг вперёд по сравнению с обычным бенчмарком. Там вы бы увидели только: «ответ сгенерирован» или «задача решена». Здесь видно, где именно начинается трение.</p>
+<p>Но есть и неприятный момент. В ряде задач итог очень сильно зависел от того, <strong>какая модель играет пользователя</strong>.</p>
+<p>Короткая выжимка:</p>
+<p>🟣 в задаче про повышение цены доля колеблющихся пользователей была 98,3% у GPT 5.5, 27,0% у Opus и 83,3% у Haiku</p>
+<p>🟣 в задаче про платный план на сайте — 75,8%, 23,2% и 93,9% соответственно</p>
+<p>🟣 в задаче про продолжение использования чат-бота после ошибки различия тоже были огромными</p>
+<p>То есть одна и та же когорта персон, один и тот же продукт, один и тот же сценарий — а выводы о продукте могут быть противоположными.</p>
+<p>Главный практический вывод работы: <strong>модель, которая играет пользователя, сама становится частью условий эксперимента</strong>. Её нельзя считать нейтральной оболочкой.</p>
+</section>
+<section>
+<h2>Где здесь польза, а где границы</h2>
+<p>MatrAIx не обещает «цифровых двойников человечества». Это не замена полевым исследованиям, не замена реальным интервью и не основание для решений в чувствительных областях.</p>
+<p>Авторы прямо пишут: такие симуляции годятся для предпродакшн-проверок, стресс-тестов, анализа подгрупп и сравнения версий продукта. Но если вы хотите делать выводы о реальных людях, потом всё равно нужна проверка на людях.</p>
+<p>У симулированных пользователей есть несколько жёстких ограничений:</p>
+<p>🟠 они могут сглаживать различия между группами</p>
+<p>🟠 они могут усиливать стереотипы</p>
+<p>🟠 они не всегда умеют правдоподобно скрывать информацию, отказываться, уходить из диалога</p>
+<p>🟠 на результат сильно влияет базовая модель</p>
+<p>🟠 если модель пользователя и тестируемая система близки по устройству, возможен эффект «самоодобрения»</p>
+<p>Последний риск особенно важен. Если одна и та же семья моделей играет и пользователя, и систему, вы можете получить завышенную оценку просто потому, что модель «любит» ответы, похожие на свои собственные.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>MatrAIx двигает оценку ИИ-систем и цифровых продуктов от абстрактного «среднего пользователя» к популяции с разными биографиями и привычками. Вместо одного итогового балла появляется разрез по когортам, подгруппам и сценариям поведения.</p>
+<p>Главная идея статьи: <strong>оценивать нужно не только способность системы решить задачу, но и то, как по-разному эту же систему воспринимают разные пользователи</strong>.</p>
+<p>Из работы стоит вынести несколько вещей:</p>
+<p>🟣 симуляция пользователей уже годится для ранних продуктовых проверок</p>
+<p>🟣 большие популяции персон полезны, если вы хотите искать редкие кейсы и различия между подгруппами</p>
+<p>🟣 следование персоне можно довести до уровня около 91,5%, но это не снимает вопроса о правдоподобии</p>
+<p>🟣 результат зависит от модели-персонажа настолько сильно, что её нужно всегда указывать в отчёте</p>
+<p>🟣 реальные пользовательские исследования такие системы не заменяют, а сужают пространство гипотез перед ними</p>
+<p>Если вы строите ИИ-продукт, здесь есть ясная практическая мысль. Прежде чем выпускать систему в мир, полезно прогнать её не по одному бенчмарку и не по одной демке, а по набору разных пользовательских ролей. Не чтобы получить окончательную истину, а чтобы заранее увидеть, где продукт раздражает, теряет доверие или проваливает ожидания конкретных групп.</p>
+<p>Именно в этом месте симулированные пользователи становятся рабочим инструментом.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2608.04205" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/MatrAIx-ai/MatrAIx-Persona-8B" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                    <a href="https://huggingface.co/datasets/MatrAIx2026/MatrAIx_Persona_1M" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <span class="text-xl leading-none">🤗</span>
+                        <span class="font-sans text-sm md:text-base font-medium">Датасет / модель на HuggingFace</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/dataism_science" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
