@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как сильная модель улучшает слабую без переобучения</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как сильная модель улучшает слабую без переобучения" />
+    <meta property="og:description" content="Можно ли сделать слабую модель заметно умнее прямо во время работы, не меняя её изнутри?
+
+Исследователи показывают, что сильная модель может собрать для слабой понятную «обвязку»: она задаёт порядок шагов, перекладывает шаткие рассуждения в чёткие правила и следит, чтобы ответ был в нужном виде. За счёт этого слабая модель начинает ошибаться реже не потому, что её доучили, а потому, что ей лучше организовали сам процесс решения.
+
+В обзоре разберём, как сильная модель помогает слабой без переобучения, за счёт чего это работает на практике и почему иногда важнее не менять саму модель, а правильно выстроить её работу." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2026-08-16/" />
+    <meta property="og:image" content="https://dataist.ai/2026-08-16/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-08-16" />
+
+    <meta name="description" content="Можно ли сделать слабую модель заметно умнее прямо во время работы, не меняя её изнутри?
+
+Исследователи показывают, что сильная модель может собрать для слабой понятную «обвязку»: она задаёт порядок шагов, перекладывает шаткие рассуждения в чёткие правила и следит, чтобы ответ был в нужном виде. За счёт этого слабая модель начинает ошибаться реже не потому, что её доучили, а потому, что ей лучше организовали сам процесс решения.
+
+В обзоре разберём, как сильная модель помогает слабой без переобучения, за счёт чего это работает на практике и почему иногда важнее не менять саму модель, а правильно выстроить её работу." />
+    <link rel="canonical" href="https://dataist.ai/2026-08-16/" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "\u041a\u0430\u043a \u0441\u0438\u043b\u044c\u043d\u0430\u044f \u043c\u043e\u0434\u0435\u043b\u044c \u0443\u043b\u0443\u0447\u0448\u0430\u0435\u0442 \u0441\u043b\u0430\u0431\u0443\u044e \u0431\u0435\u0437 \u043f\u0435\u0440\u0435\u043e\u0431\u0443\u0447\u0435\u043d\u0438\u044f",
+      "description": "\u041c\u043e\u0436\u043d\u043e \u043b\u0438 \u0441\u0434\u0435\u043b\u0430\u0442\u044c \u0441\u043b\u0430\u0431\u0443\u044e \u043c\u043e\u0434\u0435\u043b\u044c \u0437\u0430\u043c\u0435\u0442\u043d\u043e \u0443\u043c\u043d\u0435\u0435 \u043f\u0440\u044f\u043c\u043e \u0432\u043e \u0432\u0440\u0435\u043c\u044f \u0440\u0430\u0431\u043e\u0442\u044b, \u043d\u0435 \u043c\u0435\u043d\u044f\u044f \u0435\u0451 \u0438\u0437\u043d\u0443\u0442\u0440\u0438?\n\n\u0418\u0441\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u0442\u0435\u043b\u0438 \u043f\u043e\u043a\u0430\u0437\u044b\u0432\u0430\u044e\u0442, \u0447\u0442\u043e \u0441\u0438\u043b\u044c\u043d\u0430\u044f \u043c\u043e\u0434\u0435\u043b\u044c \u043c\u043e\u0436\u0435\u0442 \u0441\u043e\u0431\u0440\u0430\u0442\u044c \u0434\u043b\u044f \u0441\u043b\u0430\u0431\u043e\u0439 \u043f\u043e\u043d\u044f\u0442\u043d\u0443\u044e \u00ab\u043e\u0431\u0432\u044f\u0437\u043a\u0443\u00bb: \u043e\u043d\u0430 \u0437\u0430\u0434\u0430\u0451\u0442 \u043f\u043e\u0440\u044f\u0434\u043e\u043a \u0448\u0430\u0433\u043e\u0432, \u043f\u0435\u0440\u0435\u043a\u043b\u0430\u0434\u044b\u0432\u0430\u0435\u0442 \u0448\u0430\u0442\u043a\u0438\u0435 \u0440\u0430\u0441\u0441\u0443\u0436\u0434\u0435\u043d\u0438\u044f \u0432 \u0447\u0451\u0442\u043a\u0438\u0435 \u043f\u0440\u0430\u0432\u0438\u043b\u0430 \u0438 \u0441\u043b\u0435\u0434\u0438\u0442, \u0447\u0442\u043e\u0431\u044b \u043e\u0442\u0432\u0435\u0442 \u0431\u044b\u043b \u0432 \u043d\u0443\u0436\u043d\u043e\u043c \u0432\u0438\u0434\u0435. \u0417\u0430 \u0441\u0447\u0451\u0442 \u044d\u0442\u043e\u0433\u043e \u0441\u043b\u0430\u0431\u0430\u044f \u043c\u043e\u0434\u0435\u043b\u044c \u043d\u0430\u0447\u0438\u043d\u0430\u0435\u0442 \u043e\u0448\u0438\u0431\u0430\u0442\u044c\u0441\u044f \u0440\u0435\u0436\u0435 \u043d\u0435 \u043f\u043e\u0442\u043e\u043c\u0443, \u0447\u0442\u043e \u0435\u0451 \u0434\u043e\u0443\u0447\u0438\u043b\u0438, \u0430 \u043f\u043e\u0442\u043e\u043c\u0443, \u0447\u0442\u043e \u0435\u0439 \u043b\u0443\u0447\u0448\u0435 \u043e\u0440\u0433\u0430\u043d\u0438\u0437\u043e\u0432\u0430\u043b\u0438 \u0441\u0430\u043c \u043f\u0440\u043e\u0446\u0435\u0441\u0441 \u0440\u0435\u0448\u0435\u043d\u0438\u044f.\n\n\u0412 \u043e\u0431\u0437\u043e\u0440\u0435 \u0440\u0430\u0437\u0431\u0435\u0440\u0451\u043c, \u043a\u0430\u043a \u0441\u0438\u043b\u044c\u043d\u0430\u044f \u043c\u043e\u0434\u0435\u043b\u044c \u043f\u043e\u043c\u043e\u0433\u0430\u0435\u0442 \u0441\u043b\u0430\u0431\u043e\u0439 \u0431\u0435\u0437 \u043f\u0435\u0440\u0435\u043e\u0431\u0443\u0447\u0435\u043d\u0438\u044f, \u0437\u0430 \u0441\u0447\u0451\u0442 \u0447\u0435\u0433\u043e \u044d\u0442\u043e \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442 \u043d\u0430 \u043f\u0440\u0430\u043a\u0442\u0438\u043a\u0435 \u0438 \u043f\u043e\u0447\u0435\u043c\u0443 \u0438\u043d\u043e\u0433\u0434\u0430 \u0432\u0430\u0436\u043d\u0435\u0435 \u043d\u0435 \u043c\u0435\u043d\u044f\u0442\u044c \u0441\u0430\u043c\u0443 \u043c\u043e\u0434\u0435\u043b\u044c, \u0430 \u043f\u0440\u0430\u0432\u0438\u043b\u044c\u043d\u043e \u0432\u044b\u0441\u0442\u0440\u043e\u0438\u0442\u044c \u0435\u0451 \u0440\u0430\u0431\u043e\u0442\u0443.",
+      "image": "https://dataist.ai/2026-08-16/cover.jpg",
+      "url": "https://dataist.ai/2026-08-16/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/2026-08-16/"
+      },
+      "datePublished": "2026-08-16",
+      "inLanguage": "ru",
+      "author": {"@type": "Person", "name": "@dataist_ai"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-16/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-08-16</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Как сильная модель улучшает слабую без переобучения
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-16/cover.jpg"
+                         alt="Обложка: Как сильная модель улучшает слабую без переобучения"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда сильная модель обустраивает слабой рабочее место</h2>
+<p>Обычно перенос способностей от большой модели к маленькой выглядит так: берут сильную модель, собирают с её помощью данные, потом дообучают слабую. Авторы этой работы предлагают другой ход. Что, если слабую модель вообще не трогать? Не менять веса. Не делать файн-тюнинг. Не запускать длинное обучение. Вместо этого попросить сильную модель построить для слабой хороший пайплайн на этапе инференса.</p>
+<p>Идея звучит просто. Но результат получился неожиданно большим: в среднем качество слабой модели на четырёх бенчмарках на понимание чужих намерений и убеждений выросло с 0.49 до 0.91 в лучшем запуске. То есть почти вдвое.</p>
+<p>Это важно, если вы работаете с дешёвыми моделями, агентами и сложными пайплайнами. Часто проблема не в том, что модель «слишком глупая». Проблема в том, что ей дали задачу в неудобном виде. Слишком много шагов. Плавающий формат ответа. Смешение подзадач. Хрупкие места, где модель легко путается. Если сильная модель умеет один раз разобрать задачу на части и оформить это в код, правила, маршрутизацию и проверки, слабая модель начинает работать заметно лучше.</p>
+</section>
+<section>
+<h2>Что исследовали</h2>
+<p>Авторы называют подход «сильный-к-слабому через каркас». По сути это такой сценарий:</p>
+<p>🟠 есть сильная модель-строитель, которая проектирует пайплайн</p>
+<p>🟠 есть слабая целевая модель, которую нельзя дообучать</p>
+<p>🟠 строитель видит только маленький валидационный набор — 5% данных</p>
+<p>🟠 на этих 5% он итеративно улучшает каркас: промты, маршрутизацию, правила, код, проверки, формат ответа</p>
+<p>🟠 потом готовый каркас тестируют на скрытом полном наборе</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-16/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема эксперимента: сильная модель итеративно строит каркас по маленькой валидации, а потом его проверяют на скрытом тесте.</p>
+</div></figure>
+<p>Ключевой момент здесь в том, что сильная модель не подсказывает ответы на конкретные примеры. Она строит переиспользуемую процедуру. Если процедура потом работает на скрытом тесте, значит переносится не запоминание, а структура решения.</p>
+<p>Проверяли это на задачах типа Theory of Mind — то есть на бенчмарках, где модель должна понимать, кто что видел, во что верит, кто кого пытается обмануть, какие цели у участников и как они рассуждают о чужих целях. Это сложный класс задач для небольших LLM. Но именно здесь хорошо видно, можно ли часть рассуждения вынести наружу: в код, в промежуточные состояния, в жёсткие правила.</p>
+</section>
+<section>
+<h2>Главный результат в цифрах</h2>
+<p>Самая слабая цель в основном эксперименте — GPT-5.4-mini. Без каркаса она набирала в среднем 0.488. С каркасом средний результат по всем запускам вырос до 0.763. Лучший запуск добрался до 0.912.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-16/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Средняя точность связок «модель-строитель × платформа»: почти все варианты заметно выше базового вызова слабой модели без каркаса.</p>
+</div></figure>
+<p>Коротко по цифрам:</p>
+<p>🟣 базовый вызов GPT-5.4-mini без каркаса: 0.488</p>
+<p>🟣 средний результат всех каркасов: 0.763</p>
+<p>🟣 лучший результат: 0.912</p>
+<p>🟣 прирост в лучшем случае: +0.423</p>
+<p>🟣 все конфигурации превзошли базовую линию</p>
+<p>Иногда дешевле и полезнее не брать модель классом выше, а окружить текущую модель правильным пайплайном. В работе есть и более сильное наблюдение: хорошо собранный каркас для GPT-5.4-mini местами обгоняет более сильные модели без каркаса.</p>
+<p>Но есть и ограничение. Человеческий, вручную придуманный каркас всё ещё лучше: он дал 0.939. Значит, автоматическая сборка уже работает хорошо, но до человеческой инженерии на сложных подзадачах ещё не всегда дотягивает.</p>
+</section>
+<section>
+<h2>Откуда берётся выигрыш</h2>
+<p>Интересная часть работы — разбор механики. Авторы довольно честно показывают: дело не в том, что слабую модель просто заставили «больше рассуждать». И не в том, что ей дали больше попыток. Главный выигрыш приходит из трёх вещей.</p>
+<p>Во-первых, часть нестабильного рассуждения выносится в детерминированный код. Если вопрос можно свести к правилам, лучше не просить модель каждый раз импровизировать, а один раз зашить процедуру.</p>
+<p>Во-вторых, работает маршрутизация по типам задач. Один подтип задачи идёт в один обработчик, другой — в другой. Это снижает шум.</p>
+<p>В-третьих, много даёт жёсткий контроль формата ответа. Это инженерная деталь, но слабые модели часто теряют очки на банальных вещах: не тот формат, лишний текст, неправильный выбор опции. Каркас это обрезает.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-16/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Разные сильные каркасы исправляют разные ошибки базовой модели: вместе они покрывают почти все типы промахов.</p>
+</div></figure>
+<p>Авторы вручную разобрали техники, которые реально использовали модели-строители. Самые частые:</p>
+<p>🟠 контроль формата ответа</p>
+<p>🟠 жёсткий режим генерации без случайности</p>
+<p>🟠 маршрутизация по бенчмаркам и подтипам задач</p>
+<p>🟠 принудительное пошаговое рассуждение там, где оно помогает</p>
+<p>🟠 правила для отрицаний, полярности и логических инверсий</p>
+<p>🟠 гибридные схемы: сначала правило, потом модель как запасной вариант</p>
+<p>Редкие, но часто полезные техники:</p>
+<p>🟠 детерминированные решатели</p>
+<p>🟠 извлечение структурированного состояния задачи</p>
+<p>🟠 верификация отдельным проходом</p>
+<p>🟠 голосование между несколькими ответами</p>
+<p>Если упростить до одной фразы: лучшие каркасы не «мотивируют» слабую модель думать усерднее, а снимают с неё лишнюю умственную нагрузку.</p>
+</section>
+<section>
+<h2>Как был устроен эксперимент</h2>
+<p>Эксперимент большой: 72 запуска. Меняли сразу несколько факторов.</p>
+<p>🟣 модель-строитель: GPT-5.5, Opus-4.7, Sonnet-4.6, Gemini-3.1-Pro, Gemini-3.5-flash и другие</p>
+<p>🟣 платформу, в которой строитель писал код: Cursor, Claude Code, GPT Codex</p>
+<p>🟣 целевую модель: GPT-5.4-mini или Gemini-3.5-flash</p>
+<p>🟣 число повторов для проверки стабильности</p>
+<p>Все строители работали только с маленькой валидацией. В среднем делали около пяти прогонов на ней. И здесь ещё один вывод: больше прогонов по валидации почти не помогает. Качество итогового каркаса слабо связано с количеством таких итераций. Зато очень сильно связано с качеством самой модели-строителя.</p>
+<p>Иными словами, дело не в том, чтобы бесконечно перебирать варианты. Дело в том, чтобы сильная модель выдвинула правильную гипотезу о структуре задачи.</p>
+</section>
+<section>
+<h2>Сильнее строитель — лучше каркас</h2>
+<p>Одна из самых чистых частей статьи — сравнение уровней «усилия рассуждения» у одной и той же модели-строителя, Opus-4.7. Ей давали разный бюджет на внутреннее рассуждение при написании каркаса: низкий, средний, высокий и очень высокий.</p>
+<p>Результат почти монотонный: чем больше усилие, тем лучше каркас.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-16/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Статистическая значимость лучшего каркаса против базовой линии: исправленных ошибок намного больше, чем новых промахов.</p>
+</div></figure>
+<p>Это интересно по двум причинам.</p>
+<p>Первая: вычисления на этапе построения каркаса окупаются. То есть полезно не только «думать во время ответа», но и «думать во время проектирования пайплайна».</p>
+<p>Вторая: рост идёт не потому, что модель пишет просто больше кода. Размер кода сам по себе с качеством связан слабо. Важно, насколько удачно код снимает нагрузку со слабой модели.</p>
+<p>Короткая выжимка:</p>
+<p>🟠 больше усилия у строителя → лучше итоговый каркас</p>
+<p>🟠 больше прогонов по валидации → почти не влияет</p>
+<p>🟠 платформа влияет меньше, чем качество самой модели-строителя</p>
+<p>Если вы хотите улучшить систему, лучше дать сильной модели больше времени на построение пайплайна, чем гонять слабую модель по кругу на тех же примерах.</p>
+</section>
+<section>
+<h2>Платформа оказалась не главным фактором</h2>
+<p>Сегодня много спорят, влияет ли среда, в которой работает агент для программирования: Cursor, Codex, Claude Code и так далее. В этой работе эффект оказался вторичным.</p>
+<p>Разница между платформами есть, но она небольшая и нестабильная. Главный фактор — сама модель-строитель. Платформа начинает заметнее помогать только тогда, когда у строителя уже хватает «бюджета рассуждения», чтобы использовать её возможности.</p>
+<p>Это важно. Хорошая оболочка полезна. Но чудес она не делает. Если строитель слабый, платформа его не спасёт.</p>
+</section>
+<section>
+<h2>Кому каркасы помогают больше всего</h2>
+<p>Самый большой выигрыш получают слабые модели с заметным запасом до потолка. Когда целевая модель и так уже сильная, каркас помогает меньше. Иногда даже мешает.</p>
+<p>Авторы сравнили GPT-5.4-mini и Gemini-3.5-flash как цели. Для слабой GPT прирост был огромным. Для Gemini — гораздо меньше. Более того, на задачах, где Gemini уже близка к потолку, дополнительная инженерия иногда ухудшала результат.</p>
+<p>Логика тут простая: каркас в первую очередь возвращает модели те способности, которые у неё уже как будто есть, но она применяет их нестабильно. Если модель и так справляется, лишние правила и маршруты начинают шуметь.</p>
+<p>Вывод для практики:</p>
+<p>🟣 каркасы особенно полезны для слабых и дешёвых моделей</p>
+<p>🟣 для сильных моделей их стоит применять точечно, по подзадачам</p>
+<p>🟣 перед этим полезно измерить, где у модели ещё есть запас для улучшения</p>
+</section>
+<section>
+<h2>Где проходит предел</h2>
+<p>Не всё можно «скомпилировать» в правила и код. Остаточные ошибки хорошо показывают границу метода.</p>
+<p>Лучше всего автоматические каркасы справились с задачами, где есть явная структура: кто что видел, кто не видел, какой вывод отсюда следует. Там детерминированные правила работают почти идеально.</p>
+<p>Хуже всего — там, где нужно:</p>
+<p>🟠 отслеживать глубокую вложенность чужих убеждений</p>
+<p>🟠 учитывать обман и смену перспективы</p>
+<p>🟠 делать байесовский вывод о целях по неоднозначным действиям</p>
+<p>То есть каркас отлично снимает рутинную часть когнитивной нагрузки, но не заменяет саму способность к сложному рассуждению там, где задача остаётся по-настоящему открытой.</p>
+</section>
+<section>
+<h2>Почему это важно</h2>
+<p>Эта работа сдвигает фокус. Обычно мы спрашиваем: насколько хорошо модель решает задачу сама? Здесь вопрос другой: насколько хорошо сильная модель умеет построить условия, в которых слабая модель решит задачу лучше?</p>
+<p>Для индустрии это очень практичный поворот. В продакшене редко используют «голую» модель. Обычно вокруг неё уже есть пайплайн: инструменты, память, маршрутизация, проверки, код, ограничения формата. И теперь становится видно, что этот внешний слой — отдельный канал переноса способностей.</p>
+<p>Если говорить совсем приземлённо, сильная модель здесь выступает как инженер. Она один раз тратит много рассуждения, чтобы упаковать решение в процедуру. А потом слабая модель дёшево исполняет эту процедуру много раз.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>Если вы хотите выжать больше из недорогих моделей, менять веса — не единственный путь. Можно перенести часть способности на уровень пайплайна.</p>
+<p>Главные выводы работы такие:</p>
+<p>🟠 сильная модель может заметно улучшить слабую без дообучения, только за счёт каркаса на этапе инференса</p>
+<p>🟠 основной источник выигрыша — вынос хрупкого рассуждения в код, правила, маршрутизацию и контроль формата</p>
+<p>🟠 качество строителя важнее числа итераций по валидации и важнее платформы</p>
+<p>🟠 слабые модели получают максимальную пользу, сильные — ограниченную и местами отрицательную</p>
+<p>🟠 предел метода проходит там, где задачу трудно свести к явной структуре</p>
+<p>На языке продуктов это означает простую вещь: между «взять модель дороже» и «оставить как есть» есть большой промежуточный слой инженерии. И этот слой уже можно частично автоматизировать силами самих LLM.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2608.12307" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
