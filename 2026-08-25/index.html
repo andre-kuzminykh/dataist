@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как графы помогают ИИ-агентам работать вместе</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как графы помогают ИИ-агентам работать вместе" />
+    <meta property="og:description" content="Когда один ИИ-агент берётся за сложную задачу в одиночку, он быстро упирается в потолок.
+
+Исследователи предлагают смотреть не на одного умного исполнителя, а на целую систему, где несколько ИИ-агентов делят работу, сверяют друг друга и двигаются к общей цели. Для этого они описывают задачу, роли и текущее состояние как сеть связей, чтобы системе было проще понимать, кто что делает, что уже готово и что зависит друг от друга.
+
+В обзоре разберём, как такой подход помогает ИИ-агентам работать вместе, не терять ход задачи и справляться с тем, что одному агенту уже не по силам." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2026-08-25/" />
+    <meta property="og:image" content="https://dataist.ai/2026-08-25/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-08-25" />
+
+    <meta name="description" content="Когда один ИИ-агент берётся за сложную задачу в одиночку, он быстро упирается в потолок.
+
+Исследователи предлагают смотреть не на одного умного исполнителя, а на целую систему, где несколько ИИ-агентов делят работу, сверяют друг друга и двигаются к общей цели. Для этого они описывают задачу, роли и текущее состояние как сеть связей, чтобы системе было проще понимать, кто что делает, что уже готово и что зависит друг от друга.
+
+В обзоре разберём, как такой подход помогает ИИ-агентам работать вместе, не терять ход задачи и справляться с тем, что одному агенту уже не по силам." />
+    <link rel="canonical" href="https://dataist.ai/2026-08-25/" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "\u041a\u0430\u043a \u0433\u0440\u0430\u0444\u044b \u043f\u043e\u043c\u043e\u0433\u0430\u044e\u0442 \u0418\u0418-\u0430\u0433\u0435\u043d\u0442\u0430\u043c \u0440\u0430\u0431\u043e\u0442\u0430\u0442\u044c \u0432\u043c\u0435\u0441\u0442\u0435",
+      "description": "\u041a\u043e\u0433\u0434\u0430 \u043e\u0434\u0438\u043d \u0418\u0418-\u0430\u0433\u0435\u043d\u0442 \u0431\u0435\u0440\u0451\u0442\u0441\u044f \u0437\u0430 \u0441\u043b\u043e\u0436\u043d\u0443\u044e \u0437\u0430\u0434\u0430\u0447\u0443 \u0432 \u043e\u0434\u0438\u043d\u043e\u0447\u043a\u0443, \u043e\u043d \u0431\u044b\u0441\u0442\u0440\u043e \u0443\u043f\u0438\u0440\u0430\u0435\u0442\u0441\u044f \u0432 \u043f\u043e\u0442\u043e\u043b\u043e\u043a.\n\n\u0418\u0441\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u0442\u0435\u043b\u0438 \u043f\u0440\u0435\u0434\u043b\u0430\u0433\u0430\u044e\u0442 \u0441\u043c\u043e\u0442\u0440\u0435\u0442\u044c \u043d\u0435 \u043d\u0430 \u043e\u0434\u043d\u043e\u0433\u043e \u0443\u043c\u043d\u043e\u0433\u043e \u0438\u0441\u043f\u043e\u043b\u043d\u0438\u0442\u0435\u043b\u044f, \u0430 \u043d\u0430 \u0446\u0435\u043b\u0443\u044e \u0441\u0438\u0441\u0442\u0435\u043c\u0443, \u0433\u0434\u0435 \u043d\u0435\u0441\u043a\u043e\u043b\u044c\u043a\u043e \u0418\u0418-\u0430\u0433\u0435\u043d\u0442\u043e\u0432 \u0434\u0435\u043b\u044f\u0442 \u0440\u0430\u0431\u043e\u0442\u0443, \u0441\u0432\u0435\u0440\u044f\u044e\u0442 \u0434\u0440\u0443\u0433 \u0434\u0440\u0443\u0433\u0430 \u0438 \u0434\u0432\u0438\u0433\u0430\u044e\u0442\u0441\u044f \u043a \u043e\u0431\u0449\u0435\u0439 \u0446\u0435\u043b\u0438. \u0414\u043b\u044f \u044d\u0442\u043e\u0433\u043e \u043e\u043d\u0438 \u043e\u043f\u0438\u0441\u044b\u0432\u0430\u044e\u0442 \u0437\u0430\u0434\u0430\u0447\u0443, \u0440\u043e\u043b\u0438 \u0438 \u0442\u0435\u043a\u0443\u0449\u0435\u0435 \u0441\u043e\u0441\u0442\u043e\u044f\u043d\u0438\u0435 \u043a\u0430\u043a \u0441\u0435\u0442\u044c \u0441\u0432\u044f\u0437\u0435\u0439, \u0447\u0442\u043e\u0431\u044b \u0441\u0438\u0441\u0442\u0435\u043c\u0435 \u0431\u044b\u043b\u043e \u043f\u0440\u043e\u0449\u0435 \u043f\u043e\u043d\u0438\u043c\u0430\u0442\u044c, \u043a\u0442\u043e \u0447\u0442\u043e \u0434\u0435\u043b\u0430\u0435\u0442, \u0447\u0442\u043e \u0443\u0436\u0435 \u0433\u043e\u0442\u043e\u0432\u043e \u0438 \u0447\u0442\u043e \u0437\u0430\u0432\u0438\u0441\u0438\u0442 \u0434\u0440\u0443\u0433 \u043e\u0442 \u0434\u0440\u0443\u0433\u0430.\n\n\u0412 \u043e\u0431\u0437\u043e\u0440\u0435 \u0440\u0430\u0437\u0431\u0435\u0440\u0451\u043c, \u043a\u0430\u043a \u0442\u0430\u043a\u043e\u0439 \u043f\u043e\u0434\u0445\u043e\u0434 \u043f\u043e\u043c\u043e\u0433\u0430\u0435\u0442 \u0418\u0418-\u0430\u0433\u0435\u043d\u0442\u0430\u043c \u0440\u0430\u0431\u043e\u0442\u0430\u0442\u044c \u0432\u043c\u0435\u0441\u0442\u0435, \u043d\u0435 \u0442\u0435\u0440\u044f\u0442\u044c \u0445\u043e\u0434 \u0437\u0430\u0434\u0430\u0447\u0438 \u0438 \u0441\u043f\u0440\u0430\u0432\u043b\u044f\u0442\u044c\u0441\u044f \u0441 \u0442\u0435\u043c, \u0447\u0442\u043e \u043e\u0434\u043d\u043e\u043c\u0443 \u0430\u0433\u0435\u043d\u0442\u0443 \u0443\u0436\u0435 \u043d\u0435 \u043f\u043e \u0441\u0438\u043b\u0430\u043c.",
+      "image": "https://dataist.ai/2026-08-25/cover.jpg",
+      "url": "https://dataist.ai/2026-08-25/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/2026-08-25/"
+      },
+      "datePublished": "2026-08-25",
+      "inLanguage": "ru",
+      "author": {"@type": "Person", "name": "@dataist_ai"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-25/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-08-25</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Как графы помогают ИИ-агентам работать вместе
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-25/cover.jpg"
+                         alt="Обложка: Как графы помогают ИИ-агентам работать вместе"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда одного агента уже мало</h2>
+<p>За последний год у индустрии появилась странная привычка: если агент проваливает задачу, ему просто добавляют ещё инструментов, памяти, увеличивают контекст и дают второй шанс. Иногда это помогает. Но только до момента, когда задача становится похожа не на разговор с умной моделью, а на работу маленькой команды.</p>
+<p>Например, починить баг в большом репозитории. Или собрать исследовательский пайплайн. Или провести длинную бизнес-процедуру с проверками, согласованиями и откатами. В таких задачах один ИИ-агент быстро упирается в потолок. Он вынужден держать всё в одной голове: план, промежуточные результаты, ошибки, проверку, взаимодействие с инструментами и память о том, что уже произошло.</p>
+<p>Авторы новой большой работы предлагают смотреть на проблему иначе. Следующий шаг в развитии ИИ-агентов — система из нескольких специализированных агентов с явной структурой связей между задачами, ролями и состояниями. Для этого они вводят термин <strong>графовая инженерия</strong>.</p>
+<p>Идея практичная: если вы хотите, чтобы агентная система работала на длинных и сложных задачах, вам нужно явно описывать:</p>
+<p>🟠 что именно надо сделать</p>
+<p>🟠 кто именно это делает</p>
+<p>🟠 в каком состоянии сейчас находится вся система</p>
+<p>Именно это, по мысли авторов, отличает просто набор агентов от <strong>системного интеллекта</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-25/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Переход от интеллекта модели к системному интеллекту: от промтов и контекста к обвязке, циклам и графовой инженерии.</p>
+</div></figure>
+</section>
+<section>
+<h2>От модели к агенту, от агента к системе</h2>
+<p>Логика статьи строится как лестница.</p>
+<p>Сначала у нас есть <strong>интеллект модели</strong>. Это базовые способности LLM: понимать текст, отвечать, писать код, рассуждать. Они появляются из предобучения и дообучения, а на этапе инференса усиливаются промтами и контекстом.</p>
+<p>Потом появляется <strong>индивидуальный интеллект</strong>. Это уже не просто вызов модели, а агент с обвязкой: доступом к инструментам, памяти, навыкам и циклом действий. Он может планировать, запускать команды, смотреть на результат, исправлять себя и идти дальше.</p>
+<p>Но на длинных задачах этого мало.</p>
+<p>Один агент почти всегда работает в одном основном цикле. Из-за этого параллельные ветки превращаются в последовательную цепочку. Роли смешиваются. Проверка результата часто делается тем же агентом, который этот результат и создал. А состояние задачи размазывается по контексту, журналам и случайным заметкам.</p>
+<p>Авторы формулируют это жёстко: многие реальные задачи <strong>архитектурно не помещаются</strong> в одного агента. Дело уже не в том, что агенту не хватает ещё одного инструмента или чуть большего окна контекста. Ему не хватает организации.</p>
+<p>Коротко проблема выглядит так:</p>
+<p>🟣 сложные задачи состоят из зависимых подзадач</p>
+<p>🟣 часть шагов надо выполнять параллельно</p>
+<p>🟣 для разных шагов нужны разные специализации</p>
+<p>🟣 результаты нужно независимо проверять</p>
+<p>🟣 состояние должно жить дольше одного цикла агента</p>
+<p>Отсюда и главный переход статьи: от индивидуального интеллекта к <strong>системному интеллекту</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-25/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Как способности модели превращаются в агента: промты, контекст, обвязка и циклы исполнения.</p>
+</div></figure>
+</section>
+<section>
+<h2>Что такое графовая инженерия</h2>
+<p>Под графовой инженерией авторы понимают не просто использование графов как структуры данных. Речь о том, чтобы сделать графы <strong>рабочим слоем управления</strong> агентной системой.</p>
+<p>В этой схеме есть три главных графа, или три главных вида структур.</p>
+</section>
+<section>
+<h2>1. Организация задач</h2>
+<p>Первый вопрос: <strong>что делать</strong>.</p>
+<p>Большую цель надо разложить на подзадачи, зависимости, ветки, проверки и исполняемый пайплайн. Пока это живёт только в тексте промта, система хрупкая. Как только структура становится явной, ею можно управлять: запускать независимые шаги параллельно, перестраивать план, вставлять проверки, откатывать неудачные ветки.</p>
+<p>Это особенно заметно в задачах по программированию, исследовательских пайплайнах и бизнес-процессах. Там редко бывает одна линейная траектория. Обычно есть дерево или ориентированный граф: собрать данные, проверить гипотезу, запустить тест, сравнить результаты, вернуться назад, если проверка не прошла.</p>
+<p>Авторы перечисляют два ключевых механизма:</p>
+<p>🟠 <strong>декомпозиция цели</strong> — разбиение общей задачи на подзадачи с зависимостями</p>
+<p>🟠 <strong>оптимизация пайплайна</strong> — превращение этих подзадач в исполняемую схему с агентами, инструментами и проверками</p>
+<p>Здесь обзор собирает много работ последних лет: от систем, которые явно раскладывают задачи по подэтапам, до методов, которые прямо ищут лучший агентный пайплайн как объект оптимизации.</p>
+<p>Важно другое: задача перестаёт быть «цепочкой рассуждений в голове модели» и становится внешней структурой, с которой можно работать.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-25/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Организация задач: как цель раскладывается на подцели, зависимости и исполняемый пайплайн.</p>
+</div></figure>
+</section>
+<section>
+<h2>2. Координация агентов</h2>
+<p>Второй вопрос: <strong>кто делает работу</strong>.</p>
+<p>Если у вас несколько агентов, этого ещё недостаточно. Нужна явная модель способностей, ролей и каналов общения. Иначе получается толпа, а не система.</p>
+<p>Авторы делят координацию на три слоя:</p>
+<p>🟣 <strong>граф способностей</strong> — кто что умеет, к каким инструментам имеет доступ, где надёжен</p>
+<p>🟣 <strong>граф команды</strong> — какие роли назначены, кто кому делегирует, кто кого проверяет</p>
+<p>🟣 <strong>граф коммуникации</strong> — кто с кем и когда обменивается информацией</p>
+<p>Это важное различие. Один и тот же агент может быть хорош в анализе журналов, но не годиться для написания исправления. Другой — отлично пишет код, но не умеет надёжно проверять регрессии. Третий нужен не для генерации, а для верификации.</p>
+<p>В обычном одиночном агенте всё это слипается. В мультиагентной системе эти различия надо фиксировать явно.</p>
+<p>Авторы приводят много примеров структур:</p>
+<p>🟠 цепочки ролей, где результат одного этапа переходит к следующему</p>
+<p>🟠 маршрутизация, где диспетчер отправляет подзадачи нужным специалистам</p>
+<p>🟠 веерные схемы, где несколько агентов работают параллельно, а потом ответы агрегируются</p>
+<p>🟠 динамические топологии, которые перестраиваются по ходу задачи</p>
+<p>Здесь есть одно наблюдение: больше связей между агентами не всегда лучше. Лишняя коммуникация даёт шум, стоимость и распространение ошибок. Поэтому граф общения тоже надо проектировать, а не оставлять стихийным.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-25/fig_5.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Координация агентов: способности, командная структура и потоки сообщений между агентами.</p>
+</div></figure>
+</section>
+<section>
+<h2>3. Управление состоянием во время выполнения</h2>
+<p>Третий вопрос: <strong>что сейчас происходит</strong>.</p>
+<p>Это, пожалуй, самая недооценённая часть статьи. В агентных системах любят говорить о планировании и ролях, но намного реже — о состоянии выполнения.</p>
+<p>Если система работает долго, параллельно и с внешними инструментами, ей нужен не просто журнал. Нужен понятный, проверяемый слой состояния:</p>
+<p>🟣 какие шаги уже завершены</p>
+<p>🟣 какие результаты подтверждены</p>
+<p>🟣 какие изменения ещё только предложены</p>
+<p>🟣 где именно случилась ошибка</p>
+<p>🟣 от какого корректного состояния можно восстановиться</p>
+<p>Авторы называют это <strong>управлением состоянием во время выполнения</strong>. Внутри три задачи:</p>
+<p>🟠 запись состояния</p>
+<p>🟠 локализация сбоев</p>
+<p>🟠 восстановление после сбоев</p>
+<p>Это уже очень близко к тому, как устроены обычные надёжные системы: транзакции, контроль версий, откаты, проверка инвариантов, воспроизведение истории. Только теперь всё это нужно перенести в мир ИИ-агентов.</p>
+<p>И это важно, потому что длинные агентные задачи проваливаются не только из-за «плохих рассуждений». Они проваливаются потому, что система не понимает, где именно свернула не туда, какой кусок работы ещё валиден и что можно переиспользовать при восстановлении.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-25/fig_6.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Управление состоянием во время выполнения: запись истории, поиск сбоев и восстановление системы.</p>
+</div></figure>
+</section>
+<section>
+<h2>Почему это важно сейчас</h2>
+<p>Работа важна не новым названием, а тем, что она точно описывает сдвиг в отрасли.</p>
+<p>Последние полтора года все строили вокруг LLM всё более сложную обвязку: память, инструменты, браузеры, командные оболочки, агенты для программирования, длинные циклы с самопроверкой. Но чем сложнее задача, тем заметнее становится одна вещь: проблема уже не в отдельном вызове модели.</p>
+<p>Проблема в системе.</p>
+<p>Это видно сразу в нескольких направлениях:</p>
+<p>🟠 в задачах по программированию нужно вести параллельные ветки, тесты, ревью и откаты</p>
+<p>🟠 в научных задачах нужно разделять генерацию гипотез, критику, анализ данных и проверку</p>
+<p>🟠 в корпоративных процессах нужны роли, права доступа, согласования и журнал изменений</p>
+<p>🟠 в медицине нужны длинная история, источник каждого вывода и контроль ответственности</p>
+<p>Во всех этих кейсах «один очень умный агент» — просто неудобная единица сборки.</p>
+<p>Ещё один момент: статья прямо говорит, что <strong>мультиагентность сама по себе ничего не гарантирует</strong>. Можно добавить пять агентов и получить ещё более хаотичную систему. Системный интеллект появляется только там, где есть явная организация работы, координация ролей и управление состоянием.</p>
+</section>
+<section>
+<h2>Как авторы собирают картину поля</h2>
+<p>Это не экспериментальная статья с одной новой моделью и таблицей результатов. Это большой обзор поля.</p>
+<p>Авторы проходят по всей цепочке:</p>
+<p>🟣 базовые модели и дообучение</p>
+<p>🟣 промты и контекст</p>
+<p>🟣 обвязка агента: инструменты, память, навыки</p>
+<p>🟣 циклы выполнения и обратная связь</p>
+<p>🟣 пределы одиночного агента</p>
+<p>🟣 графовая инженерия как следующий уровень</p>
+<p>🟣 бенчмарки, библиотеки и прикладные кейсы</p>
+<p>🟣 открытые проблемы: приватность, оценка, семантика, инфраструктура</p>
+<p>Отдельно полезно, что они не ограничиваются теорией. В статье есть большой срез по прикладным системам: программирование, исследования, медицина, корпоративные пайплайны, персональные агенты, социальные симуляции. Из этого видно, что многие практические команды уже двигаются в сторону системной организации, даже если не называют это графовой инженерией.</p>
+<p>Ещё один слой — оценка. Авторы показывают, что текущие бенчмарки часто меряют либо способности модели, либо успех отдельного агента, но гораздо хуже — свойства всей системы: правильность декомпозиции, качество координации, устойчивость состояния, восстановление после ошибки, перенос улучшений между запусками.</p>
+</section>
+<section>
+<h2>Что дальше</h2>
+<p>В конце авторы смотрят чуть дальше графовой инженерии и поднимают ещё один слой — <strong>онтологическую инженерию</strong>. Идея простая: мало нарисовать граф задач и ролей, нужно ещё договориться, что именно означают узлы и связи.</p>
+<p>Что считается завершением задачи? Что такое подтверждённое доказательство? Кто имеет право менять состояние? Какие действия допустимы? Когда две разные подсистемы говорят одно и то же разными словами?</p>
+<p>Без общей семантики даже хорошо организованная система начинает путаться в собственных структурах.</p>
+<p>Это уже похоже на будущую инфраструктуру для агентных систем: не просто пайплайны и оркестраторы, а что-то вроде операционной системы для агентов, где задачи, способности, состояние и правила являются объектами первого класса.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>Граница сейчас проходит не между «моделью» и «агентом», а между <strong>одиночным агентом</strong> и <strong>системой агентов</strong>.</p>
+<p>Строить длинные и сложные агентные пайплайны без явной структуры становится всё труднее. Нужно отдельно описывать работу, роли и состояние. Нужно уметь локализовать сбои и восстанавливаться без полного перезапуска. Нужно понимать, какие организационные решения улучшают систему, а какие просто добавляют шум.</p>
+<p>Если коротко, главный тезис статьи такой:</p>
+<p>🟠 сложные задачи требуют распределённого интеллекта</p>
+<p>🟠 распределённый интеллект требует явной структуры</p>
+<p>🟠 графы становятся способом задать эту структуру</p>
+<p>🟠 следующий шаг — научиться не только исполнять такие структуры, но и безопасно улучшать их со временем</p>
+<p>Для всех, кто строит ИИ-агентов, это сдвиг фокуса: меньше думать о «магии промта» и больше — о проектировании системы.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2608.21156" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/DEEP-JLU/Awesome-Graph-Engineering" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
