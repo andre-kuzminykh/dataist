@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>How to Train a Cross-Embodiment Robot Navigation Policy with AI Agents</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="How to Train a Cross-Embodiment Robot Navigation Policy with AI Agents" />
+    <meta property="og:description" content="Navigation enables a robot to turn its perception of the surrounding world and movement into autonomous task execution. Unlike locomotion, which is responsible for stable movement, navigation must constantly determine the robot’s position, account for changes around it, choose a route, and avoid obstacles. The material demonstrates the COMPASS workflow: an AI agent checks dependencies, prepares scenes, launches training, diagnoses failures, and compares checkpoints. The process was tested on Boston Dynamics Spot, an integrated warehouse, and the SAGE-10K scene." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/news/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/" />
+    <meta property="og:image" content="https://dataist.ai/news/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-08-27" />
+
+    <meta name="description" content="Navigation enables a robot to turn its perception of the surrounding world and movement into autonomous task execution. Unlike locomotion, which is responsible for stable movement, navigation must constantly determine the robot’s position, account for changes around it, choose a route, and avoid obstacles. The material demonstrates the COMPASS workflow: an AI agent checks dependencies, prepares scenes, launches training, diagnoses failures, and compares checkpoints. The process was tested on Boston Dynamics Spot, an integrated warehouse, and the SAGE-10K scene." />
+    <link rel="canonical" href="https://dataist.ai/news/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "headline": "How to Train a Cross-Embodiment Robot Navigation Policy with AI Agents",
+      "description": "Navigation enables a robot to turn its perception of the surrounding world and movement into autonomous task execution. Unlike locomotion, which is responsible for stable movement, navigation must constantly determine the robot\u2019s position, account for changes around it, choose a route, and avoid obstacles. The material demonstrates the COMPASS workflow: an AI agent checks dependencies, prepares scenes, launches training, diagnoses failures, and compares checkpoints. The process was tested on Boston Dynamics Spot, an integrated warehouse, and the SAGE-10K scene.",
+      "image": "https://dataist.ai/news/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/cover.jpg",
+      "url": "https://dataist.ai/news/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/news/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/"
+      },
+      "datePublished": "2026-08-27",
+      "inLanguage": "ru",
+      "author": {"@type": "Person", "name": "@dataist_ai"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/news/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+                document.documentElement.classList.add('js');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Лид / вступление (короткая новость) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        /* Прогрессивное улучшение: без JS (Telegram WebView, боты, читалки)
+           контент виден сразу; анимация появления включается только когда
+           скрипт успел поставить класс .js на <html>. */
+        .fade-in { opacity: 1; transform: none; }
+        html.js .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        html.js .fade-in.visible { opacity: 1; transform: translateY(0); }
+        @media (prefers-reduced-motion: reduce) {
+            html.js .fade-in { opacity: 1; transform: none; transition: none; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <a href="/news/" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white font-sans text-sm font-medium">
+                <i data-lucide="newspaper" class="w-4 h-4"></i>
+                <span>Новости</span>
+            </a>
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА НОВОСТИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="newspaper" class="w-3.5 h-3.5"></i>
+                    <span>Новости · 2026-08-27</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    How to Train a Cross-Embodiment Robot Navigation Policy with AI Agents
+                </h1>
+
+                <p class="article-lead text-left max-w-3xl mx-auto">Navigation enables a robot to turn its perception of the surrounding world and movement into autonomous task execution. Unlike locomotion, which is responsible for stable movement, navigation must constantly determine the robot’s position, account for changes around it, choose a route, and avoid obstacles. The material demonstrates the COMPASS workflow: an AI agent checks dependencies, prepares scenes, launches training, diagnoses failures, and compares checkpoints. The process was tested on Boston Dynamics Spot, an integrated warehouse, and the SAGE-10K scene.</p>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/news/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/cover.jpg"
+                         alt="Обложка: How to Train a Cross-Embodiment Robot Navigation Policy with AI Agents"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ НОВОСТИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+                <section>
+<h2>How to Train a Navigation Policy for Different Robots Using AI Agents</h2>
+<p>Navigation enables a robot to turn perception of the surrounding world and movement into autonomous task execution. Unlike locomotion, which is responsible for stable movement, navigation must continuously determine the robot’s position, account for changes in the environment, choose a route, and avoid obstacles. This article presents the COMPASS workflow: an AI agent checks dependencies, prepares scenes, starts training, diagnoses failures, and compares checkpoints. The workflow has been tested on Boston Dynamics Spot, the built-in warehouse, and the SAGE-10K scene.</p>
+<p>Transferring this capability to a new robot or scene may require separate data, simulation resources, robot interfaces, training, diagnostics, and evaluation. Repeating this work for every “robot–scene” pair is expensive and difficult to reproduce.</p>
+<p>An AI-agent-driven workflow reduces the amount of manual work. The developer specifies the robot, scene source, and navigation objective. A coding agent uses skills from a code repository to check dependencies, prepare resources, run validation tests, start training, identify the causes of errors, and compare checkpoints. A human confirms transitions at key stages: accepting the scene, approving the validation run in a single environment, and promoting a checkpoint.</p>
+<p>Spot is used as the reference robot in this article. The COMPASS workflow with an AI agent is applied to the built-in scene and the SAGE-10K scene, while NVIDIA Omniverse NuRec demonstrates an option for working with reconstructed environments. The sequence includes a validation run, residual training, checkpoint evaluation, and connection to the runtime environment, including through the use of odometry.</p>
+</section>
+<section>
+<h2>What Is COMPASS?</h2>
+<p>COMPASS stands for “cross-embodiment mobile policy based on residual RL and skill synthesis.” It is a system for scaling navigation transfer across different types of robots. It uses expert demonstrations collected for one robot and reapplies the navigation behavior of the pretrained NVIDIA X-Mobility policy.</p>
+<p>For a selected robot and environment, COMPASS trains a specialized residual policy. It adjusts the base action instead of learning navigation from scratch. Later, data from several such specialists can be combined into a single policy for different types of robots.</p>
+<p>The COMPASS policy architecture trained and evaluated by the workflow described here is shown in a diagram in the original article.</p>
+<p>COMPASS packages the entire development process as code-repository skills. In this guide, Codex is used for development. After training, the policy and the robot controller perform navigation at runtime without the involvement of the coding agent.</p>
+</section>
+<section>
+<h2>Robot, Scenes, and Odometry</h2>
+<p>The reference workflow is designed for the Boston Dynamics Spot quadruped robot.</p>
+<p>The built-in warehouse is the primary reproducible scenario. SAGE-10K extends it to a generated scene, while NVIDIA Omniverse NuRec offers an additional path for a reconstructed target environment.</p>
+<p>If the robot does not have compatible odometry and coordinate transforms, NVIDIA cuVSLAM can be used during deployment—a CUDA-accelerated library for visual odometry and simultaneous localization and mapping.</p>
+<p>For another environment, use the COMPASS software stack fixed in the code repository together with the corresponding hardware settings.</p>
+</section>
+<section>
+<h2>Preparing the Code Repository</h2>
+<p>Before working with a scene, prepare the code repository and give the coding agent a clear, agreed-upon sequence of actions. You need to download access-restricted resources, make the COMPASS skill available to Codex, verify the software stack, and stop at the environment-confirmation stage.</p>
+<p>All `$compass` blocks in the guide are prompts that can be copied into the Codex chat from the root of the COMPASS code repository. They are not shell commands. In Claude Code, the same workflow is launched with the `/compass` command.</p>
+<p>In Codex, first open the code-repository skills through `.agents/skills`, then select COMPASS with `/skills` or mention `$compass` in a prompt. Codex supports skill directories connected through symbolic links, so the current skill can remain in a supported location. In Claude Code, use `/compass` for the same process.</p>
+<p>The AI agent can clone the code repository, build the project, download resources that do not contain secrets, and check the software stack. However, the developer must independently accept the access terms for restricted resources and enter the Hugging Face token outside the chat. The agent must not request, display, or save this token in logs.</p>
+<p>First, clone the COMPASS code repository and complete the brief startup procedure from the COMPASS guide inside the container version fixed in the code repository. Before the first run, you must:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">accept access to the restricted Hugging Face repositories `nvidia/COMPASS` and `nvidia/X-Mobility`;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">create a Hugging Face token with read permission;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">verify that it grants access to the public gated repositories available to your account;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">pass the token only in the current shell session.</span></div>
+<p>Do not paste the token into an agent prompt or add it to version control.</p>
+<p>The resource-download stage downloads registered simulation resources to `./assets/usd/`, and the pretrained X-Mobility checkpoint to `./assets/x_mobility.ckpt`. A 401 or 403 response usually means that repository access has not been configured completely or that the token lacks sufficient permissions. Fix authentication first, and only then investigate Isaac Lab.</p>
+<p>Before moving to the next stage, each stage must leave verifiable evidence. For every confirmation point, determine:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">whether the required inputs are present;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">whether the expected output files have appeared;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">whether any unresolved errors remain;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">whether there is sufficient evidence to continue.</span></div>
+<p>After launching the container, open the AI agent in the root of the code repository and describe the robot, scene, expected navigation result, and confirmation points. For the baseline scenario, copy the prepared prompt from the guide into the agent chat.</p>
+<p>The `$compass` skill checks the requested workflow against the contents of the code repository and launches the required validations. If a run fails, `$compass-doctor` performs a read-only status check and reports likely causes without changing the environment without permission.</p>
+</section>
+<section>
+<h2>Preparing the Scene</h2>
+<p>COMPASS supports three scene sources:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the built-in COMPASS warehouse;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the generated SAGE-10K scene;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">an environment reconstructed with Omniverse NuRec.</span></div>
+<p>Each option requires its own checks for registration, occupancy maps, and scene confirmation before training begins.</p>
+<h3>Built-in Warehouse</h3>
+<p>For the first reproducible run, the registered `combined_multi_rack` warehouse is recommended. The robot, scene, and occupancy map have already been added to the system, making this option suitable for validating the installation before connecting a new scene.</p>
+<p>Copy the prompt into the AI agent. It launches the baseline scenario and stops the process after the validation run in a single environment.</p>
+<h3>SAGE-10K Scene</h3>
+<p>The SAGE-10K dataset contains 10,000 generated rooms across 50 types. It is a scene dataset, not a policy or a simulator. Each scene includes geometry, materials, layout metadata, and a preview.</p>
+<p>Living-room and warehouse scenes are prepared in the same way, so downloading the entire dataset is unnecessary: simply select a suitable option.</p>
+<p>SAGE-10K provides two points for human confirmation. First, open the converted USD file in NVIDIA Isaac Sim and check the geometry, materials, scale, and collision meshes. After registering the scene and creating the occupancy map, confirm the preview in a single environment before starting full training.</p>
+<p>An occupancy map shows free and blocked space. It is used to select valid initial robot positions and navigation goals.</p>
+<p>The guide recommends copying a prompt into the agent chat that selects a scene and stops at both confirmation points.</p>
+<h3>NuRec Reconstructed Environment</h3>
+<p>Omniverse NuRec is suitable when COMPASS needs to be fine-tuned and evaluated in a reconstructed environment where the robot will operate. NuRec converts stereo RGB images into a reconstruction suitable for Isaac Sim. It includes consistent visual geometry, collision meshes, and, when necessary, additional scene elements.</p>
+<p>The documented COMPASS path for NuRec includes registering the rendered scene, checking the supplied occupancy map and origin conventions, verifying clearances for the robot, and running a validation test in a single environment before training.</p>
+<p>NuRec is presented in this article as an additional option. The practical training section continues with SAGE-10K in order to take one scene through the complete process—from preparation to evaluation.</p>
+<p>For a reconstructed environment, use the COMPASS workflow for NuRec together with the NVIDIA Isaac Sim NuRec guide. This guide, including its living-room example, describes scene preparation, training, evaluation, export, and deployment with ROS 2.</p>
+<p>Copy a separate prompt into the agent chat to prepare the registered NuRec scene. The process then stops before training begins.</p>
+</section>
+<section>
+<h2>Validation Run</h2>
+<p>Once the selected scene is available to COMPASS, run a preview in a single environment before scaling up training. For SAGE-10K, the visual inspection and scene-registration confirmation must be completed first.</p>
+<p>Make sure that:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Isaac Sim launches;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the scene loads;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Spot appears in a valid location;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">camera images are available;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the robot follows the policy commands;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the robot does not hit objects, fall, or produce unresolved simulation errors.</span></div>
+<p>The AI agent should compile a brief summary of the preview logs and visual evidence, identify possible blocking issues, and stop until a human confirms the result.</p>
+<p>Proceed to residual training only after the scene, robot, observations, and action interface work together as expected.</p>
+</section>
+<section>
+<h2>Residual Training</h2>
+<p>At this stage, the pretrained X-Mobility policy is adapted to the selected robot and scene. Start residual reinforcement learning, monitor the process, save suitable checkpoints, and prepare evidence for subsequent evaluation.</p>
+<p>After the validation run is approved, the agent can start the standard residual reinforcement-learning workflow. The example uses Spot and the built-in warehouse. When working with an SAGE-10K scene, replace the environment key with the registered key for that scene.</p>
+<p>Residual training may continue for a long time. The agent should run it in a persistent session or through a managed scheduler. Logs and checkpoints should be saved to the configured directory, and progress should be reported without requiring an interactive session to remain open.</p>
+<p>Before training begins, record:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the launch command;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the code-repository revision;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the scene key;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the configuration;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the checkpoint-save interval;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the stopping conditions.</span></div>
+<p>If the process is interrupted, check the integrity of the latest checkpoint and clarify the supported options for resuming training.</p>
+<p>Choose the `--num_envs` parameter based on the available GPU memory. Use only one environment for the validation run. During training, monitor:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">reward components;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">progress toward the goal;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">contacts and falls;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">episode terminations;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">performance;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">GPU memory usage.</span></div>
+<p>Save checkpoints periodically and evaluate them under identical conditions. Do not assume in advance that the final iteration will be the best one. COMPASS also supports distributed training across multiple GPUs for larger runs.</p>
+<p>Training time depends on the hardware, scene complexity, number of environments, and stopping conditions.</p>
+<p>When failures occur, first use the COMPASS diagnostic workflow rather than immediately changing the environment or training configuration. The type of problem determines the next direction of investigation:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">authentication errors—check Hugging Face access;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">scene-loading and collision errors—review scene preparation;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">camera or action-interface errors—review the validation-run stage;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">memory errors—adjust the number of environments or the multi-GPU training configuration.</span></div>
+<p>Save the training configuration, launch command, code-repository revision, scene registration, occupancy map, validation-run evidence, logs, checkpoints, and artifact manifest.</p>
+<p>Developer confirmation is required before changing dependencies, scene resources, rewards, or training settings.</p>
+</section>
+<section>
+<h2>Checkpoint Evaluation</h2>
+<p>After training, determine whether a residual checkpoint is ready for promotion. To do this, compare the pretrained base policy and residual-training candidates under identical conditions.</p>
+<p>Standard COMPASS evaluation considers:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the goal-achievement rate;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the fall rate;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">route-completion time.</span></div>
+<p>Additional data—such as progress toward the goal, contact behavior, timeouts, or command stability—must be labeled as derived analysis or as the results of user instrumentation.</p>
+<p>A checkpoint may be packaged only after comparable results meet the project’s navigation and safety requirements and a human has approved the packaging step.</p>
+<p>The guide includes an example evaluation prompt. Adapt it to the specific robot, scene, set of checkpoints, and required evidence.</p>
+</section>
+<section>
+<h2>Connecting to the Robot</h2>
+<p>After development is complete, connect the trained policy to the robot’s runtime environment. The AI agent coordinates development and validation, but it does not control the robot during operation.</p>
+<p>The COMPASS resource-download stage retrieves the pretrained X-Mobility checkpoint used for the validation run and residual training. Training itself creates a residual checkpoint for the selected robot and scene.</p>
+<p>Export and deployment prepare the trained policy for inference. They do not turn the base and residual policies into two separate ROS 2 components that the developer must connect manually.</p>
+<p>In the reference ROS 2 integration, the `compass_inference` component receives:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">images from the front camera;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">a navigation goal or route;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the robot velocity calculated from odometry.</span></div>
+<p>It uses these inputs to construct the inputs to the exported policy and publishes forward linear-velocity and angular-velocity commands to `/cmd_vel`.</p>
+<p>The recurrent state and previous action remain internal implementation data for inference and are not passed into the ROS 2 integration as external inputs.</p>
+<p>For the target deployment, check coordinate frames, update rates, normalization, command limits, stop behavior, and the physical robot controller.</p>
+</section>
+<section>
+<h2>Odometry with cuVSLAM</h2>
+<p>The cuVSLAM library is needed when the robot requires camera-based state estimation in an environment with unavailable or unstable GPS and does not have compatible, validated odometry and transforms.</p>
+<p>cuVSLAM odometry can be used by the COMPASS navigator, but the cuVSLAM map is not passed to the navigation policy as an input.</p>
+<p>cuVSLAM does not participate in COMPASS policy training and does not require an agent skill. It should be run as a separate ROS 2 component with compatible versions, and its odometry should be connected or remapped to `/chassis/odom`. The required `odom`–`base_link` transform must also be provided, and calibration, timestamps, topic names, and coordinate-frame conventions must be checked.</p>
+<p>The additional `$cuvslam-onboard` and `$cuvslam-troubleshoot` skills can help configure and diagnose this state-estimation component during development.</p>
+</section>
+<section>
+<h2>New Robot Type</h2>
+<p>If the robot has not yet been registered, the `$compass-newembodiment` skill guides the developer through robot configuration, environment registration, action mapping, and a visual validation run in a single environment.</p>
+<p>Connecting a new robot type is a separate engineering task from training a specialist for a robot that is already registered. The same sequence of checks and confirmations is used.</p>
+</section>
+<section>
+<h2>Workflow Boundaries</h2>
+<p>The guide ends at checkpoint evaluation. Export to ONNX, JIT, or TensorRT, ROS 2 integration, and deployment on physical hardware require separate checks for the specific robot and runtime environment.</p>
+<p>Scene quality, training duration, and checkpoint results depend on the robot type, environment, reward structure, and available computing resources. Therefore, the workflow does not define a single universal success threshold.</p>
+<p>The recommended approach is to begin with the reference scenario and then add one component at a time.</p>
+<p>The corresponding COMPASS resources are listed at the end of the guide for reproducing and extending the process.</p>
+</section>
+
+                <!-- Источник(и) новости -->
+                <div class="mt-14 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://developer.nvidia.com/blog/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Источник</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                Ежедневные новости об ИИ
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день отбираем важные новости об ИИ, роботах и метавселенных и рассказываем главное — без хайпа и воды. Если хотите понимать, что происходит в ИИ раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Только важное — каждый день
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Появление блоков. Вызывается сразу, если DOM уже готов (страница
+        // могла быть вставлена после загрузки — Web View, предпросмотр,
+        // встраивание): иначе обработчик DOMContentLoaded уже не сработает и
+        // контент навсегда остался бы скрытым.
+        function initReveal() {
+            const targets = document.querySelectorAll('.fade-in');
+            if (!('IntersectionObserver' in window)) {
+                targets.forEach(el => el.classList.add('visible'));
+                return;
+            }
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { root: null, rootMargin: '0px', threshold: 0.05 });
+            targets.forEach(el => observer.observe(el));
+            // Страховка: если наблюдатель по какой-то причине не сработал,
+            // показываем всё — пустая страница хуже, чем отсутствие анимации.
+            setTimeout(() => targets.forEach(el => el.classList.add('visible')), 1500);
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initReveal);
+        } else {
+            initReveal();
+        }
+    </script>
+</body>
+</html>
