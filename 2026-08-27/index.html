@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Можно ли научить ИИ-агента делать покупки как человек</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Можно ли научить ИИ-агента делать покупки как человек" />
+    <meta property="og:description" content="Можно ли научить ИИ-агента ходить по интернет-магазину не как бездумный робот, а как настоящий покупатель — с памятью, сомнениями и понятной целью?
+
+Исследователи предлагают агента, который рассматривает страницы магазина как человек и запоминает не всё подряд, а только нужное: что он ищет сейчас, какие товары уже видел и какие предпочтения постепенно складываются. Вместо оценки каждого отдельного клика его учат по результату всей сессии, чтобы он не листал страницы бесконечно и не останавливался слишком рано, а действовал последовательно и правдоподобно.
+
+В этом обзоре разбираем, как устроен такой ИИ-покупатель, почему обычные способы обучения плохо передают поведение людей и как проверяют сходство его решений с действиями реальных пользователей." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2026-08-27/" />
+    <meta property="og:image" content="https://dataist.ai/2026-08-27/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-08-27" />
+
+    <meta name="description" content="Можно ли научить ИИ-агента ходить по интернет-магазину не как бездумный робот, а как настоящий покупатель — с памятью, сомнениями и понятной целью?
+
+Исследователи предлагают агента, который рассматривает страницы магазина как человек и запоминает не всё подряд, а только нужное: что он ищет сейчас, какие товары уже видел и какие предпочтения постепенно складываются. Вместо оценки каждого отдельного клика его учат по результату всей сессии, чтобы он не листал страницы бесконечно и не останавливался слишком рано, а действовал последовательно и правдоподобно.
+
+В этом обзоре разбираем, как устроен такой ИИ-покупатель, почему обычные способы обучения плохо передают поведение людей и как проверяют сходство его решений с действиями реальных пользователей." />
+    <link rel="canonical" href="https://dataist.ai/2026-08-27/" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "\u041c\u043e\u0436\u043d\u043e \u043b\u0438 \u043d\u0430\u0443\u0447\u0438\u0442\u044c \u0418\u0418-\u0430\u0433\u0435\u043d\u0442\u0430 \u0434\u0435\u043b\u0430\u0442\u044c \u043f\u043e\u043a\u0443\u043f\u043a\u0438 \u043a\u0430\u043a \u0447\u0435\u043b\u043e\u0432\u0435\u043a",
+      "description": "\u041c\u043e\u0436\u043d\u043e \u043b\u0438 \u043d\u0430\u0443\u0447\u0438\u0442\u044c \u0418\u0418-\u0430\u0433\u0435\u043d\u0442\u0430 \u0445\u043e\u0434\u0438\u0442\u044c \u043f\u043e \u0438\u043d\u0442\u0435\u0440\u043d\u0435\u0442-\u043c\u0430\u0433\u0430\u0437\u0438\u043d\u0443 \u043d\u0435 \u043a\u0430\u043a \u0431\u0435\u0437\u0434\u0443\u043c\u043d\u044b\u0439 \u0440\u043e\u0431\u043e\u0442, \u0430 \u043a\u0430\u043a \u043d\u0430\u0441\u0442\u043e\u044f\u0449\u0438\u0439 \u043f\u043e\u043a\u0443\u043f\u0430\u0442\u0435\u043b\u044c \u2014 \u0441 \u043f\u0430\u043c\u044f\u0442\u044c\u044e, \u0441\u043e\u043c\u043d\u0435\u043d\u0438\u044f\u043c\u0438 \u0438 \u043f\u043e\u043d\u044f\u0442\u043d\u043e\u0439 \u0446\u0435\u043b\u044c\u044e?\n\n\u0418\u0441\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u0442\u0435\u043b\u0438 \u043f\u0440\u0435\u0434\u043b\u0430\u0433\u0430\u044e\u0442 \u0430\u0433\u0435\u043d\u0442\u0430, \u043a\u043e\u0442\u043e\u0440\u044b\u0439 \u0440\u0430\u0441\u0441\u043c\u0430\u0442\u0440\u0438\u0432\u0430\u0435\u0442 \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b \u043c\u0430\u0433\u0430\u0437\u0438\u043d\u0430 \u043a\u0430\u043a \u0447\u0435\u043b\u043e\u0432\u0435\u043a \u0438 \u0437\u0430\u043f\u043e\u043c\u0438\u043d\u0430\u0435\u0442 \u043d\u0435 \u0432\u0441\u0451 \u043f\u043e\u0434\u0440\u044f\u0434, \u0430 \u0442\u043e\u043b\u044c\u043a\u043e \u043d\u0443\u0436\u043d\u043e\u0435: \u0447\u0442\u043e \u043e\u043d \u0438\u0449\u0435\u0442 \u0441\u0435\u0439\u0447\u0430\u0441, \u043a\u0430\u043a\u0438\u0435 \u0442\u043e\u0432\u0430\u0440\u044b \u0443\u0436\u0435 \u0432\u0438\u0434\u0435\u043b \u0438 \u043a\u0430\u043a\u0438\u0435 \u043f\u0440\u0435\u0434\u043f\u043e\u0447\u0442\u0435\u043d\u0438\u044f \u043f\u043e\u0441\u0442\u0435\u043f\u0435\u043d\u043d\u043e \u0441\u043a\u043b\u0430\u0434\u044b\u0432\u0430\u044e\u0442\u0441\u044f. \u0412\u043c\u0435\u0441\u0442\u043e \u043e\u0446\u0435\u043d\u043a\u0438 \u043a\u0430\u0436\u0434\u043e\u0433\u043e \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u043e\u0433\u043e \u043a\u043b\u0438\u043a\u0430 \u0435\u0433\u043e \u0443\u0447\u0430\u0442 \u043f\u043e \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442\u0443 \u0432\u0441\u0435\u0439 \u0441\u0435\u0441\u0441\u0438\u0438, \u0447\u0442\u043e\u0431\u044b \u043e\u043d \u043d\u0435 \u043b\u0438\u0441\u0442\u0430\u043b \u0441\u0442\u0440\u0430\u043d\u0438\u0446\u044b \u0431\u0435\u0441\u043a\u043e\u043d\u0435\u0447\u043d\u043e \u0438 \u043d\u0435 \u043e\u0441\u0442\u0430\u043d\u0430\u0432\u043b\u0438\u0432\u0430\u043b\u0441\u044f \u0441\u043b\u0438\u0448\u043a\u043e\u043c \u0440\u0430\u043d\u043e, \u0430 \u0434\u0435\u0439\u0441\u0442\u0432\u043e\u0432\u0430\u043b \u043f\u043e\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u0442\u0435\u043b\u044c\u043d\u043e \u0438 \u043f\u0440\u0430\u0432\u0434\u043e\u043f\u043e\u0434\u043e\u0431\u043d\u043e.\n\n\u0412 \u044d\u0442\u043e\u043c \u043e\u0431\u0437\u043e\u0440\u0435 \u0440\u0430\u0437\u0431\u0438\u0440\u0430\u0435\u043c, \u043a\u0430\u043a \u0443\u0441\u0442\u0440\u043e\u0435\u043d \u0442\u0430\u043a\u043e\u0439 \u0418\u0418-\u043f\u043e\u043a\u0443\u043f\u0430\u0442\u0435\u043b\u044c, \u043f\u043e\u0447\u0435\u043c\u0443 \u043e\u0431\u044b\u0447\u043d\u044b\u0435 \u0441\u043f\u043e\u0441\u043e\u0431\u044b \u043e\u0431\u0443\u0447\u0435\u043d\u0438\u044f \u043f\u043b\u043e\u0445\u043e \u043f\u0435\u0440\u0435\u0434\u0430\u044e\u0442 \u043f\u043e\u0432\u0435\u0434\u0435\u043d\u0438\u0435 \u043b\u044e\u0434\u0435\u0439 \u0438 \u043a\u0430\u043a \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u044e\u0442 \u0441\u0445\u043e\u0434\u0441\u0442\u0432\u043e \u0435\u0433\u043e \u0440\u0435\u0448\u0435\u043d\u0438\u0439 \u0441 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f\u043c\u0438 \u0440\u0435\u0430\u043b\u044c\u043d\u044b\u0445 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439.",
+      "image": "https://dataist.ai/2026-08-27/cover.jpg",
+      "url": "https://dataist.ai/2026-08-27/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/2026-08-27/"
+      },
+      "datePublished": "2026-08-27",
+      "inLanguage": "ru",
+      "author": {"@type": "Person", "name": "@dataist_ai"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-27/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-08-27</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Можно ли научить ИИ-агента делать покупки как человек
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-27/cover.jpg"
+                         alt="Обложка: Можно ли научить ИИ-агента делать покупки как человек"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<p>Рекомендательная система может идеально предсказывать следующий клик — и всё равно плохо понимать пользователя.</p>
+<p>Человек листает каталог, возвращается к уже просмотренному товару, сравнивает две похожие модели, откладывает покупку, а потом внезапно добавляет вещь в корзину. В такой сессии много пауз, повторных действий и случайных движений. Если обучать симулятор только на следующем действии, он будет копировать отдельные клики, но потеряет логику всего поведения.</p>
+<p>Авторы RecVerse предлагают смотреть на покупателя как на участника длинного процесса. <strong>ИИ-агент</strong> должен видеть экран, помнить ход сессии, постепенно уточнять интересы пользователя и получать оценку за всю траекторию. Для обучения они также выпустили USB — интерактивный набор данных с реальными сессиями покупок.</p>
+</section>
+<section>
+<h2>Почему симуляция покупателя важна</h2>
+<p>Симулятор пользователя нужен, чтобы проверять рекомендательные системы без постоянных экспериментов на реальных людях. Его можно использовать для:</p>
+<p>🟠 проверки новой выдачи товаров до запуска;</p>
+<p>🟠 оценки гипотетических изменений интерфейса;</p>
+<p>🟠 обучения рекомендательной системы с помощью <strong>обучения с подкреплением</strong>;</p>
+<p>🟠 анализа того, как рекомендации влияют на клики, добавления в корзину и покупки.</p>
+<p>Проблема в том, что реалистичный покупатель — это не функция «показали товар → получили клик». Поведение зависит от всей истории сессии. Пользователь мог увидеть нужный товар десять экранов назад, сравнить его с другой вещью и вернуться к нему после просмотра отзывов.</p>
+<p>Предыдущие системы решали эту проблему двумя способами. Они либо отбрасывали старые наблюдения, либо складывали всю историю в контекст модели. Первый подход стирает долгосрочные связи. Второй быстро раздувает контекст и не всегда помогает: эксперименты авторов показывают, что после некоторого объёма визуальной истории качество начинает снижаться.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-27/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Качество сначала растёт вместе с объёмом визуальной памяти, но затем выходит на плато и немного снижается, тогда как стоимость контекста продолжает увеличиваться.</p>
+</div></figure>
+<p>Есть и другая проблема. Обучение на каждом отдельном действии подталкивает агента слишком буквально повторять журналы поведения. В результате он может начать без остановки изучать товары или, наоборот, почти ничего не делать. Средняя сессия при этом будет далека от реальной.</p>
+</section>
+<section>
+<h2>Что такое RecVerse</h2>
+<p>RecVerse — <strong>визуальный ИИ-агент</strong> для симуляции покупателя в мобильном интернет-магазине. На каждом шаге он получает снимок экрана и список доступных действий. Затем модель одновременно решает три задачи:</p>
+<p>🟣 какое действие выполнить в интерфейсе;</p>
+<p>🟣 какое текущее намерение приписать пользователю;</p>
+<p>🟣 что сохранить в памяти.</p>
+<p>Действия включают прокрутку, нажатие на товар, переход на страницу товара, возврат назад, добавление в корзину, покупку и завершение сессии. Память тоже считается частью действия. Агент сам решает, когда записать событие и когда обновить общее представление об интересах пользователя.</p>
+<p>Архитектура разделяет память на три уровня:</p>
+<p>🟣 <strong>Рабочая память</strong> хранит несколько последних экранов, действий и текущих мыслей. Это краткосрочный визуальный контекст: какие товары только что привлекли внимание и что пользователь сравнивает прямо сейчас.</p>
+<p>🟣 <strong>Эпизодическая память</strong> записывает события текущей сессии. Например: пользователь открыл страницу кроссовок, сравнил цену, вернулся в ленту и снова перешёл к похожей модели.</p>
+<p>🟣 <strong>Память предпочтений</strong> сжимает историю до более общих выводов: пользователь ищет недорогие кухонные товары, предпочитает определённый цвет или избегает конкретного свойства.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-27/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">RecVerse связывает снимок экрана, три уровня памяти, действие в интерфейсе и обновление памяти в едином цикле.</p>
+</div></figure>
+<p>Такой порядок напоминает человеческое восприятие. Недавний экран нужен для ближайшего решения. События сессии помогают не потерять нить. Обобщённые предпочтения объясняют, почему пользователь выбирает одни товары и игнорирует другие.</p>
+<p>Ключевая деталь — память не заполняется по жёстким правилам. Агент учится сам. Он может ничего не записывать после обычной прокрутки, но сохранить событие после подробного просмотра товара или добавления его в корзину.</p>
+</section>
+<section>
+<h2>Почему обучение на всей сессии лучше</h2>
+<p>Сначала RecVerse дообучают на реальных траекториях методом имитации. Это даёт модели базовое понимание интерфейса и допустимых действий. Затем начинается <strong>обучение с подкреплением</strong>.</p>
+<p>Вместо оценки каждого клика авторы оценивают всю сессию сразу. Для этого используют три сигнала.</p>
+<p><strong>Макроуровень</strong> отвечает за общий ритм поведения. Сколько было кликов, переходов к товарам, добавлений в корзину и покупок? Насколько эти числа похожи на поведение реальных пользователей?</p>
+<p><strong>Микроуровень</strong> проверяет содержание выбора. Если пользователь искал обувь, агенту засчитывается выбор товаров из близких категорий, даже если он не открыл ровно тот же товар.</p>
+<p>Третий сигнал проверяет формат ответа и возможность выполнить выбранное действие в текущем состоянии интерфейса.</p>
+<p>Вместе эти оценки решают разные задачи:</p>
+<p>🟠 макронаграда не даёт агенту стать чрезмерно активным или слишком пассивным;</p>
+<p>🟠 микронаграда удерживает его в области реального пользовательского интереса;</p>
+<p>🟠 проверка формата не позволяет модели генерировать неисполняемые действия.</p>
+<p>Для категорий авторы используют трёхуровневую иерархию. Совпадение на уровне «одежда» получает частичное признание, совпадение на уровне «обувь → сандалии» — большее. Это практичнее, чем требовать точного совпадения товара: в настоящем магазине человек может выбрать другой товар той же категории и всё равно вести себя правдоподобно.</p>
+</section>
+<section>
+<h2>USB: среда для настоящего взаимодействия</h2>
+<p>USB содержит 5 274 реальные пользовательские траектории, почти 70 тысяч действий, более 90 тысяч товаров и 5 222 пользователя. В каждой сессии есть снимки страниц, профиль пользователя, история взаимодействий и разметка действий.</p>
+<p>Средняя траектория состоит из 13,24 шага. Каталог разделён на 41 категорию верхнего уровня, 517 категорий второго уровня и 2 256 детализированных категорий.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-27/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Распределение товаров в USB по уровням категорий показывает преобладание одежды и одновременно длинный хвост нишевых интересов.</p>
+</div></figure>
+<p>Главное отличие USB от обычных журналов кликов — интерактивная среда. Агент может выбрать действие, которого не было в исходной сессии, и получить соответствующий снимок экрана. Это позволяет действительно запускать многошаговые траектории и обучать модель с подкреплением.</p>
+<p>В статическом журнале любое отклонение от исходного действия создаёт проблему: следующего состояния для нового пути просто нет. В USB состояние интерфейса восстанавливается из данных о показанных товарах и расположении элементов.</p>
+<p>При этом набор данных заметно смещён в сторону одежды. Это естественно для коммерческого сервиса, но ограничивает выводы о других типах покупок. Поведение пользователя, выбирающего платье, может отличаться от поведения человека, который ищет продукты или электронику.</p>
+</section>
+<section>
+<h2>Результаты</h2>
+<p>Авторы сравнили RecVerse с текстовыми и визуальными методами. Для оценки использовали две группы показателей.</p>
+<p>Первая измеряет, насколько общий стиль поведения похож на реальный. Сюда входят длина траектории, доля кликов, переходов на страницы товаров, добавлений в корзину и покупок.</p>
+<p>Вторая оценивает совпадение интересов. Система получает баллы за точные совпадения товаров и за близость категорий.</p>
+<p>Обычные текстовые агенты иногда показывали хорошие показатели совпадения товаров, но делали это за счёт слишком высокой активности. Например, они гораздо чаще реальных пользователей кликали и добавляли товары в корзину. Такой агент может казаться точным по отдельным метрикам, хотя его сессии не похожи на человеческие.</p>
+<p>RecVerse-GUI с обучением с подкреплением оказался ближе к реальному ритму поведения и одновременно лучше совпадал с намерениями пользователя:</p>
+<p>🟣 показатель совпадения товаров вырос с 4,27 у лучшего визуального базового метода до 7,19;</p>
+<p>🟣 доля траекторий хотя бы с одним совпадением товара выросла с 5,92 до 10,45;</p>
+<p>🟣 иерархическое совпадение категорий увеличилось с 23,11 до 32,64;</p>
+<p>🟣 доля кликов достигла 7,78% против 9,08% у реальных пользователей;</p>
+<p>🟣 средняя длина сессии составила 16,25 шага против 13,47 у реальных пользователей.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-27/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Сравнение методов по отношению к статистике реальных пользователей: RecVerse ближе к области реалистичного поведения и не компенсирует слабое понимание пользователя чрезмерной активностью.</p>
+</div></figure>
+<p>Последняя цифра показывает ограничение подхода. Модель стала лучше понимать интересы, но её траектории всё ещё длиннее человеческих. Она чаще продолжает исследовать каталог и не всегда вовремя завершает сессию.</p>
+</section>
+<section>
+<h2>Что показали дополнительные проверки</h2>
+<p>Удаление отдельных компонентов памяти ухудшило результаты. Одной рабочей памяти недостаточно: она помогает помнить последние экраны, но не сохраняет общую линию интереса. Удаление памяти предпочтений особенно заметно снижает согласованность действий с намерением пользователя.</p>
+<p>Проверка наград дала похожий результат. Без микронаграды агент хуже выбирает товары нужных категорий. Без макронаграды общий ритм становится менее реалистичным.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-27/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Удаление уровней памяти и отдельных наград снижает качество: память предпочтений отвечает за долгосрочный интерес, а микронаграда — за точность выбора.</p>
+</div></figure>
+<p>Люди тоже оценивали траектории. В 74% сравнений они предпочитали реального пользователя траектории RecVerse. Для базового визуального метода этот показатель достигал 98%. При прямом сравнении двух симуляторов RecVerse выбирали в 92% случаев.</p>
+<p>Разрыв с человеком остаётся. Наблюдатели всё ещё могут отличить машинное поведение от человеческого. Значит, совпадение статистик и категорий ещё не гарантирует естественную сессию. Люди замечают мелкие особенности: странные паузы, повторные переходы, слишком последовательное поведение или неубедительное завершение покупки.</p>
+<p>Увеличение модели с 2 до 4 миллиардов параметров улучшило в первую очередь согласованность интересов. Точность, полнота и совпадение категорий выросли, а общий стиль поведения остался примерно реалистичным. Но размер модели не исправил все расхождения: некоторые показатели просмотра и покупки по-прежнему отличаются от человеческих.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>RecVerse предлагает способ моделировать пользователей. Нужно моделировать <strong>целую сессию</strong>. Для этого агенту требуются:</p>
+<p>🟠 ограниченная краткосрочная память для текущего экрана;</p>
+<p>🟠 эпизодическая память для событий сессии;</p>
+<p>🟠 память предпочтений для долгосрочного намерения;</p>
+<p>🟠 обучение с подкреплением по оценке всей траектории;</p>
+<p>🟠 отдельные сигналы для общего ритма и содержания выбора.</p>
+<p>Практическая ценность подхода зависит от того, насколько хорошо он переносится на реальные рекомендательные системы. Пока обучение ограничено короткими траекториями до 20 шагов, а данные собраны на одной торговой площадке и в основном описывают одежду.</p>
+<p>Тем не менее направление понятно. Симулятор должен быть похож на пользователя не только по числу кликов. Он должен помнить, что уже видел, менять интересы по ходу сессии, иногда ошибаться и вовремя останавливаться. Только такой <strong>ИИ-агент</strong> может стать полезной средой для проверки рекомендательных систем до их запуска на реальных людях.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2608.20707" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
