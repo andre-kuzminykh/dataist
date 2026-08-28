@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как работает текстовый водяной знак Claude</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как работает текстовый водяной знак Claude" />
+    <meta property="og:description" content="Anthropic внедряет в будущие версии Claude текстовый водяной знак — скрытый паттерн, по которому можно оценить вероятность участия модели в создании текста. Компания делает это вместе с другими крупными поставщиками ИИ в рамках требований закона ЕС об ИИ. Маркировка не должна менять смысл, качество, читаемость или стоимость ответов и не содержит данных о пользователе. Она действует глобально, а в ближайшее время Anthropic также запустит API для проверки водяных знаков и добавит метаданные C2PA к создаваемым Claude изображениям и другим поддерживаемым файлам." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/news/kak-rabotaet-tekstovyi-vodianoi-znak-claude/" />
+    <meta property="og:image" content="https://dataist.ai/news/kak-rabotaet-tekstovyi-vodianoi-znak-claude/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-08-28" />
+
+    <meta name="description" content="Anthropic внедряет в будущие версии Claude текстовый водяной знак — скрытый паттерн, по которому можно оценить вероятность участия модели в создании текста. Компания делает это вместе с другими крупными поставщиками ИИ в рамках требований закона ЕС об ИИ. Маркировка не должна менять смысл, качество, читаемость или стоимость ответов и не содержит данных о пользователе. Она действует глобально, а в ближайшее время Anthropic также запустит API для проверки водяных знаков и добавит метаданные C2PA к создаваемым Claude изображениям и другим поддерживаемым файлам." />
+    <link rel="canonical" href="https://dataist.ai/news/kak-rabotaet-tekstovyi-vodianoi-znak-claude/" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "headline": "\u041a\u0430\u043a \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442 \u0442\u0435\u043a\u0441\u0442\u043e\u0432\u044b\u0439 \u0432\u043e\u0434\u044f\u043d\u043e\u0439 \u0437\u043d\u0430\u043a Claude",
+      "description": "Anthropic \u0432\u043d\u0435\u0434\u0440\u044f\u0435\u0442 \u0432 \u0431\u0443\u0434\u0443\u0449\u0438\u0435 \u0432\u0435\u0440\u0441\u0438\u0438 Claude \u0442\u0435\u043a\u0441\u0442\u043e\u0432\u044b\u0439 \u0432\u043e\u0434\u044f\u043d\u043e\u0439 \u0437\u043d\u0430\u043a \u2014 \u0441\u043a\u0440\u044b\u0442\u044b\u0439 \u043f\u0430\u0442\u0442\u0435\u0440\u043d, \u043f\u043e \u043a\u043e\u0442\u043e\u0440\u043e\u043c\u0443 \u043c\u043e\u0436\u043d\u043e \u043e\u0446\u0435\u043d\u0438\u0442\u044c \u0432\u0435\u0440\u043e\u044f\u0442\u043d\u043e\u0441\u0442\u044c \u0443\u0447\u0430\u0441\u0442\u0438\u044f \u043c\u043e\u0434\u0435\u043b\u0438 \u0432 \u0441\u043e\u0437\u0434\u0430\u043d\u0438\u0438 \u0442\u0435\u043a\u0441\u0442\u0430. \u041a\u043e\u043c\u043f\u0430\u043d\u0438\u044f \u0434\u0435\u043b\u0430\u0435\u0442 \u044d\u0442\u043e \u0432\u043c\u0435\u0441\u0442\u0435 \u0441 \u0434\u0440\u0443\u0433\u0438\u043c\u0438 \u043a\u0440\u0443\u043f\u043d\u044b\u043c\u0438 \u043f\u043e\u0441\u0442\u0430\u0432\u0449\u0438\u043a\u0430\u043c\u0438 \u0418\u0418 \u0432 \u0440\u0430\u043c\u043a\u0430\u0445 \u0442\u0440\u0435\u0431\u043e\u0432\u0430\u043d\u0438\u0439 \u0437\u0430\u043a\u043e\u043d\u0430 \u0415\u0421 \u043e\u0431 \u0418\u0418. \u041c\u0430\u0440\u043a\u0438\u0440\u043e\u0432\u043a\u0430 \u043d\u0435 \u0434\u043e\u043b\u0436\u043d\u0430 \u043c\u0435\u043d\u044f\u0442\u044c \u0441\u043c\u044b\u0441\u043b, \u043a\u0430\u0447\u0435\u0441\u0442\u0432\u043e, \u0447\u0438\u0442\u0430\u0435\u043c\u043e\u0441\u0442\u044c \u0438\u043b\u0438 \u0441\u0442\u043e\u0438\u043c\u043e\u0441\u0442\u044c \u043e\u0442\u0432\u0435\u0442\u043e\u0432 \u0438 \u043d\u0435 \u0441\u043e\u0434\u0435\u0440\u0436\u0438\u0442 \u0434\u0430\u043d\u043d\u044b\u0445 \u043e \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435. \u041e\u043d\u0430 \u0434\u0435\u0439\u0441\u0442\u0432\u0443\u0435\u0442 \u0433\u043b\u043e\u0431\u0430\u043b\u044c\u043d\u043e, \u0430 \u0432 \u0431\u043b\u0438\u0436\u0430\u0439\u0448\u0435\u0435 \u0432\u0440\u0435\u043c\u044f Anthropic \u0442\u0430\u043a\u0436\u0435 \u0437\u0430\u043f\u0443\u0441\u0442\u0438\u0442 API \u0434\u043b\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438 \u0432\u043e\u0434\u044f\u043d\u044b\u0445 \u0437\u043d\u0430\u043a\u043e\u0432 \u0438 \u0434\u043e\u0431\u0430\u0432\u0438\u0442 \u043c\u0435\u0442\u0430\u0434\u0430\u043d\u043d\u044b\u0435 C2PA \u043a \u0441\u043e\u0437\u0434\u0430\u0432\u0430\u0435\u043c\u044b\u043c Claude \u0438\u0437\u043e\u0431\u0440\u0430\u0436\u0435\u043d\u0438\u044f\u043c \u0438 \u0434\u0440\u0443\u0433\u0438\u043c \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u043c\u044b\u043c \u0444\u0430\u0439\u043b\u0430\u043c.",
+      "image": "https://dataist.ai/news/kak-rabotaet-tekstovyi-vodianoi-znak-claude/cover.jpg",
+      "url": "https://dataist.ai/news/kak-rabotaet-tekstovyi-vodianoi-znak-claude/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/news/kak-rabotaet-tekstovyi-vodianoi-znak-claude/"
+      },
+      "datePublished": "2026-08-28",
+      "inLanguage": "ru",
+      "author": {"@type": "Person", "name": "@dataist_ai"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/news/kak-rabotaet-tekstovyi-vodianoi-znak-claude/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+                document.documentElement.classList.add('js');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        /* Подложка идёт за темой страницы. Без этого правила карточка
+           оставалась белой на чёрной странице: `background: #fff` выше
+           перекрывался только цветом рамки, и в тёмной теме на полосе текста
+           горел белый прямоугольник. */
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            background: #1C1C1E;
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Лид / вступление (короткая новость) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* ---- Инфографика (F018) --------------------------------------
+           Нарочно только сетка: никаких стрелок, SVG-связей и абсолютного
+           позиционирования. Именно они на узком экране наезжают друг на
+           друга. Всё переносится и одинаково живёт на телефоне и на экране. */
+        .article-content .ig {
+            display: grid; gap: 12px; margin: 2.5rem auto; max-width: 48rem;
+            padding: 24px 18px; border-radius: 20px; background: #fff;
+            border: 1px solid rgba(0,0,0,0.07); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+        }
+        .dark .article-content .ig {
+            background: #1C1C1E; border-color: rgba(255,255,255,0.12);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        @media (min-width: 768px) { .article-content .ig { padding: 30px 26px; border-radius: 24px; } }
+
+        /* Ряды ровные, неполный — по центру. `auto-fit` этого не умеет: он
+           набивал в ряд сколько влезет и при пяти ячейках оставлял пятую
+           одну у левого края. Сколько ставить в ряд, считает рендерер и
+           передаёт в `--cols` (5 → 3+2, 4 → 2+2). Flex, а не grid: только
+           он центрирует НЕПОЛНЫЙ последний ряд. */
+        .article-content .ig-steps,
+        .article-content .ig-facts {
+            display: flex; flex-wrap: wrap; justify-content: center;
+        }
+        .article-content .ig-steps > *,
+        .article-content .ig-facts > * {
+            flex: 0 1 calc((100% - (var(--cols, 3) - 1) * 12px) / var(--cols, 3));
+        }
+        /* На узком экране — столбиком: три колонки по 140px там не живут. */
+        @media (max-width: 639px) {
+            .article-content .ig-steps > *,
+            .article-content .ig-facts > * { flex-basis: 100%; }
+        }
+        .article-content .ig-compare { grid-template-columns: 1fr; gap: 14px; }
+        @media (min-width: 640px) { .article-content .ig-compare { grid-template-columns: 1fr 1fr; } }
+        .article-content .ig-chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+        .article-content .ig-step,
+        .article-content .ig-fact {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            text-align: center; min-width: 0; padding: 12px 8px;
+        }
+        .article-content .ig-num {
+            width: 34px; height: 34px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-weight: 700;
+            font-size: 14px; font-family: 'Space Mono', monospace;
+            color: #F97316; border: 2px solid rgba(249,115,22,0.55);
+            background: rgba(249,115,22,0.07);
+        }
+        .article-content .ig-big {
+            font-family: 'Space Mono', monospace; font-weight: 700;
+            font-size: 1.4rem; line-height: 1.15; letter-spacing: -0.01em;
+            background: linear-gradient(100deg, #F97316, #8B5CF6);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; color: #8B5CF6;
+            overflow-wrap: anywhere;
+        }
+        @media (min-width: 768px) { .article-content .ig-big { font-size: 1.75rem; } }
+        .article-content .ig-lb { font-weight: 600; font-size: 0.9rem; line-height: 1.3; overflow-wrap: anywhere; }
+        .article-content .ig-sub {
+            font-size: 0.8rem; line-height: 1.4; color: #86868B; overflow-wrap: anywhere;
+        }
+        .dark .article-content .ig-sub { color: #8E8E93; }
+
+        .article-content .ig-col {
+            display: flex; flex-direction: column; gap: 7px; padding: 16px 18px;
+            border-radius: 14px; background: rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.06); min-width: 0;
+        }
+        .dark .article-content .ig-col { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+        .article-content .ig-hd { font-weight: 700; font-size: 0.95rem; line-height: 1.3; }
+        .article-content .ig-tx { font-size: 0.95rem; line-height: 1.5; color: #86868B; overflow-wrap: anywhere; }
+        .dark .article-content .ig-tx { color: #8E8E93; }
+        .article-content .ig-compare .ig-col:first-child .ig-hd { color: #F97316; }
+        .article-content .ig-compare .ig-col:last-child .ig-hd { color: #8B5CF6; }
+
+        .article-content .ig-chip {
+            border-radius: 999px; padding: 8px 15px; font-size: 0.875rem; font-weight: 600;
+            border: 1.5px solid rgba(139,92,246,0.45); color: #8B5CF6;
+            background: rgba(139,92,246,0.08); line-height: 1.2;
+        }
+        .article-content .ig-chips .ig-chip:nth-child(odd) {
+            border-color: rgba(249,115,22,0.5); color: #F97316; background: rgba(249,115,22,0.07);
+        }
+        .article-content .ig p { margin: 0; }
+
+        /* ---- Видео источника (F019) ----------------------------------
+           Ролик остаётся на сервере источника, у нас только проигрыватель.
+           Рамка держит соотношение 16:9 без скриптов, поэтому на телефоне
+           ничего не растягивается и не наезжает. */
+        .article-content .vid { margin: 2.5rem auto; max-width: 48rem; }
+        .article-content .vid-box {
+            position: relative; width: 100%; aspect-ratio: 16 / 9;
+            border-radius: 1.25rem; overflow: hidden; background: #000;
+            border: 1px solid rgba(0,0,0,0.07);
+        }
+        .dark .article-content .vid-box { border-color: rgba(255,255,255,0.12); }
+        .article-content .vid-player {
+            width: 100%; height: 100%; display: block; border: 0;
+        }
+        .article-content .vid-cap {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content .vid-cap { color: #8E8E93; }
+        .article-content .vid-src {
+            font-family: 'Space Mono', monospace; font-size: 0.8rem; color: #86868B;
+            margin: 0.5rem auto 0; text-align: center;
+        }
+        .dark .article-content .vid-src { color: #8E8E93; }
+        .article-content .vid-src a { text-decoration: underline; }
+
+        /* Анимации скролла */
+        /* Прогрессивное улучшение: без JS (Telegram WebView, боты, читалки)
+           контент виден сразу; анимация появления включается только когда
+           скрипт успел поставить класс .js на <html>. */
+        .fade-in { opacity: 1; transform: none; }
+        html.js .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        html.js .fade-in.visible { opacity: 1; transform: translateY(0); }
+        @media (prefers-reduced-motion: reduce) {
+            html.js .fade-in { opacity: 1; transform: none; transition: none; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <a href="/news/" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white font-sans text-sm font-medium">
+                <i data-lucide="newspaper" class="w-4 h-4"></i>
+                <span>Новости</span>
+            </a>
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА НОВОСТИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="newspaper" class="w-3.5 h-3.5"></i>
+                    <span>Новости · 2026-08-28</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Как работает текстовый водяной знак Claude
+                </h1>
+
+                <p class="article-lead text-left max-w-3xl mx-auto">Anthropic внедряет в будущие версии Claude текстовый водяной знак — скрытый паттерн, по которому можно оценить вероятность участия модели в создании текста. Компания делает это вместе с другими крупными поставщиками ИИ в рамках требований закона ЕС об ИИ. Маркировка не должна менять смысл, качество, читаемость или стоимость ответов и не содержит данных о пользователе. Она действует глобально, а в ближайшее время Anthropic также запустит API для проверки водяных знаков и добавит метаданные C2PA к создаваемым Claude изображениям и другим поддерживаемым файлам.</p>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/news/kak-rabotaet-tekstovyi-vodianoi-znak-claude/cover.jpg"
+                         alt="Обложка: Как работает текстовый водяной знак Claude"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ НОВОСТИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+                <section>
+<p>Anthropic внедряет в будущие версии Claude текстовый водяной знак — скрытый паттерн, по которому можно оценить вероятность участия модели в создании текста. Компания делает это вместе с другими крупными поставщиками ИИ в рамках требований закона ЕС об ИИ. Маркировка не должна менять смысл, качество, читаемость или стоимость ответов и не содержит данных о пользователе. Она действует глобально, а в ближайшее время Anthropic также запустит API для проверки водяных знаков и добавит метаданные C2PA к создаваемым Claude изображениям и другим поддерживаемым файлам.</p>
+</section>
+<section>
+<h2>Как работает маркировка</h2>
+<p>Большие языковые модели вроде Claude создают текст по одному слову. Для каждого следующего слова модель выбирает из списка возможных вариантов наиболее подходящий с учётом уже написанного. В предложении «Сегодня погода была холодной и…» слово «сладкой» почти наверняка не появится, а «пасмурной» или «серой» будут вполне вероятными. Для читателя выбор между последними двумя вариантами обычно не меняет смысла, поэтому его определяет случайное число.</p>
+<p>Водяной знак использует множество таких малозначимых выборов, которые встречаются по всему сгенерированному тексту, чтобы оставить в ответе определённый паттерн. Читатель его не заметит, но обнаружить сможет тот, у кого есть специальный ключ.</p>
+<p>При маркировке выбор слов по-прежнему остаётся случайным, меняется только источник случайности. Вместо произвольного генератора модель использует ключ и несколько слов, стоящих перед текущим. Затем можно проверить последовательность слов и оценить, насколько она соответствует решениям, которые Claude принимал бы с этим ключом. Так вычисляется вероятность того, что текст был создан Claude.</p>
+<p>Модель не начинает постоянно предпочитать слова «пасмурный» или «серый». В одном предложении может появиться первый вариант, в другом — второй: всё зависит от предыдущего текста. Маркировка также не заставляет Claude выбирать слово, которое модель обычно не рассматривала бы. Например, она не подтолкнёт модель к редкому синониму «пасмурного» — слову «nubilous», которое Claude почти наверняка не использовал бы в обычных условиях.</p>
+</section>
+<section>
+<h2>Влияние на ответы</h2>
+<p>Водяной знак не меняет качество ответов Claude. Для читателя маркированный текст неотличим от немаркированного. В этом он отличается от водяных знаков на банкнотах, физических предметах и некоторых цифровых документах: их можно увидеть невооружённым глазом.</p>
+<p>Внутренние тесты Anthropic не выявили влияния маркировки на содержание, творческий уровень и читаемость текста. В работе SynthID-Text, опубликованной Google DeepMind, исследователи включали маркировку для части запросов к Gemini и сравнивали оценки пользователей «нравится» и «не нравится». Статистически значимых различий с немаркированной моделью они не обнаружили. В контролируемом исследовании люди также не увидели разницы в качестве, сравнивая ответы рядом.</p>
+<p>Anthropic предлагает представить игру вроде «Монополии». В обычной версии игрок каждый ход перемещается на случайное число клеток, полученное броском кубика. Но вместо кубика можно взять книгу с цифрами числа π, выбрать случайную позицию — например, 1 012 845-ю цифру после запятой, которой является 6, — и затем использовать следующие цифры как результаты бросков.</p>
+<p>Для игроков и исхода партии ходы останутся случайными: неважно, откуда берётся случайность — из π или из кубика. Но если после игры изучить всю последовательность ходов и знать значение π, можно оценить, насколько вероятно, что использовался именно этот источник. Такая партия оказывается «маркированной».</p>
+<p>С текстом Claude происходит то же самое: водяной знак не меняет смысл и восприятие ответа, но позволяет задним числом проверить вероятность участия модели.</p>
+</section>
+<section>
+<h2>Ограничения водяного знака</h2>
+<p>Текстовый водяной знак Claude основан на подходе SynthID-Text, который Google DeepMind описал в статье для Nature в 2024 году. Этот подход относится к семейству методов, восходящих к предложению Scott Aaronson от 2022 года. Их общий принцип — менять только источник случайности при выборе между словами.</p>
+<p>Метод не даёт окончательного ответа на вопрос о происхождении текста. С ключом Anthropic можно оценить лишь вероятность того, что Claude участвовал в его создании. Водяной знак не подтверждает, что текст написал человек, и не показывает, создавался ли он другой ИИ-моделью. У другой модели будет другой ключ, а сам метод маркировки может быть устроен иначе.</p>
+<p>На коротких фрагментах обнаружение работает хуже: в них меньше вариантов выбора и, следовательно, меньше данных для проверки. Чем длиннее текст, тем выше уверенность в оценке участия Claude.</p>
+<p>В фактических фрагментах маркировка встречается реже, поскольку там меньше вариантов, которые можно выбрать без потери точности. В предложении «Самая известная работа Исаака Ньютона называлась Principia…» правильным продолжением будет только «Mathematica». Водяному знаку здесь нечего использовать. То же касается корректуры: если попросить Claude изменить только грамматику и пунктуацию, маркировка сможет проявиться лишь в небольшом числе исправлений, чего может оказаться недостаточно.</p>
+<p>Водяной знак распространяется только на слова, выбранные Claude. При корректуре текста человека модель обычно вносит лёгкие правки, а почти все слова остаются авторскими. Поэтому маркировке может быть не за что «зацепиться», особенно если изменений мало. Чем больше Claude пишет сам, тем больше решений принимает и тем больше материала остаётся для водяного знака.</p>
+</section>
+<section>
+<h2>Код и точные ответы</h2>
+<p>Маркировка использует ситуации, в которых несколько слов одинаково хорошо подходят по смыслу. Когда требуется точный результат и другой вариант был бы фактически неверным или сломал бы код, водяной знак не применяется.</p>
+<p>После записи «2 + 2 =» у модели есть очевидный лучший следующий токен — «4». Если речь идёт о романе Джорджа Оруэлла «1984», таким вариантом будет «5». Другого ответа с такой же ценностью здесь нет, поэтому маркировочный «сдвиг» не используется.</p>
+<p>По той же причине код обычно содержит меньше маркировки, чем другие виды текста: во многих случаях он должен быть точным. Исключением могут стать места со свободным выбором слов, например комментарии в коде. При этом на сам исполняемый код водяной знак оказывает пренебрежимо малое влияние.</p>
+</section>
+<section>
+<h2>Скорость и данные пользователей</h2>
+<p>Нет. Маркировка почти не влияет на скорость работы моделей и не создаёт дополнительных токенов. Поэтому стоимость обслуживания и использования Claude не меняется.</p>
+<p>Нет. Водяной знак относится к Claude и его ответам, а не к отдельным пользователям. Ни в самой маркировке, ни в ключе нет информации, которая позволила бы восстановить сведения о пользователе, его организации или переписке с Claude.</p>
+</section>
+<section>
+<h2>Почему Anthropic внедряет маркировку</h2>
+<p>Anthropic внедряет водяной знак, чтобы выполнить требования закона ЕС об ИИ. В июле 2026 года компания вместе с другими крупными поставщиками ИИ-моделей и примерно 190 другими участниками подписала Кодекс практики ЕС по прозрачности контента, созданного ИИ. Он требует от поставщиков ИИ-систем использовать методы маркировки текста, созданного ИИ.</p>
+<p>На старте водяной знак будет применяться глобально, поскольку у Anthropic пока нет надёжного способа ограничить его работу отдельными регионами. Компания продолжит изучать разные варианты и сообщит об изменениях.</p>
+<p>В ближайшее время Anthropic также предложит API для обнаружения водяных знаков. Сейчас компания определяет детали его реализации.</p>
+</section>
+<section>
+<h2>Маркировка файлов</h2>
+<p>Когда Claude создаёт файл поддерживаемого типа — например, `.png`, `.jpg` или `.svg`, — он добавляет в метаданные небольшую криптографически подписанную запись. Она сообщает, что файл был создан или обработан с помощью Claude.</p>
+<p>Для этого используется открытый отраслевой стандарт C2PA. Его применяют производители камер и программы для редактирования фотографий, чтобы фиксировать происхождение изображения. Прочитать такие данные сможет любой инструмент с поддержкой C2PA; Anthropic также предоставит собственный сервис, куда можно загрузить файл для проверки.</p>
+<p>Такая запись в метаданных отличается от водяного знака: содержимое файла не меняется, а сама информация не скрывается и не встраивается в изображение. Как и текстовая маркировка, она сообщает только об участии Claude и не содержит идентифицирующих данных.</p>
+</section>
+<section>
+<h2>Редактирование и перевод</h2>
+<p>До некоторой степени водяной знак можно убрать редактированием. Лёгкая правка, вероятно, не удалит его полностью, а полный переписанный текст, в котором заменено каждое слово, маркировку устранит. В таком случае, впрочем, уже можно спорить, остаётся ли текст созданным ИИ.</p>
+<p>Водяной знак показывает только вероятность того, что Claude в какой-то момент участвовал в работе с материалом. Он не различает ситуации «Claude написал текст» и «Claude сильно его отредактировал».</p>
+<p>Да, перевод, выполненный Claude, будет содержать водяной знак, поскольку в этом случае каждое слово выбирает модель.</p>
+<p>Для моделей Anthropic, выпущенных до 2 августа 2026 года, законодательство ЕС предусматривает переходный период. Компания работает над добавлением маркировки и в эти модели; внедрение будет проходить в течение ближайших месяцев.</p>
+</section>
+<section>
+<h2>Чем маркировка отличается от сервисов обнаружения ИИ</h2>
+<p>Программы для обнаружения текста, созданного ИИ, используют другой метод, поскольку у их разработчиков нет ключа Anthropic. В частности, такие сервисы анализируют особенности текста и заметные или едва уловимые «сигналы» в формулировках, которые часто встречаются у ИИ.</p>
+<p>Например, модели, по наблюдениям разработчиков таких сервисов, любят конструкцию «это не [X], а [Y]» и используют слово «тихо» заметно чаще, чем можно было бы ожидать. Поиск подобных закономерностей принципиально отличается от проверки водяного знака.</p>
+</section>
+<section>
+<h2>Права на контент</h2>
+<p>Нет. Водяной знак помогает проверить лишь вероятность того, что Claude создал или обработал материал. Он ничего не говорит о праве собственности или авторстве и не меняет права пользователя, закреплённые в условиях Anthropic. Маркировка применяется только тогда, когда Claude участвовал в обработке контента или файла.</p>
+</section>
+<section>
+<h2>Другие инициативы Anthropic</h2>
+<p>Anthropic открывает исследовательскую предварительную версию Стандарта аппаратного обеспечения моделей (MHS) — общей спецификации, которая должна позволить ИИ-агентам безопасно работать с физическими устройствами. На первом этапе доступ к ней получат научно-исследовательские лаборатории и передовые производители.</p>
+<p>С сегодняшнего дня 10 000 учёных по всему миру смогут бесплатно начать пользоваться Claude. Проверенные руководители исследований получают право на тариф «Команда Claude», после чего могут добавить свою исследовательскую группу: обычные места будут бесплатными, а расширенные — стоить $15 в месяц. Льгота действует до года.</p>
+<p>Anthropic также запускает грантовую программу на $5 млн для независимых исследований влияния ИИ на благополучие пользователей.</p>
+<div class="ig ig-facts" style="--cols:3"><div class="ig-fact"><span class="ig-big">10 000</span><span class="ig-sub">учёных получают Claude бесплатно</span></div><div class="ig-fact"><span class="ig-big">$15 в месяц</span><span class="ig-sub">расширенное место для исследователя</span></div><div class="ig-fact"><span class="ig-big">$5 млн</span><span class="ig-sub">грантовая программа</span></div></div>
+</section>
+
+                <!-- Источник(и) новости -->
+                <div class="mt-14 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://www.anthropic.com/news/claude-text-watermark" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Источник</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                Ежедневные новости об ИИ
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день отбираем важные новости об ИИ, роботах и метавселенных и рассказываем главное — без хайпа и воды. Если хотите понимать, что происходит в ИИ раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Только важное — каждый день
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Появление блоков. Вызывается сразу, если DOM уже готов (страница
+        // могла быть вставлена после загрузки — Web View, предпросмотр,
+        // встраивание): иначе обработчик DOMContentLoaded уже не сработает и
+        // контент навсегда остался бы скрытым.
+        function initReveal() {
+            const targets = document.querySelectorAll('.fade-in');
+            if (!('IntersectionObserver' in window)) {
+                targets.forEach(el => el.classList.add('visible'));
+                return;
+            }
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { root: null, rootMargin: '0px', threshold: 0.05 });
+            targets.forEach(el => observer.observe(el));
+            // Страховка: если наблюдатель по какой-то причине не сработал,
+            // показываем всё — пустая страница хуже, чем отсутствие анимации.
+            setTimeout(() => targets.forEach(el => el.classList.add('visible')), 1500);
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initReveal);
+        } else {
+            initReveal();
+        }
+    </script>
+</body>
+</html>
