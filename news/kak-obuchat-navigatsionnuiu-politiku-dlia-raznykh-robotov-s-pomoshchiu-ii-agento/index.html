@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как обучать навигационную политику для разных роботов с помощью ИИ-агентов</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как обучать навигационную политику для разных роботов с помощью ИИ-агентов" />
+    <meta property="og:description" content="NVIDIA описала агентный процесс COMPASS для переноса навыков навигации между роботами и сценами. Разработчик задаёт робота, источник сцены и цель, а агент для программирования проверяет зависимости, подготавливает данные, запускает предварительные проверки и обучение, диагностирует ошибки и сравнивает контрольные точки. В основе лежит предобученная политика X-Mobility: для нового робота и окружения обучается остаточная политика, которая корректирует её действия. В качестве примера NVIDIA использует четвероногого Boston Dynamics Spot, сцены встроенного склада и SAGE-10K, а для реконструированных помещений — Omniverse NuRec." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/news/kak-obuchat-navigatsionnuiu-politiku-dlia-raznykh-robotov-s-pomoshchiu-ii-agento/" />
+    <meta property="og:image" content="https://dataist.ai/news/kak-obuchat-navigatsionnuiu-politiku-dlia-raznykh-robotov-s-pomoshchiu-ii-agento/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-08-29" />
+
+    <meta name="description" content="NVIDIA описала агентный процесс COMPASS для переноса навыков навигации между роботами и сценами. Разработчик задаёт робота, источник сцены и цель, а агент для программирования проверяет зависимости, подготавливает данные, запускает предварительные проверки и обучение, диагностирует ошибки и сравнивает контрольные точки. В основе лежит предобученная политика X-Mobility: для нового робота и окружения обучается остаточная политика, которая корректирует её действия. В качестве примера NVIDIA использует четвероногого Boston Dynamics Spot, сцены встроенного склада и SAGE-10K, а для реконструированных помещений — Omniverse NuRec." />
+    <link rel="canonical" href="https://dataist.ai/news/kak-obuchat-navigatsionnuiu-politiku-dlia-raznykh-robotov-s-pomoshchiu-ii-agento/" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "headline": "\u041a\u0430\u043a \u043e\u0431\u0443\u0447\u0430\u0442\u044c \u043d\u0430\u0432\u0438\u0433\u0430\u0446\u0438\u043e\u043d\u043d\u0443\u044e \u043f\u043e\u043b\u0438\u0442\u0438\u043a\u0443 \u0434\u043b\u044f \u0440\u0430\u0437\u043d\u044b\u0445 \u0440\u043e\u0431\u043e\u0442\u043e\u0432 \u0441 \u043f\u043e\u043c\u043e\u0449\u044c\u044e \u0418\u0418-\u0430\u0433\u0435\u043d\u0442\u043e\u0432",
+      "description": "NVIDIA \u043e\u043f\u0438\u0441\u0430\u043b\u0430 \u0430\u0433\u0435\u043d\u0442\u043d\u044b\u0439 \u043f\u0440\u043e\u0446\u0435\u0441\u0441 COMPASS \u0434\u043b\u044f \u043f\u0435\u0440\u0435\u043d\u043e\u0441\u0430 \u043d\u0430\u0432\u044b\u043a\u043e\u0432 \u043d\u0430\u0432\u0438\u0433\u0430\u0446\u0438\u0438 \u043c\u0435\u0436\u0434\u0443 \u0440\u043e\u0431\u043e\u0442\u0430\u043c\u0438 \u0438 \u0441\u0446\u0435\u043d\u0430\u043c\u0438. \u0420\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u0447\u0438\u043a \u0437\u0430\u0434\u0430\u0451\u0442 \u0440\u043e\u0431\u043e\u0442\u0430, \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a \u0441\u0446\u0435\u043d\u044b \u0438 \u0446\u0435\u043b\u044c, \u0430 \u0430\u0433\u0435\u043d\u0442 \u0434\u043b\u044f \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0438\u0440\u043e\u0432\u0430\u043d\u0438\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0437\u0430\u0432\u0438\u0441\u0438\u043c\u043e\u0441\u0442\u0438, \u043f\u043e\u0434\u0433\u043e\u0442\u0430\u0432\u043b\u0438\u0432\u0430\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0435, \u0437\u0430\u043f\u0443\u0441\u043a\u0430\u0435\u0442 \u043f\u0440\u0435\u0434\u0432\u0430\u0440\u0438\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0438 \u0438 \u043e\u0431\u0443\u0447\u0435\u043d\u0438\u0435, \u0434\u0438\u0430\u0433\u043d\u043e\u0441\u0442\u0438\u0440\u0443\u0435\u0442 \u043e\u0448\u0438\u0431\u043a\u0438 \u0438 \u0441\u0440\u0430\u0432\u043d\u0438\u0432\u0430\u0435\u0442 \u043a\u043e\u043d\u0442\u0440\u043e\u043b\u044c\u043d\u044b\u0435 \u0442\u043e\u0447\u043a\u0438. \u0412 \u043e\u0441\u043d\u043e\u0432\u0435 \u043b\u0435\u0436\u0438\u0442 \u043f\u0440\u0435\u0434\u043e\u0431\u0443\u0447\u0435\u043d\u043d\u0430\u044f \u043f\u043e\u043b\u0438\u0442\u0438\u043a\u0430 X-Mobility: \u0434\u043b\u044f \u043d\u043e\u0432\u043e\u0433\u043e \u0440\u043e\u0431\u043e\u0442\u0430 \u0438 \u043e\u043a\u0440\u0443\u0436\u0435\u043d\u0438\u044f \u043e\u0431\u0443\u0447\u0430\u0435\u0442\u0441\u044f \u043e\u0441\u0442\u0430\u0442\u043e\u0447\u043d\u0430\u044f \u043f\u043e\u043b\u0438\u0442\u0438\u043a\u0430, \u043a\u043e\u0442\u043e\u0440\u0430\u044f \u043a\u043e\u0440\u0440\u0435\u043a\u0442\u0438\u0440\u0443\u0435\u0442 \u0435\u0451 \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u044f. \u0412 \u043a\u0430\u0447\u0435\u0441\u0442\u0432\u0435 \u043f\u0440\u0438\u043c\u0435\u0440\u0430 NVIDIA \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u0443\u0435\u0442 \u0447\u0435\u0442\u0432\u0435\u0440\u043e\u043d\u043e\u0433\u043e\u0433\u043e Boston Dynamics Spot, \u0441\u0446\u0435\u043d\u044b \u0432\u0441\u0442\u0440\u043e\u0435\u043d\u043d\u043e\u0433\u043e \u0441\u043a\u043b\u0430\u0434\u0430 \u0438 SAGE-10K, \u0430 \u0434\u043b\u044f \u0440\u0435\u043a\u043e\u043d\u0441\u0442\u0440\u0443\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0445 \u043f\u043e\u043c\u0435\u0449\u0435\u043d\u0438\u0439 \u2014 Omniverse NuRec.",
+      "image": "https://dataist.ai/news/kak-obuchat-navigatsionnuiu-politiku-dlia-raznykh-robotov-s-pomoshchiu-ii-agento/cover.jpg",
+      "url": "https://dataist.ai/news/kak-obuchat-navigatsionnuiu-politiku-dlia-raznykh-robotov-s-pomoshchiu-ii-agento/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/news/kak-obuchat-navigatsionnuiu-politiku-dlia-raznykh-robotov-s-pomoshchiu-ii-agento/"
+      },
+      "datePublished": "2026-08-29",
+      "inLanguage": "ru",
+      "author": {"@type": "Person", "name": "@dataist_ai"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/news/kak-obuchat-navigatsionnuiu-politiku-dlia-raznykh-robotov-s-pomoshchiu-ii-agento/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+                document.documentElement.classList.add('js');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        /* Подложка идёт за темой страницы. Без этого правила карточка
+           оставалась белой на чёрной странице: `background: #fff` выше
+           перекрывался только цветом рамки, и в тёмной теме на полосе текста
+           горел белый прямоугольник. */
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            background: #1C1C1E;
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Лид / вступление (короткая новость) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* ---- Пункты списка (F013) ------------------------------------
+           Рендерер отдаёт пункты как `.tech-card` — класс из шаблона статей
+           dataist_media, а здесь его НЕ БЫЛО ВОВСЕ. Оставались только
+           тейлвиндовские отступы: пункты выглядели как обрывки текста без
+           подложки, маркера и связи друг с другом. Владелец дважды написал
+           «тут можно было красиво сделать пункты» — вот про это. */
+        .article-content .tech-card {
+            position: relative; display: block; margin: 0 auto 10px;
+            max-width: 48rem; padding: 14px 18px 14px 44px;
+            border-radius: 14px; background: rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.06);
+        }
+        .dark .article-content .tech-card {
+            background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1);
+        }
+        /* Маркер — точка в фирменном градиенте, а не буллет браузера. */
+        .article-content .tech-card::before {
+            content: ""; position: absolute; left: 18px; top: 1.35em;
+            width: 8px; height: 8px; border-radius: 50%;
+            background: linear-gradient(100deg, #F97316, #8B5CF6);
+        }
+        .article-content .tech-card span {
+            font-family: 'Inter', sans-serif; font-size: 1rem; line-height: 1.55;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content .tech-card span { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content .tech-card span { font-size: 1.0625rem; }
+        }
+        /* Нумерованный пункт: вместо точки — номер в кружке. */
+        .article-content .tech-num {
+            display: flex; align-items: center; gap: 14px; padding-left: 18px;
+        }
+        .article-content .tech-num::before { content: none; }
+        .article-content .tech-num .ig-num { flex: 0 0 auto; }
+
+        /* Метрика «было → стало»: значения в моноширинном, стрелка не рвётся. */
+        .article-content .tech-card.flex { padding-left: 18px; gap: 14px; display: flex; }
+        .article-content .tech-card.flex::before { content: none; }
+        .article-content .tech-card .text-cyber-orange { color: #F97316; }
+
+        /* ---- Инфографика (F018) --------------------------------------
+           Нарочно только сетка: никаких стрелок, SVG-связей и абсолютного
+           позиционирования. Именно они на узком экране наезжают друг на
+           друга. Всё переносится и одинаково живёт на телефоне и на экране. */
+        .article-content .ig {
+            display: grid; gap: 12px; margin: 2.5rem auto; max-width: 48rem;
+            padding: 24px 18px; border-radius: 20px; background: #fff;
+            border: 1px solid rgba(0,0,0,0.07); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+        }
+        .dark .article-content .ig {
+            background: #1C1C1E; border-color: rgba(255,255,255,0.12);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        @media (min-width: 768px) { .article-content .ig { padding: 30px 26px; border-radius: 24px; } }
+
+        /* Ряды ровные, неполный — по центру. `auto-fit` этого не умеет: он
+           набивал в ряд сколько влезет и при пяти ячейках оставлял пятую
+           одну у левого края. Сколько ставить в ряд, считает рендерер и
+           передаёт в `--cols` (5 → 3+2, 4 → 2+2). Flex, а не grid: только
+           он центрирует НЕПОЛНЫЙ последний ряд. */
+        .article-content .ig-steps,
+        .article-content .ig-facts {
+            display: flex; flex-wrap: wrap; justify-content: center;
+        }
+        .article-content .ig-steps > *,
+        .article-content .ig-facts > * {
+            flex: 0 1 calc((100% - (var(--cols, 3) - 1) * 12px) / var(--cols, 3));
+        }
+        /* На узком экране — столбиком: три колонки по 140px там не живут. */
+        @media (max-width: 639px) {
+            .article-content .ig-steps > *,
+            .article-content .ig-facts > * { flex-basis: 100%; }
+        }
+        .article-content .ig-compare { grid-template-columns: 1fr; gap: 14px; }
+        @media (min-width: 640px) { .article-content .ig-compare { grid-template-columns: 1fr 1fr; } }
+        .article-content .ig-chips { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+
+        .article-content .ig-step,
+        .article-content .ig-fact {
+            display: flex; flex-direction: column; align-items: center; gap: 6px;
+            text-align: center; min-width: 0; padding: 12px 8px;
+        }
+        .article-content .ig-num {
+            width: 34px; height: 34px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-weight: 700;
+            font-size: 14px; font-family: 'Space Mono', monospace;
+            color: #F97316; border: 2px solid rgba(249,115,22,0.55);
+            background: rgba(249,115,22,0.07);
+        }
+        .article-content .ig-big {
+            font-family: 'Space Mono', monospace; font-weight: 700;
+            font-size: 1.4rem; line-height: 1.15; letter-spacing: -0.01em;
+            background: linear-gradient(100deg, #F97316, #8B5CF6);
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent; color: #8B5CF6;
+            overflow-wrap: anywhere;
+        }
+        @media (min-width: 768px) { .article-content .ig-big { font-size: 1.75rem; } }
+        .article-content .ig-lb { font-weight: 600; font-size: 0.9rem; line-height: 1.3; overflow-wrap: anywhere; }
+        .article-content .ig-sub {
+            font-size: 0.8rem; line-height: 1.4; color: #86868B; overflow-wrap: anywhere;
+        }
+        .dark .article-content .ig-sub { color: #8E8E93; }
+
+        .article-content .ig-col {
+            display: flex; flex-direction: column; gap: 7px; padding: 16px 18px;
+            border-radius: 14px; background: rgba(0,0,0,0.03);
+            border: 1px solid rgba(0,0,0,0.06); min-width: 0;
+        }
+        .dark .article-content .ig-col { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+        .article-content .ig-hd { font-weight: 700; font-size: 0.95rem; line-height: 1.3; }
+        .article-content .ig-tx { font-size: 0.95rem; line-height: 1.5; color: #86868B; overflow-wrap: anywhere; }
+        .dark .article-content .ig-tx { color: #8E8E93; }
+        .article-content .ig-compare .ig-col:first-child .ig-hd { color: #F97316; }
+        .article-content .ig-compare .ig-col:last-child .ig-hd { color: #8B5CF6; }
+
+        .article-content .ig-chip {
+            border-radius: 999px; padding: 8px 15px; font-size: 0.875rem; font-weight: 600;
+            border: 1.5px solid rgba(139,92,246,0.45); color: #8B5CF6;
+            background: rgba(139,92,246,0.08); line-height: 1.2;
+        }
+        .article-content .ig-chips .ig-chip:nth-child(odd) {
+            border-color: rgba(249,115,22,0.5); color: #F97316; background: rgba(249,115,22,0.07);
+        }
+        .article-content .ig p { margin: 0; }
+
+        /* ---- Видео источника (F019) ----------------------------------
+           Ролик остаётся на сервере источника, у нас только проигрыватель.
+           Рамка держит соотношение 16:9 без скриптов, поэтому на телефоне
+           ничего не растягивается и не наезжает. */
+        .article-content .vid { margin: 2.5rem auto; max-width: 48rem; }
+        .article-content .vid-box {
+            position: relative; width: 100%; aspect-ratio: 16 / 9;
+            border-radius: 1.25rem; overflow: hidden; background: #000;
+            border: 1px solid rgba(0,0,0,0.07);
+        }
+        .dark .article-content .vid-box { border-color: rgba(255,255,255,0.12); }
+        .article-content .vid-player {
+            width: 100%; height: 100%; display: block; border: 0;
+        }
+        .article-content .vid-cap {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content .vid-cap { color: #8E8E93; }
+        .article-content .vid-src {
+            font-family: 'Space Mono', monospace; font-size: 0.8rem; color: #86868B;
+            margin: 0.5rem auto 0; text-align: center;
+        }
+        .dark .article-content .vid-src { color: #8E8E93; }
+        .article-content .vid-src a { text-decoration: underline; }
+        /* Карточка-ссылка: издание не отдаёт файл, но кадр у нас есть.
+           Кнопка play нарисована двумя градиентами, без картинок и скриптов. */
+        .article-content .vid-link { display: block; }
+        .article-content .vid-poster {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+        }
+        .article-content .vid-play {
+            position: absolute; left: 50%; top: 50%; width: 4.5rem; height: 4.5rem;
+            transform: translate(-50%, -50%); border-radius: 50%;
+            background: rgba(0,0,0,0.55); border: 2px solid rgba(255,255,255,0.9);
+        }
+        .article-content .vid-play::after {
+            content: ""; position: absolute; left: 56%; top: 50%;
+            transform: translate(-50%, -50%);
+            border-left: 1.15rem solid #fff; border-top: 0.72rem solid transparent;
+            border-bottom: 0.72rem solid transparent;
+        }
+        .article-content .vid-link:hover .vid-play { background: rgba(0,0,0,0.75); }
+
+        /* Анимации скролла */
+        /* Прогрессивное улучшение: без JS (Telegram WebView, боты, читалки)
+           контент виден сразу; анимация появления включается только когда
+           скрипт успел поставить класс .js на <html>. */
+        .fade-in { opacity: 1; transform: none; }
+        html.js .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        html.js .fade-in.visible { opacity: 1; transform: translateY(0); }
+        @media (prefers-reduced-motion: reduce) {
+            html.js .fade-in { opacity: 1; transform: none; transition: none; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <a href="/news/" class="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white font-sans text-sm font-medium">
+                <i data-lucide="newspaper" class="w-4 h-4"></i>
+                <span>Новости</span>
+            </a>
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА НОВОСТИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="newspaper" class="w-3.5 h-3.5"></i>
+                    <span>Новости · 2026-08-29</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Как обучать навигационную политику для разных роботов с помощью ИИ-агентов
+                </h1>
+
+                <p class="article-lead text-left max-w-3xl mx-auto">NVIDIA описала агентный процесс COMPASS для переноса навыков навигации между роботами и сценами. Разработчик задаёт робота, источник сцены и цель, а агент для программирования проверяет зависимости, подготавливает данные, запускает предварительные проверки и обучение, диагностирует ошибки и сравнивает контрольные точки. В основе лежит предобученная политика X-Mobility: для нового робота и окружения обучается остаточная политика, которая корректирует её действия. В качестве примера NVIDIA использует четвероногого Boston Dynamics Spot, сцены встроенного склада и SAGE-10K, а для реконструированных помещений — Omniverse NuRec.</p>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/news/kak-obuchat-navigatsionnuiu-politiku-dlia-raznykh-robotov-s-pomoshchiu-ii-agento/cover.jpg"
+                         alt="Обложка: Как обучать навигационную политику для разных роботов с помощью ИИ-агентов"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ НОВОСТИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+                <section>
+<h2>NVIDIA показала процесс на основе ИИ для навигации роботов разных типов</h2>
+<p>NVIDIA описала агентный процесс COMPASS для переноса навыков навигации между роботами и сценами. Разработчик задаёт робота, источник сцены и цель, а агент для программирования проверяет зависимости, подготавливает данные, запускает предварительные проверки и обучение, диагностирует ошибки и сравнивает контрольные точки. В основе лежит предобученная политика X-Mobility: для нового робота и окружения обучается остаточная политика, которая корректирует её действия. В качестве примера NVIDIA использует четвероногого Boston Dynamics Spot, сцены встроенного склада и SAGE-10K, а для реконструированных помещений — Omniverse NuRec.</p>
+<p>Навигация превращает восприятие среды и движение в целенаправленное автономное поведение. Робот должен постоянно определять своё положение, интерпретировать изменения вокруг себя, выбирать маршрут и объезжать препятствия, чтобы безопасно достичь цели. Это отличается от локомоции, которая отвечает прежде всего за устойчивое движение.</p>
+<p>Перенос такой способности на другого робота или в новую сцену может потребовать новых данных, симуляционных ресурсов, интерфейсов робота, обучения, диагностики и оценки. Если повторять эту работу для каждой пары «робот — сцена», процесс становится дорогим и плохо воспроизводимым.</p>
+<p>Агентный процесс сокращает объём ручной работы. Разработчик указывает робота, источник сцены и навигационную цель. Агент для программирования использует навыки репозитория, чтобы проверить зависимости, подготовить ресурсы, выполнить предварительные проверки, запустить обучение, найти причины сбоев и сравнить контрольные точки. Человек подтверждает принятие сцены, прохождение проверки в одном окружении и продвижение контрольной точки.</p>
+<div class="ig ig-steps" style="--cols:2"><div class="ig-step"><span class="ig-num">1</span><span class="ig-lb">Проверка сцены</span></div><div class="ig-step"><span class="ig-num">2</span><span class="ig-lb">Предварительная проверка</span></div><div class="ig-step"><span class="ig-num">3</span><span class="ig-lb">Остаточное обучение</span></div><div class="ig-step"><span class="ig-num">4</span><span class="ig-lb">Оценка контрольных точек</span></div></div>
+</section>
+<section>
+<h2>Как работает COMPASS</h2>
+<p>В учебном примере NVIDIA использует Spot в двух вариантах: со встроенной сценой и со сценой SAGE-10K. Также рассматривается поддержка захваченных окружений через NVIDIA Omniverse NuRec. Процесс проходит через предварительную проверку, остаточное обучение, оценку контрольных точек и интеграцию с исполнением политики. Одометрия подключается при необходимости.</p>
+<p>COMPASS — это платформа переноса политики мобильности между воплощениями с помощью остаточного RL и синтеза навыков. Она предназначена для масштабируемого переноса навыков мобильности между разными типами роботов и использует экспертные демонстрации, собранные на одном воплощении.</p>
+<p>В основе лежит предобученная политика NVIDIA X-Mobility. Для выбранных робота и окружения COMPASS обучает остаточную специализированную политику. Она корректирует базовое действие, вместо того чтобы заново осваивать навигацию с нуля. Позднее данные от нескольких специалистов можно дистиллировать в общую политику, работающую на разных типах роботов.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-obuchat-navigatsionnuiu-politiku-dlia-raznykh-robotov-s-pomoshchiu-ii-agento/fig_0.jpg" alt="" class="w-full object-contain rounded-lg">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">COMPASS адаптирует базовую политику X-Mobility в специализированные политики для отдельных воплощений и дистиллирует их в политику, совместимую с разными воплощениями</p>
+<p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://developer.nvidia.com/blog/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">developer.nvidia.com</a></p>
+</div></figure>
+<p>Показанная в материале архитектура COMPASS обучается и оценивается через агентный рабочий процесс.</p>
+<p>COMPASS оформляет этот процесс в виде навыков репозитория. Во время разработки в примере используется Codex. После обучения политика и контроллер робота выполняют навигацию во время работы системы уже без агента для программирования.</p>
+<p>В качестве эталонного робота выбран четвероногий Boston Dynamics Spot. Встроенный склад служит основным воспроизводимым сценарием, SAGE-10K добавляет сгенерированные сцены, а NVIDIA Omniverse NuRec предлагает отдельный путь для реконструированного окружения. Если робот не передаёт совместимую одометрию и преобразования, их при развёртывании может предоставить NVIDIA cuVSLAM — библиотека визуальной одометрии и одновременной локализации и картографирования с ускорением CUDA.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-obuchat-navigatsionnuiu-politiku-dlia-raznykh-robotov-s-pomoshchiu-ii-agento/fig_1.gif" alt="" class="w-full object-contain rounded-lg">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Четвероногий робот Spot перемещается по зарегистрированному складу COMPASS combined_multi_rack</p>
+<p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://developer.nvidia.com/blog/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">developer.nvidia.com</a></p>
+</div></figure>
+<p>Для другого окружения NVIDIA рекомендует использовать закреплённый в репозитории программный стек COMPASS и соответствующее оборудование.</p>
+</section>
+<section>
+<h2>Подготовка репозитория</h2>
+<p>Сначала нужно подготовить репозиторий и заранее задать агенту для программирования понятный порядок работ. На этом этапе скачиваются ресурсы с ограниченным доступом, навык COMPASS делается доступным для Codex, выполняются проверки программного стека, после чего процесс останавливается на этапе подтверждения одного окружения.</p>
+<p>Блоки `$compass` — это запросы для чата Codex, который нужно открыть в корне репозитория COMPASS. Это не команды оболочки. В Claude Code тот же процесс запускается через `/compass`.</p>
+<p>В Codex навыки репозитория сначала открывают через `.agents/skills`, а затем выбирают COMPASS командой `/skills` или упоминанием `$compass` в запросе. Codex поддерживает символические ссылки на каталоги навыков, поэтому текущий навык можно оставить в исходном расположении. В Claude Code используется тот же рабочий процесс через `/compass`.</p>
+<p>Агент может клонировать репозиторий, собрать проект, скачать несекретные ресурсы и проверить программный стек. При этом разработчик сам принимает условия доступа к закрытым ресурсам и вводит токен Hugging Face за пределами чата. Агент не должен запрашивать, показывать или сохранять этот токен в журналах.</p>
+<p>Репозиторий COMPASS нужно клонировать и пройти краткий запуск из руководства COMPASS в контейнере, закреплённом за репозиторием. До первого запуска необходимо открыть доступ к закрытым репозиториям Hugging Face `nvidia/COMPASS` и `nvidia/X-Mobility`, создать токен Hugging Face только для чтения и убедиться, что он позволяет читать доступные аккаунту публичные репозитории с ограничениями. Токен следует оставлять доступным только в текущей оболочке: его нельзя вставлять в запрос агента или добавлять в систему контроля версий.</p>
+<p>На этапе подготовки ресурсы симуляции скачиваются в `./assets/usd/`, а предобученная контрольная точка X-Mobility — в `./assets/x_mobility.ckpt`. Ответ 401 или 403 обычно означает, что доступ к репозиторию не завершён или у токена недостаточные права. Сначала нужно исправить аутентификацию и только потом искать проблемы в Isaac Lab.</p>
+<p>Каждая фаза должна оставлять проверяемые материалы до перехода к следующей. Для любого этапа подтверждения нужно проверить четыре вещи: присутствуют ли требуемые входные данные, появились ли ожидаемые результаты, остались ли нерешённые ошибки и достаточно ли свидетельств для продолжения.</p>
+<p>После запуска контейнера разработчик открывает агента для программирования в корне репозитория и описывает робота, сцену, ожидаемый результат навигации и этапы подтверждения. Для базового сценария в чат агента вставляется запрос, который просит навык `$compass` сверить рабочий процесс с репозиторием и выполнить необходимые проверки. Если запуск завершается ошибкой, `$compass-doctor` выполняет проверку состояния только для чтения и сообщает вероятные причины, не меняя окружение скрыто.</p>
+</section>
+<section>
+<h2>Источники сцен</h2>
+<p>COMPASS поддерживает три варианта подготовки сцены:</p>
+<div class="ig ig-chips"><span class="ig-chip">Встроенный склад</span><span class="ig-chip">SAGE-10K</span><span class="ig-chip">Omniverse NuRec</span></div>
+<h3>Встроенный склад</h3>
+<p>Для первого воспроизводимого запуска рекомендуется зарегистрированный склад `combined_multi_rack`. Робот, сцена и карта занятости уже добавлены в систему, поэтому этот вариант позволяет проверить установку до подключения нового окружения.</p>
+<p>Агенту для программирования можно передать запрос, который запускает базовый сценарий и останавливает его после предварительной проверки в одном окружении.</p>
+<h3>Сцена SAGE-10K</h3>
+<p>Набор данных SAGE-10K содержит 10 000 сгенерированных сцен помещений 50 типов. Это набор сцен, а не политика и не симулятор. Каждая сцена включает геометрию, материалы, метаданные планировки и предварительный просмотр. Сцены гостиных и складов готовятся одинаково, поэтому скачивать весь набор не требуется — достаточно выбрать подходящий вариант.</p>
+<p>Путь через SAGE-10K включает два этапа ручного подтверждения. Сначала преобразованный файл USD нужно проверить в NVIDIA Isaac Sim: оценить геометрию, материалы, масштаб и сетки столкновений. После регистрации сцены и построения карты занятости требуется подтвердить предварительный просмотр в одном окружении перед полным обучением.</p>
+<p>Карта занятости показывает свободное и заблокированное пространство, чтобы система могла выбирать допустимые начальные позиции робота и цели навигации. Агенту можно передать запрос для отбора сцены и остановки на обоих этапах подтверждения.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-obuchat-navigatsionnuiu-politiku-dlia-raznykh-robotov-s-pomoshchiu-ii-agento/fig_2.gif" alt="" class="w-full object-contain rounded-lg">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Четвероногий робот Spot в преобразованной сцене помещения SAGE-10K, подготовленной для валидации COMPASS</p>
+<p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://developer.nvidia.com/blog/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">developer.nvidia.com</a></p>
+</div></figure>
+<h3>Omniverse NuRec</h3>
+<p>Omniverse NuRec используется, если COMPASS нужно дообучить и оценить в реконструкции предполагаемого места эксплуатации. Система преобразует стереосъёмку RGB в реконструкцию, готовую для Isaac Sim, с согласованной визуальной геометрией, сетками столкновений и возможностью дополнительного редактирования сцены.</p>
+<p>Документированный процесс COMPASS для такой сцены включает её регистрацию, проверку готовой карты занятости и соглашения о начале координат, оценку зазоров для робота и предварительную проверку в одном окружении перед обучением.</p>
+<p>NuRec в этом материале остаётся дополнительным вариантом. Практическая часть обучения продолжается на SAGE-10K, чтобы пройти один сценарий от подготовки до оценки. Для захваченного окружения нужно использовать рабочий процесс COMPASS NuRec и руководство NVIDIA Isaac Sim NuRec, включая пример гостиной. В них описаны подготовка сцены, обучение, оценка, экспорт и развёртывание в ROS 2.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-obuchat-navigatsionnuiu-politiku-dlia-raznykh-robotov-s-pomoshchiu-ii-agento/fig_3.gif" alt="" class="w-full object-contain rounded-lg">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Политика NuRec Real2Sim (справа) осуществляет навигацию вокруг стола к цели; для сравнения показана синтетическая политика (слева)</p>
+<p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://developer.nvidia.com/blog/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">developer.nvidia.com</a></p>
+</div></figure>
+<p>Агенту для программирования можно передать запрос, который подготовит зарегистрированную сцену NuRec и остановится перед началом обучения.</p>
+</section>
+<section>
+<h2>Предварительная проверка</h2>
+<p>После того как выбранная сцена стала доступна COMPASS, перед масштабированием обучения запускается предварительный просмотр в одном окружении. Для сцены SAGE-10K до этого нужно завершить визуальную проверку и подтвердить регистрацию сцены.</p>
+<p>Во время проверки нужно убедиться, что Isaac Sim запускается, сцена загружается, Spot появляется в допустимой позиции, камера передаёт наблюдения, а робот реагирует на команды политики без пересечений с объектами, падений и нерешённых ошибок симуляции.</p>
+<p>Агент для программирования должен обобщить журналы предварительного просмотра и визуальные материалы, перечислить блокирующие проблемы и остановиться до получения подтверждения от человека. К остаточному обучению переходят после проверки, что сцена, робот, наблюдения и интерфейс действий работают согласованно.</p>
+</section>
+<section>
+<h2>Остаточное обучение</h2>
+<p>COMPASS адаптирует предобученную политику X-Mobility к выбранным роботу и сцене. После одобрения предварительной проверки агент может запустить стандартный рабочий процесс остаточного обучения с подкреплением.</p>
+<p>В примере используется Spot и встроенный склад. При переходе к сцене SAGE-10K ключ окружения нужно заменить на зарегистрированный ключ выбранной сцены.</p>
+<p>Остаточное обучение длится долго. Агенту следует запускать его в постоянной сессии или через управляемый планировщик, сохранять журналы и контрольные точки в настроенный каталог результатов и сообщать о ходе работы, не удерживая интерактивную сессию открытой.</p>
+<p>До начала запуска нужно зафиксировать команду, ревизию репозитория, ключ сцены, конфигурацию, интервал сохранения контрольных точек и критерии остановки. Если процесс прервался, необходимо проверить целостность последней контрольной точки и доступные варианты продолжения.</p>
+<p>Параметр `--num_envs` выбирают с учётом объёма памяти GPU. Для предварительной проверки используется только одно окружение. Во время обучения нужно отслеживать компоненты награды, продвижение к цели, столкновения и падения, завершения эпизодов, пропускную способность и загрузку памяти GPU.</p>
+<p>Контрольные точки следует сохранять регулярно и оценивать в одинаковых условиях, не считая лучшей автоматически последнюю итерацию. COMPASS также поддерживает распределённое обучение на нескольких GPU для более крупных запусков. Продолжительность зависит от оборудования, сложности сцены, количества окружений и критериев остановки.</p>
+<p>Для поиска причин сбоев следует использовать диагностический рабочий процесс COMPASS и только потом менять окружение или конфигурацию обучения. Ошибки аутентификации направляются к проверке доступа Hugging Face, проблемы загрузки сцены и столкновений — к подготовке сцены, ошибки камеры и интерфейса действий — к этапу предварительной проверки, а ошибки памяти — к настройке количества окружений или нескольких GPU.</p>
+<p>Нужно сохранить конфигурацию обучения, команду запуска, ревизию репозитория, регистрацию сцены, карту занятости, материалы предварительной проверки, журналы, контрольные точки и перечень результатов. Перед изменением зависимостей, ресурсов сцены, наград или параметров обучения требуется подтверждение разработчика.</p>
+</section>
+<section>
+<h2>Оценка контрольной точки</h2>
+<p>Оценка нужна, чтобы определить, готова ли остаточная контрольная точка к продвижению. Предобученную базовую политику и кандидатов сравнивают в одинаковых условиях, а стандартные метрики COMPASS рассматривают вместе с дополнительными материалами.</p>
+<p>В стандартный отчёт входят:</p>
+<div class="ig ig-facts" style="--cols:3"><div class="ig-fact"><span class="ig-big">Доля достигнутых целей</span><span class="ig-sub">доля достигнутых целей</span></div><div class="ig-fact"><span class="ig-big">Доля падений</span><span class="ig-sub">доля падений</span></div><div class="ig-fact"><span class="ig-big">Время движения</span><span class="ig-sub">время движения</span></div></div>
+<p>Дополнительно можно анализировать продвижение к цели, поведение при контактах, превышения времени ожидания и стабильность команд. Такие показатели нужно помечать как производный анализ или пользовательскую инструментальную проверку.</p>
+<p>Контрольную точку продвигают только после того, как согласованные результаты отвечают требованиям проекта по навигации и безопасности, а человек подтверждает упаковку результата. Для оценки можно использовать запрос, адаптированный под конкретного робота, сцену, набор контрольных точек и требуемые материалы.</p>
+</section>
+<section>
+<h2>Подключение к роботу</h2>
+<p>После завершения разработки обученная политика подключается к рабочему процессу робота. В этом разделе рассматриваются входы и выходы эталонной политики, применение cuVSLAM для получения одометрии и действия для незарегистрированного робота. Агент координирует разработку и проверки, но не управляет роботом во время работы.</p>
+<p>На этапе COMPASS скачивается контрольная точка предобученной X-Mobility, используемая для предварительной проверки и остаточного обучения. Само обучение создаёт остаточную контрольную точку для выбранных робота и сцены. Экспорт и развёртывание упаковывают обученную политику для инференса. Они не превращают базовую и остаточную политики в два компонента ROS 2, которые разработчик должен соединять вручную.</p>
+<p>В эталонной интеграции ROS 2 компонент `compass_inference` преобразует изображения с передней камеры, навигационную цель или маршрут и скорость робота, рассчитанную по одометрии, во входы экспортированной политики. На `/cmd_vel` публикуются команды линейной скорости вперёд и угловой скорости.</p>
+<p>Рекуррентное состояние и предыдущее действие остаются внутренними данными реализации инференса и не передаются как внешние входы интеграции ROS. Для целевого развёртывания нужно проверить системы координат, частоты обновления, нормализацию, ограничения команд, поведение при остановке и контроллер физического робота.</p>
+</section>
+<section>
+<h2>Одометрия через cuVSLAM</h2>
+<p>cuVSLAM используется, если роботу в среде без GPS или с нестабильным GPS нужна оценка состояния по камере, а совместимая и проверенная одометрия с преобразованиями отсутствует. Её данные могут поддерживать навигатор COMPASS, но карта cuVSLAM не подаётся на вход навигационной политики.</p>
+<p>cuVSLAM не участвует в обучении политики COMPASS и не требует навыка агента. Библиотеку нужно запускать как отдельный компонент ROS 2 с совместимыми версиями, подключить или перенаправить его одометрию в `/chassis/odom`, передать обязательное преобразование `odom` в `base_link`, а также проверить калибровку, временные метки, имена топиков и соглашения о системах координат.</p>
+<p>Во время разработки настроить и диагностировать этот компонент могут дополнительные навыки `$cuvslam-onboard` и `$cuvslam-troubleshoot`.</p>
+</section>
+<section>
+<h2>Новый тип робота</h2>
+<p>Если робот ещё не зарегистрирован, `$compass-newembodiment` проводит разработчика через настройку робота, регистрацию окружения, сопоставление действий и визуальную предварительную проверку в одном окружении.</p>
+<p>Подключение нового типа робота — отдельная инженерная задача по сравнению с обучением специалиста для уже зарегистрированного робота. При этом используется тот же порядок проверок и ручных подтверждений.</p>
+<p>Материал заканчивается на оценке контрольной точки. Экспорт в ONNX, JIT или TensorRT, интеграция с ROS 2 и развёртывание на физическом оборудовании требуют отдельных проверок для целевого робота и рабочего окружения.</p>
+<p>Качество сцены, продолжительность обучения и результаты контрольной точки зависят от типа робота, окружения, конструкции награды и доступных вычислительных ресурсов. Поэтому рабочий процесс не устанавливает универсальный порог успеха.</p>
+<p>Рекомендуемый порядок — начать с эталонного сценария, а затем по одному добавлять остальные компоненты.</p>
+</section>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-obuchat-navigatsionnuiu-politiku-dlia-raznykh-robotov-s-pomoshchiu-ii-agento/fig_4.jpg" alt="" class="w-full object-contain rounded-lg"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">На этапе инференса политика COMPASS использует входные данные RGB, одометрию и точку цели, а также необязательные данные карты и маршрута, чтобы формировать команды линейной и угловой скорости для контроллера робота</p><p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://developer.nvidia.com/blog/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">developer.nvidia.com</a></p></div></figure>
+
+                <!-- Источник(и) новости -->
+                <div class="mt-14 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://developer.nvidia.com/blog/how-to-train-a-cross-embodiment-robot-navigation-policy-with-ai-agents/" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Источник</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                Ежедневные новости об ИИ
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день отбираем важные новости об ИИ, роботах и метавселенных и рассказываем главное — без хайпа и воды. Если хотите понимать, что происходит в ИИ раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Только важное — каждый день
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Появление блоков. Вызывается сразу, если DOM уже готов (страница
+        // могла быть вставлена после загрузки — Web View, предпросмотр,
+        // встраивание): иначе обработчик DOMContentLoaded уже не сработает и
+        // контент навсегда остался бы скрытым.
+        function initReveal() {
+            const targets = document.querySelectorAll('.fade-in');
+            if (!('IntersectionObserver' in window)) {
+                targets.forEach(el => el.classList.add('visible'));
+                return;
+            }
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { root: null, rootMargin: '0px', threshold: 0.05 });
+            targets.forEach(el => observer.observe(el));
+            // Страховка: если наблюдатель по какой-то причине не сработал,
+            // показываем всё — пустая страница хуже, чем отсутствие анимации.
+            setTimeout(() => targets.forEach(el => el.classList.add('visible')), 1500);
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initReveal);
+        } else {
+            initReveal();
+        }
+    </script>
+</body>
+</html>
