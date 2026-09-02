@@ -14,11 +14,13 @@
     <!-- Превью-карточка (Telegram, соцсети, вебвью): в описание выводится полный
          лид статьи; платформа сама обрежет по своему лимиту. -->
     <meta property="og:site_name" content="Датаист / Обучение" />
+    <meta property="og:locale" content="ru_RU" />
     <meta property="og:title" content="Как увидеть бизнес-процесс таким, какой он есть на самом деле" />
     <meta property="og:description" content="Сотрудники описывают процесс таким, каким он задуман. Журнал событий хранит то, как он шёл в действительности, — и вместо единственного маршрута их там оказывается несколько десятков. В этом материале: из каких полей складывается журнал, чем режим исследования отличается от проверки соответствия, какие шесть вопросов обязана закрывать схема процесса и почему чересчур аккуратная модель означает, что часть реальности в неё не попала." />
     <meta property="og:type" content="article" />
     <meta property="og:url" content="https://dataist.ai/education/auto_2_5/" />
     <meta property="og:image" content="https://dataist.ai/education/auto_2_5/cover.jpg" />
+    <meta property="og:image:secure_url" content="https://dataist.ai/education/auto_2_5/cover.jpg" />
     <meta property="og:image:type" content="image/jpeg" />
     <meta property="og:image:width" content="1920" />
     <meta property="og:image:height" content="1080" />
@@ -29,6 +31,7 @@
 
     <!-- Дополнительно для Twitter (X) и Telegram -->
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://dataist.ai/education/auto_2_5/" />
     <meta name="twitter:title" content="Как увидеть бизнес-процесс таким, какой он есть на самом деле" />
     <meta name="twitter:description" content="Сотрудники описывают процесс таким, каким он задуман. Журнал событий хранит то, как он шёл в действительности, — и вместо единственного маршрута их там оказывается несколько десятков. В этом материале: из каких полей складывается журнал, чем режим исследования отличается от проверки соответствия, какие шесть вопросов обязана закрывать схема процесса и почему чересчур аккуратная модель означает, что часть реальности в неё не попала." />
     <meta name="twitter:image" content="https://dataist.ai/education/auto_2_5/cover.jpg" />
@@ -1199,16 +1202,21 @@
             setTimeout(() => lucide.createIcons(), 50);
         }
 
-        // Telegram Web App
-        const tg = window.Telegram?.WebApp;
+        // Telegram Web App: инициализируем только внутри реального Telegram Mini App.
+        // Для обычного Telegram in-app browser / link preview этот блок безопасно ничего не делает.
+        const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
         if (tg && tg.initData) {
-            tg.ready();
-            tg.expand();
-            if (tg.colorScheme) {
-                applyTheme(tg.colorScheme === 'dark');
-                tg.onEvent('themeChanged', function() {
+            try {
+                tg.ready();
+                tg.expand();
+                if (tg.colorScheme) {
                     applyTheme(tg.colorScheme === 'dark');
-                });
+                    tg.onEvent('themeChanged', function () {
+                        applyTheme(tg.colorScheme === 'dark');
+                    });
+                }
+            } catch (e) {
+                console.warn('Telegram WebApp init skipped:', e);
             }
         }
 
@@ -1247,5 +1255,5 @@
             fadeElements.forEach(el => observer.observe(el));
         });
     </script>
-</body>
+<script defer src="/static/js/analytics.js?v=1786668480"></script></body>
 </html>
