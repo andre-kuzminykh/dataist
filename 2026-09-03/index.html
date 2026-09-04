@@ -198,33 +198,82 @@
     
 /* BR408: лента соседних разборов.
 
-           overscroll-behavior — единственная строка здесь, без которой
-           блок опасен: страницы читают в Telegram, и без неё дотянутая до
-           края лента отдаёт жест дальше, окну приложения. Полоса прокрутки
-           убрана, потому что край последней карточки и так подсказывает,
-           что лента продолжается. */
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: шесть подсвеченных прямоугольников спорят с обложками,
+           ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
         .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
             overscroll-behavior-x: contain;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
+            scrollbar-width: none; -ms-overflow-style: none;
         }
         .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
 
-        /* Рамка карточки — фирменный градиент. Он рисуется подложкой, а
-           содержимое лежит на своём фоне поверх: так рамка получается
-           градиентной без масок и border-image, которые в старых вебвью
-           ведут себя по-разному. */
-        .rel-card { background: linear-gradient(100deg, #F97316, #8B5CF6); }
-
-        /* Шторка по краю ленты — тем же цветом, что и фон страницы, поэтому
-           карточки именно растворяются, а не уезжают под серый прямоугольник.
-           Цвета выписаны числами: color-mix() в старых вебвью не понимается,
-           и вся строка градиента отбрасывается целиком. */
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
         .rel-fade {
             position: absolute; top: 0; bottom: 12px; width: 96px;
             pointer-events: none; opacity: 0; z-index: 2;
             transition: opacity .35s ease;
         }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
         .rel-fade-l {
             left: 0;
             background: linear-gradient(90deg, #F5F5F7 12%,
@@ -256,13 +305,13 @@
             position: absolute; top: calc(50% - 34px); translate: 0 -50%;
             z-index: 3; width: 42px; height: 42px; border-radius: 50%;
             display: grid; place-items: center; cursor: pointer;
-            border: 1px solid rgba(0,0,0,0.08); background: #fff; color: #000;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
             box-shadow: 0 8px 26px rgba(0,0,0,0.14);
             opacity: 0; visibility: hidden; pointer-events: none;
             transition: opacity .35s ease, transform .25s ease;
         }
         .dark .rel-arrow {
-            border-color: rgba(255,255,255,0.12); background: #1C1C1E; color: #fff;
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
         }
         .rel-arrow:hover { transform: scale(1.08); }
         .rel-arrow-l { left: 6px; }
@@ -275,7 +324,7 @@
         }
         @media (hover: none) { .rel-arrow { display: none; } }
         @media (prefers-reduced-motion: reduce) {
-            .rel-fade, .rel-arrow { transition: none; }
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
         }
     </style>
 </head>
@@ -498,143 +547,141 @@
                                 aria-label="Следующие материалы">
                             <i data-lucide="chevron-right" class="w-5 h-5"></i>
                         </button>
-                    
-                    <div class="rel-rail flex gap-4 overflow-x-auto snap-x snap-proximity
-                                px-4 scroll-pl-4 md:px-0 md:scroll-pl-0 pb-3">
-                        
-                        <a href="https://dataist.ai/2026-06-30/"
-                           class="rel-card group shrink-0 snap-start w-[76%] sm:w-64 md:w-72
-                                  rounded-3xl p-px no-underline transition-transform
-                                  hover:scale-[1.02] active:scale-[0.99]">
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0">
                             
-                            <span class="flex h-full flex-col overflow-hidden rounded-[calc(1.5rem-1px)]
-                                         bg-white dark:bg-[#1C1C1E]">
+                            <a href="https://dataist.ai/2026-06-30/">
                                 
-                                <span class="block aspect-[16/10] bg-black/5 dark:bg-white/5 overflow-hidden">
+                                <span class="rel-thumb">
                                     
-                                    <img src="https://dataist.ai/2026-06-30/cover.png" alt="" loading="lazy" decoding="async"
-                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]">
+                                    <img src="https://dataist.ai/2026-06-30/cover.png" alt="" loading="lazy" decoding="async">
                                     
                                 </span>
-                                <span class="flex grow flex-col p-4">
-                                    <time datetime="2026-06-30"
-                                          class="block font-mono text-[0.65rem] tracking-widest uppercase text-black/40 dark:text-white/40 mb-2">2026-06-30</time>
-                                    <span class="block font-sans text-[0.9rem] font-semibold leading-snug text-black dark:text-white">Почему даже лучшие ИИ-агенты сильно отстают от людей</span>
-                                </span>
-                            </span>
-                        </a>
-                        
-                        <a href="https://dataist.ai/2026-07-14/"
-                           class="rel-card group shrink-0 snap-start w-[76%] sm:w-64 md:w-72
-                                  rounded-3xl p-px no-underline transition-transform
-                                  hover:scale-[1.02] active:scale-[0.99]">
+                                <time datetime="2026-06-30">2026-06-30</time>
+                                <span class="rel-title">Почему даже лучшие ИИ-агенты сильно отстают от людей</span>
+                            </a>
                             
-                            <span class="flex h-full flex-col overflow-hidden rounded-[calc(1.5rem-1px)]
-                                         bg-white dark:bg-[#1C1C1E]">
+                            <a href="https://dataist.ai/2026-07-14/">
                                 
-                                <span class="block aspect-[16/10] bg-black/5 dark:bg-white/5 overflow-hidden">
+                                <span class="rel-thumb">
                                     
-                                    <img src="https://dataist.ai/2026-07-14/cover.jpg" alt="" loading="lazy" decoding="async"
-                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]">
+                                    <img src="https://dataist.ai/2026-07-14/cover.jpg" alt="" loading="lazy" decoding="async">
                                     
                                 </span>
-                                <span class="flex grow flex-col p-4">
-                                    <time datetime="2026-07-14"
-                                          class="block font-mono text-[0.65rem] tracking-widest uppercase text-black/40 dark:text-white/40 mb-2">2026-07-14</time>
-                                    <span class="block font-sans text-[0.9rem] font-semibold leading-snug text-black dark:text-white">Метапознание как следующий рубеж для LLM</span>
-                                </span>
-                            </span>
-                        </a>
-                        
-                        <a href="https://dataist.ai/2025-09-16/"
-                           class="rel-card group shrink-0 snap-start w-[76%] sm:w-64 md:w-72
-                                  rounded-3xl p-px no-underline transition-transform
-                                  hover:scale-[1.02] active:scale-[0.99]">
+                                <time datetime="2026-07-14">2026-07-14</time>
+                                <span class="rel-title">Метапознание как следующий рубеж для LLM</span>
+                            </a>
                             
-                            <span class="flex h-full flex-col overflow-hidden rounded-[calc(1.5rem-1px)]
-                                         bg-white dark:bg-[#1C1C1E]">
+                            <a href="https://dataist.ai/2025-09-16/">
                                 
-                                <span class="block aspect-[16/10] bg-black/5 dark:bg-white/5 overflow-hidden">
+                                <span class="rel-thumb">
                                     
-                                    <img src="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1758009626/gcw65ckgqwhywtiez8k1.png" alt="" loading="lazy" decoding="async"
-                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]">
+                                    <img src="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1758009626/gcw65ckgqwhywtiez8k1.png" alt="" loading="lazy" decoding="async">
                                     
                                 </span>
-                                <span class="flex grow flex-col p-4">
-                                    <time datetime="2025-09-16"
-                                          class="block font-mono text-[0.65rem] tracking-widest uppercase text-black/40 dark:text-white/40 mb-2">2025-09-16</time>
-                                    <span class="block font-sans text-[0.9rem] font-semibold leading-snug text-black dark:text-white">ИИ-агенты выходят на рынок: как строится новая агентная экономика</span>
-                                </span>
-                            </span>
-                        </a>
-                        
-                        <a href="https://dataist.ai/2025-08-23/"
-                           class="rel-card group shrink-0 snap-start w-[76%] sm:w-64 md:w-72
-                                  rounded-3xl p-px no-underline transition-transform
-                                  hover:scale-[1.02] active:scale-[0.99]">
+                                <time datetime="2025-09-16">2025-09-16</time>
+                                <span class="rel-title">ИИ-агенты выходят на рынок: как строится новая агентная экономика</span>
+                            </a>
                             
-                            <span class="flex h-full flex-col overflow-hidden rounded-[calc(1.5rem-1px)]
-                                         bg-white dark:bg-[#1C1C1E]">
+                            <a href="https://dataist.ai/2025-08-23/">
                                 
-                                <span class="block aspect-[16/10] bg-black/5 dark:bg-white/5 overflow-hidden">
+                                <span class="rel-thumb">
                                     
-                                    <img src="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1755968263/ssjajmke5bajsklc3xyy.png" alt="" loading="lazy" decoding="async"
-                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]">
+                                    <img src="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1755968263/ssjajmke5bajsklc3xyy.png" alt="" loading="lazy" decoding="async">
                                     
                                 </span>
-                                <span class="flex grow flex-col p-4">
-                                    <time datetime="2025-08-23"
-                                          class="block font-mono text-[0.65rem] tracking-widest uppercase text-black/40 dark:text-white/40 mb-2">2025-08-23</time>
-                                    <span class="block font-sans text-[0.9rem] font-semibold leading-snug text-black dark:text-white">Покажи — и робот поймёт: как Embodied‑R1 сокращает разрыв между «вижу» и «делаю»</span>
-                                </span>
-                            </span>
-                        </a>
-                        
-                        <a href="https://dataist.ai/2026-07-26/"
-                           class="rel-card group shrink-0 snap-start w-[76%] sm:w-64 md:w-72
-                                  rounded-3xl p-px no-underline transition-transform
-                                  hover:scale-[1.02] active:scale-[0.99]">
+                                <time datetime="2025-08-23">2025-08-23</time>
+                                <span class="rel-title">Покажи — и робот поймёт: как Embodied‑R1 сокращает разрыв между «вижу» и «делаю»</span>
+                            </a>
                             
-                            <span class="flex h-full flex-col overflow-hidden rounded-[calc(1.5rem-1px)]
-                                         bg-white dark:bg-[#1C1C1E]">
+                            <a href="https://dataist.ai/2026-07-26/">
                                 
-                                <span class="block aspect-[16/10] bg-black/5 dark:bg-white/5 overflow-hidden">
+                                <span class="rel-thumb">
                                     
-                                    <img src="https://dataist.ai/2026-07-26/cover.jpg" alt="" loading="lazy" decoding="async"
-                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]">
+                                    <img src="https://dataist.ai/2026-07-26/cover.jpg" alt="" loading="lazy" decoding="async">
                                     
                                 </span>
-                                <span class="flex grow flex-col p-4">
-                                    <time datetime="2026-07-26"
-                                          class="block font-mono text-[0.65rem] tracking-widest uppercase text-black/40 dark:text-white/40 mb-2">2026-07-26</time>
-                                    <span class="block font-sans text-[0.9rem] font-semibold leading-snug text-black dark:text-white">Как один разбор ИИ-агента исправил втрое больше задач, чем прежние методы</span>
-                                </span>
-                            </span>
-                        </a>
-                        
-                        <a href="https://dataist.ai/2025-08-24/"
-                           class="rel-card group shrink-0 snap-start w-[76%] sm:w-64 md:w-72
-                                  rounded-3xl p-px no-underline transition-transform
-                                  hover:scale-[1.02] active:scale-[0.99]">
+                                <time datetime="2026-07-26">2026-07-26</time>
+                                <span class="rel-title">Как один разбор ИИ-агента исправил втрое больше задач, чем прежние методы</span>
+                            </a>
                             
-                            <span class="flex h-full flex-col overflow-hidden rounded-[calc(1.5rem-1px)]
-                                         bg-white dark:bg-[#1C1C1E]">
+                            <a href="https://dataist.ai/2025-08-24/">
                                 
-                                <span class="block aspect-[16/10] bg-black/5 dark:bg-white/5 overflow-hidden">
+                                <span class="rel-thumb">
                                     
-                                    <img src="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1756073870/tgjeu1moqkzwynfirfad.png" alt="" loading="lazy" decoding="async"
-                                         class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]">
+                                    <img src="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1756073870/tgjeu1moqkzwynfirfad.png" alt="" loading="lazy" decoding="async">
                                     
                                 </span>
-                                <span class="flex grow flex-col p-4">
-                                    <time datetime="2025-08-24"
-                                          class="block font-mono text-[0.65rem] tracking-widest uppercase text-black/40 dark:text-white/40 mb-2">2025-08-24</time>
-                                    <span class="block font-sans text-[0.9rem] font-semibold leading-snug text-black dark:text-white">Нажал — и мир двинулся: Matrix-Game 2.0 делает видео интерактивным в реальном времени</span>
+                                <time datetime="2025-08-24">2025-08-24</time>
+                                <span class="rel-title">Нажал — и мир двинулся: Matrix-Game 2.0 делает видео интерактивным в реальном времени</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-10/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-10/photo_2026-04-09%2023.34.59.jpeg" alt="" loading="lazy" decoding="async">
+                                    
                                 </span>
-                            </span>
-                        </a>
-                        
-                    </div>
+                                <time datetime="2026-04-10">2026-04-10</time>
+                                <span class="rel-title">Атомарные навыки: как улучшить агентов для программирования на 18.7%</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2025-11-07/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/NngvyBXZ/Chat-GPT-Image-7-2025-15-23-39.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2025-11-07">2025-11-07</time>
+                                <span class="rel-title">От пикселей к смыслу: как SVG помогает ИИ понимать мир</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-06-29_1/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-06-29_1/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-06-29">2026-06-29</time>
+                                <span class="rel-title">Проверять код ИИ стало труднее, чем писать</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-09-02/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-09-02/cover.jpg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-09-02">2026-09-02</time>
+                                <span class="rel-title">Как ИИ-агенты меняют роль разработчика</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-08-28/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-08-28/cover.jpg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-08-28">2026-08-28</time>
+                                <span class="rel-title">Автоматическая отладка улучшила ИИ-агентов на 10%</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-08-13/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-08-13/cover.jpg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-08-13">2026-08-13</time>
+                                <span class="rel-title">Зачем агенту понимать причины поступков человека</span>
+                            </a>
+                            
+                        </div>
                     </div>
                     
                     <script>
@@ -667,6 +714,79 @@
                             rail.addEventListener('scroll', sync, { passive: true });
                             window.addEventListener('resize', sync);
                             sync();
+
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них в
+                            // страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую подложку,
+                                    // а не значок сломанной картинки.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = item.date; }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            function same(url) {
+                                try { return new URL(url, location.href).pathname === location.pathname; }
+                                catch (e) { return false; }
+                            }
+
+                            // Лента дотягивается ОДИН раз и только когда
+                            // читатель до неё добрался: 125 КБ фида не должны
+                            // грузиться у того, кто до подвала не дошёл.
+                            var loaded = false;
+                            function fill() {
+                                if (loaded) return;
+                                loaded = true;
+                                fetch('/papers.json')
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) return;
+                                        var rows = list.filter(function (x) {
+                                            return x && x.url && x.title && !same(x.url);
+                                        });
+                                        if (!rows.length) return;
+                                        // Прокрутку не сбрасываем: читатель мог
+                                        // уже листать запасные карточки, и
+                                        // подмена под пальцем сбивает.
+                                        var x = rail.scrollLeft;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+                                        rail.scrollLeft = x;
+                                        sync();
+                                    })
+                                    .catch(function () { /* остаёмся с разметкой */ });
+                            }
+                            if ('IntersectionObserver' in window) {
+                                var io = new IntersectionObserver(function (es) {
+                                    if (es.some(function (e) { return e.isIntersecting; })) {
+                                        io.disconnect();
+                                        fill();
+                                    }
+                                }, { rootMargin: '400px' });
+                                io.observe(wrap);
+                            } else {
+                                fill();
+                            }
                         })();
                     </script>
                 </section>
