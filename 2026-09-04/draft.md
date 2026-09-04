@@ -101,9 +101,6 @@
 
 Авторы сравнили один и тот же агент Codex на GPT-5.5 в двух режимах: без навыков и с навыками. Бюджет на выполнение задачи оставили одинаковым. Меняли только доступ к заранее собранному операционному знанию.
 
-[FIGURE:0]
-[CAPTION:Главный результат на MLE-bench: один и тот же агент с навыками резко обходит версию без навыков на всех уровнях сложности.]
-
 **Итог:**
 
 🟠 **31,11% → 72,89%** по метрике Any Medal на всём наборе.
@@ -181,10 +178,6 @@
 Это , по сути , сдвиг от «агент каждый раз учится жить заново» к «агент приходит на задачу уже с набором проверенных рабочих привычек». Для ИИ-исследований это может оказаться важнее , чем ещё один виток усложнения мультиагентной обвязки.
 
 <!-- Доступные иллюстрации (вставляются маркером [FIGURE:N]) -->
-<!-- [FIGURE:0] Table 1 : Main results on MLE-bench (full, 75 competitions). We report
-Any Medal (%) across the Low, Medium, High, and full 75-task splits. Public
-baselines are copied from the official MLE-bench leaderboard
-( https://github.com/openai/mle-bench ) and report mean ± \pm SEM over runs. AREX-Skill values follow the same convention over three repeated runs. Bold marks the best score in each column. -->
 <!-- [FIGURE:1] Figure 1 : The impact of reusable skills on autonomous research agents. (a) AREX-Skill adds the missing operational layer beyond the model and harness, replacing trial-and-error exploration with reusable procedures that support the task’s operational steps.
 (b) The skill library and DisCo agent form the resulting stack, and skill augmentation improves performance across four benchmarks. -->
 <!-- [FIGURE:2] Figure 2 : DisCo produces and uses operational knowledge. A research task τ = ( q , 𝒟 , ℰ , g ) \tau=(q,\mathcal{D},\mathcal{E},g) is solved by an agent with backbone M θ M_{\theta} , harness H H , and operating context 𝒦 \mathcal{K} . In creator mode, an anchor z z , either a source c c or a task τ \tau , is scoped into capabilities 𝒬 \mathcal{Q} , grounded in evidence 𝒳 \mathcal{X} , packaged as a candidate graph 𝒢 ~ \tilde{\mathcal{G}} , and verified into an accepted graph 𝒢 \mathcal{G} with construction record R R . In researcher mode, the agent loads only the relevant branch of accepted graphs from the AREX-Skill Library and uses those skills as 𝒦 \mathcal{K} during execution. -->
