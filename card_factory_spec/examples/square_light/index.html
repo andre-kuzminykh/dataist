@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ЭТАЛОН · Формат 1 — квадратные карточки 1080×1080 (staged-появление)</title>
+<style>
+/* ============================================================================
+   ЭТАЛОН ФОРМАТА 1 («Академия»): квадрат 1080×1080, обложка тёмная + белые слайды.
+   Демонстрирует систему STAGED-ПОЯВЛЕНИЯ: каждый элемент = .st stN + --hide,
+   появляются по очереди, живут микро-анимацией, исчезают — бесшовный цикл.
+   ============================================================================ */
+@font-face{font-family:'JetBrains Mono';font-weight:400;src:url('../../assets/fonts/JetBrainsMono-400.ttf') format('truetype')}
+@font-face{font-family:'JetBrains Mono';font-weight:500;src:url('../../assets/fonts/JetBrainsMono-500.ttf') format('truetype')}
+@font-face{font-family:'JetBrains Mono';font-weight:700;src:url('../../assets/fonts/JetBrainsMono-700.ttf') format('truetype')}
+@font-face{font-family:'JetBrains Mono';font-weight:800;src:url('../../assets/fonts/JetBrainsMono-800.ttf') format('truetype')}
+
+:root{--flame:#F97316;--plum:#8854F3;--scale:1;
+  --mono:'JetBrains Mono','SFMono-Regular',ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#111114;font-family:var(--mono);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+#deck{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden}
+.card{position:absolute;width:1080px;height:1080px;overflow:hidden;border-radius:10px;
+  transform:scale(var(--scale));opacity:0;visibility:hidden;transition:opacity .4s}
+.card.active{opacity:1;visibility:visible}
+body.export #deck{position:static;display:block;height:auto;padding:24px 0}
+body.export .card{position:relative;opacity:1;visibility:visible;transform:none;margin:0 auto 30px}
+.dark{background:#050505;color:#F4F4F5}
+.light{background:#FAFAFA;color:#0A0A0A}
+.grain{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.06;mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px}
+.light .grain{opacity:.4;mix-blend-mode:multiply}
+.logo{position:absolute;top:56px;left:62px;z-index:5;height:58px}
+.logo img{height:58px;width:auto;display:block}
+.idx{position:absolute;top:72px;right:64px;z-index:5;font-size:20px;font-weight:700;letter-spacing:.18em;color:rgba(10,10,10,.32)}
+.dark .idx{color:rgba(255,255,255,.4)}
+.ico{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* ====================== STAGED-ПОЯВЛЕНИЕ (ядро системы) ======================
+   .st stN — тайминг появления (N = очередь), --hide — КАК элемент скрыт до входа.
+   0% и 100% скрыты → первый кадр = последний = бесшовный цикл для MP4. */
+.st{animation-duration:6s;animation-iteration-count:infinite;animation-fill-mode:both;animation-timing-function:ease}
+@keyframes st1{0%,2%{opacity:0;transform:var(--hide,translateY(28px))}9%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(28px))}}
+@keyframes st2{0%,8%{opacity:0;transform:var(--hide,translateY(28px))}15%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(28px))}}
+@keyframes st3{0%,14%{opacity:0;transform:var(--hide,translateY(28px))}21%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(28px))}}
+@keyframes st4{0%,20%{opacity:0;transform:var(--hide,translateY(28px))}27%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(28px))}}
+@keyframes st5{0%,26%{opacity:0;transform:var(--hide,translateY(28px))}33%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(28px))}}
+@keyframes st6{0%,32%{opacity:0;transform:var(--hide,translateY(28px))}39%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(28px))}}
+@keyframes st7{0%,38%{opacity:0;transform:var(--hide,translateY(28px))}45%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(28px))}}
+@keyframes st8{0%,44%{opacity:0;transform:var(--hide,translateY(28px))}51%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(28px))}}
+.st1{animation-name:st1}.st2{animation-name:st2}.st3{animation-name:st3}.st4{animation-name:st4}
+.st5{animation-name:st5}.st6{animation-name:st6}.st7{animation-name:st7}.st8{animation-name:st8}
+
+/* «жизнь» после появления — вешается на ДОЧЕРНИЙ элемент */
+@keyframes gshift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(12px)}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes chev{0%,100%{opacity:.25;transform:translateX(-4px)}50%{opacity:1;transform:translateX(4px)}}
+.grad{background:linear-gradient(120deg,var(--plum),var(--flame) 50%,var(--plum));background-size:220% 220%;
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:gshift 5s ease-in-out infinite}
+
+/* ---------- слайд 1: тёмная обложка ---------- */
+.cv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:36px;z-index:4;text-align:center}
+.kick{font-size:24px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;color:var(--flame)}
+.cv h1{margin:0;font-size:88px;font-weight:800;line-height:1.08;letter-spacing:-.03em}
+.badge{border:2px solid var(--plum);color:var(--plum);border-radius:16px;padding:16px 30px;font-size:30px;font-weight:700}
+.cfoot{font-size:28px;font-weight:600;color:rgba(255,255,255,.8)}
+.cfoot .arr{display:inline-block;color:var(--flame);animation:nudge 1.4s ease-in-out infinite}
+
+/* ---------- слайд 2: белая схема ---------- */
+.head{position:absolute;left:72px;right:72px;top:150px;z-index:5}
+.title{font-size:46px;font-weight:800;letter-spacing:-.02em;margin:0;white-space:nowrap}
+.subtitle{font-size:26px;font-weight:500;margin:14px 0 0;color:rgba(10,10,10,.55)}
+.row3{position:absolute;left:72px;right:72px;top:360px;z-index:4;display:flex;justify-content:center;align-items:center;gap:22px}
+.mcard{width:250px;border:2px solid;border-radius:22px;background:#fff;padding:30px 18px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:0 8px 22px rgba(20,20,40,.07)}
+.mcard .mi{width:76px;height:76px;border-radius:19px;display:grid;place-items:center;animation:breathe 4s ease-in-out infinite}
+.mcard .mi svg{width:42px;height:42px}
+.mcard b{font-size:27px;font-weight:800}
+.mcard span{font-size:19px;color:rgba(10,10,10,.55);text-align:center;line-height:1.35}
+.chevs{display:flex;color:var(--flame)}
+.chevs svg{width:26px;height:26px;animation:chev 1.4s ease-in-out infinite}
+.chevs svg:nth-child(2){animation-delay:.18s}
+.insight{position:absolute;left:72px;right:72px;bottom:64px;z-index:5;display:flex;gap:22px;align-items:flex-start;
+  background:rgba(249,115,22,.08);border:1.5px solid rgba(249,115,22,.28);border-radius:22px;padding:24px 30px}
+.insight .bulb{flex:0 0 auto;width:54px;height:54px;border-radius:15px;display:grid;place-items:center;background:rgba(249,115,22,.16);color:var(--flame)}
+.insight .bulb svg{width:30px;height:30px;animation:blink 2.2s ease-in-out infinite}
+.insight p{margin:0;font-size:22px;line-height:1.5;font-weight:500;color:#1c1207}
+.insight b{display:block;margin-bottom:4px;font-weight:700;color:var(--flame)}
+
+/* ---------- слайд 3: белый список ---------- */
+.list{position:absolute;left:72px;right:72px;top:300px;bottom:230px;z-index:4;display:flex;flex-direction:column;gap:16px;justify-content:space-between}
+.li{display:flex;align-items:center;border:2px solid rgba(10,10,10,.12);border-radius:18px;background:#fff;overflow:hidden;flex:1;box-shadow:0 6px 18px rgba(20,20,40,.05)}
+.li .lic{width:92px;align-self:stretch;display:grid;place-items:center;color:#fff}
+.li .lic svg{width:38px;height:38px}
+.li .lit{padding:0 26px;font-size:28px;font-weight:700}
+.li .lin{margin-left:auto;padding-right:26px;font-size:34px;font-weight:800}
+
+/* ---------- навигация (не попадает в экспорт) ---------- */
+#nav{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:50;display:flex;gap:12px;
+  background:rgba(20,20,26,.75);border-radius:999px;padding:10px 16px}
+#nav button{background:rgba(255,255,255,.12);border:0;color:#fff;width:40px;height:40px;border-radius:50%;font-size:17px;cursor:pointer}
+body.export #nav{display:none}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/></symbol>
+<symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.4 12 2.5 2.5 5-5"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+<symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M8.5 14.5C7 13.5 6 11.9 6 10a6 6 0 0 1 12 0c0 1.9-1 3.5-2.5 4.5-.6.4-1 .9-1 1.6v.4H9.5v-.4c0-.7-.4-1.2-1-1.6z"/></symbol>
+<symbol id="i-brain" viewBox="0 0 24 24"><path d="M12 5a3 3 0 0 0-5.6-1.5A3 3 0 0 0 4 6.5a3 3 0 0 0-1 5.6V14a3 3 0 0 0 4 2.8A3 3 0 0 0 12 19z"/><path d="M12 5a3 3 0 0 1 5.6-1.5A3 3 0 0 1 20 6.5a3 3 0 0 1 1 5.6V14a3 3 0 0 1-4 2.8A3 3 0 0 1 12 19z"/><path d="M12 5v14"/></symbol>
+</defs></svg>
+
+<div id="deck">
+
+  <!-- СЛАЙД 1 — тёмная обложка: кикер сверху → строки заголовка → бейдж → фраза-стрелка -->
+  <section class="card dark active" id="card-1">
+    <div class="grain"></div>
+    <div class="logo"><img src="../../assets/ait-logo.png" alt="AIT"></div>
+    <div class="idx">01 / 03</div>
+    <div class="cv">
+      <div class="kick st st1" style="--hide:translateY(-28px)">AIT · Academy</div>
+      <h1>
+        <span class="st st2" style="display:block">Заголовок-хук</span>
+        <span class="st st3 grad" style="display:block;--hide:translateY(34px)">оранжевой строкой</span>
+      </h1>
+      <div class="badge st st4" style="--hide:scale(.6)">мини-схема или тезис</div>
+      <div class="cfoot st st5">финальная фраза-крючок <span class="arr">→</span></div>
+    </div>
+  </section>
+
+  <!-- СЛАЙД 2 — белая схема: заголовок слева → 3 карточки попами → инсайт снизу -->
+  <section class="card light" id="card-2">
+    <div class="grain"></div>
+    <div class="logo"><img src="../../assets/ait-logo.png" alt="AIT"></div>
+    <div class="idx">02 / 03</div>
+    <div class="head">
+      <h2 class="title st st1" style="--hide:translateX(-60px)">1. Заголовок в одну строку</h2>
+      <p class="subtitle st st2" style="--hide:translateX(-60px)">Подзаголовок — суть слайда</p>
+    </div>
+    <div class="row3">
+      <div class="mcard st st3" style="border-color:var(--flame);--hide:translateY(40px) scale(.8)">
+        <span class="mi" style="background:rgba(249,115,22,.13);color:var(--flame)"><svg class="ico"><use href="#i-target"/></svg></span>
+        <b>Шаг 1</b><span>короткое пояснение</span>
+      </div>
+      <div class="chevs st st4" style="--hide:scale(.6)"><svg class="ico"><use href="#i-chevron"/></svg><svg class="ico"><use href="#i-chevron"/></svg></div>
+      <div class="mcard st st5" style="border-color:var(--plum);--hide:translateY(40px) scale(.8)">
+        <span class="mi" style="background:rgba(136,84,243,.13);color:var(--plum)"><svg class="ico"><use href="#i-brain"/></svg></span>
+        <b>Шаг 2</b><span>короткое пояснение</span>
+      </div>
+      <div class="chevs st st6" style="--hide:scale(.6)"><svg class="ico"><use href="#i-chevron"/></svg><svg class="ico"><use href="#i-chevron"/></svg></div>
+      <div class="mcard st st7" style="border-color:var(--flame);--hide:translateY(40px) scale(.8)">
+        <span class="mi" style="background:rgba(249,115,22,.13);color:var(--flame)"><svg class="ico"><use href="#i-bolt"/></svg></span>
+        <b>Шаг 3</b><span>короткое пояснение</span>
+      </div>
+    </div>
+    <div class="insight st st8"><span class="bulb"><svg class="ico"><use href="#i-bulb"/></svg></span>
+      <p><b>Жирная мысль отдельной строкой</b>Пояснение строкой ниже, без точки в конце</p></div>
+  </section>
+
+  <!-- СЛАЙД 3 — белый список: строки въезжают слева, цифры — своим цветом -->
+  <section class="card light" id="card-3">
+    <div class="grain"></div>
+    <div class="logo"><img src="../../assets/ait-logo.png" alt="AIT"></div>
+    <div class="idx">03 / 03</div>
+    <div class="head">
+      <h2 class="title st st1" style="--hide:translateY(-28px)">Лучшие практики темы</h2>
+    </div>
+    <div class="list">
+      <div class="li st st2" style="--hide:translateX(-70px)"><span class="lic" style="background:var(--flame)"><svg class="ico"><use href="#i-target"/></svg></span><span class="lit">Первый пункт списка</span><span class="lin" style="color:var(--flame)">01</span></div>
+      <div class="li st st3" style="--hide:translateX(-70px)"><span class="lic" style="background:var(--plum)"><svg class="ico"><use href="#i-brain"/></svg></span><span class="lit">Второй пункт списка</span><span class="lin" style="color:var(--plum)">02</span></div>
+      <div class="li st st4" style="--hide:translateX(-70px)"><span class="lic" style="background:var(--flame)"><svg class="ico"><use href="#i-bolt"/></svg></span><span class="lit">Третий пункт списка</span><span class="lin" style="color:var(--flame)">03</span></div>
+      <div class="li st st5" style="--hide:translateX(-70px)"><span class="lic" style="background:var(--plum)"><svg class="ico"><use href="#i-check"/></svg></span><span class="lit">Четвёртый пункт списка</span><span class="lin" style="color:var(--plum)">04</span></div>
+    </div>
+    <div class="insight st st6"><span class="bulb"><svg class="ico"><use href="#i-bulb"/></svg></span>
+      <p><b>Главный вывод статьи</b>Одной короткой строкой</p></div>
+  </section>
+
+</div>
+
+<nav id="nav"><button id="prev">‹</button><button id="next">›</button></nav>
+<script>
+(function(){
+  var cards=[].slice.call(document.querySelectorAll('.card')),i=0;
+  if(/[?&]export/.test(location.search)){document.body.classList.add('export');return;}
+  function fit(){var s=Math.min((innerWidth-40)/1080,(innerHeight-120)/1080,1.2);
+    document.documentElement.style.setProperty('--scale',s.toFixed(4));}
+  function show(n){i=(n+cards.length)%cards.length;
+    cards.forEach(function(c,k){c.classList.toggle('active',k===i);});}
+  document.getElementById('next').onclick=function(){show(i+1)};
+  document.getElementById('prev').onclick=function(){show(i-1)};
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight')show(i+1);else if(e.key==='ArrowLeft')show(i-1);});
+  addEventListener('resize',fit);fit();show(0);
+})();
+</script>
+</body>
+</html>
