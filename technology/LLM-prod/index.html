@@ -988,51 +988,6 @@
                                 <time datetime="2026-07-17">17.07.2026</time>
                                 <span class="rel-title">AI Product Discovery: как автоматизировать генерацию идей для продуктов</span>
                             </a>
-                            <a href="https://dataist.ai/2026-09-04/" role="listitem">
-                                <span class="rel-thumb"><img src="https://dataist.ai/2026-09-04/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-                                <time datetime="2026-09-04">04.09.2026</time>
-                                <span class="rel-title">Как собирать готовые навыки для ИИ-агентов из репозиториев с кодом</span>
-                            </a>
-                            <a href="https://dataist.ai/2026-09-03/" role="listitem">
-                                <span class="rel-thumb"><img src="https://dataist.ai/2026-09-03/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-                                <time datetime="2026-09-03">03.09.2026</time>
-                                <span class="rel-title">Почему каждому студенту нужен ИИ-репетитор</span>
-                            </a>
-                            <a href="https://dataist.ai/2026-09-02/" role="listitem">
-                                <span class="rel-thumb"><img src="https://dataist.ai/2026-09-02/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-                                <time datetime="2026-09-02">02.09.2026</time>
-                                <span class="rel-title">Как ИИ-агенты меняют роль разработчика</span>
-                            </a>
-                            <a href="https://dataist.ai/2026-09-01/" role="listitem">
-                                <span class="rel-thumb"><img src="https://dataist.ai/2026-09-01/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-                                <time datetime="2026-09-01">01.09.2026</time>
-                                <span class="rel-title">ИИ-агент собирает законы физики из видео</span>
-                            </a>
-                            <a href="https://dataist.ai/2026-08-31/" role="listitem">
-                                <span class="rel-thumb"><img src="https://dataist.ai/2026-08-31/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-                                <time datetime="2026-08-31">31.08.2026</time>
-                                <span class="rel-title">Как опыт превращается в рабочие навыки ИИ-агента</span>
-                            </a>
-                            <a href="https://dataist.ai/2026-08-28/" role="listitem">
-                                <span class="rel-thumb"><img src="https://dataist.ai/2026-08-28/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-                                <time datetime="2026-08-28">28.08.2026</time>
-                                <span class="rel-title">Автоматическая отладка улучшила ИИ-агентов на 10%</span>
-                            </a>
-                            <a href="https://dataist.ai/2026-08-27/" role="listitem">
-                                <span class="rel-thumb"><img src="https://dataist.ai/2026-08-27/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-                                <time datetime="2026-08-27">27.08.2026</time>
-                                <span class="rel-title">Можно ли научить ИИ-агента делать покупки как человек</span>
-                            </a>
-                            <a href="https://dataist.ai/2026-08-26/" role="listitem">
-                                <span class="rel-thumb"><img src="https://dataist.ai/2026-08-26/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-                                <time datetime="2026-08-26">26.08.2026</time>
-                                <span class="rel-title">Как ИИ-агент восстанавливается после ошибок и меняет план</span>
-                            </a>
-                            <a href="https://dataist.ai/2026-08-25/" role="listitem">
-                                <span class="rel-thumb"><img src="https://dataist.ai/2026-08-25/cover.jpg" alt="" loading="lazy" decoding="async"></span>
-                                <time datetime="2026-08-25">25.08.2026</time>
-                                <span class="rel-title">Как графы помогают ИИ-агентам работать вместе</span>
-                            </a>
                         </div>
                     </div>
                     <script>
@@ -1104,59 +1059,36 @@
                                 return a;
                             }
 
+                            // Лента не устаревает вместе со страницей: список
+                            // раздела берётся из его же индекса. Раздел
+                            // маленький, поэтому в разметке лежит он весь —
+                            // запрос только подхватывает новые статьи.
+                            var SOURCES = ['/technology/index.json',
+                                           'https://dataist.ai/technology/index.json'];
                             function path(href) {
                                 try { return new URL(href, location.href).pathname; }
                                 catch (e) { return ''; }
                             }
-
-                            // Дописываем В КОНЕЦ, а не заменяем: соседи по
-                            // разделу читателю ближе, и их место в начале.
-                            // Раздел маленький, четыре статьи, поэтому ленту
-                            // продолжают разборы работ.
-                            var loaded = false;
-                            function fill() {
-                                if (loaded) return;
-                                loaded = true;
-                                var here = {};
-                                Array.prototype.forEach.call(rail.querySelectorAll('a'), function (a) {
-                                    here[path(a.href)] = 1;
-                                });
-                                here[location.pathname] = 1;
-                                fetch('/papers.json')
+                            function load(i) {
+                                if (i >= SOURCES.length) return;
+                                fetch(SOURCES[i], { cache: 'no-cache' })
                                     .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
                                     .then(function (list) {
-                                        if (!Array.isArray(list) || !list.length) return;
+                                        if (!Array.isArray(list) || !list.length) throw 0;
                                         var rows = list.filter(function (x) {
-                                            return x && x.url && x.title && !here[path(x.url)];
+                                            return x && x.url && x.title && path(x.url) !== location.pathname;
+                                        }).sort(function (a, b) {
+                                            return String(b.published_at || b.date || '')
+                                                .localeCompare(String(a.published_at || a.date || ''));
                                         });
-                                        rows.sort(function (a, b) {
-                                            return String(b.date || '').localeCompare(String(a.date || ''));
-                                        });
-                                        if (!rows.length) return;
-                                        // Прокрутку не сбрасываем: читатель
-                                        // мог уже листать запечённые
-                                        // карточки, и рывок под пальцем сбивает.
-                                        var x = rail.scrollLeft;
-                                        rows.forEach(function (item) { rail.appendChild(card(item)); });
-                                        rail.scrollLeft = x;
+                                        if (!rows.length) throw 0;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+                                        rail.scrollLeft = 0;
                                         sync();
                                     })
-                                    .catch(function () { /* остаёмся с разметкой */ });
+                                    .catch(function () { load(i + 1); });
                             }
-                            // Фид тянется, только когда читатель добрался до
-                            // подвала: 120 КБ не должны грузиться у того, кто
-                            // до блока не дошёл.
-                            if ('IntersectionObserver' in window) {
-                                var io = new IntersectionObserver(function (es) {
-                                    if (es.some(function (e) { return e.isIntersecting; })) {
-                                        io.disconnect();
-                                        fill();
-                                    }
-                                }, { rootMargin: '400px' });
-                                io.observe(wrap);
-                            } else {
-                                fill();
-                            }
+                            load(0);
                         })();
                     </script>
                 </section>
