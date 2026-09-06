@@ -134,6 +134,125 @@
             opacity: 1;
             transform: translateY(0);
         }
+    
+        /* Лента «Читайте также». Устройство то же, что в блоке раздела на
+           странице про спорт, свёрстанном руками, но без зависимости от
+           переменных --rb-*: на этих страницах их нет. Цвета совпадают —
+           фон страницы здесь и там один и тот же (#F5F5F7 / #000).
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит
+           дальше, окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ в 4px не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-wrap { position: relative; }
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение: палец на телефоне считается наведением,
+           и растущая карточка упирается в соседей и обрезается. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растянулась бы во всю высоту карточки, и
+           дата с заголовком уехали бы за экран. */
+        .rel-thumb {
+            display: block; position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+        /* Шторка цветом фона страницы: карточки растворяются, а не уезжают
+           под серый прямоугольник. Числами, а не через color-mix(): в
+           старых вебвью такой функции нет, и браузер отбрасывает всю строку
+           градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        /* Стрелки зажигаются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты по отсутствию мыши, а не по
+           ширине экрана — на планшете с мышью они нужны.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой странице. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
     </style>
 
     <!-- Инфографика: лёгкие адаптивные схемы в стиле статьи (светлая/тёмная тема) -->
@@ -1142,6 +1261,237 @@
                 <p class="article-p fade-in">
                     <b>Идея ничего не стоит. Стоит только её исполнение.</b> Конкурентное преимущество сегодня — это скорость превращения предположений в надёжное знание. Именно её и даёт AI Product Discovery: не машину для генерации красивых документов, а производственную систему, в которой каждая идея имеет происхождение, каждое утверждение — источник и уровень уверенности, а каждая гипотеза — путь к дешёвой проверке.
                 </p>
+
+                                <!-- ======================================================
+                     Лента «Читайте также». До неё у страницы раздела было
+                     ровно две внутренние ссылки — на главную и на себя, — и
+                     ни одной на соседний материал. Робот, дочитав статью,
+                     обязан был вернуться на витрину, чтобы дойти до
+                     следующей; читателю идти было некуда.
+
+                     В разметке двенадцать карточек: сначала соседи по
+                     разделу, затем свежие разборы работ. Их видит и робот
+                     на первом проходе, и читатель без JS, и Instant View.
+                     Скрипт ниже дотягивает ленту до полного списка
+                     разборов — это уже только для читателя.
+                     ====================================================== -->
+                <section class="mt-16 md:mt-20 fade-in" aria-labelledby="rel-heading">
+                    <div class="flex items-end justify-between gap-5 mb-6 md:mb-8">
+                        <h2 id="rel-heading"
+                            class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight m-0">
+                            Читайте также
+                        </h2>
+                        <a href="https://dataist.ai/category/tech"
+                           class="shrink-0 inline-flex items-center gap-1.5 no-underline whitespace-nowrap text-[0.8125rem] font-semibold text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors">
+                            Все технологии
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                    <!-- Отрицательные поля — чтобы лента доходила до края
+                         экрана и обрез последней карточки читался как
+                         «листай», а не как ошибка вёрстки. Ровно 16
+                         пикселей: столько же колонка отступает от края на
+                         телефоне (px-4 у main), и на пиксель больше — это
+                         уже горизонтальная прокрутка всей страницы.
+                         scroll-padding обязателен, иначе прилипание съедает
+                         отступ и первая карточка липнет к краю. -->
+                    <div class="rel-wrap -mx-4 md:mx-0" data-left="0" data-right="1">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l" aria-label="Предыдущие материалы">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r" aria-label="Следующие материалы">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0" tabindex="0" role="list">
+                            <a href="https://dataist.ai/technology/human_ai_sports/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/technology/human_ai_sports/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-09-02">02.09.2026</time>
+                                <span class="rel-title">Новая эпоха спорта: как ИИ меняет пределы человеческих возможностей</span>
+                            </a>
+                            <a href="https://dataist.ai/technology/agentic_robots/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/technology/agentic_robots/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-17">17.08.2026</time>
+                                <span class="rel-title">Как ИИ-агенты начинают самостоятельно обучать роботов</span>
+                            </a>
+                            <a href="https://dataist.ai/technology/LLM-prod/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/technology/___ChatGPT%20Image%20Apr%205%2C%202026%2C%2012_17_47%20AM.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-04-05">05.04.2026</time>
+                                <span class="rel-title">Нельзя так просто взять и внедрить LLM в прод: как управлять ИИ-системами в компании</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-09-04/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/2026-09-04/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-09-04">04.09.2026</time>
+                                <span class="rel-title">Как собирать готовые навыки для ИИ-агентов из репозиториев с кодом</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-09-03/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/2026-09-03/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-09-03">03.09.2026</time>
+                                <span class="rel-title">Почему каждому студенту нужен ИИ-репетитор</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-09-02/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/2026-09-02/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-09-02">02.09.2026</time>
+                                <span class="rel-title">Как ИИ-агенты меняют роль разработчика</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-09-01/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/2026-09-01/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-09-01">01.09.2026</time>
+                                <span class="rel-title">ИИ-агент собирает законы физики из видео</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-08-31/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/2026-08-31/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-31">31.08.2026</time>
+                                <span class="rel-title">Как опыт превращается в рабочие навыки ИИ-агента</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-08-28/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/2026-08-28/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-28">28.08.2026</time>
+                                <span class="rel-title">Автоматическая отладка улучшила ИИ-агентов на 10%</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-08-27/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/2026-08-27/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-27">27.08.2026</time>
+                                <span class="rel-title">Можно ли научить ИИ-агента делать покупки как человек</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-08-26/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/2026-08-26/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-26">26.08.2026</time>
+                                <span class="rel-title">Как ИИ-агент восстанавливается после ошибок и меняет план</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-08-25/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/2026-08-25/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-25">25.08.2026</time>
+                                <span class="rel-title">Как графы помогают ИИ-агентам работать вместе</span>
+                            </a>
+                        </div>
+                    </div>
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка
+                                // мигает в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+                            function step(dir) {
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            rail.addEventListener('keydown', function (e) {
+                                if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+                                if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+                            });
+                            sync();
+
+                            function ru(iso) {
+                                var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+                                return m ? m[3] + '.' + m[2] + '.' + m[1] : '';
+                            }
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них
+                            // в страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                a.setAttribute('role', 'listitem');
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую
+                                    // подложку, а не значок сломанной
+                                    // картинки посреди ленты.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = ru(item.date); }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            function path(href) {
+                                try { return new URL(href, location.href).pathname; }
+                                catch (e) { return ''; }
+                            }
+
+                            // Дописываем В КОНЕЦ, а не заменяем: соседи по
+                            // разделу читателю ближе, и их место в начале.
+                            // Раздел маленький, четыре статьи, поэтому ленту
+                            // продолжают разборы работ.
+                            var loaded = false;
+                            function fill() {
+                                if (loaded) return;
+                                loaded = true;
+                                var here = {};
+                                Array.prototype.forEach.call(rail.querySelectorAll('a'), function (a) {
+                                    here[path(a.href)] = 1;
+                                });
+                                here[location.pathname] = 1;
+                                fetch('/papers.json')
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) return;
+                                        var rows = list.filter(function (x) {
+                                            return x && x.url && x.title && !here[path(x.url)];
+                                        });
+                                        rows.sort(function (a, b) {
+                                            return String(b.date || '').localeCompare(String(a.date || ''));
+                                        });
+                                        if (!rows.length) return;
+                                        // Прокрутку не сбрасываем: читатель
+                                        // мог уже листать запечённые
+                                        // карточки, и рывок под пальцем сбивает.
+                                        var x = rail.scrollLeft;
+                                        rows.forEach(function (item) { rail.appendChild(card(item)); });
+                                        rail.scrollLeft = x;
+                                        sync();
+                                    })
+                                    .catch(function () { /* остаёмся с разметкой */ });
+                            }
+                            // Фид тянется, только когда читатель добрался до
+                            // подвала: 120 КБ не должны грузиться у того, кто
+                            // до блока не дошёл.
+                            if ('IntersectionObserver' in window) {
+                                var io = new IntersectionObserver(function (es) {
+                                    if (es.some(function (e) { return e.isIntersecting; })) {
+                                        io.disconnect();
+                                        fill();
+                                    }
+                                }, { rootMargin: '400px' });
+                                io.observe(wrap);
+                            } else {
+                                fill();
+                            }
+                        })();
+                    </script>
+                </section>
 
                 <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
                 <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mb-12 group">
