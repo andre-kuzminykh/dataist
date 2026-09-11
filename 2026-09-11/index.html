@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как ИИ-агент за несколько дней собрал играбельный шутер</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как ИИ-агент за несколько дней собрал играбельный шутер" />
+    <meta property="og:description" content="Кажется, мы всё ближе к моменту, когда ИИ-агент сможет сам собрать не просто кусок кода, а целую рабочую игру.
+
+Авторы предлагают способ, при котором ИИ не делает всё за один заход, а идёт по кругу: сначала думает, что нужно сделать, потом пишет код, потом сам себя проверяет и исправляет. Команда устроила этот процесс так, чтобы ИИ не только чинил ошибки, но и шаг за шагом добавлял новые возможности, собирая проект маленькими понятными частями вместо хаотичной переделки всего сразу.
+
+В этом обзоре разбираем, как устроен такой подход к самостоятельной разработке, почему он помогает ИИ доводить проект до играбельного состояния и как в итоге за несколько дней получился полноценный шутер." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2026-09-11/" />
+    <meta property="og:image" content="https://dataist.ai/2026-09-11/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-09-11" />
+
+    <meta name="description" content="Кажется, мы всё ближе к моменту, когда ИИ-агент сможет сам собрать не просто кусок кода, а целую рабочую игру.
+
+Авторы предлагают способ, при котором ИИ не делает всё за один заход, а идёт по кругу: сначала думает, что нужно сделать, потом пишет код, потом сам себя проверяет и исправляет. Команда устроила этот процесс так, чтобы ИИ не только чинил ошибки, но и шаг за шагом добавлял новые возможности, собирая проект маленькими понятными частями вместо хаотичной переделки всего сразу.
+
+В этом обзоре разбираем, как устроен такой подход к самостоятельной разработке, почему он помогает ИИ доводить проект до играбельного состояния и как в итоге за несколько дней получился полноценный шутер." />
+    <link rel="canonical" href="https://dataist.ai/2026-09-11/" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "\u041a\u0430\u043a \u0418\u0418-\u0430\u0433\u0435\u043d\u0442 \u0437\u0430 \u043d\u0435\u0441\u043a\u043e\u043b\u044c\u043a\u043e \u0434\u043d\u0435\u0439 \u0441\u043e\u0431\u0440\u0430\u043b \u0438\u0433\u0440\u0430\u0431\u0435\u043b\u044c\u043d\u044b\u0439 \u0448\u0443\u0442\u0435\u0440",
+      "description": "\u041a\u0430\u0436\u0435\u0442\u0441\u044f, \u043c\u044b \u0432\u0441\u0451 \u0431\u043b\u0438\u0436\u0435 \u043a \u043c\u043e\u043c\u0435\u043d\u0442\u0443, \u043a\u043e\u0433\u0434\u0430 \u0418\u0418-\u0430\u0433\u0435\u043d\u0442 \u0441\u043c\u043e\u0436\u0435\u0442 \u0441\u0430\u043c \u0441\u043e\u0431\u0440\u0430\u0442\u044c \u043d\u0435 \u043f\u0440\u043e\u0441\u0442\u043e \u043a\u0443\u0441\u043e\u043a \u043a\u043e\u0434\u0430, \u0430 \u0446\u0435\u043b\u0443\u044e \u0440\u0430\u0431\u043e\u0447\u0443\u044e \u0438\u0433\u0440\u0443.\n\n\u0410\u0432\u0442\u043e\u0440\u044b \u043f\u0440\u0435\u0434\u043b\u0430\u0433\u0430\u044e\u0442 \u0441\u043f\u043e\u0441\u043e\u0431, \u043f\u0440\u0438 \u043a\u043e\u0442\u043e\u0440\u043e\u043c \u0418\u0418 \u043d\u0435 \u0434\u0435\u043b\u0430\u0435\u0442 \u0432\u0441\u0451 \u0437\u0430 \u043e\u0434\u0438\u043d \u0437\u0430\u0445\u043e\u0434, \u0430 \u0438\u0434\u0451\u0442 \u043f\u043e \u043a\u0440\u0443\u0433\u0443: \u0441\u043d\u0430\u0447\u0430\u043b\u0430 \u0434\u0443\u043c\u0430\u0435\u0442, \u0447\u0442\u043e \u043d\u0443\u0436\u043d\u043e \u0441\u0434\u0435\u043b\u0430\u0442\u044c, \u043f\u043e\u0442\u043e\u043c \u043f\u0438\u0448\u0435\u0442 \u043a\u043e\u0434, \u043f\u043e\u0442\u043e\u043c \u0441\u0430\u043c \u0441\u0435\u0431\u044f \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442 \u0438 \u0438\u0441\u043f\u0440\u0430\u0432\u043b\u044f\u0435\u0442. \u041a\u043e\u043c\u0430\u043d\u0434\u0430 \u0443\u0441\u0442\u0440\u043e\u0438\u043b\u0430 \u044d\u0442\u043e\u0442 \u043f\u0440\u043e\u0446\u0435\u0441\u0441 \u0442\u0430\u043a, \u0447\u0442\u043e\u0431\u044b \u0418\u0418 \u043d\u0435 \u0442\u043e\u043b\u044c\u043a\u043e \u0447\u0438\u043d\u0438\u043b \u043e\u0448\u0438\u0431\u043a\u0438, \u043d\u043e \u0438 \u0448\u0430\u0433 \u0437\u0430 \u0448\u0430\u0433\u043e\u043c \u0434\u043e\u0431\u0430\u0432\u043b\u044f\u043b \u043d\u043e\u0432\u044b\u0435 \u0432\u043e\u0437\u043c\u043e\u0436\u043d\u043e\u0441\u0442\u0438, \u0441\u043e\u0431\u0438\u0440\u0430\u044f \u043f\u0440\u043e\u0435\u043a\u0442 \u043c\u0430\u043b\u0435\u043d\u044c\u043a\u0438\u043c\u0438 \u043f\u043e\u043d\u044f\u0442\u043d\u044b\u043c\u0438 \u0447\u0430\u0441\u0442\u044f\u043c\u0438 \u0432\u043c\u0435\u0441\u0442\u043e \u0445\u0430\u043e\u0442\u0438\u0447\u043d\u043e\u0439 \u043f\u0435\u0440\u0435\u0434\u0435\u043b\u043a\u0438 \u0432\u0441\u0435\u0433\u043e \u0441\u0440\u0430\u0437\u0443.\n\n\u0412 \u044d\u0442\u043e\u043c \u043e\u0431\u0437\u043e\u0440\u0435 \u0440\u0430\u0437\u0431\u0438\u0440\u0430\u0435\u043c, \u043a\u0430\u043a \u0443\u0441\u0442\u0440\u043e\u0435\u043d \u0442\u0430\u043a\u043e\u0439 \u043f\u043e\u0434\u0445\u043e\u0434 \u043a \u0441\u0430\u043c\u043e\u0441\u0442\u043e\u044f\u0442\u0435\u043b\u044c\u043d\u043e\u0439 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u043a\u0435, \u043f\u043e\u0447\u0435\u043c\u0443 \u043e\u043d \u043f\u043e\u043c\u043e\u0433\u0430\u0435\u0442 \u0418\u0418 \u0434\u043e\u0432\u043e\u0434\u0438\u0442\u044c \u043f\u0440\u043e\u0435\u043a\u0442 \u0434\u043e \u0438\u0433\u0440\u0430\u0431\u0435\u043b\u044c\u043d\u043e\u0433\u043e \u0441\u043e\u0441\u0442\u043e\u044f\u043d\u0438\u044f \u0438 \u043a\u0430\u043a \u0432 \u0438\u0442\u043e\u0433\u0435 \u0437\u0430 \u043d\u0435\u0441\u043a\u043e\u043b\u044c\u043a\u043e \u0434\u043d\u0435\u0439 \u043f\u043e\u043b\u0443\u0447\u0438\u043b\u0441\u044f \u043f\u043e\u043b\u043d\u043e\u0446\u0435\u043d\u043d\u044b\u0439 \u0448\u0443\u0442\u0435\u0440.",
+      "image": "https://dataist.ai/2026-09-11/cover.jpg",
+      "url": "https://dataist.ai/2026-09-11/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/2026-09-11/"
+      },
+      "datePublished": "2026-09-11",
+      "inLanguage": "ru",
+      "author": {"@type": "Person", "name": "@dataist_ai"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-09-11/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-09-11</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Как ИИ-агент за несколько дней собрал играбельный шутер
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-09-11/cover.jpg"
+                         alt="Обложка: Как ИИ-агент за несколько дней собрал играбельный шутер"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда агенту мало одного прохода</h2>
+<p>Одна из главных проблем агентов для программирования давно видна всем, кто пробовал поручить им что-то больше функции на 50 строк. На короткой задаче всё выглядит бодро. На длинной — агент быстро запутывается в собственных шагах, чинит одно, ломает другое, теряет из виду исходные требования и слишком рано объявляет работу законченной.</p>
+<p>Авторы работы <strong>Harness-of-Harness</strong> предлагают новую <strong>обвязку для долгой автономной разработки</strong>. Идея простая: не ждать, что один запуск агента сразу соберёт целый продукт, а заставить его работать циклами — <strong>спланировал, написал, проверил, пошёл дальше</strong>.</p>
+<p>Если вы хотите, чтобы ИИ-агент не просто дописывал код, а строил программу с нуля без человека рядом, ему нужен не только доступ к терминалу и редактору. Ему нужен процесс, который удерживает проект в памяти и не даёт деградировать от итерации к итерации.</p>
+<p>Разговор об автономной разработке давно вышел за пределы аккуратных демок. Вопрос уже не в том, умеет ли LLM написать кусок кода. Вопрос в том, <strong>может ли она вести проект неделями и не потерять нить</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-11/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Два режима разработки: агент под постоянным контролем человека и полностью автономная разработка по требованиям верхнего уровня.</p>
+</div></figure>
+</section>
+<section>
+<h2>Что такое Harness-of-Harness</h2>
+<p>Термин в названии сначала звучит тяжеловато. Но по смыслу всё довольно ясно.</p>
+<p>У современных агентов для программирования уже есть своя <strong>обвязка</strong>: доступ к файлам, терминалу, командам сборки, иногда к тестам и репозиторию. Авторы не переписывают эту обвязку. Они строят <strong>обвязку над обвязкой</strong>. То есть внешний слой, который организует работу агента на длинной дистанции.</p>
+<p>Вместо одного большого запуска система делает повторяющийся цикл из трёх ролей:</p>
+<p>🟠 <strong>Планировщик проекта</strong> решает, что делать в следующей итерации, опираясь на требования и результаты прошлых проверок</p>
+<p>🟠 <strong>Разработчик</strong> вносит изменения в проект и прогоняет локальные тесты по ходу работы</p>
+<p>🟠 <strong>Тестировщик</strong> независимо проверяет, что получилось, и фиксирует, что реально работает, а что нет</p>
+<p>Ключевой момент здесь не в самих ролях. Такие схемы уже встречались. Важнее другое: между циклами система переносит не только код, но и <strong>состояние знаний о проекте</strong>.</p>
+<p>Авторы разделяют две вещи:</p>
+<p>🟣 <strong>Артефакт проекта</strong> — текущий код, ресурсы, конфиги, всё, что уже собрано</p>
+<p>🟣 <strong>Свидетельства выполнения</strong> — что проверено, какие ошибки найдены, что сломалось, что надо сохранить в следующей итерации</p>
+<p>Это и есть центральная идея работы: <strong>агент должен помнить не только то, что он написал, но и то, что уже было проверено</strong>. Без этого каждая новая попытка почти заново угадывает состояние проекта по одному лишь коду.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-11/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Схема Harness-of-Harness: планировщик, разработчик и тестировщик работают вокруг растущего проекта, а система сохраняет код и проверенные свидетельства между итерациями.</p>
+</div></figure>
+</section>
+<section>
+<h2>Почему обычный агент проваливает длинные задачи</h2>
+<p>Авторы довольно точно описывают проблему длинной автономной разработки.</p>
+<p>Когда проект растёт, у агента начинаются типичные сбои:</p>
+<p>🟠 <strong>Теряются ранние решения</strong>: почему архитектура устроена так, а не иначе, какие ограничения уже были приняты</p>
+<p>🟠 <strong>Локальные исправления дают регрессии</strong>: починили меню — сломали сохранение, добавили механику — испортили ввод</p>
+<p>🟠 <strong>Появляется цикл «смотрим, чиним, снова смотрим»</strong> без заметного прогресса в продукте</p>
+<p>🟠 <strong>Пропуски маскируются под завершение</strong>: код есть, но целостного поведения нет</p>
+<p>Если говорить проще, агенту трудно держать в голове длинную историю проекта. Контекстное окно конечно. История переписки заканчивается. А код сам по себе плохо хранит объяснение, <strong>что уже было подтверждено проверкой, а что только кажется рабочим</strong>.</p>
+<p>Поэтому авторы не делают ставку на память как отдельный модуль. Вместо этого они сохраняют документы, отчёты, историю итераций и дают агенту <strong>доставать нужное по индексу</strong>, а не тащить весь проект целиком в каждый промт.</p>
+<p>Это инженерный подход. Не «пусть модель сама всё удержит». А «пусть система аккуратно хранит важное снаружи».</p>
+</section>
+<section>
+<h2>Как устроен цикл работы</h2>
+<p>Каждая итерация у HoH ограничена по объёму. Планировщик не должен сказать «сделай всю игру». Он выбирает <strong>маленький, но законченный прирост</strong>.</p>
+<p>Например:</p>
+<p>🟣 исправить конкретный блокер сборки и добавить базовый экран результата</p>
+<p>🟣 сохранить уже работающий ввод и достроить механику столкновений</p>
+<p>🟣 не переписывать полпроекта, а закрыть один наблюдаемый сценарий</p>
+<p>Такой подход решает сразу две проблемы. Во-первых, область изменений меньше, значит легче найти источник поломки. Во-вторых, результат проще проверять.</p>
+<p>Ещё один ход: <strong>тестирование встроено и в разработку, и после разработки</strong>.</p>
+<p>Разработчик гоняет локальные проверки по ходу изменения кода. Это нужно, чтобы быстро ловить собственные ошибки. Но финальное решение о том, работает система или нет, выносит отдельный тестировщик на замороженной версии проекта. Он уже не может тихо дописать код за разработчика. Только проверить и зафиксировать факты.</p>
+<p>Это убирает частую проблему <strong>мультиагентных</strong> схем, где агент сам себя и пишет, и тут же сам себя убеждает, что всё готово.</p>
+</section>
+<section>
+<h2>Что показали бенчмарки</h2>
+<p>Авторы гоняли HoH на трёх разных наборах задач:</p>
+<p>🟠 <strong>GameCraft-Bench</strong> — создание играбельных игр в Godot по текстовому описанию</p>
+<p>🟠 <strong>FrontierSWE</strong> — сложные задачи по разработке и оптимизации программных систем</p>
+<p>🟠 <strong>ProgramBench</strong> — восстановление программы с нуля по исполняемому файлу и документации</p>
+<p>Проверяли три связки «обвязка + модель»:</p>
+<p>🟣 Codex с GPT-5.5</p>
+<p>🟣 OpenCode с DeepSeek-V4-Pro</p>
+<p>🟣 Pi с MiniMax-M3</p>
+<p>Во всех случаях HoH сравнивали с базовым режимом, где тот же агент просто делает один обычный проход без внешнего цикла.</p>
+<p><strong>Итеративная схема почти везде даёт большой прирост</strong>.</p>
+<p>Коротко по цифрам:</p>
+<p>🟠 На GameCraft-Bench средний итоговый балл вырос на <strong>16.6–22.1 пункта</strong> в зависимости от связки</p>
+<p>🟠 На FrontierSWE прирост по доминированию составил <strong>19–29 процентных пунктов</strong></p>
+<p>🟠 На ProgramBench улучшение доходило до <strong>16.85 пункта</strong> по доле пройденных скрытых тестов</p>
+<p>🟠 Средний относительный выигрыш по всем экспериментам авторы оценивают в <strong>52.25%</strong>, максимум — <strong>82.86%</strong> после трёх итераций</p>
+<p><strong>Выжимка по результатам:</strong></p>
+<p>🟣 HoH улучшает результат на всех трёх бенчмарках</p>
+<p>🟣 Прирост виден у разных моделей, а не только у самой сильной связки</p>
+<p>🟣 Выигрыш даёт именно организация цикла, а не просто лишний проход</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-11/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Сравнение базового режима и HoH после трёх итераций по четырём критериям качества игр: механики, глубина контента, визуальная функциональность и подача.</p>
+</div></figure>
+<p>Отдельно видно, что выигрыш есть не только у самой сильной связки. Даже более слабые базовые агенты заметно улучшаются, если дать им правильный цикл работы.</p>
+<p>Это практический вывод. Прогресс здесь идёт не только от «дайте модель получше», но и от <strong>правильной организации процесса</strong>.</p>
+</section>
+<section>
+<h2>Улучшение идёт от итерации к итерации</h2>
+<p>Одна из самых полезных частей работы — проверка, не случайный ли это эффект первых двух дополнительных попыток. Для этого авторы отдельно смотрят, как качество меняется по мере роста числа циклов.</p>
+<p>На игровом бенчмарке баллы у всех трёх связок росли от HoH@1 к HoH@3. На FrontierSWE для связки Codex + GPT-5.5 систему прогнали до десяти циклов. Там доминирование выросло с <strong>27.33% у базового режима</strong> до <strong>72.67% на десятой итерации</strong>, а лучший чекпойнт на девятом цикле дал <strong>76%</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-11/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">На FrontierSWE качество растёт по мере увеличения числа циклов: HoH продолжает улучшать результат далеко за пределами трёх итераций.</p>
+</div></figure>
+<p>То есть перед нами не просто «агенту дали ещё один шанс». Система действительно накапливает полезное состояние между проходами.</p>
+<p>Авторы отдельно проверили и другой вопрос: может, всё дело в том, что HoH просто тратит больше токенов? Для этого они сравнили HoH с режимом, где базового агента просто просят «продолжить разработку» ещё на один и ещё на один проход.</p>
+<p>Результат показателен. При одинаковом числе проходов HoH всё равно впереди. Более того, <strong>HoH после двух циклов обгоняет базовый режим после трёх</strong>, хотя токенов у него даже меньше.</p>
+<p><strong>Что из этого следует:</strong></p>
+<p>🟠 Дело не сводится к грубой силе</p>
+<p>🟠 Дополнительные токены сами по себе не объясняют прирост</p>
+<p>🟠 Работает именно структура цикла: план, реализация, независимая проверка, перенос свидетельств дальше</p>
+</section>
+<section>
+<h2>Что именно помогает</h2>
+<p>Авторы сделали и абляцию — по очереди вынимали ключевые части схемы.</p>
+<p>Если:</p>
+<p>🟣 <strong>не обновлять план</strong> между итерациями, качество заметно падает</p>
+<p>🟣 <strong>не передавать результаты проверки</strong> в следующий цикл, тоже падает</p>
+<p>🟣 <strong>не продолжать работу с прошлого состояния проекта</strong>, а каждый раз начинать почти заново, качество падает, а расход токенов растёт</p>
+<p>Из этого получается простая мысль: HoH работает не потому, что «три агента лучше одного» сами по себе. Он работает потому, что есть три сквозных механизма:</p>
+<p>🟠 <strong>обновляемый план</strong></p>
+<p>🟠 <strong>обратная связь от проверки</strong></p>
+<p>🟠 <strong>непрерывность артефакта проекта</strong></p>
+<p>Уберите любую из этих опор — и система начинает хуже держать длинную задачу.</p>
+</section>
+<section>
+<h2>Многодневная разработка шутера</h2>
+<p>Самая заметная часть статьи — не бенчмарки, а длинный кейс с автономной разработкой игры-шутера от первого лица. Система получила только документ с требованиями продукта и дальше более <strong>70 итераций</strong> вела проект сама.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-11/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">За десятки итераций HoH собрал играбельный шутер от первого лица: сюжет, бой, оружие, враги, интерфейс, меню, анимации и звук.</p>
+</div></figure>
+<p>Итоговый проект включал:</p>
+<p>🟠 связный сценарий</p>
+<p>🟠 боевую механику</p>
+<p>🟠 оружие и взаимодействие с врагами</p>
+<p>🟠 навигацию для игрока</p>
+<p>🟠 интерфейс и меню</p>
+<p>🟠 анимации, визуальную подачу и звук</p>
+<p>Важно не только то, что игра вообще появилась. Интереснее динамика. За 70 циклов система завела 81 задачу, закрыла 65, а 17 задач позже пришлось открыть заново из-за регрессий. Это очень похоже на обычную жизнь программного проекта. Продукт растёт, ошибки всплывают, часть исправлений ломается позже, затем их снова чинят.</p>
+<p>И вот здесь особенно хорошо видно, зачем нужны <strong>история версий</strong> и <strong>свидетельства проверки</strong>. Без них длинная автономная разработка быстро превращается в хаос, где агент уже не понимает, что было рабочим на прошлой неделе и почему сейчас это перестало работать.</p>
+<p><strong>Коротко о кейсе:</strong></p>
+<p>🟣 Более 70 итераций без ручного ведения проекта</p>
+<p>🟣 81 заведённая задача, 65 закрытых, 17 повторно открытых</p>
+<p>🟣 Регрессии возникают даже в успешном длинном цикле</p>
+<p>🟣 История проекта и результаты проверок нужны не меньше, чем сам код</p>
+</section>
+<section>
+<h2>Что это меняет</h2>
+<p><strong>Автономная разработка — это проблема процесса, а не только модели</strong>.</p>
+<p>Если вы строите агента для программирования, мало дать ему хороший доступ к инструментам и большую LLM. Нужны ещё:</p>
+<p>🟣 <strong>короткие проверяемые шаги вместо одного гигантского захода</strong></p>
+<p>🟣 <strong>разделение ролей между планированием, реализацией и проверкой</strong></p>
+<p>🟣 <strong>сохранение истории проекта в виде кода и свидетельств</strong></p>
+<p>🟣 <strong>независимая проверка, которая не может сама подправить результат</strong></p>
+<p>Отсюда и более широкий вывод. Вокруг LLM всё чаще обсуждают <strong>модели мира</strong>, <strong>рассуждение</strong>, агентность. Но в задачах по программированию часто решает более приземлённая вещь: <strong>умеет ли система организовать собственную работу на длинной дистанции</strong>.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>Harness-of-Harness показывает, что прогресс в автономной разработке можно получить без новой модели и без дообучения. Достаточно сделать то, что в обычной инженерии давно считается нормой: разбить работу на <strong>многошаговый цикл</strong>, сохранять историю решений, отделить написание кода от проверки и переносить вперёд не только файлы, но и знание о том, что уже подтверждено.</p>
+<p>Для индустрии это значит простую вещь. Следующая ступень агентов для программирования, скорее всего, придёт не только из более мощных LLM. Она придёт из <strong>лучшей обвязки</strong>, где агент меньше импровизирует вслепую и больше работает как дисциплинированная команда, пусть и собранная вокруг одной и той же модели.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2609.01481" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 mb-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
