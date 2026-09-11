@@ -1,0 +1,1315 @@
+
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Датаист / Обучение | Как превратить человеческое мышление в работающего ИИ-агента</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph -->
+    <!-- Превью-карточка (Telegram, соцсети, вебвью): в описание выводится полный
+         лид статьи; платформа сама обрежет по своему лимиту. -->
+    <meta property="og:site_name" content="Датаист / Обучение" />
+    <meta property="og:title" content="Как превратить человеческое мышление в работающего ИИ-агента" />
+    <meta property="og:description" content="Экспертную интуицию нельзя автоматизировать целиком, но её можно разобрать на части. Разбираем, как решение эксперта раскладывается на когнитивные функции, почему один большой промт проигрывает набору из шести измеримых навыков, какие связи превращают набор навыков в граф и как под структуру задачи выбирают способ рассуждения агента." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/education/auto_2_9/" />
+    <meta property="og:image" content="https://dataist.ai/education/auto_2_9/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1920" />
+    <meta property="og:image:height" content="1080" />
+    <meta property="og:image:alt" content="Как превратить человеческое мышление в работающего ИИ-агента — обложка" />
+    <meta property="article:published_time" content="2026-09-10T10:00:00+03:00" />
+    <link rel="canonical" href="https://dataist.ai/education/auto_2_9/">
+    <meta name="description" content="Экспертную интуицию нельзя автоматизировать целиком, но её можно разобрать на части. Разбираем, как решение эксперта раскладывается на когнитивные функции, почему один большой промт проигрывает набору из шести измеримых навыков, какие связи превращают набор навыков в граф и как под структуру задачи выбирают способ рассуждения агента.">
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Как превратить человеческое мышление в работающего ИИ-агента" />
+    <meta name="twitter:description" content="Экспертную интуицию нельзя автоматизировать целиком, но её можно разобрать на части. Разбираем, как решение эксперта раскладывается на когнитивные функции, почему один большой промт проигрывает набору из шести измеримых навыков, какие связи превращают набор навыков в граф и как под структуру задачи выбирают способ рассуждения агента." />
+    <meta name="twitter:image" content="https://dataist.ai/education/auto_2_9/cover.jpg" />
+    <meta name="twitter:image:alt" content="Как превратить человеческое мышление в работающего ИИ-агента — обложка" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .reason-num {
+            @apply font-mono text-apple-textMutedLight dark:text-apple-textMutedDark mr-3 text-xl md:text-2xl;
+        }
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 rounded-2xl bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark mb-4;
+        }
+        .emoji-chip {
+            @apply w-11 h-11 md:w-12 md:h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center text-xl md:text-2xl shrink-0 leading-none;
+        }
+        .card-title {
+            @apply font-sans font-semibold text-black dark:text-white text-base md:text-lg leading-snug;
+        }
+        .card-sub {
+            @apply text-apple-textMutedLight dark:text-apple-textMutedDark text-sm md:text-base leading-relaxed;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+
+    <!-- Инфографика: лёгкие адаптивные схемы в стиле статьи (светлая/тёмная тема) -->
+    <style>
+        /* Акцентные цвета живут и вне .figx: .grad-text/.grad-card стоят прямо
+           в тексте статьи, а там локальных переменных нет — без этого градиент
+           не собирался и текст оставался прозрачным (то есть невидимым). */
+        :root{--flame:#F97316; --plum:#8B5CF6}
+
+        .figx{
+            --ink:#0a0a0a; --mut:rgba(0,0,0,.55); --faint:rgba(0,0,0,.34);
+            --line:rgba(0,0,0,.30); --brd:rgba(0,0,0,.10); --soft:rgba(0,0,0,.035);
+            --card:#ffffff; --flame:#F97316; --plum:#8B5CF6; --rail:rgba(0,0,0,.16);
+            background:var(--card); border:1px solid var(--brd); border-radius:22px;
+            padding:36px 22px; margin:2.6rem 0; box-shadow:0 4px 24px rgba(0,0,0,.04);
+            color:var(--ink); overflow:hidden;
+            font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;
+        }
+        .dark .figx{
+            --ink:#F5F5F7; --mut:rgba(255,255,255,.60); --faint:rgba(255,255,255,.36);
+            --line:rgba(255,255,255,.32); --brd:rgba(255,255,255,.12); --soft:rgba(255,255,255,.05);
+            --card:#1C1C1E; --rail:rgba(255,255,255,.20); box-shadow:0 4px 24px rgba(255,255,255,.04);
+        }
+        @media (min-width:768px){ .figx{padding:44px 36px; border-radius:26px} }
+
+        .figx .cap{margin-top:26px; text-align:center; font-size:13.5px; line-height:1.5; color:var(--mut)}
+        .figx .cap b{color:var(--ink); font-weight:600}
+
+        .fxrow{display:flex; align-items:center; justify-content:center; gap:14px 16px; flex-wrap:wrap}
+        .fxcol{display:flex; flex-direction:column; align-items:center; gap:18px}
+
+        .fxchip{border:1.5px solid var(--brd); background:var(--soft); border-radius:999px;
+            padding:9px 16px; font-size:14.5px; font-weight:600; white-space:nowrap; line-height:1.2}
+        .fxchip.f{border-color:rgba(249,115,22,.55); color:var(--flame); background:rgba(249,115,22,.07)}
+        .fxchip.p{border-color:rgba(139,92,246,.55); color:var(--plum); background:rgba(139,92,246,.08)}
+        .fxchip.dim{opacity:.52}
+
+        .fxnode{display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center; min-width:86px}
+        .fxnode .em{font-size:34px; line-height:1}
+        .fxnode .lb{font-size:13.5px; font-weight:600; line-height:1.25; white-space:nowrap}
+        .fxnode .sb{font-size:12px; color:var(--mut); line-height:1.35}
+        .fxnode.dim{opacity:.5}
+
+        .fxarr{position:relative; flex:0 0 auto; width:15px; height:15px;
+            border-top:2.5px solid var(--line); border-right:2.5px solid var(--line);
+            transform:rotate(45deg); border-radius:2px; margin:0 4px}
+        .fxarr::before{content:""; position:absolute; left:50%; top:50%; width:21px; height:2.5px;
+            background:var(--line); border-radius:2px; transform:translate(-50%,-50%) rotate(-45deg)}
+        .fxarr.down{transform:rotate(135deg); margin:6px 0}
+        .fxseq{display:flex; align-items:center; gap:14px}
+        /* На узком экране ряд узлов переносится в столбик — стрелка между ними
+           обязана смотреть ВНИЗ, иначе она указывает поперёк потока. */
+        @media (max-width:560px){
+            .figx .fxrow > .fxarr:not(.down),
+            .figx .fxrow .fxseq > .fxarr:not(.down){transform:rotate(135deg)}
+            .figx .fxrow{flex-direction:column}
+            .figx .fxrow.tight{flex-direction:row}
+            .figx .fxrow .fxseq{flex-direction:column; gap:10px}
+        }
+        .fxrow.tight{flex-wrap:nowrap; gap:10px; align-items:flex-start; width:100%}
+        .fxrow.tight .fxnode{flex:1 1 0; min-width:0}
+        .fxrow.tight .fxnode .lb{white-space:normal; font-size:12.5px}
+        @media (max-width:640px){ .fxrow.tight .fxnode .lb{font-size:11px} .fxrow.tight .fxnode .em{font-size:26px} }
+        @media (max-width:480px){
+            .fxrow.tight{flex-wrap:wrap; justify-content:center; gap:18px 10px}
+            .fxrow.tight .fxnode{flex:0 0 28%}
+            .fxrow.tight .fxnode .em{font-size:28px}
+            .fxrow.tight .fxnode .lb{font-size:11.5px}
+        }
+
+        .grad-text{background:linear-gradient(100deg,var(--flame),var(--plum));
+            -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent}
+        .grad-card{border:1.5px solid transparent; border-radius:20px; padding:20px 26px; text-align:center;
+            background:linear-gradient(var(--card,#fff),var(--card,#fff)) padding-box,
+                       linear-gradient(140deg,#F97316,#8B5CF6) border-box}
+        .dark .grad-card{--card:#1C1C1E}
+
+        /* Степпер: этапы */
+        .fxsteps{display:grid; grid-template-columns:repeat(6,1fr); gap:10px; width:100%; max-width:860px; margin:0 auto}
+        .fxsteps.three{grid-template-columns:repeat(3,1fr)}
+        .fxsteps.four{grid-template-columns:repeat(4,1fr)}
+        .fxstep .dotrow{position:relative; width:100%; display:flex; justify-content:center}
+        /* Рельс рисуется по каждой ячейке: с запасом в 10px стыки соседних отрезков
+           перекрываются и линия не «рвётся» на дробных позициях сетки. */
+        .fxstep .dotrow::before{content:""; position:absolute; left:-10px; right:-10px; top:50%; height:2px;
+            transform:translateY(-50%); background:var(--rail)}
+        .fxstep:first-child .dotrow::before{left:50%}
+        .fxstep:last-child .dotrow::before{right:50%}
+        .fxstep{position:relative; display:flex; flex-direction:column; align-items:center; gap:8px; z-index:1}
+        .fxstep .em{font-size:32px; line-height:1; margin-bottom:4px}
+        .fxstep .dot{position:relative; z-index:1; width:34px; height:34px; border-radius:50%; background:var(--card); border:2px solid var(--brd);
+            display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:var(--mut)}
+        .fxstep.hot .dot{border-color:var(--flame); color:var(--flame); box-shadow:0 0 22px -6px rgba(249,115,22,.65)}
+        .fxstep .lb{font-size:12.5px; font-weight:600; text-align:center; line-height:1.25}
+        .fxstep .sub{font-size:12px; color:var(--mut); text-align:center; line-height:1.35; margin-top:-2px}
+        .fxstep.hot .lb{color:var(--flame)}
+        @media (max-width:640px){
+            .fxsteps{grid-template-columns:repeat(3,1fr); gap:22px 10px}
+            .fxsteps.four{grid-template-columns:repeat(2,1fr)}
+            .fxstep .dotrow::before{display:none}
+        }
+        @media (max-width:420px){ .fxsteps.three{grid-template-columns:1fr; gap:18px} }
+
+        /* Конвейер: вход → ядро → инструменты */
+        .fxpipe{display:flex; align-items:stretch; justify-content:center; gap:12px; width:100%; max-width:820px; margin:0 auto}
+        .fxpipe .p{flex:1 1 0; min-width:0; border:1.5px solid var(--brd); background:var(--soft);
+            border-radius:18px; padding:18px 14px; text-align:center;
+            display:flex; flex-direction:column; align-items:center; gap:7px}
+        .fxpipe .p .em{font-size:30px; line-height:1}
+        .fxpipe .p .t{font-size:15px; font-weight:700; line-height:1.3}
+        .fxpipe .p .s{font-size:12.5px; color:var(--mut); line-height:1.45}
+        .fxpipe .p.core{position:relative; border-color:transparent;
+            background:linear-gradient(var(--card),var(--card)) padding-box,
+                       linear-gradient(140deg,#F97316,#8B5CF6) border-box}
+        .fxpipe .badge{position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+            font-family:'Space Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.14em;
+            text-transform:uppercase; white-space:nowrap; padding:3px 10px; border-radius:999px;
+            background:linear-gradient(100deg,#F97316,#8B5CF6); color:#fff}
+        .fxpipe .fxarr{align-self:center; margin:0}
+        .fxpipe .fxarr.down{display:none}
+        @media (max-width:700px){
+            .fxpipe{flex-direction:column; max-width:340px}
+            .fxpipe .fxarr:not(.down){display:none}
+            .fxpipe .fxarr.down{display:block; align-self:center}
+        }
+
+        /* Орбита: ядро и шесть свойств вокруг. Кружок держит ТОЛЬКО иконку,
+           подпись стоит ПОД ним — снаружи; серый пунктир проходит ЗА кружками
+           (он ниже по z-index и рисуется обычной CSS-границей, без SVG). */
+        .fxorbit{position:relative; width:min(100%,520px); aspect-ratio:1; margin:0 auto}
+        .fxorbit .oring{position:absolute; inset:20%; border:2px dashed var(--rail);
+            border-radius:50%; pointer-events:none; z-index:0}
+        .fxorbit .core, .fxorbit .sat{
+            position:absolute; left:var(--x,50%); top:var(--y,50%); transform:translate(-50%,-50%);
+            display:flex; flex-direction:column; align-items:center; gap:9px; z-index:1}
+        .fxorbit .bub{border-radius:50%; display:grid; place-items:center; flex:none;
+            border:1.5px solid var(--brd); background:var(--card)}
+        .fxorbit .sat .bub{width:74px; height:74px}
+        .fxorbit .sat .bub .em{font-size:38px; line-height:1}
+        .fxorbit .core .bub{width:96px; height:96px; border:2px solid transparent;
+            background:linear-gradient(var(--card),var(--card)) padding-box,
+                       linear-gradient(140deg,#F97316,#8B5CF6) border-box}
+        .fxorbit .core .bub .em{font-size:46px; line-height:1}
+        /* 152px — ширина под самое длинное слово («мультимодальность») в одну
+           строку: на 128px оно ломалось посередине. Соседние подписи при этой
+           ширине не пересекаются — проверено замером координат. */
+        .fxorbit .lb{font-size:13px; font-weight:700; line-height:1.25; text-align:center;
+            width:152px; hyphens:auto; overflow-wrap:break-word}
+        .fxorbit .core .lb{font-size:16px; font-weight:800; width:152px}
+        @media (max-width:560px){
+            /* На узком экране орбита не помещается — разворачиваем её в список,
+               кружок с иконкой остаётся, подпись встаёт справа от него.
+               Одна колонка: в двух «мультимодальность» ломалась посреди слова,
+               а min-width:0 обязателен — иначе grid-ячейка не сжимается по
+               длинному слову и строка вылезает за карточку (замер рендером). */
+            .fxorbit{aspect-ratio:auto; display:grid; grid-template-columns:1fr;
+                gap:8px; width:100%}
+            .fxorbit .oring{display:none}
+            .fxorbit .core, .fxorbit .sat{position:static; transform:none; min-width:0;
+                flex-direction:row; gap:11px; align-items:center; justify-content:flex-start;
+                border:1px solid var(--brd); background:var(--soft);
+                border-radius:16px; padding:11px 12px}
+            .fxorbit .core{grid-column:1 / -1; justify-content:center; background:transparent;
+                border-color:transparent}
+            .fxorbit .sat .bub{width:44px; height:44px}
+            .fxorbit .sat .bub .em{font-size:24px}
+            .fxorbit .core .bub{width:56px; height:56px}
+            .fxorbit .core .bub .em{font-size:30px}
+            .fxorbit .lb{width:auto; min-width:0; text-align:left; font-size:13.5px}
+            .fxorbit .core .lb{width:auto; min-width:0; font-size:16px}
+        }
+
+        /* Дорожки сравнения: один и тот же триггер — и две разные глубины
+           реакции. Цепочка чипов показывает, что агент делает НЕ один шаг. */
+        .fxlanes{display:flex; flex-direction:column; align-items:center; gap:12px;
+            width:100%; max-width:820px; margin:0 auto}
+        /* всё содержимое дорожки — по центру: и заголовок, и чипы, и сноска */
+        .fxlane{width:100%; border:1.5px solid var(--brd); background:var(--soft);
+            border-radius:18px; padding:16px 18px;
+            display:flex; flex-direction:column; align-items:center; gap:11px}
+        .fxlane .lh{display:flex; align-items:center; justify-content:center; gap:8px;
+            font-size:11.5px; font-weight:800; letter-spacing:.14em;
+            text-transform:uppercase; color:var(--mut); text-align:center}
+        .fxlane .lr{display:flex; align-items:center; justify-content:center;
+            flex-wrap:wrap; gap:8px}
+        .fxlane .ln{font-size:12.5px; color:var(--faint); line-height:1.4; text-align:center}
+        .fxlane.hot{border-color:transparent;
+            background:linear-gradient(var(--card),var(--card)) padding-box,
+                       linear-gradient(120deg,#F97316,#8B5CF6) border-box}
+        .fxlane.hot .lh{color:var(--flame)}
+        .fxlane .fxarr{width:11px; height:11px; border-width:2px; margin:0}
+        .fxlane .fxarr::before{width:15px; height:2px}
+        /* стрелка живёт В ОДНОЙ группе со СВОИМ чипом: при переносе строки
+           она уходит вниз вместе с ним, а не повисает в конце строки */
+        .fxlane .fxseq{gap:8px}
+        .fxchip.sm{padding:7px 13px; font-size:13px; white-space:normal}
+        .fxchip.pick{border-style:dashed}
+        /* Цепочка шагов: сетка с ФИКСИРОВАННЫМ числом колонок, стрелки рисуются
+           только МЕЖДУ соседями внутри ряда. Перенос строки авторский, а не
+           случайный, поэтому стрелка никогда не повисает в конце/начале строки. */
+        .fxchain{display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+            gap:13px 26px; width:100%}
+        /* чип в сетке растягивается по высоте ряда, поэтому он ОБЯЗАН быть flex:
+           иначе текст прилипает к верхнему краю овала (span = display:block) */
+        .fxchain > .fxchip{position:relative; width:100%; display:flex;
+            align-items:center; justify-content:center; text-align:center}
+        .fxchain > .fxchip::after{content:""; position:absolute; right:-18px; top:50%;
+            width:9px; height:9px; border-top:2px solid var(--rail);
+            border-right:2px solid var(--rail); border-radius:1px;
+            transform:translateY(-50%) rotate(45deg)}
+        .fxchain > .fxchip:nth-child(3n)::after,
+        .fxchain > .fxchip:last-child::after{content:none}
+        /* цепочка из двух шагов не должна оставлять пустую третью колонку */
+        .fxchain.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+        /* .plain — не цепочка, а набор равноправных вариантов: стрелок нет */
+        .fxchain.plain{gap:9px 10px}
+        .fxchain.plain > .fxchip::after{content:none}
+        @media (max-width:560px){
+            /* На телефоне цепочка встаёт В СТОЛБИК — значит и стрелки должны
+               смотреть ВНИЗ, иначе они показывают вбок поперёк потока. */
+            .fxlane{padding:14px 13px}
+            .fxlane .lr{flex-direction:column; align-items:center; gap:6px}
+            .fxlane .fxseq{flex-direction:column; align-items:center; gap:6px}
+            .fxlane .fxarr{transform:rotate(135deg); margin:0}
+            .fxchip.sm{padding:6px 11px; font-size:12.5px}
+            /* Цепочка встаёт в один столбец — стрелки уезжают под чип и
+               разворачиваются вниз, по направлению потока. */
+            .fxchain{grid-template-columns:1fr; gap:23px 0}
+            .fxchain > .fxchip::after,
+            .fxchain > .fxchip:nth-child(3n)::after{content:""; right:auto; left:50%;
+                top:auto; bottom:-16px; transform:translateX(-50%) rotate(135deg)}
+            .fxchain > .fxchip:last-child::after{content:none}
+            .fxchain.plain{gap:7px 0}
+            .fxchain.plain > .fxchip::after,
+            .fxchain.plain > .fxchip:nth-child(3n)::after{content:none}
+        }
+
+        /* Петля обучения / замкнутый цикл */
+        .fxloop{position:relative}
+        .fxloop-svg{display:block; width:min(420px,80%); margin:2px auto 0}
+        /* На телефоне цепочка встаёт в столбик, и горизонтальная дуга теряет
+           смысл: возврат рисуем скобой слева, стрелка заходит обратно в «Сигнал». */
+        @media (max-width:560px){
+            .fxloop > .fxloop-svg{display:none}
+            /* скоба доводится до самих иконок: правый край — по центру колонки
+               минус радиус эмодзи, поэтому стрелка упирается прямо в первый шаг.
+               Левый край привязан к центру, а не к краю карточки: путь возврата
+               получается короче и всё равно не задевает подписи (замер рендером —
+               самая широкая подпись начинается на 13px правее линии). */
+            .fxloop::before{content:""; position:absolute; left:calc(50% - 86px); right:calc(50% + 30px);
+                top:17px; bottom:41px;
+                border:2.5px solid var(--plum); border-right:none;
+                border-radius:14px 0 0 14px; opacity:.9}
+            .fxloop::after{content:""; position:absolute; right:calc(50% + 19px); top:11px;
+                border-top:7px solid transparent; border-bottom:7px solid transparent;
+                border-left:11px solid var(--plum)}
+        }
+
+        /* Ключевая плашка внутри фигуры */
+        .fxkey{display:flex; align-items:center; justify-content:center; gap:9px; flex-wrap:wrap;
+            margin:22px auto 0; max-width:640px; padding:13px 20px; border-radius:16px;
+            border:1px solid var(--brd); background:var(--soft);
+            font-size:15px; font-weight:600; line-height:1.4; text-align:center}
+        .fxkey u{text-decoration:none; border-bottom:2px solid var(--flame); padding-bottom:1px; font-weight:800}
+
+        /* Двухколоночная схема «ветвление» */
+        .fxbranch{display:grid; grid-template-columns:1fr 1fr; gap:14px; width:100%; max-width:720px; margin:0 auto}
+        .fxbranch .b{border:1.5px solid var(--brd); background:var(--soft); border-radius:18px;
+            padding:18px 20px; text-align:center; display:flex; flex-direction:column; gap:7px; align-items:center}
+        .fxbranch .b .em{font-size:30px; line-height:1}
+        .fxbranch .b .t{font-size:15px; font-weight:700; line-height:1.3}
+        .fxbranch .b .s{font-size:13px; color:var(--mut); line-height:1.45}
+        .fxbranch .b.hot{border-color:rgba(249,115,22,.5); background:rgba(249,115,22,.06)}
+        .fxbranch .b.hot .t{color:var(--flame)}
+        @media (max-width:640px){ .fxbranch{grid-template-columns:1fr} }
+
+        /* Сравнение ❌ / ✅ */
+        .vsx{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:2.2rem 0;
+            --ink:#0a0a0a; --mut:rgba(0,0,0,.55); --brd:rgba(0,0,0,.10); --card:#fff; color:var(--ink)}
+        .dark .vsx{--ink:#F5F5F7; --mut:rgba(255,255,255,.6); --brd:rgba(255,255,255,.12); --card:#1C1C1E}
+        @media (max-width:640px){ .vsx{grid-template-columns:1fr} }
+        .vsx .col{border:1px solid var(--brd); background:var(--card); border-radius:18px; padding:20px 22px;
+            box-shadow:0 4px 24px rgba(0,0,0,.04)}
+        .dark .vsx .col{box-shadow:0 4px 24px rgba(255,255,255,.03)}
+        .vsx .hd{font-size:15px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:8px; color:var(--ink)}
+        .vsx .tx{font-size:15.5px; line-height:1.55; color:var(--mut)}
+        .vsx .tx b{color:var(--ink); font-weight:600}
+        .vsx .tx + .tx{margin-top:8px}
+
+        /* заголовок внутри схемы */
+        .figx .fxhd{text-align:center; font-size:11.5px; font-weight:800; letter-spacing:.14em;
+            text-transform:uppercase; color:var(--mut); margin-bottom:20px}
+
+        /* ── Таймлайн эпох ── */
+        .fxtime{position:relative; display:flex; flex-direction:column; gap:24px;
+            padding-left:34px; max-width:620px; margin:0 auto}
+        .fxtime::before{content:""; position:absolute; left:8px; top:8px; bottom:8px; width:2px;
+            background:var(--rail); border-radius:2px}
+        .fxtime .ev{position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:5px}
+        .fxtime .ev .dot{position:absolute; left:-34px; top:2px; width:18px; height:18px;
+            border-radius:50%; box-sizing:border-box;
+            background:var(--card); border:3.5px solid var(--rail)}
+        .fxtime .ev .yr{font-family:'Space Mono',monospace; font-size:11px; font-weight:700;
+            letter-spacing:.16em; text-transform:uppercase; color:var(--faint)}
+        .fxtime .ev .t{font-size:16.5px; font-weight:700; line-height:1.3}
+        .fxtime .ev .s{font-size:13.5px; color:var(--mut); line-height:1.5}
+        .fxtime .ev.now .dot{border-color:var(--flame); background:var(--flame);
+            box-shadow:0 0 0 5px rgba(249,115,22,.16)}
+        .fxtime .ev.now .yr{color:#fff; background:linear-gradient(100deg,#F97316,#8B5CF6);
+            padding:4px 11px; border-radius:999px; letter-spacing:.14em}
+        .fxtime .ev.now .t{font-size:18px; font-weight:800}
+        .fxtime .ev.now .s{color:var(--ink)}
+
+        /* ── Три равные карточки (ветвление на три) ── */
+        .fxbranch.three{grid-template-columns:repeat(3,1fr)}
+        @media (max-width:640px){ .fxbranch.three{grid-template-columns:1fr} }
+
+        /* приглушённая часть подписи внутри чипа */
+        .fxchip .mu{color:var(--mut); font-weight:500}
+
+
+        /* ── Зоны и типы процессов: карточка с нижней плашкой-целью ── */
+        .fxzones{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px}
+        .fxzones.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+        .fxzones .z{position:relative; overflow:hidden; min-width:0;
+            border:1.5px solid var(--brd); background:var(--soft); border-radius:18px;
+            padding:30px 16px 0; display:flex; flex-direction:column; align-items:center;
+            text-align:center; gap:7px}
+        .fxzones .z .em{font-size:30px; line-height:1}
+        .fxzones .z .t{font-size:19px; font-weight:800; line-height:1.15; letter-spacing:.01em}
+        .fxzones .z .k{font-family:'Space Mono',monospace; font-size:10px; font-weight:700;
+            letter-spacing:.12em; text-transform:uppercase; color:var(--faint); white-space:nowrap}
+        .fxzones .z .s{font-size:13px; color:var(--mut); line-height:1.45; flex:1 0 auto}
+        .fxzones .z .unc{display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:2px}
+        .fxzones .z .unc .bars{display:flex; gap:4px}
+        .fxzones .z .unc i{display:block; width:22px; height:5px; border-radius:99px;
+            background:var(--rail); font-style:normal}
+        .fxzones .z .unc i.on{background:linear-gradient(90deg,#F97316,#8B5CF6)}
+        .fxzones .z .unc b{font-size:10px; font-weight:700; letter-spacing:.08em;
+            text-transform:uppercase; color:var(--faint); line-height:1.3}
+        .fxzones .z .goal{align-self:stretch; margin:14px -16px 0; padding:11px 14px;
+            border-top:1px solid var(--brd); background:var(--card);
+            font-size:12px; line-height:1.4; color:var(--mut)}
+        .fxzones .z .goal b{color:var(--ink); font-weight:700}
+        .fxzones .z.hot{border-color:transparent;
+            background:linear-gradient(var(--card),var(--card)) padding-box,
+                       linear-gradient(140deg,#F97316,#8B5CF6) border-box}
+        .fxzones .z.hot .t{color:var(--flame)}
+        .fxzones .z.hot .goal{background:var(--soft)}
+        .fxzones .z .badge{position:absolute; top:0; left:50%; transform:translateX(-50%);
+            font-family:'Space Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.14em;
+            text-transform:uppercase; white-space:nowrap; padding:4px 13px; border-radius:0 0 11px 11px;
+            background:linear-gradient(100deg,#F97316,#8B5CF6); color:#fff}
+        @media (max-width:700px){ .fxzones{grid-template-columns:1fr} }
+        @media (max-width:640px){ .fxzones.four{grid-template-columns:1fr} }
+
+        /* ── Кто выполняет шаг цикла ── */
+        .fxown{display:flex; flex-direction:column; gap:9px; max-width:680px; margin:0 auto}
+        .fxown .hdr{display:grid; grid-template-columns:1fr 118px 138px; gap:12px; padding:0 15px;
+            font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--faint)}
+        .fxown .hdr span:not(:first-child){text-align:center}
+        .fxown.two .hdr, .fxown.two .row{grid-template-columns:1fr 1fr}
+        .fxown .row{display:grid; grid-template-columns:1fr 118px 138px; align-items:center; gap:12px;
+            border:1px solid var(--brd); background:var(--soft); border-radius:14px; padding:12px 15px}
+        .fxown .row .st{font-size:13.5px; font-weight:700; line-height:1.3; min-width:0}
+        .fxown .row .who{font-size:11.5px; font-weight:700; line-height:1.2; text-align:center;
+            padding:6px 8px; border-radius:999px; border:1px solid var(--brd);
+            background:var(--card); color:var(--mut)}
+        .fxown .row .who.ai{color:var(--flame); border-color:rgba(249,115,22,.45);
+            background:rgba(249,115,22,.07)}
+        @media (max-width:600px){
+            .fxown .hdr{display:none}
+            .fxown .row, .fxown.two .row{grid-template-columns:1fr; gap:9px; justify-items:stretch}
+            .fxown .row .who{text-align:left; padding:7px 12px}
+            .fxown .row .who::before{content:attr(data-lb) " · "; color:var(--faint); font-weight:800;
+                font-size:10px; letter-spacing:.1em; text-transform:uppercase}
+        }
+
+
+        /* В колоночном флексе элемент получает свою max-content ширину и
+           вылезает за карточку вместо переноса; max-width:100% возвращает
+           перенос. :not() — для тех, кто выходит за края ПО ЗАМЫСЛУ. */
+        .fxzones .z > *:not(.goal){max-width:100%}
+        .fxbranch .b > *{max-width:100%}
+        /* Ячейка сетки по умолчанию не уже своего min-content: на 320px
+           колонка шага становилась шире дорожки. */
+        .fxsteps .fxstep{min-width:0}
+        .fxsteps .fxstep > *{max-width:100%}
+
+        /* Заголовок колонки .vsx — flex-строка из НЕСКОЛЬКИХ текстовых узлов,
+           а значит из нескольких flex-элементов. Без переноса строка держит
+           свою max-content ширину и растягивает всю колонку. */
+        .vsx .hd{flex-wrap:wrap}
+
+        /* ── Карта плиток ── */
+        .fxgrid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px}
+        .fxgrid .g{border:1px solid var(--brd); background:var(--soft); border-radius:15px;
+            padding:14px 10px; min-width:0;
+            display:flex; flex-direction:column; align-items:center; text-align:center; gap:5px}
+        .fxgrid .g > *{max-width:100%}
+        .fxgrid .g .em{font-size:22px; line-height:1}
+        .fxgrid .g .t{font-size:12.5px; font-weight:700; line-height:1.2; overflow-wrap:break-word}
+        .fxgrid .g .s{font-size:11px; color:var(--mut); line-height:1.35;
+            overflow-wrap:break-word}
+        .fxgrid .g .s b{color:var(--ink); font-weight:700}
+        .fxgrid .g.hot{border-color:transparent;
+            background:linear-gradient(var(--card),var(--card)) padding-box,
+                       linear-gradient(120deg,#F97316,#8B5CF6) border-box}
+        .fxgrid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+
+        /* Три колонки на телефоне уже длинного слова — плитка рвёт слово
+           посередине. На общей точке перелома разворачиваем в две.
+           Селектор через .figx — общий адаптив идёт ниже по файлу и при
+           равной силе перебил бы это правило. */
+        @media (max-width:640px){
+            .figx .fxgrid.three{grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
+            .figx .fxgrid.three .g{padding:14px 10px}
+            .figx .fxgrid.three .g .em{font-size:22px}
+            .figx .fxgrid.three .g .t{font-size:12.5px}
+            .figx .fxgrid.three .g .s{font-size:11px}
+        }
+
+        /* Длинная подпись шага в ряду из четырёх не помещается на 320px и
+           обрезается. По правилу адаптива колонки не трогаем, уменьшаем кегль —
+           и делаем это на общей точке перелома, а не на своей. */
+        @media (max-width:640px){ .fxsteps.four .fxstep .lb{font-size:11px} }
+
+        /* ── Таблица .fxown: три широкие колонки ──
+           Модификатор, а НЕ inline-style: иначе правило шире медиазапроса
+           и на телефоне колонки не схлопываются. */
+        .fxown.wide{max-width:760px}
+        .fxown.wide .hdr, .fxown.wide .row{
+            grid-template-columns:minmax(0,.85fr) minmax(0,1.2fr) minmax(0,1.25fr)}
+        .fxown.wide .hdr span:not(:first-child){text-align:left}
+        .fxown.wide .row .who{text-align:left; white-space:normal;
+            border-radius:12px; padding:8px 13px}
+        @media (max-width:640px){
+            .fxown.wide .row{grid-template-columns:minmax(0,1fr)}
+            .fxown.wide .hdr{display:none}
+        }
+        /* Метка режима H0–H3 стоит в первой колонке строкой над названием роли. */
+        .fxown .row .st em{display:block; margin-bottom:3px; font-style:normal;
+            font-family:'Space Mono',monospace; font-size:10px; font-weight:700;
+            letter-spacing:.14em; color:var(--flame); line-height:1.2}
+
+        /* ── Таблица .fxown: узкая левая колонка и широкая правая ── */
+        .fxown.units{max-width:700px}
+        .fxown.units .hdr, .fxown.units .row{
+            grid-template-columns:minmax(0,1.15fr) minmax(0,1.35fr)}
+        .fxown.units .hdr span:not(:first-child){text-align:left}
+        .fxown.units .row .who{text-align:left; white-space:normal;
+            border-radius:12px; padding:8px 13px}
+        @media (max-width:640px){
+            .fxown.units .row{grid-template-columns:minmax(0,1fr)}
+            .fxown.units .hdr{display:none}
+        }
+
+        /* Метка зоны в базовом словаре — nowrap; длинная метка при трёх
+           колонках не помещается уже на 768px. Здесь она переносится. */
+        .fxzones .z .k{white-space:normal}
+        /* Точка перелома в серии одна — 640px. Базовый словарь разворачивал
+           зоны в столбик уже на 700px, из-за чего между 641 и 700 появлялась
+           третья версия раскладки. Здесь диапазон возвращён в ряд из трёх. */
+        @media (min-width:641px) and (max-width:700px){
+            .fxzones{grid-template-columns:repeat(3,minmax(0,1fr))}
+        }
+
+        /* Плашка-вывод на 15px не помещается на 320px: фраза рассыпается на
+           строки из одного слова. Кегль мельче — и строки снова целые. */
+        @media (max-width:640px){ .fxkey{font-size:13.5px; padding:12px 15px} }
+
+        /* ── Дорожки «раньше / теперь»: цепочка из шести шагов ── */
+        @media (max-width:640px){
+            .fxchain{grid-template-columns:1fr; gap:23px 0}
+            .fxchain > .fxchip::after,
+            .fxchain > .fxchip:nth-child(3n)::after{content:""; right:auto; left:50%;
+                top:auto; bottom:-16px; transform:translateX(-50%) rotate(135deg)}
+            .fxchain > .fxchip:last-child::after{content:none}
+            .fxchip.sm{padding:6px 11px; font-size:12.5px}
+        }
+
+        /* ══ АДАПТИВ: РОВНО ДВЕ ВЕРСИИ — ДЕСКТОП И МОБИЛЬНАЯ ══
+           Промежуточных состояний нет: одна точка перелома, 640px. На каждой
+           из двух версий раскладка либо полный ряд, либо симметричная фигура.
+           Сирот вида «2+1» или «3+1» быть не должно ни при какой ширине. */
+
+        /* Рельс степпера рисуется по каждой ячейке с перехлёстом, чтобы линия
+           не рвалась на дробных позициях сетки. Но полупрозрачный --rail в
+           месте перехлёста складывается сам с собой и даёт тёмные засечки —
+           поэтому здесь он заменён НЕПРОЗРАЧНЫМ эквивалентом того же оттенка
+           (rgba(0,0,0,.16) на белом = #D6D6D6; rgba(255,255,255,.20) на
+           #1C1C1E = #49494B). */
+        .figx{--railo:#D6D6D6}
+        .dark .figx{--railo:#49494B}
+        .figx .fxstep .dotrow::before{background:var(--railo)}
+
+        /* ── Три шага: всегда в ряд, включая телефон ── */
+        .fxsteps.three{grid-template-columns:repeat(3,1fr)}
+        @media (max-width:640px){
+            .fxsteps.three{grid-template-columns:repeat(3,1fr); gap:20px 8px}
+            .fxsteps.three .fxstep .em{font-size:26px}
+            .fxsteps.three .fxstep .lb{font-size:11.5px}
+            .fxsteps.three .fxstep .sub{font-size:10.5px}
+        }
+        @media (max-width:420px){ .fxsteps.three{grid-template-columns:repeat(3,1fr)} }
+
+        /* ── Пять шагов: три сверху, два снизу ровно ПОД ПРОМЕЖУТКАМИ верхних.
+           Сетка из шести колонок: верхние занимают 1–2, 3–4, 5–6, нижние 2–3 и
+           4–5 — поэтому их центры попадают точно между центрами верхнего ряда,
+           а не прижимаются к левому краю. ── */
+        .fxsteps.five{grid-template-columns:repeat(6,1fr)}
+        .fxsteps.five .fxstep:nth-child(1){grid-column:1 / span 2}
+        .fxsteps.five .fxstep:nth-child(2){grid-column:3 / span 2}
+        .fxsteps.five .fxstep:nth-child(3){grid-column:5 / span 2}
+        .fxsteps.five .fxstep:nth-child(4){grid-column:2 / span 2}
+        .fxsteps.five .fxstep:nth-child(5){grid-column:4 / span 2}
+        /* Рельса в этой раскладке нет: порядок несут нумерованные кружки, а
+           линия, разорванная на два ряда, читается как две разные цепочки.
+           ::before спозиционирован абсолютно, поэтому скрытие не влияет на
+           раскладку — ряды и центровка остаются прежними. */
+        .fxsteps.five .fxstep .dotrow::before{display:none}
+        @media (max-width:640px){
+            .fxsteps.five{grid-template-columns:repeat(6,1fr); gap:20px 6px}
+            .fxsteps.five .fxstep .em{font-size:25px}
+            .fxsteps.five .fxstep .lb{font-size:11px}
+            .fxsteps.five .fxstep .sub{font-size:10px}
+        }
+        @media (max-width:430px){ .fxsteps.five{grid-template-columns:repeat(6,1fr)} }
+
+        /* ── Четыре шага: ряд на десктопе, 2+2 на телефоне ── */
+        @media (max-width:640px){ .fxsteps.four{grid-template-columns:repeat(2,1fr)} }
+
+        /* ── Плитки: 4 в ряд на десктопе, 2 на телефоне.
+           Промежуточной трёхколоночной версии больше нет. ── */
+        .fxgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+        @media (max-width:700px){ .fxgrid{grid-template-columns:repeat(4,minmax(0,1fr))} }
+        @media (max-width:640px){ .fxgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+        @media (max-width:460px){ .fxgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+
+        /* ── Три плитки: всегда в ряд. На телефоне мельче кегль и поля,
+           но по-прежнему три колонки, а не 2+1. ── */
+        .fxgrid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+        @media (max-width:620px){ .fxgrid.three{grid-template-columns:repeat(3,minmax(0,1fr))} }
+        @media (max-width:640px){
+            .fxgrid.three{grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px}
+            .fxgrid.three .g{padding:11px 7px}
+            .fxgrid.three .g .em{font-size:19px}
+            .fxgrid.three .g .t{font-size:11.5px}
+            .fxgrid.three .g .s{font-size:10.5px}
+        }
+        @media (max-width:400px){ .fxgrid.three{grid-template-columns:repeat(3,minmax(0,1fr))} }
+
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative pb-12">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://t.me/dataist_academy" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-16 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+
+                <!-- Тег категории -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
+                    <span>Обучение</span>
+                </div>
+
+                <!-- Заголовок -->
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white max-w-4xl mx-auto">
+                    Как превратить человеческое мышление в работающего ИИ-агента
+                </h1>
+
+                <!-- Подзаголовок -->
+                <p class="text-xl md:text-2xl lg:text-3xl text-apple-textMutedLight dark:text-apple-textMutedDark font-medium tracking-tight mt-6 max-w-3xl mx-auto">
+                    Когнитивные функции, граф навыков и паттерны рассуждений агента
+                </p>
+
+                <!-- Обложка -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="cover.jpg" width="1920" height="1080" fetchpriority="high"
+                         alt="Как превратить человеческое мышление в работающего ИИ-агента — обложка"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">
+                    Экспертную интуицию нельзя автоматизировать целиком, но её можно разобрать на части. Разбираем, как решение эксперта раскладывается на когнитивные функции, почему один большой промт проигрывает набору из шести измеримых навыков, какие связи превращают набор навыков в граф и как под структуру задачи выбирают способ рассуждения агента.
+                </p>
+
+                <h2 class="article-h2 fade-in" style="margin-top:0">От решения эксперта к функции агента</h2>
+
+                <p class="article-p fade-in">
+                    <b>Не пытайтесь автоматизировать эксперта целиком. Выделяйте отдельные функции его мышления.</b>
+                </p>
+
+                <p class="article-p fade-in">
+                    Здесь методология делает главный переход. Начинали с бизнеса, в нём отыскали процессы, в процессах — отдельные операции, а в операциях — развилки, где выбирается маршрут. Теперь решение эксперта предстоит перевести в форму, которую агент способен исполнить.
+                </p>
+
+                <!-- ИНФОГРАФИКА 1: пять уровней, по которым спускается разбор -->
+                <div class="figx fade-in" role="img" aria-label="Пять уровней, по которым спускается разбор. Бизнес — с него начинают, здесь живут цель и деньги. Процесс — устойчивая последовательность работы, у неё есть вход и выход. Операция — отдельный шаг внутри процесса, у него есть исполнитель. Решение — точка, где процесс выбирает маршрут. Функция — то, во что решение превращается, чтобы его мог исполнить агент. Разбор идёт сверху вниз и на каждом уровне сужается">
+                    <div class="fxhd">Пять уровней разбора: куда мы спустились</div>
+                    <div class="fxsteps five">
+                        <div class="fxstep">
+                            <div class="em">🏢</div>
+                            <div class="dotrow"><div class="dot">1</div></div>
+                            <div class="lb">Бизнес</div>
+                            <div class="sub">здесь живут цель и деньги</div>
+                        </div>
+                        <div class="fxstep">
+                            <div class="em">🔄</div>
+                            <div class="dotrow"><div class="dot">2</div></div>
+                            <div class="lb">Процесс</div>
+                            <div class="sub">у него есть вход и выход</div>
+                        </div>
+                        <div class="fxstep">
+                            <div class="em">⚙️</div>
+                            <div class="dotrow"><div class="dot">3</div></div>
+                            <div class="lb">Операция</div>
+                            <div class="sub">отдельный шаг с исполнителем</div>
+                        </div>
+                        <div class="fxstep">
+                            <div class="em">🧭</div>
+                            <div class="dotrow"><div class="dot">4</div></div>
+                            <div class="lb">Решение</div>
+                            <div class="sub">точка, где выбирается маршрут</div>
+                        </div>
+                        <div class="fxstep hot">
+                            <div class="em">🧩</div>
+                            <div class="dotrow"><div class="dot">5</div></div>
+                            <div class="lb">Функция</div>
+                            <div class="sub">то, что уже способен исполнить агент</div>
+                        </div>
+                    </div>
+                    <div class="cap">Ниже пятого уровня спускаться незачем — <b>здесь заканчивается бизнес-анализ и начинается проектирование агента</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    В ответ на просьбу описать критерии эксперты часто говорят одно и то же: решение принимается по опыту, тут просто чувствуешь. Но за этим «чувствуешь» почти всегда стоят четыре различимых элемента. <b>Вход</b> — данные, которые получает система. <b>Логика</b> — критерии, правила, модели или эвристики, на которых держится выбор. <b>Выход</b> — результат, который должен появиться. <b>Метрика качества</b> — способ понять, что функция отработала хорошо.
+                </p>
+
+                <p class="article-p fade-in">
+                    Проще всего это видно на конкретной операции. Возьмём решение «принять или отклонить заявку» и разложим его по тем же четырём элементам.
+                </p>
+
+                <!-- ИНФОГРАФИКА 2: разбор решения «принять или отклонить заявку» -->
+                <div class="figx fade-in" role="img" aria-label="Разбор решения принять или отклонить заявку по четырём элементам. Вход — заявка и прошлые обращения клиента, то есть всё, что система получает до принятия решения. Логика — правила и признаки риска, то есть по чему именно выбирается ответ. Выход — решение и причина, по которой оно принято, потому что решение без причины нельзя ни проверить, ни оспорить. Метрика качества — точность, скорость и сколько случаев ушло в спорные, то есть по чему видно, что функция работает хорошо">
+                    <div class="fxhd">Одна операция, разложенная на четыре элемента</div>
+                    <div class="fxown units">
+                        <div class="hdr"><span>Элемент</span><span>«Принять или отклонить заявку»</span></div>
+                        <div class="row">
+                            <span class="st">📥 Что на входе</span>
+                            <span class="who ai" data-lb="в примере">Заявка и прошлые обращения клиента</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">⚙️ Логика</span>
+                            <span class="who ai" data-lb="в примере">Правила и признаки риска</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">🏁 Выход</span>
+                            <span class="who ai" data-lb="в примере">Решение и причина, по которой оно принято</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">📊 Метрика качества</span>
+                            <span class="who ai" data-lb="в примере">Точность, скорость и сколько случаев ушло в спорные</span>
+                        </div>
+                    </div>
+                    <div class="cap">Заполненные четыре строки — это уже техническое задание: <b>такую функцию можно спроектировать, протестировать и улучшить</b></div>
+                </div>
+
+                <h2 class="article-h2 fade-in">Агент — набор навыков, а не один промт</h2>
+
+                <p class="article-p fade-in">
+                    <b>Интеллект агента проектируют как набор функций, а не как одну большую инструкцию.</b>
+                </p>
+
+                <p class="article-p fade-in">
+                    Разобранные функции превращаются в отдельные измеримые навыки. Первый разбирает входящую заявку. Второй ищет в данных пропуски и противоречия. Третий относит кейс к категории. Четвёртый взвешивает риск. Пятый готовит текст ответа. Шестой отвечает на вопрос, звать ли человека.
+                </p>
+
+                <!-- ИНФОГРАФИКА 3: шесть навыков вместо одного промта -->
+                <div class="figx fade-in" role="img" aria-label="Шесть навыков, на которые раскладывается работа агента с обращением. Анализ заявки — понять, о чём вообще речь. Проверка данных — найти пропуски и противоречия. Классификация — отнести кейс к категории. Оценка риска — понять, чем грозит ошибка. Черновик ответа — подготовить текст для человека или клиента. Решение об эскалации — понять, справится ли агент сам. Каждый навык живёт отдельно, поэтому его можно отдельно измерять и улучшать">
+                    <div class="fxhd">Шесть навыков одного агента</div>
+                    <div class="fxgrid three">
+                        <div class="g">
+                            <span class="em">📨</span>
+                            <span class="t">Анализ заявки</span>
+                            <span class="s">понять, о чём речь</span>
+                        </div>
+                        <div class="g">
+                            <span class="em">🔎</span>
+                            <span class="t">Проверка данных</span>
+                            <span class="s">найти пропуски и противоречия</span>
+                        </div>
+                        <div class="g">
+                            <span class="em">🏷️</span>
+                            <span class="t">Классифи&shy;кация</span>
+                            <span class="s">отнести кейс к категории</span>
+                        </div>
+                        <div class="g">
+                            <span class="em">⚠️</span>
+                            <span class="t">Оценка риска</span>
+                            <span class="s">понять, чем грозит ошибка</span>
+                        </div>
+                        <div class="g">
+                            <span class="em">✍️</span>
+                            <span class="t">Черновик ответа</span>
+                            <span class="s">подготовить текст</span>
+                        </div>
+                        <div class="g hot">
+                            <span class="em">🙋</span>
+                            <span class="t">Нужна ли эскалация</span>
+                            <span class="s">справится ли агент сам</span>
+                        </div>
+                    </div>
+                    <div class="cap">Шесть управляемых навыков вместо одной инструкции на много страниц — <b>и каждый из них можно измерить по отдельности</b></div>
+                </div>
+
+                <!-- ИНФОГРАФИКА 4: чем набор навыков отличается от одного промта -->
+                <div class="figx fade-in" role="img" aria-label="Чем один большой промт отличается от набора навыков. Один промт: качество измеряется целиком, поэтому непонятно, какая именно часть просела; правка ради одного случая ломает соседние; тестировать можно только весь ответ; когда инструкция растёт, поведение агента становится всё менее предсказуемым. Набор навыков: у каждого навыка своя метрика и свой тест; правка ограничена одним навыком; сбой локализуется до конкретной функции; наблюдать можно за каждым узлом отдельно">
+                    <div class="fxhd">Одна инструкция против набора функций</div>
+                    <div class="vsx" style="margin:0">
+                        <div class="col">
+                            <div class="hd">📜 Один большой промт · <b>цена</b></div>
+                            <p class="tx">Качество меряется целиком, поэтому непонятно, какая именно часть просела. Правка ради одного случая ломает соседние.</p>
+                            <p class="tx">Чем длиннее инструкция, тем менее предсказуемо поведение агента.</p>
+                        </div>
+                        <div class="col">
+                            <div class="hd">🧩 Набор навыков · <b>выгода</b></div>
+                            <p class="tx">У каждого навыка своя метрика и свой тест. Правка ограничена одним навыком и не задевает остальные.</p>
+                            <p class="tx">Сбой локализуется до конкретной функции, а за каждым узлом можно наблюдать отдельно.</p>
+                        </div>
+                    </div>
+                    <div class="cap">Управляемым агента делает именно разбиение на части — <b>без него улучшение превращается в бесконечную правку одного текста</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    Чтобы навык можно было передать в разработку, у него заполняют паспорт из пяти полей. Последнее поле важнее, чем кажется: <b>если навык ничего не оставляет после себя, его результат негде проверить</b>.
+                </p>
+
+                <!-- ИНФОГРАФИКА 5: паспорт одного навыка -->
+                <div class="figx fade-in" role="img" aria-label="Паспорт одного навыка на примере проверки данных заявки. Вход — поля пришедшей заявки. Действие — валидация полей. Выход — статус и перечень ошибок. Метрика — доля пропущенных ошибок. Артефакт — запись в CRM после обновления. Пять заполненных полей превращают навык в задачу, которую можно передать разработчику">
+                    <div class="fxhd">Паспорт навыка «проверка данных»</div>
+                    <div class="fxown units">
+                        <div class="hdr"><span>Поле паспорта</span><span>Чем заполняется в примере</span></div>
+                        <div class="row">
+                            <span class="st">📥 Вход</span>
+                            <span class="who ai" data-lb="пример">Поля пришедшей заявки</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">⚙️ Действие</span>
+                            <span class="who ai" data-lb="пример">Валидация полей</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">🏁 Выход</span>
+                            <span class="who ai" data-lb="пример">Статус и перечень ошибок</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">📊 Метрика</span>
+                            <span class="who ai" data-lb="пример">Доля пропущенных ошибок</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">📄 Артефакт</span>
+                            <span class="who ai" data-lb="пример">Запись в CRM после обновления</span>
+                        </div>
+                    </div>
+                    <div class="cap">Пять заполненных строк — <b>и навык уже можно отдать в разработку, не объясняя ничего на словах</b></div>
+                </div>
+
+                <h2 class="article-h2 fade-in">Где искать ошибку, когда агент ошибся</h2>
+
+                <p class="article-p fade-in">
+                    Модульность окупается в первый же разбор сбоя. Когда агент выдал неверный результат, вопрос звучит не «как переписать промт», а «какой именно навык отработал не так». Вариантов обычно четыре, и они проверяются по очереди.
+                </p>
+
+                <!-- ИНФОГРАФИКА 6: четыре места, где ломается ответ агента -->
+                <div class="figx fade-in" role="img" aria-label="Четыре места, где может сломаться ответ агента, и что чинят в каждом. Извлечение данных — агент не увидел нужное поле, чинят разбор входа. Классификация — кейс отнесён не к той категории, чинят критерии и примеры. Маршрутизация — кейс ушёл не по той ветке, чинят условия перехода. Генерация — данные верные, а текст плохой, чинят формулировку и формат ответа. Проверять стоит по порядку: ошибка на раннем шаге делает бессмысленными все последующие">
+                    <div class="fxhd">Четыре места сбоя и что чинят в каждом</div>
+                    <div class="fxsteps four">
+                        <div class="fxstep">
+                            <div class="em">📥</div>
+                            <div class="dotrow"><div class="dot">1</div></div>
+                            <div class="lb">Извлечение</div>
+                            <div class="sub">не увидел нужное поле — чиним разбор входа</div>
+                        </div>
+                        <div class="fxstep">
+                            <div class="em">🏷️</div>
+                            <div class="dotrow"><div class="dot">2</div></div>
+                            <div class="lb">Классификация</div>
+                            <div class="sub">не та категория — чиним критерии и примеры</div>
+                        </div>
+                        <div class="fxstep">
+                            <div class="em">🔀</div>
+                            <div class="dotrow"><div class="dot">3</div></div>
+                            <div class="lb">Маршрутизация</div>
+                            <div class="sub">не та ветка — чиним условия перехода</div>
+                        </div>
+                        <div class="fxstep hot">
+                            <div class="em">✍️</div>
+                            <div class="dotrow"><div class="dot">4</div></div>
+                            <div class="lb">Генерация</div>
+                            <div class="sub">данные верные, текст плохой — чиним формат</div>
+                        </div>
+                    </div>
+                    <div class="cap">Проверять стоит по порядку: <b>ошибка на раннем шаге обесценивает всё, что идёт после неё</b></div>
+                </div>
+
+                <h2 class="article-h2 fade-in">Как навыки связываются в граф</h2>
+
+                <p class="article-p fade-in">
+                    <b>Отдельные навыки агентом ещё не становятся. Всё решает то, как они соединены.</b>
+                </p>
+
+                <p class="article-p fade-in">
+                    Видов связей три, и каждый нужен ради своего. <b>Последовательные</b> выстраивают конвейер: разбор заявки, затем проверка, затем категория, затем решение и текст ответа — то, что вернул один навык, поступает на вход соседнему. <b>Параллельные</b> запускают несколько навыков разом: как только кейс пришёл, система одновременно смотрит полноту данных, взвешивает риск и поднимает историю клиента. <b>Обратные</b> заносят в процесс то, что выяснилось позже: человек поправил результат, клиент дослал недостающее, сработала проверка качества — и нужный участок стартует заново.
+                </p>
+
+                <!-- ИНФОГРАФИКА 7: три вида связей и что каждая даёт -->
+                <div class="figx fade-in" role="img" aria-label="Три вида связей между навыками и что даёт каждый. Последовательные связи выстраивают конвейер, где выход предыдущего навыка становится входом следующего; они дают предсказуемость и понятный порядок разбора сбоя. Параллельные связи запускают несколько навыков одновременно; они дают скорость и сокращают задержку в обработке кейса. Обратные связи возвращают в процесс то, что стало известно позже; они дают улучшение, потому что каждая правка становится сигналом для системы">
+                    <div class="fxhd">Три вида связей и что делает каждая</div>
+                    <div class="fxzones">
+                        <div class="z">
+                            <span class="em">➡️</span>
+                            <span class="k">последовательные</span>
+                            <span class="t">Порядок</span>
+                            <span class="s">Выход предыдущего навыка становится входом следующего</span>
+                            <span class="goal"><b>Предсказуемость</b>: понятно, где разбирать сбой</span>
+                        </div>
+                        <div class="z">
+                            <span class="em">⚡</span>
+                            <span class="k">параллельные</span>
+                            <span class="t">Скорость</span>
+                            <span class="s">Несколько проверок идут одновременно, а не по очереди</span>
+                            <span class="goal"><b>Время</b>: задержка в обработке кейса падает</span>
+                        </div>
+                        <div class="z hot">
+                            <span class="badge">чаще всего забывают</span>
+                            <span class="em">🔄</span>
+                            <span class="k">обратные</span>
+                            <span class="t">Улучшение</span>
+                            <span class="s">Позднее знание возвращается и перезапускает участок</span>
+                            <span class="goal"><b>Развитие</b>: каждая правка становится сигналом</span>
+                        </div>
+                    </div>
+                    <div class="cap">Первые два вида проектируют почти всегда, третий — редко. <b>Без обратных связей агент не улучшается, а просто работает</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    Сигнал обратной связи не пропадает и не остаётся в переписке — он идёт в одно из четырёх мест. Куда именно, решают заранее: от этого зависит, станет ли поправка разовой или изменит поведение агента навсегда.
+                </p>
+
+                <!-- ИНФОГРАФИКА 8: куда уходит сигнал обратной связи -->
+                <div class="figx fade-in" role="img" aria-label="Четыре места, куда уходит сигнал обратной связи, и что меняется в каждом. Правила — меняется условие перехода, срабатывает сразу и для всех кейсов. Промт — меняется формулировка задачи навыка, действует с ближайшего запуска. Память — пополняется база примеров и исключений, влияет на похожие случаи. Модель — обновление уходит в переобучение, самый долгий и самый дорогой путь. Чем ниже по списку, тем медленнее и дороже изменение">
+                    <div class="fxhd">Куда уходит сигнал обратной связи</div>
+                    <div class="fxgrid">
+                        <div class="g">
+                            <span class="em">📐</span>
+                            <span class="t">Правило</span>
+                            <span class="s">меняется условие перехода — <b>сразу и для всех</b></span>
+                        </div>
+                        <div class="g">
+                            <span class="em">📝</span>
+                            <span class="t">Промт</span>
+                            <span class="s">меняется постановка задачи навыка</span>
+                        </div>
+                        <div class="g">
+                            <span class="em">🗄️</span>
+                            <span class="t">Память</span>
+                            <span class="s">пополняется база примеров и исключений</span>
+                        </div>
+                        <div class="g hot">
+                            <span class="em">🧠</span>
+                            <span class="t">Модель</span>
+                            <span class="s">уходит в переобучение — <b>дольше и дороже всего</b></span>
+                        </div>
+                    </div>
+                    <div class="cap">Одну и ту же поправку можно внести в любое из четырёх мест — <b>и это решение о стоимости, а не о технике</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    Так и складывается <b>граф навыков</b> — функциональное устройство агента. На нём читаются модули, маршруты данных, развилки, проверки и переходы к человеку. Когда подобных графов в компании накапливается много, её саму уместно рассматривать как сеть когнитивных функций — человеческих и машинных вперемешку.
+                </p>
+
+                <h2 class="article-h2 fade-in">Как агент рассуждает внутри навыка</h2>
+
+                <p class="article-p fade-in">
+                    <b>Разным задачам нужны разные способы рассуждения.</b>
+                </p>
+
+                <p class="article-p fade-in">
+                    Простой работе с очевидным ответом хватает прямого ответа. Если решение нужно объяснить, его раскладывают на шаги. Если важно рассмотреть альтернативы — строят несколько веток, оценивают их и при необходимости возвращаются назад. А когда промежуточных выводов много и их приходится объединять между собой, ветки сходятся в граф с обратными связями.
+                </p>
+
+                <!-- ИНФОГРАФИКА 9: четыре способа рассуждения -->
+                <div class="figx fade-in" role="img" aria-label="Четыре способа рассуждения агента и когда каждый уместен. Прямой ответ — вопрос сразу переходит в ответ, годится для простой работы с очевидным решением. Пошаговая цепочка, известная как Chain-of-Thought, — задача разбивается на шаги и приводит к выводу, нужна там, где решение должно быть объяснимым. Дерево размышлений, оно же Tree of Thoughts, — строятся альтернативные ветки, оцениваются, и при неудаче можно откатиться назад. Граф размышлений, он же Graph of Thoughts, — ветки объединяются между собой и появляются обратные связи, нужен там, где промежуточных выводов много">
+                    <div class="fxhd">Четыре способа рассуждения</div>
+                    <div class="fxgrid">
+                        <div class="g">
+                            <span class="em">➡️</span>
+                            <span class="t">Прямой ответ</span>
+                            <span class="s">вопрос — ответ: <b>решение очевидно</b></span>
+                        </div>
+                        <div class="g">
+                            <span class="em">🪜</span>
+                            <span class="t">Пошаговая цепочка</span>
+                            <span class="s">известна как <b>Chain-of-Thought</b>: решение надо объяснить</span>
+                        </div>
+                        <div class="g">
+                            <span class="em">🌳</span>
+                            <span class="t">Дерево размышлений</span>
+                            <span class="s">оно же <b>Tree of Thoughts</b>: есть альтернативы и откат</span>
+                        </div>
+                        <div class="g hot">
+                            <span class="em">🕸️</span>
+                            <span class="t">Граф размышлений</span>
+                            <span class="s">он же <b>Graph of Thoughts</b>: ветки нужно объединять</span>
+                        </div>
+                    </div>
+                    <div class="cap">Это разные топологии рассуждения, а не уровни зрелости — <b>структура решения должна повторять структуру задачи</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    Соблазн взять схему посложнее велик, но каждый лишний виток стоит времени ответа и денег. Поэтому за усложнение берутся ровно тогда, когда оно окупается заметной прибавкой хотя бы по одному из трёх направлений.
+                </p>
+
+                <!-- ИНФОГРАФИКА 10: чем оправдывается усложнение схемы -->
+                <div class="figx fade-in" role="img" aria-label="Три направления, по которым проверяют, оправдано ли усложнение схемы рассуждения. Качество — ответы стали точнее на тех же кейсах. Надёжность — реже случаются срывы и меньше разброс между запусками. Стоимость — кейс в итоге обходится дешевле, даже если сам запрос подорожал. Если выигрыша нет ни по одному направлению, более простая схема лучше">
+                    <div class="fxhd">Чем оправдывается более сложная схема</div>
+                    <div class="fxsteps three">
+                        <div class="fxstep">
+                            <div class="em">🎯</div>
+                            <div class="dotrow"><div class="dot">1</div></div>
+                            <div class="lb">Качество</div>
+                            <div class="sub">ответы точнее на тех же кейсах</div>
+                        </div>
+                        <div class="fxstep">
+                            <div class="em">🛡️</div>
+                            <div class="dotrow"><div class="dot">2</div></div>
+                            <div class="lb">Надёжность</div>
+                            <div class="sub">меньше срывов и разброса между запусками</div>
+                        </div>
+                        <div class="fxstep hot">
+                            <div class="em">💸</div>
+                            <div class="dotrow"><div class="dot">3</div></div>
+                            <div class="lb">Стоимость</div>
+                            <div class="sub">кейс в итоге обходится дешевле</div>
+                        </div>
+                    </div>
+                    <div class="fxkey"><span>Если выигрыша нет ни по одному направлению,<br>правильный выбор — <u>схема попроще</u></span></div>
+                    <div class="cap">Сложность схемы — это расход, который нужно окупить, <b>а не признак зрелости проекта</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    В сумме архитектура агента отвечает всего на два вопроса. И пока на оба нет ответа, обсуждать модель рано.
+                </p>
+
+                <!-- ИНФОГРАФИКА 11: два вопроса архитектуры агента -->
+                <div class="figx fade-in" role="img" aria-label="Два вопроса, на которые отвечает архитектура агента. Первый: какие навыки ему нужны и как они связаны между собой — это граф навыков, внешнее устройство агента. Второй: как организовано решение внутри каждого навыка — это способ рассуждения, внутреннее устройство. Ответ на первый вопрос определяет, что агент умеет; ответ на второй — насколько надёжно он это делает">
+                    <div class="fxhd">Два вопроса архитектуры</div>
+                    <div class="fxbranch">
+                        <div class="b">
+                            <span class="em">🗺️</span>
+                            <span class="t">Какие нужны навыки</span>
+                            <span class="s">и как они связаны между собой · это граф навыков, внешнее устройство агента · ответ определяет, <b>что агент умеет</b></span>
+                        </div>
+                        <div class="b hot">
+                            <span class="em">🧠</span>
+                            <span class="t">Как устроено решение внутри навыка</span>
+                            <span class="s">какой способ рассуждения выбран · это внутреннее устройство · ответ определяет, <b>насколько надёжно он это делает</b></span>
+                        </div>
+                    </div>
+                    <div class="cap">На этом бизнес-анализ заканчивается — <b>дальше начинается проектирование машинного интеллекта</b></div>
+                </div>
+
+                <h2 class="article-h2 fade-in">Что важно запомнить</h2>
+
+                <div class="fade-in">
+                    <div class="list-card">
+                        <div class="emoji-chip">🧩</div>
+                        <p class="card-sub"><b class="card-title">Эксперта не автоматизируют целиком</b><br>Разбирают отдельные решения: вход, логика, выход и метрика качества — четыре элемента вместо слова «интуиция».</p>
+                    </div>
+                    <div class="list-card">
+                        <div class="emoji-chip">📜</div>
+                        <p class="card-sub"><b class="card-title">Один большой промт неуправляем</b><br>Метрика одна на всё, поэтому виновника не найти, а любое уточнение задевает чужие ситуации.</p>
+                    </div>
+                    <div class="list-card">
+                        <div class="emoji-chip">📄</div>
+                        <p class="card-sub"><b class="card-title">У навыка есть паспорт</b><br>Вход, действие, выход, метрика и артефакт. Если после навыка ничего не остаётся, его результат негде проверить.</p>
+                    </div>
+                    <div class="list-card">
+                        <div class="emoji-chip">🔄</div>
+                        <p class="card-sub"><b class="card-title">Связи важнее самих навыков</b><br>Последовательные дают предсказуемость, параллельные — скорость, обратные — развитие. Третьи проектируют реже всего.</p>
+                    </div>
+                    <div class="list-card">
+                        <div class="emoji-chip">🌳</div>
+                        <p class="card-sub"><b class="card-title">Способ рассуждения выбирают под задачу</b><br>Прямой ответ, цепочка, дерево или граф — топологию выбирают по тому, как устроена сама задача.</p>
+                    </div>
+                    <div class="list-card">
+                        <div class="emoji-chip">💸</div>
+                        <p class="card-sub"><b class="card-title">Усложнение нужно окупить</b><br>За тяжёлую схему берутся, только если она прибавляет по качеству, по надёжности или по цене кейса.</p>
+                    </div>
+                </div>
+
+                <!-- Финальная цитата -->
+                <div class="grad-card fade-in" style="margin:2.6rem 0; padding:34px 30px">
+                    <div style="font-size:34px; line-height:1; margin-bottom:14px">🧩</div>
+                    <div class="text-black dark:text-white" style="font-size:clamp(19px,3.4vw,26px); font-weight:800; line-height:1.4; letter-spacing:-.01em">
+                        «Он просто чувствует» — это не описание работы.<br>
+                        <span class="grad-text">Описание начинается с входа, логики, выхода и метрики.</span>
+                    </div>
+                </div>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mb-12 group">
+
+                    <!-- Декоративные элементы (свет/тень в стиле хай-тек) -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="zap" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                Дальше — практика
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Эта статья и её продолжение основаны на <a href="https://andre.technology/automation/2" target="_blank" rel="noopener" class="underline decoration-black/25 dark:decoration-white/30 underline-offset-4 hover:decoration-black dark:hover:decoration-white transition-colors">второй лекции курса по автоматизации бизнес-процессов с ИИ-агентами</a>.
+                            </p>
+                            <p class="font-sans text-base md:text-lg leading-relaxed text-black/65 dark:text-white/65">
+                                В следующей статье соберём всё вместе: десять артефактов зрелого проекта, метрики эффекта, шесть причин провала и методологию целиком.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA (Кнопка) -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                От диагностики бизнеса<br>— до работающего агента.
+                            </p>
+
+                            <a href="https://andre.technology/automation/" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">Пройти курс</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            // Перерисовка иконок при смене темы, если требуется
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.05
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach(el => observer.observe(el));
+        });
+    </script>
+<script defer src="https://dataist.ai/static/js/analytics.js?v=1786668480"></script></body>
+</html>
