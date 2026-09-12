@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ЭТАЛОН · Формат 3 — вертикаль «инфографика + субтитры» (тёмный) 1080×1920</title>
+<style>
+/* ============================================================================
+   ЭТАЛОН ФОРМАТА 3 («Академия-вертикаль»): вертикаль 1080×1920, ТЁМНЫЙ фон.
+   Сверху — компактная инфографика (иконка + крупная цифра + подпись),
+   короткая палочка-разделитель, снизу — «субтитры» = озвучка кадра
+   (то, что произносится за кадром), с караоке-подсветкой слов по очереди.
+   Бренд «Академия Датаиста». Staged-появление + непрерывная «жизнь» = луп.
+   ============================================================================ */
+@font-face{font-family:'JetBrains Mono';font-weight:400;src:url('../../assets/fonts/JetBrainsMono-400.ttf') format('truetype')}
+@font-face{font-family:'JetBrains Mono';font-weight:500;src:url('../../assets/fonts/JetBrainsMono-500.ttf') format('truetype')}
+@font-face{font-family:'JetBrains Mono';font-weight:700;src:url('../../assets/fonts/JetBrainsMono-700.ttf') format('truetype')}
+@font-face{font-family:'JetBrains Mono';font-weight:800;src:url('../../assets/fonts/JetBrainsMono-800.ttf') format('truetype')}
+
+:root{--flame:#F97316;--plum:#8854F3;--scale:1;
+  --mono:'JetBrains Mono','SFMono-Regular',ui-monospace,Menlo,monospace}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:#111114;color:#F4F4F5;font-family:var(--mono);-webkit-font-smoothing:antialiased;overflow-x:hidden}
+
+#deck{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden}
+.card{position:absolute;width:1080px;height:1920px;overflow:hidden;background:#0A0A12;border-radius:10px;
+  transform:scale(var(--scale));opacity:0;visibility:hidden;transition:opacity .4s;display:flex;flex-direction:column}
+.card.active{opacity:1;visibility:visible}
+body.export #deck{position:static;display:block;height:auto;padding:24px 0}
+body.export .card{position:relative;opacity:1;visibility:visible;transform:none;margin:0 auto 30px;box-shadow:0 18px 60px rgba(0,0,0,.5)}
+.grain{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.06;mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px}
+.ico{fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- шапка: логотип + бренд ---------- */
+.top-bar{position:relative;z-index:5;flex:0 0 auto;height:150px}
+.logo{position:absolute;left:76px;top:60px;height:44px;width:auto}
+.brand{position:absolute;left:0;right:0;top:70px;text-align:center;font-size:23px;font-weight:700;
+  letter-spacing:.30em;text-transform:uppercase;color:rgba(255,255,255,.42)}
+
+/* ---------- ВЕРХ: инфографика ---------- */
+.hero{position:relative;z-index:4;flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:40px;padding:0 90px}
+.glow-bg{position:absolute;left:50%;top:38%;width:760px;height:760px;transform:translate(-50%,-50%);z-index:-1;pointer-events:none;
+  background:radial-gradient(circle,rgba(136,84,243,.22),rgba(249,115,22,.05) 45%,transparent 66%);
+  animation:auraf 5s ease-in-out infinite}
+.bulb{color:var(--flame);animation:bulbglow 2.8s ease-in-out infinite}
+.bulb svg{width:104px;height:104px}
+/* градиент точно по ширине текста → и в статике чёткий оранжевый→фиолетовый;
+   «жизнь» — мягкая пульсация двухцветного свечения, а не сдвиг фона */
+.num{font-size:172px;font-weight:800;letter-spacing:-.03em;line-height:1;white-space:nowrap;
+  background:linear-gradient(90deg,var(--flame),var(--plum));
+  -webkit-background-clip:text;background-clip:text;color:transparent;animation:numglow 3.2s ease-in-out infinite}
+.cap{font-size:50px;font-weight:800;letter-spacing:-.01em;color:#fff;white-space:nowrap;margin:0}
+
+/* ---------- ПАЛОЧКА-РАЗДЕЛИТЕЛЬ (короткая, по центру) ---------- */
+.dvd{width:104px;height:6px;border-radius:4px;background:linear-gradient(90deg,var(--plum),var(--flame));
+  animation:dvdpulse 3s ease-in-out infinite}
+
+/* ---------- НИЗ: субтитры (озвучка кадра, караоке по словам) ---------- */
+.subs{position:relative;z-index:4;flex:0 0 580px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  gap:150px;padding:44px 84px 0;text-align:center}
+.capt{font-size:58px;font-weight:800;line-height:1.34;letter-spacing:-.01em;max-width:900px}
+/* базовое (замороженное) состояние — читаемо (белым); подсветка «бежит» по словам */
+.capt .w{display:inline-block;color:#fff;animation:wordpop 5s ease-in-out infinite both}
+
+/* ====================== STAGED-ПОЯВЛЕНИЕ (та же система) ====================== */
+.st{animation-duration:5s;animation-iteration-count:infinite;animation-fill-mode:both;animation-timing-function:ease}
+@keyframes st1{0%,2%{opacity:0;transform:var(--hide,translateY(30px))}9%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(30px))}}
+@keyframes st2{0%,8%{opacity:0;transform:var(--hide,translateY(30px))}15%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(30px))}}
+@keyframes st3{0%,14%{opacity:0;transform:var(--hide,translateY(30px))}21%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(30px))}}
+@keyframes st4{0%,20%{opacity:0;transform:var(--hide,translateY(30px))}27%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(30px))}}
+@keyframes st5{0%,26%{opacity:0;transform:var(--hide,translateY(30px))}33%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(30px))}}
+@keyframes st6{0%,32%{opacity:0;transform:var(--hide,translateY(30px))}39%,88%{opacity:1;transform:none}96%,100%{opacity:0;transform:var(--hide,translateY(30px))}}
+.st1{animation-name:st1}.st2{animation-name:st2}.st3{animation-name:st3}
+.st4{animation-name:st4}.st5{animation-name:st5}.st6{animation-name:st6}
+
+/* «жизнь» после появления */
+@keyframes gshift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes numglow{0%,100%{filter:drop-shadow(0 0 10px rgba(249,115,22,.22)) drop-shadow(0 0 10px rgba(136,84,243,.22))}
+  50%{filter:drop-shadow(0 0 26px rgba(249,115,22,.42)) drop-shadow(0 0 26px rgba(136,84,243,.5))}}
+@keyframes auraf{0%,100%{opacity:.7;transform:translate(-50%,-50%) scale(1)}50%{opacity:1;transform:translate(-50%,-50%) scale(1.08)}}
+@keyframes bulbglow{0%,100%{filter:drop-shadow(0 0 14px rgba(249,115,22,.4))}50%{filter:drop-shadow(0 0 36px rgba(249,115,22,.85))}}
+@keyframes dvdpulse{0%,100%{box-shadow:0 0 12px 0 rgba(136,84,243,.4)}50%{box-shadow:0 0 26px 2px rgba(249,115,22,.6)}}
+/* караоке: слово «загорается» по очереди; в покое белое и читаемое */
+@keyframes wordpop{
+  0%,88%,100%{color:#fff;transform:translateY(0) scale(1);text-shadow:none}
+  6%{color:#B69CFF;transform:translateY(-6px) scale(1.09);text-shadow:0 0 24px rgba(136,84,243,.65)}
+  14%{color:#fff;transform:translateY(0) scale(1);text-shadow:none}
+}
+
+#nav{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:50;display:flex;gap:12px;
+  background:rgba(240,240,246,.14);border-radius:999px;padding:10px 16px}
+#nav button{background:rgba(255,255,255,.14);border:0;color:#fff;width:40px;height:40px;border-radius:50%;font-size:17px;cursor:pointer}
+body.export #nav{display:none}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 0 0-4 12.7c.6.5 1 1.3 1 2.1V17h6v-.2c0-.8.4-1.6 1-2.1A7 7 0 0 0 12 2z"/></symbol>
+</defs></svg>
+
+<div id="deck">
+  <section class="card active" id="card-1">
+    <div class="grain"></div>
+
+    <!-- шапка -->
+    <div class="top-bar">
+      <img class="logo" alt="AIT" src="../../assets/ait-logo.png"
+        onerror="this.onerror=null;this.src='https://raw.githubusercontent.com/andre-kuzminykh/andre-ait-page/main/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png'">
+      <div class="brand">Академия Датаиста</div>
+    </div>
+
+    <!-- ВЕРХ: инфографика (появляется по очереди) -->
+    <div class="hero">
+      <div class="glow-bg"></div>
+      <div class="st st1" style="--hide:scale(.5)"><div class="bulb"><svg class="ico"><use href="#i-bulb"/></svg></div></div>
+      <div class="st st2" style="--hide:translateY(30px) scale(.9)"><div class="num">25–51%</div></div>
+      <p class="cap st st3" style="--hide:translateY(24px)">Успех вырос во всех играх</p>
+    </div>
+
+    <!-- НИЗ: палочка-разделитель + субтитры (озвучка кадра) -->
+    <div class="subs">
+      <div class="st st4" style="--hide:scaleX(.15)"><div class="dvd"></div></div>
+      <!-- animation-delay сдвинут в окно видимости блока (st5 виден с ~33%),
+           чтобы караоке-подсветка попадала на экран, а не до появления субтитров -->
+      <div class="capt st st5" style="--hide:translateY(26px)">
+        <span class="w" style="animation-delay:1.8s">пятидесяти</span><br>
+        <span class="w" style="animation-delay:2.5s">одного</span>
+        <span class="w" style="animation-delay:3.2s">процента.</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+<nav id="nav"><button id="prev">‹</button><button id="next">›</button></nav>
+<script>
+(function(){
+  if(/[?&]export/.test(location.search)){document.body.classList.add('export');return;}
+  function fit(){var s=Math.min((innerWidth-40)/1080,(innerHeight-100)/1920,1.1);
+    document.documentElement.style.setProperty('--scale',s.toFixed(4));}
+  addEventListener('resize',fit);fit();
+})();
+</script>
+</body>
+</html>
