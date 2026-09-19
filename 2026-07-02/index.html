@@ -1,14 +1,1016 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="scroll-smooth">
 <head>
-<meta charset="UTF-8">
-<title>Путь к более общему ИИ лежит через модель мира</title>
-<link rel="canonical" href="https://dataist.ai/research/ru/put-k-bolee-obshchemu-ii-lezhit-cherez-model-mira_ru/">
-<meta name="robots" content="noindex,follow">
-<meta http-equiv="refresh" content="0; url=https://dataist.ai/research/ru/put-k-bolee-obshchemu-ii-lezhit-cherez-model-mira_ru/">
-<script>location.replace("https://dataist.ai/research/ru/put-k-bolee-obshchemu-ii-lezhit-cherez-model-mira_ru/");</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Путь к более общему ИИ лежит через модель мира</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Путь к более общему ИИ лежит через модель мира" />
+    <meta property="og:description" content="Похоже, путь к более общему ИИ лежит не в умении продолжать текст или картинку, а в попытке понять, как устроен сам мир.
+
+Авторы предлагают модель, которая учится не отдельным задачам по кускам, а общему представлению о том, что происходит вокруг и как одно состояние мира переходит в другое. Для этого ей показывают и видео, и текстовые описания событий, чтобы она училась связывать увиденное, сказанное и возможные действия. Это важно, потому что такой подход может приблизить ИИ не просто к ответам по шаблону, а к более цельному пониманию происходящего.
+
+В этом обзоре разбираем, как устроена такая модель мира, чему именно её учат и почему единое представление о мире может стать важным шагом к более общему ИИ." />
+    <meta name="description" content="Похоже, путь к более общему ИИ лежит не в умении продолжать текст или картинку, а в попытке понять, как устроен сам мир.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2026-07-02/" />
+    <link rel="canonical" href="https://dataist.ai/2026-07-02/">
+    <meta property="og:image" content="https://dataist.ai/2026-07-02/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-02/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Путь к более общему ИИ лежит через модель мира",
+    "url": "https://dataist.ai/2026-07-02/",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://dataist.ai/2026-07-02/"
+    },
+    "inLanguage": "ru",
+    "author": {
+      "@type": "Person",
+      "name": "@dataist_ai"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Dataist AI",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://dataist.ai/AIT_logo.png"
+      }
+    },
+    "description": "Похоже, путь к более общему ИИ лежит не в умении продолжать текст или картинку, а в попытке понять, как устроен сам мир.\n\nАвторы предлагают модель, которая учится не отдельным задачам по кускам, а общему представлению о том, что происходит вокруг и как одно состояние мира переходит в другое. Для этого ей показывают и видео, и текстовые описания событий, чтобы она училась связывать увиденное, сказанное и возможные действия. Это важно, потому что такой подход может приблизить ИИ не просто к ответам по шаблону, а к более цельному пониманию происходящего.\n\nВ этом обзоре разбираем, как устроена такая модель мира, чему именно её учат и почему единое представление о мире может стать важным шагом к более общему ИИ.",
+    "image": "https://dataist.ai/2026-07-02/cover.png",
+    "datePublished": "2026-07-02",
+    "citation": {
+      "@type": "ScholarlyArticle",
+      "name": "Orca: The World is in Your Mind",
+      "identifier": "arXiv:2606.30534",
+      "url": "https://arxiv.org/abs/2606.30534"
+    },
+    "isBasedOn": "https://arxiv.org/abs/2606.30534"
+  }
+</script>
 </head>
-<body>
-<p>Разбор переехал: <a href="https://dataist.ai/research/ru/put-k-bolee-obshchemu-ii-lezhit-cherez-model-mira_ru/">https://dataist.ai/research/ru/put-k-bolee-obshchemu-ii-lezhit-cherez-model-mira_ru/</a></p>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-07-02</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Путь к более общему ИИ лежит через модель мира
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-02/cover.png"
+                         alt="Обложка: Путь к более общему ИИ лежит через модель мира"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Когда модели перестанут просто болтать и начнут <strong>понимать, что происходит в мире</strong></h2>
+<p>Последние пару лет ИИ учился очень разным фокусам. Одни модели хорошо продолжают текст. Другие дорисовывают картинку. Третьи пытаются управлять роботом. Но почти все они решают <strong>частные задачи</strong>: предсказать следующий токен, следующий кадр или следующее действие.</p>
+<p>Авторы Orca предлагают посмотреть на проблему иначе. А что, если модели нужно учиться не “следующему слову” и не “следующему пикселю”, а <strong>следующему состоянию мира</strong>? То есть не просто угадать форму ответа, а внутренне понять: что изменится в сцене, если человек что-то сделал, объект сдвинулся, чашка упала, робот промахнулся и попробовал снова.</p>
+<p>Звучит амбициозно. И местами даже слишком. Но работа интересна не громкими обещаниями, а тем, что в ней есть внятная инженерная ставка: собрать общую <strong>модель мира</strong>, обучить её на видео, событиях и вопросах по видео, а потом проверить, можно ли из одной и той же внутренней репрезентации “считывать” текст, изображения и действия робота.</p>
+<p>Если коротко: идея сильная, результаты местами реально впечатляют, особенно для роботов. Но это пока именно <strong>ранний шаг</strong>, а не готовая универсальная машина понимания мира.</p>
+</section>
+<section>
+<h2>В чём главная идея Orca</h2>
+<p>Вместо того чтобы строить отдельные модели под текст, видео и роботов, Orca пытается выучить единое <strong>скрытое состояние</strong> мира. Это внутреннее представление должно отвечать на простой вопрос: “что сейчас происходит и как это может измениться дальше?”</p>
+<p>Авторы делают ставку на два режима обучения.</p>
+<p>Первый — <strong>“бессознательное” обучение</strong>. Модель смотрит на непрерывные видео и учится предсказывать, каким будет следующее состояние сцены. Без явных подписей. Просто из потока наблюдений. Так она должна схватывать плотную, естественную динамику: движение объектов, столкновения, перекрытия, инерцию, бытовую физику.</p>
+<p>Второй — <strong>“сознательное” обучение</strong>. Здесь к видео добавляют язык: описания событий, инструкции, вопросы и ответы. Модель учится не просто угадывать ближайшее будущее, а понимать <strong>осмысленные переходы</strong>: “до” и “после” действия, цель, намерение, причинную связь.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-02/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Общая схема Orca: один кодировщик учит скрытое состояние мира, а отдельные лёгкие декодеры превращают его в текст, изображение или действие.</p>
+</div></figure>
+<p>Архитектурно всё устроено довольно аккуратно. Есть кодировщик и декодер. Кодировщик учит это единое внутреннее пространство. Дальше его <strong>замораживают</strong>, а поверх обучают лёгкие модули чтения в нужную модальность: текст, картинку или управление роботом. Это важный момент. Он нужен, чтобы показать: дело не в том, что под каждую задачу отдельно дообучили большую модель. Дело именно в качестве общего скрытого состояния.</p>
+<p>Почему это важно? Потому что в идеале такая схема ближе к тому, как мы сами думаем о мире. У нас нет отдельного “мозга для текста” и отдельного “мозга для захвата ложки”. Есть общая картина происходящего, из которой уже рождаются слова, ожидания и действия.</p>
+</section>
+<section>
+<h2>Как Orca обучали</h2>
+<p>С данными авторы размахнулись широко. Они собрали набор для “обучения миру”, который включает:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">125 тысяч часов видео,</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">160 миллионов аннотаций событий,</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">11,5 миллиона примеров вопросов и ответов по видео.</span></div>
+<p>Правда, в этой версии использовали только десятую часть видеоданных. Уже само это говорит, что авторы думают о проекте как о долгой линии, а не о разовом эксперименте.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-02/fig_2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Какие данные использует Orca: непрерывное видео для естественных переходов, события с текстом для осмысленных изменений и VQA для семантики и здравого смысла.</p>
+</div></figure>
+<p>Предобучение строится на трёх задачах.</p>
+<p>Первая — предсказать следующее состояние по текущему кадру. Это и есть “бессознательная” часть.</p>
+<p>Вторая — предсказать состояние, заданное через событие или инструкцию. Например, модель видит сцену и текстовое условие, которое указывает на предыдущее или следующее значимое событие. Это уже “сознательная” часть.</p>
+<p>Третья — отвечать на вопросы по видео. Это нужно, чтобы в скрытое состояние лучше встраивались язык, семантика и бытовой здравый смысл.</p>
+<p>Любопытно, что Orca не учат восстанавливать пиксели напрямую. Она предсказывает представление следующего состояния в пространстве визуального кодировщика. То есть ставка не на красивую картинку как таковую, а на <strong>смысловую динамику сцены</strong>.</p>
+<p>После этого кодировщик замораживают. И отдельно обучают три выхода:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">в текст — через уже имеющуюся языковую голову;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">в изображение — через лёгкий адаптер и замороженную генеративную модель изображений;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">в действия — через отдельный модуль для управления роботом.</span></div>
+<p>Это хороший дизайн для проверки гипотезы. Если при замороженном “ядре” качество в трёх разных задачах растёт, значит внутренняя репрезентация и правда несёт полезную информацию о мире.</p>
+</section>
+<section>
+<h2>Что получилось: главный тезис работы подтверждается</h2>
+<p>Первая важная проверка — масштабируемость. Если идея правильная, потери при обучении должны снижаться с ростом модели и данных. Так и происходит.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-02/fig_5.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Чем больше модель и данных, тем лучше работают декодеры: улучшаются текст, предсказание изображений и действия робота.</p>
+</div></figure>
+<p>Но гораздо интереснее вторая проверка: помогает ли более сильная модель мира в прикладных задачах? Здесь ответ тоже положительный. По мере роста предобучения улучшаются все три считывания — текст, изображение и действия.</p>
+<p>Это, пожалуй, самый важный результат статьи. Он показывает, что авторы не просто обучили очередную видеомодель, а действительно получили <strong>общее внутреннее представление</strong>, которое переносится между задачами.</p>
+<p>Особенно интересно, что выигрыш есть и в робототехнике, хотя на этапе предобучения модель не видела размеченных действий. Для области, где данных с реальных роботов всегда мало и они дорогие, это очень сильный сигнал: возможно, часть навыков можно выращивать из обычного видео, если модель умеет понимать переходы состояний.</p>
+</section>
+<section>
+<h2>Текст: Orca лучше понимает изменения, причинность и движение</h2>
+<p>В текстовых тестах Orca проверяли на четырёх бенчмарках, связанных с пониманием видео, временной динамикой, пространственными отношениями и причинными вопросами.</p>
+<p>Результат у Orca-4B сильный: в среднем она обходит сопоставимые по размеру модели и некоторые специализированные подходы. Особенно заметен прирост в задачах, где важно не просто распознать объект, а понять <strong>как сцена меняется во времени</strong>.</p>
+<p>Авторы отдельно разбили качество по четырём большим категориям:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">переходы состояний,</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">рассуждение на основе здравого смысла,</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">пространственные отношения,</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">динамика движения.</span></div>
+<p>Там Orca особенно хорошо выглядит именно в переходах состояний и динамике. Это логично: если ты учился по видео и событиям, то должен лучше схватывать, что из чего следует.</p>
+<p>Важно, что здесь не заявляется магия уровня “всё понимает лучше всех”. В пространственных задачах отрыв уже небольшой. Но общая картина ясна: ставка на предсказание следующего состояния действительно помогает в тех вопросах, где нужно мыслить во времени, а не просто смотреть на один кадр.</p>
+</section>
+<section>
+<h2>Изображения: не “красивее”, а <strong>физичнее</strong></h2>
+<p>Часть про изображения, пожалуй, самая необычная. Авторы не хотят соревноваться в художественной генерации. Их интересует другое: может ли скрытое состояние Orca помочь предсказать, <strong>как изменится реальная сцена после действия</strong>.</p>
+<p>Для этого они сделали собственный бенчмарк реальных взаимодействий. На вход подаются исходное изображение и инструкция. На выходе нужно получить картинку результата. Причём оценивается не красота, а соответствие действию, сохранение сцены и физическая правдоподобность.</p>
+<p>Здесь Orca-4B показывает лучший средний результат среди сравниваемых моделей. По описанию и примерам видно, где именно преимущество: меньше “телепортации” объектов, меньше лишних предметов из воздуха, лучше сохраняется поза робота, связи контакта и логика сцены.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-02/fig_6.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Сравнение предсказания изображений в реальных сценах: Orca лучше сохраняет структуру сцены, объекты и правдоподобные изменения после действия.</p>
+</div></figure>
+<p>Это тонкий, но важный сдвиг. Обычно генеративные модели изображений очень хороши в визуальном правдоподобии, но могут быть плохи в <strong>причинной правдоподобности</strong>. То есть картинка красивая, но непонятно, как мир до такого состояния дошёл. Orca, судя по результатам, лучше держится за причинную нить.</p>
+</section>
+<section>
+<h2>Роботы: самая сильная часть статьи</h2>
+<p>Самая живая и убедительная часть работы — эксперименты на реальном двухруком роботе. Пять задач. Два жёстких режима обобщения: новые окружения и новые объекты. Для дообучения всего по 200 траекторий на задачу. Это мало.</p>
+<p>И вот здесь Orca показывает, что идея модели мира может быть полезна не только в тестах на понимание, но и в физическом действии. В среднем она заметно обходит Qwen3.5 с тем же модулем действий и оказывается сопоставима, а местами лучше сильной специализированной робототехнической модели π0.5, которая предобучалась на больших робототехнических данных.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-02/fig_7.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Orca лучше восстанавливается после неудачных захватов: робот не застывает, а пробует ещё раз и продвигается по задаче.</p>
+</div></figure>
+<p>Самое интересное тут даже не сухая успешность. Авторы смотрят на <strong>промежуточный прогресс</strong> и способность восстанавливаться после ошибок. И Orca выглядит сильнее именно как система, которая “понимает, что пошло не так” и пытается вернуться в рабочее состояние. Например, если робот неудачно схватил ложку, Orca чаще делает повторные осмысленные попытки, а не зависает.</p>
+<p>Это очень хороший признак. В реальном мире провалы случаются постоянно. Робот, который просто следует шаблону, ломается от первого отклонения. Робот, у которого есть хотя бы грубая модель состояния мира, может заметить, что цель не достигнута, и скорректироваться.</p>
+</section>
+<section>
+<h2>Что в работе особенно ценно</h2>
+<p>У статьи есть несколько по-настоящему сильных сторон.</p>
+<p>Во-первых, <strong>правильная постановка задачи</strong>. Переход от “следующего токена” к “следующему состоянию” — не просто маркетинг. Это полезная рамка, если мы хотим систем, которые понимают мир, а не только имитируют ответы.</p>
+<p>Во-вторых, <strong>проверка одной идеи сразу в трёх каналах</strong>: текст, изображения, действия. Это делает работу гораздо убедительнее.</p>
+<p>В-третьих, <strong>хорошая методическая честность</strong>. Авторы замораживают ядро и обучают только лёгкие выходы. Это снижает риск, что успех объясняется просто большим числом обучаемых параметров в конкретной задаче.</p>
+<p>В-четвёртых, <strong>акцент на реальном мире</strong>. Не на синтетике, не на красивой генерации, а на сценах, где есть объекты, контакт, ошибка, повторная попытка.</p>
+</section>
+<section>
+<h2>Где слабые места и почему до “универсального мира” ещё далеко</h2>
+<p>При всей силе идеи, статья честно показывает и свои ограничения.</p>
+<p>Первое: Orca пока в основном живёт в зрении и языке. А реальный мир — это ещё звук, тактильность, сила, температура, собственное состояние тела. Без этого модель мира остаётся неполной.</p>
+<p>Второе: модель учится предсказывать состояние не напрямую, а в пространстве уже готового визуального кодировщика. Это удобно инженерно, но значит, что “мир” частично наследует ограничения чужого визуального пространства.</p>
+<p>Третье: масштаб пока умеренный — 0.8B и 4B. Для настолько амбициозной идеи этого явно мало. Авторы сами пишут, что между текстом, изображением и действием у небольшой модели возникает компромисс.</p>
+<p>Четвёртое: горизонт предсказания короткий. Orca хорошо учится локальным переходам состояния, но это ещё не модель длительных процессов на часы или дни.</p>
+<p>И наконец, часть оценок, особенно в изображениях, всё ещё довольно сырая. Собственный бенчмарк — это хорошо, но его ещё нужно обкатать сообществом.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>Orca — это не “ещё одна LLM с видео”. И не просто очередная робототехническая модель. Это попытка переопределить сам объект обучения: вместо слов, кадров и действий — <strong>состояния мира и их переходы</strong>.</p>
+<p>Получилось не всё. До общей модели мира здесь огромная дистанция. Но работа уже даёт важный практический вывод: если учить систему на естественной динамике видео, осмысленных событиях и языковых условиях, можно получить внутреннее представление, которое полезно сразу для нескольких разных задач.</p>
+<p>Главная ценность Orca в том, что она возвращает разговор об ИИ к более фундаментальному вопросу: <strong>понимает ли модель, как мир меняется</strong>. И вот на этот вопрос статья впервые даёт не философский, а вполне инженерный ответ.</p>
+<p>Пока осторожный. Но уже очень интересный.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2606.30534" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                </div>
+
+                <section class="mt-16 md:mt-20 fade-in" aria-labelledby="related-heading">
+                    <h2 id="related-heading"
+                        class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight mb-6 md:mb-8">
+                        Читайте также
+                    </h2>
+                    
+                    <div class="rel-wrap relative -mx-4 md:mx-0" data-left="0" data-right="1"
+                         data-date="2026-07-02">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l"
+                                aria-label="Предыдущие материалы">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r"
+                                aria-label="Следующие материалы">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0">
+                            
+                            <a href="https://dataist.ai/2026-07-01/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-07-01/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-07-01">2026-07-01</time>
+                                <span class="rel-title">Как ИИ научился читать мысли без имплантов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-06-30/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-06-30/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-06-30">2026-06-30</time>
+                                <span class="rel-title">Почему даже лучшие ИИ-агенты сильно отстают от людей</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-06-29_1/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-06-29_1/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-06-29">2026-06-29</time>
+                                <span class="rel-title">Проверять код ИИ стало труднее, чем писать</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-06-24/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-06-24/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-06-24">2026-06-24</time>
+                                <span class="rel-title">Готовы ли ваши агенты к AI-Native памяти?</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-26/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-26/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-26">2026-05-26</time>
+                                <span class="rel-title">Как улучшить ИИ-агента без новых данных</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-25/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-25/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-25">2026-05-25</time>
+                                <span class="rel-title">Улучшать нужно не модель, а интерфейс агента</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-19/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-19/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-19">2026-05-19</time>
+                                <span class="rel-title">Почему код стал операционной системой для агентов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-18/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-18/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-18">2026-05-18</time>
+                                <span class="rel-title">Как ИИ-агенты собирают презентации нового поколения с голосом, видео и интерактивом</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-15/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-15/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-15">2026-05-15</time>
+                                <span class="rel-title">Как графы знаний учат LLM меньше галлюцинировать</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-12/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-12/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-12">2026-05-12</time>
+                                <span class="rel-title">Как ИИ-соавтор для математиков решает открытые задачи</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-11/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-11/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-11">2026-05-11</time>
+                                <span class="rel-title">Как агентам делегировать задачи без потери контроля</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-10/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-10/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-10">2026-05-10</time>
+                                <span class="rel-title">Синтетические компьютеры учат агентов работать неделями</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-08/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-08/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-08">2026-05-08</time>
+                                <span class="rel-title">Что на самом деле делает мультиагентные системы умнее</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-06/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-06/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-06">2026-05-06</time>
+                                <span class="rel-title">Почему агенты хуже учатся на длинных задачах</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-04/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-04/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-04">2026-05-04</time>
+                                <span class="rel-title">Для чего нужна рекурсивная мультиагентная система</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-30/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-30/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-30">2026-04-30</time>
+                                <span class="rel-title">Как построить компанию из одного человека и ИИ-агентов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-28/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-28/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-28">2026-04-28</time>
+                                <span class="rel-title">Модели мира для агентов нового поколения</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-27/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-27/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-27">2026-04-27</time>
+                                <span class="rel-title">Разработка игр стала новым бенчмарком для ИИ-агентов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-24/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-24/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-24">2026-04-24</time>
+                                <span class="rel-title">Архитектура общей памяти агентов для программирования</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-17/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-17/20260417.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-17">2026-04-17</time>
+                                <span class="rel-title">Как ИИ-агенты учатся помнить через окружающий мир</span>
+                            </a>
+                            
+                        </div>
+                    </div>
+                    
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка мигает
+                                // в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+                            function step(dir) {
+                                // Листаем на видимую ширину минус нахлёст,
+                                // чтобы следующая карточка подсказывала, что
+                                // лента продолжается.
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            sync();
+
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них в
+                            // страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую подложку,
+                                    // а не значок сломанной картинки.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = item.date; }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            function same(url) {
+                                try { return new URL(url, location.href).pathname === location.pathname; }
+                                catch (e) { return false; }
+                            }
+
+                            // Лента дотягивается ОДИН раз и только когда
+                            // читатель до неё добрался: 125 КБ фида не должны
+                            // грузиться у того, кто до подвала не дошёл.
+                            var loaded = false;
+                            function fill() {
+                                if (loaded) return;
+                                loaded = true;
+                                fetch('/papers.json')
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) return;
+                                        var all = list.filter(function (x) {
+                                            return x && x.url && x.title;
+                                        });
+                                        // Свежие вперёд. Фид приходит уже в
+                                        // этом порядке, но сортировка здесь
+                                        // стоит явно: порядок ленты — правило
+                                        // блока, а не побочный эффект того,
+                                        // как список собрали на сервере.
+                                        all.sort(function (a, b) {
+                                            return String(b.date || '').localeCompare(String(a.date || ''));
+                                        });
+                                        // Где в этом списке стоит сама статья.
+                                        // Считаем ДО того, как её выбросить:
+                                        // её место и есть «здесь», а первым
+                                        // после неё идёт ровно предыдущий
+                                        // разбор.
+                                        var mineAt = -1;
+                                        for (var i = 0; i < all.length; i++) {
+                                            if (same(all[i].url)) { mineAt = i; break; }
+                                        }
+                                        var rows = all.filter(function (x) { return !same(x.url); });
+                                        if (!rows.length) return;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+
+                                        // ЛЕНТА ОТКРЫВАЕТСЯ НА МЕСТЕ ЭТОЙ
+                                        // СТАТЬИ, а не с самого свежего
+                                        // разбора. Влево от стартовой позиции
+                                        // остаётся то, что вышло ПОСЛЕ неё,
+                                        // вправо уходит то, что было ДО.
+                                        //
+                                        // Без этого лента получалась одинаковой
+                                        // на всех страницах сайта: у майской
+                                        // статьи она начиналась бы с сентября,
+                                        // и соседство по времени — то самое,
+                                        // ради чего блок и нужен, — пропадало
+                                        // ровно в тот момент, когда страница
+                                        // становится интерактивной.
+                                        //
+                                        // Позицию берём по месту самой статьи
+                                        // в фиде. Сравнивать по дате нельзя:
+                                        // за один день выходит по два разбора
+                                        // («2026-07-05» и «2026-07-05_1»), и
+                                        // правило «дата меньше моей» проскочит
+                                        // собрата того же дня — лента откроется
+                                        // на разборе через один.
+                                        //
+                                        // Дата остаётся запасным ответом на
+                                        // случай, если статьи в фиде нет
+                                        // вовсе: свежая страница попадает туда
+                                        // не раньше, чем пересоберётся индекс.
+                                        var at = 0;
+                                        if (mineAt >= 0) {
+                                            at = mineAt;
+                                        } else {
+                                            var mine = wrap.dataset.date || '';
+                                            if (mine) {
+                                                for (var k = 0; k < rows.length; k++) {
+                                                    if (String(rows[k].date || '') < mine) { at = k; break; }
+                                                }
+                                            }
+                                        }
+                                        // Самый старый разбор: предыдущего у
+                                        // него нет, поэтому лента встаёт в
+                                        // конец — слева от края всё свежее.
+                                        if (at > rows.length - 1) at = rows.length - 1;
+                                        var target = rail.children[at];
+                                        if (target) {
+                                            // Без плавности: это не жест
+                                            // читателя, а исходное положение.
+                                            rail.scrollLeft = target.offsetLeft - rail.offsetLeft;
+                                        }
+                                        sync();
+                                    })
+                                    .catch(function () { /* остаёмся с разметкой */ });
+                            }
+                            if ('IntersectionObserver' in window) {
+                                var io = new IntersectionObserver(function (es) {
+                                    if (es.some(function (e) { return e.isIntersecting; })) {
+                                        io.disconnect();
+                                        fill();
+                                    }
+                                }, { rootMargin: '400px' });
+                                io.observe(wrap);
+                            } else {
+                                fill();
+                            }
+                        })();
+                    </script>
+                <nav data-hub-nav aria-label="Темы и справочники"
+                     class="mt-8 md:mt-10 font-sans text-sm text-black/50 dark:text-white/50">
+                    Темы: <a href="https://dataist.ai/topic/vision" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Зрение и видео</a>, <a href="https://dataist.ai/topic/world-models" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Модели мира</a> · <a href="https://dataist.ai/papers" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Разобранные работы</a> · <a href="https://dataist.ai/glossary" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Словарь терминов</a>
+                </nav>
+                </section>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
 </body>
 </html>

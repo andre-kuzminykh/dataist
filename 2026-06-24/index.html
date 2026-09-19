@@ -1,14 +1,1092 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="scroll-smooth">
 <head>
-<meta charset="UTF-8">
-<title>Готовы ли ваши агенты к AI-Native памяти?</title>
-<link rel="canonical" href="https://dataist.ai/research/ru/gotovy-li-vashi-agenty-k-ai-native-pamiati_ru/">
-<meta name="robots" content="noindex,follow">
-<meta http-equiv="refresh" content="0; url=https://dataist.ai/research/ru/gotovy-li-vashi-agenty-k-ai-native-pamiati_ru/">
-<script>location.replace("https://dataist.ai/research/ru/gotovy-li-vashi-agenty-k-ai-native-pamiati_ru/");</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Готовы ли ваши агенты к AI-Native памяти?</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Готовы ли ваши агенты к AI-Native памяти?" />
+    <meta property="og:description" content="Память ИИ-агента — это уже не мелкая деталь, а место, где часто решается, будет он полезным или начнёт путаться.
+
+Авторы показывают, что память у таких систем надо оценивать не только по конечному ответу, но и по тому, как она хранит, достаёт, обновляет и приводит в порядок сведения по ходу работы. Это важно, потому что один и тот же подход может хорошо работать в одной задаче и проваливаться в другой, а лишние перестройки памяти могут стоить дорого и только мешать.
+
+В этом обзоре разбираем, из каких частей на деле состоит память ИИ-агента, почему не существует одного лучшего решения для всех случаев и какой способ поддержки памяти оказывается самым разумным на практике." />
+    <meta name="description" content="Память ИИ-агента — это уже не мелкая деталь, а место, где часто решается, будет он полезным или начнёт путаться.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2026-06-24/" />
+    <link rel="canonical" href="https://dataist.ai/2026-06-24/">
+    <meta property="og:image" content="https://dataist.ai/2026-06-24/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-06-24/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-p strong {
+            @apply font-semibold text-black dark:text-white;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .apple-img {
+            @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white;
+        }
+
+        /* Карточки-списки */
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 mb-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Готовы ли ваши агенты к AI-Native памяти?",
+    "url": "https://dataist.ai/2026-06-24/",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://dataist.ai/2026-06-24/"
+    },
+    "inLanguage": "ru",
+    "author": {
+      "@type": "Person",
+      "name": "@dataist_ai"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Dataist AI",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://dataist.ai/AIT_logo.png"
+      }
+    },
+    "description": "Память ИИ-агента — это уже не мелкая деталь, а место, где часто решается, будет он полезным или начнёт путаться.\n\nАвторы показывают, что память у таких систем надо оценивать не только по конечному ответу, но и по тому, как она хранит, достаёт, обновляет и приводит в порядок сведения по ходу работы. Это важно, потому что один и тот же подход может хорошо работать в одной задаче и проваливаться в другой, а лишние перестройки памяти могут стоить дорого и только мешать.\n\nВ этом обзоре разбираем, из каких частей на деле состоит память ИИ-агента, почему не существует одного лучшего решения для всех случаев и какой способ поддержки памяти оказывается самым разумным на практике.",
+    "image": "https://dataist.ai/2026-06-24/cover.png",
+    "datePublished": "2026-06-24",
+    "citation": {
+      "@type": "ScholarlyArticle",
+      "name": "Are We Ready For An Agent-Native Memory System?",
+      "identifier": "arXiv:2606.24775",
+      "url": "https://arxiv.org/abs/2606.24775"
+    },
+    "isBasedOn": "https://arxiv.org/abs/2606.24775"
+  }
+</script>
 </head>
-<body>
-<p>Разбор переехал: <a href="https://dataist.ai/research/ru/gotovy-li-vashi-agenty-k-ai-native-pamiati_ru/">https://dataist.ai/research/ru/gotovy-li-vashi-agenty-k-ai-native-pamiati_ru/</a></p>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+
+                <!-- Тег категории -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-06-24</span>
+                </div>
+
+                <!-- Заголовок -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Готовы ли ваши агенты к AI-Native памяти?
+                </h1>
+
+                <!-- Главная обложка -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-06-24/cover.png"
+                         alt="Обложка: Готовы ли ваши агенты к AI-Native памяти?"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">
+                    Память ИИ-агента — это уже не мелкая деталь, а место, где часто решается, будет он полезным или начнёт путаться.
+                </p>
+
+                <h2 class="article-h2 fade-in">Память для ИИ-агентов: почему «просто поиск по векторной базе» уже не спасает</h2>
+                <p class="article-p fade-in">Если вы следите за развитием ИИ-агентов, то наверняка замечали странную вещь. Модели стали лучше писать код, вести диалог, пользоваться инструментами и даже выполнять длинные цепочки действий. Но как только агенту нужно <strong>помнить</strong> — что пользователь говорил неделю назад, какая версия факта актуальна сейчас, в каком порядке происходили события, — магия быстро заканчивается. Вместо умного помощника мы получаем машину с провалами в памяти, ложными воспоминаниями и привычкой путать прошлое с настоящим.</p>
+                <p class="article-p fade-in">Именно в эту боль бьет работа <strong>«Готовы ли мы к нативной системе памяти для агентов?»</strong>. Авторы предлагают посмотреть на память агента не как на декоративный модуль вокруг LLM, а как на полноценную систему управления данными: с записью, извлечением, маршрутизацией запросов, обновлением, забыванием и издержками. И это очень своевременный сдвиг оптики. Потому что пока индустрия часто меряет только «получилось ли решить задачу», остается за кадром главное: <strong>какой ценой, на какой архитектуре и насколько надежно это работает, когда мир меняется</strong>.</p>
+                <p class="article-p fade-in">Статья ценна именно этим: она не рекламирует очередной способ «прикрутить память», а разбирает весь зоопарк подходов по косточкам и показывает неприятную, но полезную правду — <strong>универсальной памяти для агентов пока нет</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Что вообще считается памятью агента</h2>
+                <p class="article-p fade-in">Один из сильных ходов статьи — четкое разведение понятий. Авторы говорят: память агента — это не просто длинный контекст и не обычный поиск по внешней базе знаний. Это <strong>постоянное, обновляемое хранилище состояния</strong>, которое переживает отдельные шаги инференса и помогает агенту в будущем.</p>
+                <p class="article-p fade-in">То есть речь идет не только о том, чтобы достать релевантный фрагмент текста. Нужно еще решить:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">что именно сохранять из диалога, журналов инструментов и промежуточных действий;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">в каком виде это хранить;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">как искать нужное;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">как обновлять устаревшие факты;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">как не утонуть в растущем объеме памяти;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">как не потратить на все это слишком много времени и вычислений.</span>
+                </div>
+
+                <p class="article-p fade-in">Авторы раскладывают любую систему памяти на четыре модуля:</p>
+                <p class="article-p fade-in">1. <strong>Представление и хранение памяти</strong> — текст, граф, дерево, гибрид.</p>
+                <p class="article-p fade-in">2. <strong>Извлечение памяти</strong> — как сырые данные превращаются в факты, заметки, сводки или структуры.</p>
+                <p class="article-p fade-in">3. <strong>Поиск и маршрутизация</strong> — как система решает, что именно поднять по запросу.</p>
+                <p class="article-p fade-in">4. <strong>Поддержка памяти</strong> — обновления, версии, консолидация, удаление и контроль роста.</p>
+                <p class="article-p fade-in">Эта декомпозиция важна, потому что позволяет сравнивать не «черные ящики», а конкретные инженерные решения.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-06-24/fig_0.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Типовые рабочие процессы памяти агента: от простого потока заметок до многослойных и гибридных систем.</figcaption>
+                </figure>
+
+                <h2 class="article-h2 fade-in">Как сегодня устроена память: от плоских заметок до графов и гибридов</h2>
+                <p class="article-p fade-in">На практике исследователи выделили несколько семейств архитектур.</p>
+                <p class="article-p fade-in">Самый простой вариант — <strong>последовательная память</strong>: история хранится как текст, факты или сжатые сводки. Это близко к идее «сложим все в журнал и будем искать по сходству». Такой подход дешевле и проще, но быстро начинает ломаться на дальних зависимостях и обновлениях.</p>
+                <p class="article-p fade-in">Следующий уровень — <strong>графы и деревья</strong>. Здесь память уже не просто набор фраз, а структура: сущности, связи, временные отметки, иерархии. Это особенно полезно, когда нужно понимать, <strong>кто связан с кем</strong>, <strong>что изменилось</strong> и <strong>в каком порядке происходили события</strong>.</p>
+                <p class="article-p fade-in">Наконец, есть <strong>гибридные системы</strong>, которые совмещают сразу несколько видов памяти: текст, векторные индексы, графовые базы, ключевые слова, сводки и отдельные хранилища для краткосрочного и долгосрочного состояния. Они выглядят как наиболее «взрослый» путь — но и платят за это сложностью.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-06-24/fig_1.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Основные способы представления памяти: плоские последовательности, графовые структуры и гибридные контейнеры.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Это не просто классификация ради классификации. Она подводит к главному выводу статьи: <strong>выигрывает не самая умная архитектура сама по себе, а та, чья структура совпадает с узким местом конкретной задачи</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Как авторы проверяли память агентов</h2>
+                <p class="article-p fade-in">Работа впечатляет масштабом: исследователи сравнили <strong>12 репрезентативных систем памяти</strong> и две базовые альтернативы — длинный контекст и обычный поиск по эмбеддингам. Проверка шла на <strong>пяти типах нагрузки и 11 наборах данных</strong>.</p>
+                <p class="article-p fade-in">Что особенно хорошо: они не ограничились общей метрикой «насколько хороший ответ». Вместо этого оценивали память по пяти измерениям:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">итоговая эффективность на задачах;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">точность извлечения нужных свидетельств;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">устойчивость к обновлению знаний;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">стабильность на длинном горизонте;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">операционные издержки.</span>
+                </div>
+
+                <p class="article-p fade-in">Именно такой дизайн превращает статью из очередного сравнения моделей в почти системное исследование.</p>
+
+                <h2 class="article-h2 fade-in">Главный результат: лучшей памяти «на все случаи» не существует</h2>
+                <p class="article-p fade-in">Самый отрезвляющий вывод звучит просто: <strong>ни одна архитектура не доминирует во всех сценариях</strong>.</p>
+                <p class="article-p fade-in">На задачах, где нужно собирать факты через несколько сессий и отслеживать временные связи, лучше показывают себя системы с явной структурой — например графовые. Там, где важна точная привязка ответа к длинному, но цельному диалогу, хорошо работают гибридные схемы с многоступенчатой фильтрацией. А на задачах, где успех зависит от сохранения следа промежуточных действий, неожиданно сильным остается просто длинный контекст или память, сохраняющая трассу событий почти без переработки.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-06-24/fig_6.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Сравнение общей эффективности систем памяти на нескольких бенчмарках: лидер меняется в зависимости от типа нагрузки.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Это, пожалуй, самый практичный вывод для разработчиков. Если ваш агент — это помощник с персональной историей, вам нужны хорошие механизмы временных обновлений и связи между фактами. Если это исполнитель многошаговых процедур, критично не «умное сжатие», а сохранение последовательности действий. Если это диалоговый интерфейс с длинными беседами, пригодится грубая фильтрация с последующим уточнением.</p>
+                <p class="article-p fade-in">Иными словами, <strong>память — это не аксессуар, а часть специализации агента</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Почему обычный поиск не справляется</h2>
+                <p class="article-p fade-in">Отдельный сильный блок статьи — анализ не только качества ответов, но и того, <strong>насколько хорошо система поднимает нужные свидетельства</strong>. И здесь у обычного плоского поиска по эмбеддингам начинаются проблемы.</p>
+                <p class="article-p fade-in">Исследователи показывают, что на короткой дистанции такие системы еще конкурентоспособны. Но как только доказательства ответа оказываются разбросаны по времени или по разным частям истории, качество резко падает. Память начинает поднимать что-то «похожее по смыслу», но не обязательно то, что нужно для конкретного вопроса.</p>
+                <p class="article-p fade-in">Это важное различие. Для агента мало найти <strong>что-то релевантное</strong>. Ему нужно собрать <strong>полный набор опорных фрагментов</strong>, причем иногда из очень далеких кусков истории.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-06-24/fig_7.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Точность извлечения свидетельств: структурированные системы лучше держат дальние и разрозненные зависимости, чем плоский поиск.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Отсюда один из центральных выводов статьи: <strong>качество памяти — это не только ранжирование первого подходящего фрагмента, но и способность восстановить полный контекст</strong>. Графы и иерархии здесь помогают, потому что хранят не просто «похожие куски текста», а отношения между ними.</p>
+
+                <h2 class="article-h2 fade-in">Самое больное место: обновления и «галлюцинации прошлого»</h2>
+                <p class="article-p fade-in">Если пользователь вчера сказал, что живет в Берлине, а сегодня — что переехал в Мюнхен, память агента должна не просто сохранить оба факта. Она должна понять, <strong>какой из них актуален сейчас</strong>, а какой — часть прошлого состояния.</p>
+                <p class="article-p fade-in">Именно тут многие популярные решения оказываются хрупкими. Авторы показывают, что системы без нормального управления жизненным циклом памяти склонны возвращать устаревшие сведения. Получается эффект, который можно назвать <strong>галлюцинацией прошлого</strong>: агент честно извлекает то, что когда-то было правдой, но больше не соответствует реальности.</p>
+                <p class="article-p fade-in">Лучше всего с обновлениями справляются архитектуры, где память связана с сущностями, отношениями и временными версиями. Грубо говоря, если система знает, что речь идет об одном и том же объекте и умеет вести версии, она с большей вероятностью корректно перепишет состояние. Если же память — это просто лента текстовых заметок, обновление превращается в гадание.</p>
+                <p class="article-p fade-in">Еще один важный результат: смена базовой LLM влияет на абсолютное качество ответа, но не меняет фундаментально то, <strong>какая система памяти работает лучше</strong>. Это значит, что хорошие свойства памяти возникают не из-за «более умной модели сверху», а из-за правильной организации данных снизу.</p>
+
+                <h2 class="article-h2 fade-in">Длинный горизонт: хранить мало, связывать важно</h2>
+                <p class="article-p fade-in">Очень интересен вывод про длинную историю взаимодействий. Интуитивно кажется, что проблему можно решить просто большим контекстом. Но статья показывает: по мере роста истории это работает все хуже. Контекст обрастает шумом, нужные сигналы теряются, а внимание модели рассеивается.</p>
+                <p class="article-p fade-in">Здесь выигрывают системы, которые умеют <strong>строить абстракции</strong>: связи между сущностями, сводки по сессиям, иерархии, локальные кластеры. Они не обязательно хранят больше, но хранят <strong>осмысленнее</strong>.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-06-24/fig_9.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Устойчивость на длинном горизонте: при росте контекста и удалении свидетельств выигрывают системы со структурой и многошаговой организацией памяти.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Но и тут есть тонкость. Слишком агрессивное сжатие тоже вредно. Авторы в разборе отдельных компонентов показывают, что чем больше уровней абстракции между исходным содержанием и тем, что реально хранится, тем выше риск потерять детали, которые позже окажутся важны. Сводка удобна, но она легко выбрасывает именно тот маленький факт, который потом станет ключом к ответу.</p>
+                <p class="article-p fade-in">Отсюда очень практичное правило: <strong>легкое сжатие допустимо, агрессивная семантическая переработка — уже риск</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Цена вопроса: хорошая память может оказаться слишком дорогой</h2>
+                <p class="article-p fade-in">В промышленной среде этот раздел, пожалуй, не менее важен, чем все разговоры о качестве. Авторы специально измерили операционные издержки: время построения индексов, задержки запросов и общую стоимость операций памяти.</p>
+                <p class="article-p fade-in">И тут обнаруживается неприятный компромисс. Самые структурированные и «богатые» системы памяти часто оказываются на порядки тяжелее по задержкам и стоимости обслуживания. Глобальная реорганизация памяти, синхронизация нескольких хранилищ и сложная консолидация дают прирост качества, но не всегда пропорциональный цене.</p>
+                <p class="article-p fade-in">Особенно хорошо выглядят решения, где обслуживание памяти <strong>локализовано</strong>: обновляется не весь мир сразу, а только небольшой релевантный фрагмент. Это один из самых инженерно ценных выводов статьи. Авторы прямо показывают, что <strong>локальная поддержка памяти обычно выгоднее глобальной перестройки</strong>.</p>
+                <p class="article-p fade-in">Для реальных систем это почти руководство к действию: если хотите масштабируемую память, думайте не только о качестве поиска, но и о радиусе воздействия каждой записи и каждого обновления.</p>
+
+                <h2 class="article-h2 fade-in">Что полезного дает разбор по компонентам</h2>
+                <p class="article-p fade-in">Помимо общего сравнения систем, статья делает еще одну важную вещь: проводит тонкие эксперименты по отдельным модулям памяти. И здесь появляются очень прикладные наблюдения.</p>
+                <p class="article-p fade-in">Во-первых, <strong>сохранение исходного содержания важнее красивой абстракции</strong>. Сырые или слабо сжатые записи часто лучше поддерживают точное восстановление фактов, чем аккуратные сводки.</p>
+                <p class="article-p fade-in">Во-вторых, <strong>фильтровать лучше позже, а не раньше</strong>. Если слишком агрессивно чистить и структурировать данные на этапе записи, агент потом может недополучить детали, нужные для комбинированного рассуждения.</p>
+                <p class="article-p fade-in">В-третьих, <strong>легкое планирование поиска помогает</strong>, а вот дополнительные слои самопроверки и усложнения маршрута не всегда окупаются. То есть немного «подумать, где искать» полезно; бесконечно рефлексировать над поиском — уже нет.</p>
+                <p class="article-p fade-in">Наконец, в поддержке памяти лучшей стратегией выглядит <strong>консервативная консолидация</strong>: аккуратно объединять близкие элементы, но не спешить превращать все в одну большую сводку. Слишком грубое укрупнение и отложенная запись скорее вредят.</p>
+
+                <h2 class="article-h2 fade-in">Почему эта работа важна</h2>
+                <p class="article-p fade-in">Эта статья важна не потому, что объявляет нового победителя. Наоборот: ее ценность в том, что она <strong>ломает иллюзию простого решения</strong>. Сегодня память для агентов часто подается как что-то вроде «добавьте векторную базу — и агент станет долгоживущим». Исследование показывает, что это слишком наивная картина.</p>
+                <p class="article-p fade-in">Память агента — это полноценный системный слой со своими компромиссами:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">между точностью и стоимостью;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">между компактностью и сохранностью свидетельств;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">между гибкостью и управляемостью обновлений;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">между быстрым поиском и корректным восстановлением длинных зависимостей.</span>
+                </div>
+
+                <p class="article-p fade-in">Именно поэтому вопрос из заголовка — готовы ли мы к нативной системе памяти для агентов — пока получает скорее <strong>осторожный ответ «еще не совсем»</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Выводы</h2>
+                <p class="article-p fade-in">Если сжать статью до нескольких тезисов, получится вот что.</p>
+                <p class="article-p fade-in">Во-первых, <strong>универсальной архитектуры памяти пока нет</strong>. Хорошая память зависит от типа нагрузки.</p>
+                <p class="article-p fade-in">Во-вторых, <strong>структура имеет значение</strong>. Графы, иерархии и гибридные схемы действительно помогают, особенно когда нужно работать с дальними и обновляемыми фактами.</p>
+                <p class="article-p fade-in">В-третьих, <strong>главная проблема — не просто помнить, а помнить правильно во времени</strong>. Без версий, связей и аккуратного обновления агент начинает жить в прошлом.</p>
+                <p class="article-p fade-in">В-четвертых, <strong>операционные издержки нельзя игнорировать</strong>. Самая умная память может оказаться непрактичной в реальном продукте.</p>
+                <p class="article-p fade-in">И наконец, главный мета-вывод: память для ИИ-агента пора оценивать не как магическую надстройку над LLM, а как инженерную систему управления данными. Пожалуй, именно этот переход — от красивых демонстраций к архитектурной дисциплине — и делает работу по-настоящему важной.</p>
+
+                <!-- Источник -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2606.24775" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/OpenDataBox/MemoryData" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                </div>
+
+                <section class="mt-16 md:mt-20 fade-in" aria-labelledby="related-heading">
+                    <h2 id="related-heading"
+                        class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight mb-6 md:mb-8">
+                        Читайте также
+                    </h2>
+                    
+                    <div class="rel-wrap relative -mx-4 md:mx-0" data-left="0" data-right="1"
+                         data-date="2026-06-24">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l"
+                                aria-label="Предыдущие материалы">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r"
+                                aria-label="Следующие материалы">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0">
+                            
+                            <a href="https://dataist.ai/2026-05-26/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-26/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-26">2026-05-26</time>
+                                <span class="rel-title">Как улучшить ИИ-агента без новых данных</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-25/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-25/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-25">2026-05-25</time>
+                                <span class="rel-title">Улучшать нужно не модель, а интерфейс агента</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-19/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-19/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-19">2026-05-19</time>
+                                <span class="rel-title">Почему код стал операционной системой для агентов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-18/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-18/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-18">2026-05-18</time>
+                                <span class="rel-title">Как ИИ-агенты собирают презентации нового поколения с голосом, видео и интерактивом</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-15/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-15/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-15">2026-05-15</time>
+                                <span class="rel-title">Как графы знаний учат LLM меньше галлюцинировать</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-12/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-12/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-12">2026-05-12</time>
+                                <span class="rel-title">Как ИИ-соавтор для математиков решает открытые задачи</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-11/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-11/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-11">2026-05-11</time>
+                                <span class="rel-title">Как агентам делегировать задачи без потери контроля</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-10/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-10/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-10">2026-05-10</time>
+                                <span class="rel-title">Синтетические компьютеры учат агентов работать неделями</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-08/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-08/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-08">2026-05-08</time>
+                                <span class="rel-title">Что на самом деле делает мультиагентные системы умнее</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-06/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-06/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-06">2026-05-06</time>
+                                <span class="rel-title">Почему агенты хуже учатся на длинных задачах</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-04/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-04/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-04">2026-05-04</time>
+                                <span class="rel-title">Для чего нужна рекурсивная мультиагентная система</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-30/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-30/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-30">2026-04-30</time>
+                                <span class="rel-title">Как построить компанию из одного человека и ИИ-агентов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-28/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-28/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-28">2026-04-28</time>
+                                <span class="rel-title">Модели мира для агентов нового поколения</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-27/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-27/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-27">2026-04-27</time>
+                                <span class="rel-title">Разработка игр стала новым бенчмарком для ИИ-агентов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-24/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-24/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-24">2026-04-24</time>
+                                <span class="rel-title">Архитектура общей памяти агентов для программирования</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-17/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-17/20260417.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-17">2026-04-17</time>
+                                <span class="rel-title">Как ИИ-агенты учатся помнить через окружающий мир</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-14/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-14/cover%20(1).png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-14">2026-04-14</time>
+                                <span class="rel-title">Когда у ИИ-агента несколько пользователей</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-12/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-12">2026-04-12</time>
+                                <span class="rel-title">Двунаправленная память: как основа эволюции агентов, которые помнят прошлые шаги</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-10/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-10/photo_2026-04-09%2023.34.59.jpeg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-10">2026-04-10</time>
+                                <span class="rel-title">Атомарные навыки: как улучшить агентов для программирования на 18.7%</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-05/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-05/ChatGPT%20Image%20Apr%205%2C%202026%2C%2009_53_10%20PM.jpg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-05">2026-04-05</time>
+                                <span class="rel-title">Когда агент — это граф: как устроена оптимизация процессов на лету</span>
+                            </a>
+                            
+                        </div>
+                    </div>
+                    
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка мигает
+                                // в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+                            function step(dir) {
+                                // Листаем на видимую ширину минус нахлёст,
+                                // чтобы следующая карточка подсказывала, что
+                                // лента продолжается.
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            sync();
+
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них в
+                            // страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую подложку,
+                                    // а не значок сломанной картинки.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = item.date; }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            function same(url) {
+                                try { return new URL(url, location.href).pathname === location.pathname; }
+                                catch (e) { return false; }
+                            }
+
+                            // Лента дотягивается ОДИН раз и только когда
+                            // читатель до неё добрался: 125 КБ фида не должны
+                            // грузиться у того, кто до подвала не дошёл.
+                            var loaded = false;
+                            function fill() {
+                                if (loaded) return;
+                                loaded = true;
+                                fetch('/papers.json')
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) return;
+                                        var all = list.filter(function (x) {
+                                            return x && x.url && x.title;
+                                        });
+                                        // Свежие вперёд. Фид приходит уже в
+                                        // этом порядке, но сортировка здесь
+                                        // стоит явно: порядок ленты — правило
+                                        // блока, а не побочный эффект того,
+                                        // как список собрали на сервере.
+                                        all.sort(function (a, b) {
+                                            return String(b.date || '').localeCompare(String(a.date || ''));
+                                        });
+                                        // Где в этом списке стоит сама статья.
+                                        // Считаем ДО того, как её выбросить:
+                                        // её место и есть «здесь», а первым
+                                        // после неё идёт ровно предыдущий
+                                        // разбор.
+                                        var mineAt = -1;
+                                        for (var i = 0; i < all.length; i++) {
+                                            if (same(all[i].url)) { mineAt = i; break; }
+                                        }
+                                        var rows = all.filter(function (x) { return !same(x.url); });
+                                        if (!rows.length) return;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+
+                                        // ЛЕНТА ОТКРЫВАЕТСЯ НА МЕСТЕ ЭТОЙ
+                                        // СТАТЬИ, а не с самого свежего
+                                        // разбора. Влево от стартовой позиции
+                                        // остаётся то, что вышло ПОСЛЕ неё,
+                                        // вправо уходит то, что было ДО.
+                                        //
+                                        // Без этого лента получалась одинаковой
+                                        // на всех страницах сайта: у майской
+                                        // статьи она начиналась бы с сентября,
+                                        // и соседство по времени — то самое,
+                                        // ради чего блок и нужен, — пропадало
+                                        // ровно в тот момент, когда страница
+                                        // становится интерактивной.
+                                        //
+                                        // Позицию берём по месту самой статьи
+                                        // в фиде. Сравнивать по дате нельзя:
+                                        // за один день выходит по два разбора
+                                        // («2026-07-05» и «2026-07-05_1»), и
+                                        // правило «дата меньше моей» проскочит
+                                        // собрата того же дня — лента откроется
+                                        // на разборе через один.
+                                        //
+                                        // Дата остаётся запасным ответом на
+                                        // случай, если статьи в фиде нет
+                                        // вовсе: свежая страница попадает туда
+                                        // не раньше, чем пересоберётся индекс.
+                                        var at = 0;
+                                        if (mineAt >= 0) {
+                                            at = mineAt;
+                                        } else {
+                                            var mine = wrap.dataset.date || '';
+                                            if (mine) {
+                                                for (var k = 0; k < rows.length; k++) {
+                                                    if (String(rows[k].date || '') < mine) { at = k; break; }
+                                                }
+                                            }
+                                        }
+                                        // Самый старый разбор: предыдущего у
+                                        // него нет, поэтому лента встаёт в
+                                        // конец — слева от края всё свежее.
+                                        if (at > rows.length - 1) at = rows.length - 1;
+                                        var target = rail.children[at];
+                                        if (target) {
+                                            // Без плавности: это не жест
+                                            // читателя, а исходное положение.
+                                            rail.scrollLeft = target.offsetLeft - rail.offsetLeft;
+                                        }
+                                        sync();
+                                    })
+                                    .catch(function () { /* остаёмся с разметкой */ });
+                            }
+                            if ('IntersectionObserver' in window) {
+                                var io = new IntersectionObserver(function (es) {
+                                    if (es.some(function (e) { return e.isIntersecting; })) {
+                                        io.disconnect();
+                                        fill();
+                                    }
+                                }, { rootMargin: '400px' });
+                                io.observe(wrap);
+                            } else {
+                                fill();
+                            }
+                        })();
+                    </script>
+                <nav data-hub-nav aria-label="Темы и справочники"
+                     class="mt-8 md:mt-10 font-sans text-sm text-black/50 dark:text-white/50">
+                    Темы: <a href="https://dataist.ai/topic/agents" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">ИИ-агенты</a>, <a href="https://dataist.ai/topic/memory" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Память и контекст</a>, <a href="https://dataist.ai/topic/business" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">ИИ в бизнесе</a> · <a href="https://dataist.ai/papers" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Разобранные работы</a> · <a href="https://dataist.ai/glossary" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Словарь терминов</a>
+                </nav>
+                </section>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры статей
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
 </body>
 </html>

@@ -1,14 +1,985 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="scroll-smooth">
 <head>
-<meta charset="UTF-8">
-<title>Как улучшить ИИ-агента без новых данных</title>
-<link rel="canonical" href="https://dataist.ai/research/ru/kak-uluchshit-ii-agenta-bez-novykh-dannykh_ru/">
-<meta name="robots" content="noindex,follow">
-<meta http-equiv="refresh" content="0; url=https://dataist.ai/research/ru/kak-uluchshit-ii-agenta-bez-novykh-dannykh_ru/">
-<script>location.replace("https://dataist.ai/research/ru/kak-uluchshit-ii-agenta-bez-novykh-dannykh_ru/");</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как улучшить ИИ-агента без новых данных</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как улучшить ИИ-агента без новых данных" />
+    <meta property="og:description" content="В ИИ-индустрии долгое время господствовала такая идея: если агент ошибается, значит, надо либо переписать промт, либо дообучить модель, либо надеяться на более мощную модель" />
+    <meta name="description" content="В ИИ-индустрии долгое время господствовала такая идея: если агент ошибается, значит, надо либо переписать промт, либо дообучить модель, либо надеяться на более мощную…">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2026-05-26/" />
+    <link rel="canonical" href="https://dataist.ai/2026-05-26/">
+    <meta property="og:image" content="https://dataist.ai/2026-05-26/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-05-26/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-p strong {
+            @apply font-semibold text-black dark:text-white;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .apple-img {
+            @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white;
+        }
+
+        /* Карточки-списки */
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 mb-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Как улучшить ИИ-агента без новых данных",
+    "url": "https://dataist.ai/2026-05-26/",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://dataist.ai/2026-05-26/"
+    },
+    "inLanguage": "ru",
+    "author": {
+      "@type": "Person",
+      "name": "@dataist_ai"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Dataist AI",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://dataist.ai/AIT_logo.png"
+      }
+    },
+    "description": "В ИИ-индустрии долгое время господствовала такая идея: если агент ошибается, значит, надо либо переписать промт, либо дообучить модель, либо надеяться на более мощную модель",
+    "image": "https://dataist.ai/2026-05-26/cover.png",
+    "datePublished": "2026-05-26",
+    "citation": {
+      "@type": "ScholarlyArticle",
+      "name": "SkillOpt: Executive Strategy for Self-Evolving Agent Skills",
+      "identifier": "arXiv:2605.23904",
+      "url": "https://arxiv.org/abs/2605.23904"
+    },
+    "isBasedOn": "https://arxiv.org/abs/2605.23904"
+  }
+</script>
 </head>
-<body>
-<p>Разбор переехал: <a href="https://dataist.ai/research/ru/kak-uluchshit-ii-agenta-bez-novykh-dannykh_ru/">https://dataist.ai/research/ru/kak-uluchshit-ii-agenta-bez-novykh-dannykh_ru/</a></p>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+
+                <!-- Тег категории -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-05-26</span>
+                </div>
+
+                <!-- Заголовок -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Как улучшить ИИ-агента без новых данных
+                </h1>
+
+                <!-- Главная обложка -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-05-26/cover.png"
+                         alt="Обложка: Как улучшить ИИ-агента без новых данных"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">
+                    В ИИ-индустрии долгое время господствовала идея: если агент ошибается, значит, надо либо переписать промт, либо дообучить модель, либо надеяться на более мощную модель. Авторы работы <strong>SkillOpt</strong> предлагают другой взгляд — не трогать веса модели вообще, а обучать то, <strong>как именно агент работает</strong>, в виде компактного текстового «навыка».
+                </p>
+
+                <h2 class="article-h2 fade-in">Когда агенту мало просто «уметь»: как научить его рабочим привычкам</h2>
+                <p class="article-p fade-in">Звучит почти слишком просто: есть замороженная LLM, есть документ с инструкциями для конкретного домена, и есть отдельная модель-оптимизатор, которая смотрит на успешные и провальные траектории, а затем аккуратно редактирует этот документ. Но за этой простотой скрывается важная мысль: если навык — это внешний слой адаптации, то его можно оптимизировать почти как параметры нейросети. С шагом обучения, валидацией, буфером неудачных обновлений и защитой от деградации.</p>
+                <p class="article-p fade-in">И, судя по результатам, это не просто красивая метафора. В 52 из 52 сравнений метод либо лучший, либо делит первое место. Для области, где многие подходы живут на уровне «попробовали переписать подсказку — вроде стало лучше», это довольно громкое заявление.</p>
+
+                <h2 class="article-h2 fade-in">Что вообще оптимизирует SkillOpt</h2>
+                <p class="article-p fade-in">Авторы исходят из практической проблемы: в реальных агентных системах адаптация — это не только знания модели, но и <strong>процедуры</strong>. Как искать информацию, когда вызывать инструменты, как проверять результат, в каком формате отвечать, как не зациклиться в многошаговой задаче. Всё это удобно хранить не в весах, а в переносимом текстовом артефакте — навыке.</p>
+                <p class="article-p fade-in">В SkillOpt этот навык становится объектом обучения. Целевая модель остается замороженной. Она просто решает задачи, пользуясь текущей версией навыка. Дальше в игру вступает отдельная более сильная модель: она анализирует траектории, выявляет повторяющиеся ошибки и предлагает ограниченные правки трех типов — добавить, удалить или заменить фрагменты текста.</p>
+                <p class="article-p fade-in">Ключевой момент: правка принимается не потому, что она «звучит умно», а только если она <strong>улучшает качество на отложенной валидации</strong>. Если нет — правка отвергается и сохраняется как негативный пример для будущих итераций.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-26/fig_0.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Общая идея SkillOpt: агент решает задачи с текущим навыком, оптимизатор предлагает правки, а валидационный фильтр пропускает только реально полезные изменения.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Это важно, потому что большинство систем саморедактирования агентов страдают одной и той же болезнью: они охотно генерируют правдоподобные объяснения собственных ошибок, но эти объяснения далеко не всегда улучшают поведение. SkillOpt превращает саморефлексию в более жесткий цикл «предложил — проверил — принял или выбросил».</p>
+
+                <h2 class="article-h2 fade-in">Почему это вообще существенно</h2>
+                <p class="article-p fade-in">У метода есть сразу несколько сильных практических следствий.</p>
+                <p class="article-p fade-in">Во-первых, <strong>не нужен файн-тюнинг</strong>. Для закрытых моделей это часто единственный реалистичный путь адаптации. Для открытых — более дешевый и быстрый.</p>
+                <p class="article-p fade-in">Во-вторых, итог — это маленький текстовый файл, который можно читать, проверять, переносить между средами и даже редактировать вручную. В эпоху, когда поведение моделей всё труднее инспектировать, это редкое достоинство.</p>
+                <p class="article-p fade-in">В-третьих, SkillOpt работает не только в «чистом чате», но и в агентных контурах с инструментами — в том числе в средах наподобие Codex и Claude Code. То есть речь не о красивом улучшении подсказки для игрушечных задач, а о процедуре, которая помогает агенту лучше действовать в рабочих сценариях.</p>
+                <p class="article-p fade-in">Наконец, работа затрагивает более широкий вопрос: можно ли обучать не только параметры модели, но и <strong>внешнее процедурное состояние</strong>. Если да, то это открывает любопытную альтернативу гонке за всё более дорогими моделями.</p>
+
+                <h2 class="article-h2 fade-in">Как устроен цикл оптимизации</h2>
+                <p class="article-p fade-in">Методология здесь, пожалуй, интереснее самих цифр. Авторы явно вдохновляются логикой глубокого обучения, но переносят её в текстовое пространство.</p>
+                <p class="article-p fade-in">На каждом шаге целевая модель проходит пакет задач с текущим навыком. Собираются траектории: сообщения, вызовы инструментов, промежуточные наблюдения, финальные ответы, сигналы проверяющей системы. Затем оптимизатор разбивает примеры на успешные и неуспешные, анализирует их мини-пакетами и предлагает локальные правки.</p>
+                <p class="article-p fade-in">Эти правки затем объединяются и ранжируются. Но применяются не все: действует <strong>текстовый аналог шага обучения</strong> — бюджет правок. Идея простая: если позволить модели каждый раз полностью переписывать навык, она будет легко затирать удачные правила, переобучаться на свежие неудачи и метаться из стороны в сторону. Ограниченные правки сохраняют преемственность.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-26/fig_1.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Пайплайн SkillOpt: сбор траекторий, анализ успехов и неудач, ограниченные правки навыка и строгая проверка через валидацию.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Есть и ещё два механизма устойчивости.</p>
+                <p class="article-p fade-in">Первый — <strong>буфер отвергнутых правок</strong>. Если какое-то изменение ухудшило результат, система не просто забывает о нем, а использует как отрицательную обратную связь. Это снижает вероятность ходить по кругу.</p>
+                <p class="article-p fade-in">Второй — <strong>медленное межэпохальное обновление</strong>. В конце эпохи метод сравнивает поведение навыка на тех же задачах до и после серии локальных правок и добавляет более долговременные указания в защищенный раздел. Локальные шаги этот раздел трогать не могут. По сути, это способ отделить быстрые тактические исправления от стратегических уроков.</p>
+                <p class="article-p fade-in">Именно здесь SkillOpt перестает быть «еще одним способом автогенерации подсказки» и начинает напоминать дисциплинированный цикл обучения.</p>
+
+                <h2 class="article-h2 fade-in">Что показали эксперименты</h2>
+                <p class="article-p fade-in">Экспериментальная часть у работы масштабная: шесть бенчмарков, семь целевых моделей, три режима исполнения. Задачи покрывают поиск ответов, работу с таблицами, офисные документы, визуальные документы, математику и embodied-среду наподобие ALFWorld.</p>
+                <p class="article-p fade-in">Главный итог авторы формулируют предельно жестко: <strong>лучший или разделяющий первое место результат в 52 из 52 ячеек</strong>.</p>
+                <p class="article-p fade-in">На GPT–5.5 в прямом чате средний прирост относительно режима без навыка составил <strong>+23,5 процентного пункта</strong>. Внутри контура Codex — <strong>+24,8</strong>, внутри Claude Code — <strong>+19,1</strong>.</p>
+                <p class="article-p fade-in">Особенно впечатляют задачи, где ошибка — это не «не вспомнил факт», а «не соблюл процедуру». Например:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">SpreadsheetBench 41,8 → 80,7</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">OfficeQA 33,1 → 72,1</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">LiveMath 37,6 → 66,9</span>
+                </div>
+
+                <p class="article-p fade-in">То есть метод особенно силен там, где агенту нужна рабочая дисциплина: сначала проверить структуру файла, потом правильно извлечь данные, затем выдать ответ в строгом формате.</p>
+                <p class="article-p fade-in">При этом выигрывают не только топовые модели. Более слабые версии и открытые модели вроде Qwen тоже получают заметную прибавку. Это важное наблюдение: компактный текстовый навык может выступать внешней «процедурной памятью», компенсируя то, чего маленькой модели не хватает в весах.</p>
+
+                <h2 class="article-h2 fade-in">Почему результаты выглядят правдоподобно</h2>
+                <p class="article-p fade-in">В подобных работах всегда возникает подозрение: а вдруг дело просто в более длинном промте, более сильной модели-учителе или удачной настройке гиперпараметров? Авторы стараются это снять несколькими сериями проверок.</p>
+                <p class="article-p fade-in">Во-первых, они сравнивают SkillOpt не только с отсутствием навыка, но и с ручными навыками, одношагово сгенерированными навыками, а также с конкурентами вроде TextGrad, GEPA, Trace2Skill и EvoSkill. SkillOpt стабильно впереди.</p>
+                <p class="article-p fade-in">Во-вторых, есть разбор компонентов. Убрать ограниченный бюджет правок — хуже. Убрать буфер отвергнутых изменений — тоже хуже. Убрать медленное межэпохальное обновление — на некоторых задачах деградация очень заметна, особенно на задачах с таблицами.</p>
+                <p class="article-p fade-in">В-третьих, авторы показывают динамику по эпохам: лучший по валидации контрольный пункт обычно хорошо совпадает с лучшим качеством на тесте. Это не доказывает идеальную способность к обобщению, но хотя бы показывает, что валидационный фильтр не ведет систему в очевидный тупик.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-26/fig_2.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Как меняется качество навыка по эпохам на разных бенчмарках: валидация обычно неплохо указывает на версию, которая обобщается на тест.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Это, пожалуй, один из самых убедительных моментов статьи. Авторы не просто демонстрируют рост метрики, а пытаются показать, <strong>за счет каких ограничителей этот рост не разваливается</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Переносимость: навык как артефакт</h2>
+                <p class="article-p fade-in">Отдельно интересны эксперименты на перенос. Оптимизированный навык, обученный на одной модели, можно запускать на другой; обученный в одной агентной среде — переносить в другую; а в некоторых случаях даже применять на соседнем бенчмарке.</p>
+                <p class="article-p fade-in">Например, навык для таблиц, обученный в среде Codex, хорошо переносится в Claude Code. Есть и перенос между моделями: навык, обученный на GPT–5.4, помогает и более компактным вариантам.</p>
+                <p class="article-p fade-in">Это, возможно, самый практичный вывод работы. Если навык можно <strong>один раз обучить, проверить, сохранить как текст и затем переиспользовать</strong>, он превращается в самостоятельный инженерный артефакт. Не эфемерный промт, живущий в ноутбуке исследователя, а что-то ближе к библиотеке процедурных правил.</p>
+                <p class="article-p fade-in">Конечно, перенос не всегда дает ту же прибавку, что обучение «на месте», но почти все сдвиги оказываются положительными. А это уже хороший сигнал, что SkillOpt извлекает не только локальные шаблоны конкретного набора данных.</p>
+
+                <h2 class="article-h2 fade-in">Что именно учится: не факты, а привычки</h2>
+                <p class="article-p fade-in">Один из самых приятных аспектов статьи — качественный анализ итоговых навыков. Они маленькие, обычно от нескольких сотен до пары тысяч токенов. И главное, состоят не из заплаток под отдельные примеры, а из процедурных правил.</p>
+                <p class="article-p fade-in">Для таблиц навык учится сначала инспектировать структуру книги и формулы, а не полагаться на предварительный просмотр. Для задач по документам — сначала привязать вопрос к конкретной строке, заголовку или полю, а потом извлекать ответ. Для математики — различать «самое сильное утверждение» и просто верный, но более слабый вариант. Для embodied-задач — вести память о посещенных местах и не повторять бесполезные действия.</p>
+                <p class="article-p fade-in">Это важное различие. SkillOpt, похоже, действительно обучает <strong>поведенческим инвариантам</strong>, а не просто переписывает формулировки инструкции чуть красивее.</p>
+                <p class="article-p fade-in">И еще одна деталь: крупных улучшений часто хватает добиться за <strong>1–4 принятые правки</strong>. То есть основная работа системы — не в том, чтобы непрерывно переписывать весь навык, а в том, чтобы среди множества предложений отобрать считаные полезные.</p>
+
+                <h2 class="article-h2 fade-in">Ограничения и скепсис, который стоит сохранить</h2>
+                <p class="article-p fade-in">При всей силе результатов, это не серебряная пуля.</p>
+                <p class="article-p fade-in">Во-первых, методу нужны <strong>надежные сигналы качества</strong>: верификаторы, точные метрики, исполнимые проверки. Для открытых творческих задач, где успех многомерен и субъективен, такой цикл будет устроить сложнее.</p>
+                <p class="article-p fade-in">Во-вторых, обучение навыка не бесплатно. Да, на инференсе дополнительных вызовов нет, но офлайн-оптимизация требует заметного числа прогонов и вызовов модели-оптимизатора.</p>
+                <p class="article-p fade-in">В-третьих, SkillOpt пока работает с одним компактным навыком под один домен. Для действительно гетерогенных задач, вероятно, понадобится уже не один документ, а библиотека навыков, диспетчеризация между ними и что-то вроде композиции процедур.</p>
+                <p class="article-p fade-in">Наконец, нельзя исключать, что часть правил остается завязана на конкретный формат бенчмарка. Авторы это частично компенсируют экспериментами на перенос, но вопрос широкой внешней валидности всё равно остается открытым.</p>
+
+                <h2 class="article-h2 fade-in">Вывод</h2>
+                <p class="article-p fade-in"><strong>SkillOpt</strong> — это одна из тех работ, которые не обещают магии, но предлагают очень сильную инженерную идею: если нельзя или не хочется менять веса модели, меняйте и обучайте её внешние рабочие инструкции так же дисциплинированно, как обучают параметры.</p>
+                <p class="article-p fade-in">Сильная сторона статьи не только в цифрах, хотя они впечатляют. Главное — в постановке задачи. Авторы обращаются с навыком как с настоящим объектом оптимизации: с ограниченным шагом, валидацией, защитой от деградации и накоплением отрицательной обратной связи. Благодаря этому «самоулучшение через текст» перестает выглядеть как набор эвристик и начинает напоминать осмысленный процесс обучения.</p>
+                <p class="article-p fade-in">Для индустрии это особенно важно. Мы привыкаем думать, что прогресс агентов — это либо новые веса, либо новые инструменты. SkillOpt показывает третий путь: <strong>обучаемый процедурный слой поверх замороженной модели</strong>. Если эта линия работ выстрелит, у нас появится не просто способ улучшать агентов без файн-тюнинга, а новый класс переносимых и проверяемых артефактов — текстовых навыков, которые можно хранить, версионировать и развивать почти как код.</p>
+
+                <!-- Источник -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/html/2605.23904v2" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://aka.ms/SkillOpt" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                </div>
+
+                <section class="mt-16 md:mt-20 fade-in" aria-labelledby="related-heading">
+                    <h2 id="related-heading"
+                        class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight mb-6 md:mb-8">
+                        Читайте также
+                    </h2>
+                    
+                    <div class="rel-wrap relative -mx-4 md:mx-0" data-left="0" data-right="1"
+                         data-date="2026-05-26">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l"
+                                aria-label="Предыдущие материалы">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r"
+                                aria-label="Следующие материалы">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0">
+                            
+                            <a href="https://dataist.ai/2026-05-25/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-25/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-25">2026-05-25</time>
+                                <span class="rel-title">Улучшать нужно не модель, а интерфейс агента</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-19/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-19/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-19">2026-05-19</time>
+                                <span class="rel-title">Почему код стал операционной системой для агентов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-18/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-18/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-18">2026-05-18</time>
+                                <span class="rel-title">Как ИИ-агенты собирают презентации нового поколения с голосом, видео и интерактивом</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-15/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-15/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-15">2026-05-15</time>
+                                <span class="rel-title">Как графы знаний учат LLM меньше галлюцинировать</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-12/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-12/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-12">2026-05-12</time>
+                                <span class="rel-title">Как ИИ-соавтор для математиков решает открытые задачи</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-11/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-11/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-11">2026-05-11</time>
+                                <span class="rel-title">Как агентам делегировать задачи без потери контроля</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-10/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-10/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-10">2026-05-10</time>
+                                <span class="rel-title">Синтетические компьютеры учат агентов работать неделями</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-08/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-08/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-08">2026-05-08</time>
+                                <span class="rel-title">Что на самом деле делает мультиагентные системы умнее</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-06/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-06/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-06">2026-05-06</time>
+                                <span class="rel-title">Почему агенты хуже учатся на длинных задачах</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-05-04/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-04/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-04">2026-05-04</time>
+                                <span class="rel-title">Для чего нужна рекурсивная мультиагентная система</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-30/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-30/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-30">2026-04-30</time>
+                                <span class="rel-title">Как построить компанию из одного человека и ИИ-агентов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-28/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-28/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-28">2026-04-28</time>
+                                <span class="rel-title">Модели мира для агентов нового поколения</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-27/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-27/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-27">2026-04-27</time>
+                                <span class="rel-title">Разработка игр стала новым бенчмарком для ИИ-агентов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-24/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-24/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-24">2026-04-24</time>
+                                <span class="rel-title">Архитектура общей памяти агентов для программирования</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-17/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-17/20260417.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-17">2026-04-17</time>
+                                <span class="rel-title">Как ИИ-агенты учатся помнить через окружающий мир</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-14/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-14/cover%20(1).png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-14">2026-04-14</time>
+                                <span class="rel-title">Когда у ИИ-агента несколько пользователей</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-12/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-12">2026-04-12</time>
+                                <span class="rel-title">Двунаправленная память: как основа эволюции агентов, которые помнят прошлые шаги</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-10/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-10/photo_2026-04-09%2023.34.59.jpeg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-10">2026-04-10</time>
+                                <span class="rel-title">Атомарные навыки: как улучшить агентов для программирования на 18.7%</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-05/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-05/ChatGPT%20Image%20Apr%205%2C%202026%2C%2009_53_10%20PM.jpg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-05">2026-04-05</time>
+                                <span class="rel-title">Когда агент — это граф: как устроена оптимизация процессов на лету</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-04-03/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-03/_ChatGPT%20Image%20Apr%203%2C%202026%2C%2011_25_03%20PM.jpg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-03">2026-04-03</time>
+                                <span class="rel-title">ИИ не может запустить стартап — и вот почему</span>
+                            </a>
+                            
+                        </div>
+                    </div>
+                    
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка мигает
+                                // в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+                            function step(dir) {
+                                // Листаем на видимую ширину минус нахлёст,
+                                // чтобы следующая карточка подсказывала, что
+                                // лента продолжается.
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            sync();
+
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них в
+                            // страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую подложку,
+                                    // а не значок сломанной картинки.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = item.date; }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            function same(url) {
+                                try { return new URL(url, location.href).pathname === location.pathname; }
+                                catch (e) { return false; }
+                            }
+
+                            // Лента дотягивается ОДИН раз и только когда
+                            // читатель до неё добрался: 125 КБ фида не должны
+                            // грузиться у того, кто до подвала не дошёл.
+                            var loaded = false;
+                            function fill() {
+                                if (loaded) return;
+                                loaded = true;
+                                fetch('/papers.json')
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) return;
+                                        var rows = list.filter(function (x) {
+                                            return x && x.url && x.title && !same(x.url);
+                                        });
+                                        // Свежие вперёд. Фид приходит уже в
+                                        // этом порядке, но сортировка здесь
+                                        // стоит явно: порядок ленты — правило
+                                        // блока, а не побочный эффект того,
+                                        // как список собрали на сервере.
+                                        rows.sort(function (a, b) {
+                                            return String(b.date || '').localeCompare(String(a.date || ''));
+                                        });
+                                        if (!rows.length) return;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+
+                                        // ЛЕНТА ОТКРЫВАЕТСЯ НА МЕСТЕ ЭТОЙ
+                                        // СТАТЬИ, а не с самого свежего
+                                        // разбора. Влево от стартовой позиции
+                                        // остаётся то, что вышло ПОСЛЕ неё,
+                                        // вправо уходит то, что было ДО.
+                                        //
+                                        // Без этого лента получалась одинаковой
+                                        // на всех страницах сайта: у майской
+                                        // статьи она начиналась бы с сентября,
+                                        // и соседство по времени — то самое,
+                                        // ради чего блок и нужен, — пропадало
+                                        // ровно в тот момент, когда страница
+                                        // становится интерактивной.
+                                        //
+                                        // Позицию берём у первой карточки
+                                        // СТАРШЕ этой статьи: её левый край и
+                                        // есть «здесь». Ширина карточки
+                                        // фиксирована, поэтому позиция
+                                        // считается точно и до загрузки
+                                        // обложек.
+                                        var mine = wrap.dataset.date || '';
+                                        var at = 0;
+                                        if (mine) {
+                                            for (var k = 0; k < rows.length; k++) {
+                                                if (String(rows[k].date || '') < mine) { at = k; break; }
+                                            }
+                                        }
+                                        var target = rail.children[at];
+                                        if (target) {
+                                            // Без плавности: это не жест
+                                            // читателя, а исходное положение.
+                                            rail.scrollLeft = target.offsetLeft - rail.offsetLeft;
+                                        }
+                                        sync();
+                                    })
+                                    .catch(function () { /* остаёмся с разметкой */ });
+                            }
+                            if ('IntersectionObserver' in window) {
+                                var io = new IntersectionObserver(function (es) {
+                                    if (es.some(function (e) { return e.isIntersecting; })) {
+                                        io.disconnect();
+                                        fill();
+                                    }
+                                }, { rootMargin: '400px' });
+                                io.observe(wrap);
+                            } else {
+                                fill();
+                            }
+                        })();
+                    </script>
+                <nav data-hub-nav aria-label="Темы и справочники"
+                     class="mt-8 md:mt-10 font-sans text-sm text-black/50 dark:text-white/50">
+                    Темы: <a href="https://dataist.ai/topic/agents" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">ИИ-агенты</a> · <a href="https://dataist.ai/papers" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Разобранные работы</a> · <a href="https://dataist.ai/glossary" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Словарь терминов</a>
+                </nav>
+                </section>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры статей
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
 </body>
 </html>

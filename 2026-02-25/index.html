@@ -1,14 +1,718 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="scroll-smooth">
 <head>
-<meta charset="UTF-8">
-<title>Когда контекст мешает: почему AGENTS.md делает работу агентов хуже</title>
-<link rel="canonical" href="https://dataist.ai/research/ru/kogda-kontekst-meshaet-pochemu-agents-md-delaet-rabotu-agentov-khuzhe_ru/">
-<meta name="robots" content="noindex,follow">
-<meta http-equiv="refresh" content="0; url=https://dataist.ai/research/ru/kogda-kontekst-meshaet-pochemu-agents-md-delaet-rabotu-agentov-khuzhe_ru/">
-<script>location.replace("https://dataist.ai/research/ru/kogda-kontekst-meshaet-pochemu-agents-md-delaet-rabotu-agentov-khuzhe_ru/");</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Когда контекст мешает: почему AGENTS.md делает работу агентов хуже</title>
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Когда контекст мешает: почему AGENTS.md делает работу агентов хуже" />
+    <meta property="og:description" content="Идея кажется очевидной: если агенту для программирования дать специальный файл с правилами репозитория — как собирать проект, как гонять тесты, какие есть договорённости по стилю и структуре — он будет работать увереннее и реже ошибаться. Такие файлы часто называют context files: AGENTS.md,…" />
+    <meta name="description" content="Идея кажется очевидной: если агенту для программирования дать специальный файл с правилами репозитория — как собирать проект, как гонять тесты, какие есть…">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/2026-02-25/" />
+    <link rel="canonical" href="https://dataist.ai/2026-02-25/">
+    <meta property="og:image" content="https://i.ibb.co/pB57WTPz/Chat-GPT-Image-Feb-25-2026-12-56-14-PM.png" />
+    <meta property="article:published_time" content="2026-02-25T10:00:00+03:00" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://i.ibb.co/pB57WTPz/Chat-GPT-Image-Feb-25-2026-12-56-14-PM.png" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function () { try { var s=localStorage.getItem('theme'); var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; if(s?s==='dark':p) document.documentElement.classList.add('dark'); } catch(e){ document.documentElement.classList.add('dark'); } })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {
+            colors: { apple: { light:'#F5F5F7', dark:'#000000', grayLight:'#E5E5EA', grayDark:'#1C1C1E', textMutedLight:'#86868B', textMutedDark:'#8E8E93' } },
+            fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','"Inter"','sans-serif'], mono: ['"Space Mono"','monospace'] },
+            boxShadow: { 'apple':'0 4px 24px rgba(0,0,0,0.04)', 'apple-dark':'0 4px 24px rgba(255,255,255,0.04)' }
+        } } };
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header { @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10; }
+        }
+        body { @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300; }
+        ::selection { @apply bg-black text-white dark:bg-white dark:text-black; }
+        .article-p { @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85; }
+        .article-p strong { @apply font-semibold text-black dark:text-white; }
+        .article-h2 { @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white; }
+        .apple-img { @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white; }
+        .fade-in { opacity:0; transform:translateY(20px); transition:opacity .8s cubic-bezier(0.2,0.8,0.2,1), transform .8s cubic-bezier(0.2,0.8,0.2,1); will-change:opacity,transform; }
+        .fade-in.visible { opacity:1; transform:translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Когда контекст мешает: почему AGENTS.md делает работу агентов хуже",
+    "url": "https://dataist.ai/2026-02-25/",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://dataist.ai/2026-02-25/"
+    },
+    "inLanguage": "ru",
+    "author": {
+      "@type": "Person",
+      "name": "@dataist_ai"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Dataist AI",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://dataist.ai/AIT_logo.png"
+      }
+    },
+    "description": "Идея кажется очевидной: если агенту для программирования дать специальный файл с правилами репозитория — как собирать проект, как гонять тесты, какие есть договорённости по стилю и структуре — он будет работать увереннее и реже ошибаться. Такие файлы часто называют context files: AGENTS.md,…",
+    "image": "https://i.ibb.co/pB57WTPz/Chat-GPT-Image-Feb-25-2026-12-56-14-PM.png",
+    "datePublished": "2026-02-25",
+    "citation": {
+      "@type": "ScholarlyArticle",
+      "name": "Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents?",
+      "identifier": "arXiv:2602.11988",
+      "url": "https://arxiv.org/abs/2602.11988"
+    },
+    "isBasedOn": "https://arxiv.org/abs/2602.11988"
+  }
+</script>
 </head>
-<body>
-<p>Разбор переехал: <a href="https://dataist.ai/research/ru/kogda-kontekst-meshaet-pochemu-agents-md-delaet-rabotu-agentov-khuzhe_ru/">https://dataist.ai/research/ru/kogda-kontekst-meshaet-pochemu-agents-md-delaet-rabotu-agentov-khuzhe_ru/</a></p>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white"><i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">i</div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">ДАТАИСТ</div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i><i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i><span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i><span>Обзор · 2026-02-25</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white">Когда контекст мешает: почему AGENTS.md делает работу агентов хуже</h1>
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-white"><img src="https://i.ibb.co/pB57WTPz/Chat-GPT-Image-Feb-25-2026-12-56-14-PM.png" alt="Когда контекст мешает: почему AGENTS.md делает работу агентов хуже" class="w-full h-auto object-cover"></div>
+            </header>
+            <div class="max-w-3xl mx-auto w-full">
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">Идея кажется очевидной: если агенту для программирования дать специальный файл с правилами репозитория — как собирать проект, как гонять тесты, какие есть договорённости по стилю и структуре — он будет работать увереннее и реже ошибаться. Такие файлы часто называют context files: AGENTS.md, CLAUDE.md и похожие. Их уже десятки тысяч в open-source, а многие фреймворки для агентов даже предлагают команду “init”, которая сама сгенерирует нужный документ.</p>
+                <p class="article-p fade-in">Проблема в том, что эту практику почти никто строго не проверял. Советы «добавьте AGENTS.md, и агент станет умнее» звучат убедительно, но до конца непонятно: помогает ли такой контекст именно в сложных задачах уровня репозитория, где агент должен разобраться в чужом коде, исправить баг или добавить фичу, не сломав тесты? Авторы работы <strong class="font-semibold text-black dark:text-white">Evaluating AGENTS.md: Are Repository-Level Context Files Helpful for Coding Agents? </strong>берутся ответить на этот вопрос экспериментально — и результаты получаются неожиданными.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2602.11988v1/x1.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Схема эксперимента: один и тот же репозиторий и задача проверяются в трёх режимах — без context file, с автоматически сгенерированным файлом и с файлом от разработчиков.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Как устроена проверка и почему она ближе к реальности</h2>
+                <p class="article-p fade-in">Авторы тестируют context files в двух мирах. Первый — привычные популярные репозитории из SWE-bench Lite, где таких файлов обычно нет, поэтому их приходится генерировать с помощью LLM по рекомендациям конкретного агента. Второй — более интересный: новый бенчмарк AGENTbench, собранный из менее “звёздных”, но живых Python-репозиториев, где разработчики сами добавили AGENTS.md/CLAUDE.md и реально ими пользуются.</p>
+                <p class="article-p fade-in">AGENTbench сделан довольно приземлённо: берутся реальные GitHub issues и соответствующие pull request, из которых восстанавливают задачу и проверку через тесты. В итоге получается 138 задач из 12 репозиториев: где-то это багфиксы, где-то добавление функциональности. Важная деталь: поскольку во многих небольших проектах тестов в PR может не быть, авторы генерируют регрессионные тесты так, чтобы они падали на версии “до” и проходили на “после”, а затем вручную чистят слишком жёсткие случаи.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2602.11988v1/x2.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Как распределены задачи AGENTbench по 12 репозиториям: видно, что набор не завязан на один-единственный проект.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Помогает ли AGENTS.md решать задачи лучше</h2>
+                <p class="article-p fade-in">Главный итог звучит почти парадоксально для индустриальных рекомендаций: автоматически сгенерированные context files чаще мешают, чем помогают. В среднем по настройкам такие файлы дают небольшое падение доли успешно решённых задач (примерно на несколько процентов) — причём это устойчиво для разных агентов и моделей.</p>
+                <p class="article-p fade-in">Файлы, написанные людьми (то есть реально закоммиченные разработчиками в репозитории), выглядят лучше: на AGENTbench они дают небольшой плюс относительно режима без контекста (около +4% в среднем). Но это именно небольшой плюс, не прорыв. И что важно — даже человеческие файлы почти всегда увеличивают “цену” попытки.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2602.11988v1/x3.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Успешность решения задач у 4 агентов: без context files, с LLM-сгенерированными и с файлами от разработчиков — отдельно для SWE-bench Lite и AGENTbench.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Цена подсказок: агент старается больше, но выигрывает не всегда</h2>
+                <p class="article-p fade-in">Когда в репозитории появляется context file, агенты начинают вести себя иначе. Они больше исследуют кодовую базу, чаще запускают тесты, активнее используют инструменты и чаще следуют repo-specific инструкциям (например, переходят на uv, если это написано в файле). На уровне поведения кажется, что всё хорошо: агент дисциплинированнее, осторожнее, более “инженерный”.</p>
+                <p class="article-p fade-in">Но именно это и может быть причиной просадки: лишние требования расширяют пространство обязательных действий. Агент тратит больше шагов, больше reasoning-токенов и в итоге чаще не укладывается в бюджет итераций или уходит в не самое нужное расследование.</p>
+                <p class="article-p fade-in">В числах это выглядит жёстко: стоимость инференса растёт более чем на 20% почти везде, а количество шагов стабильно увеличивается. То есть context file почти гарантированно делает попытку дороже, даже если успех не растёт.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2602.11988v1/x8.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Насколько сильнее агенты начинают пользоваться инструментами при добавлении context files: рост заметен и для LLM-сгенерированных, и для human-файлов.</figcaption></figure>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2602.11988v1/x9.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Рост reasoning-токенов: с context files агент буквально “думает” больше, но это не всегда конвертируется в успех.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Почему структура проекта не спасает</h2>
+                <p class="article-p fade-in">Многие context files содержат обзор структуры проекта: перечисление папок, подсказки по типу “код здесь”, а “тесты там”. Кажется, это должно ускорять процесс. Авторы проверяют это через простой, но показательный прокси-сигнал: сколько шагов проходит до первого взаимодействия с файлом, который действительно был изменён в эталонном PR.</p>
+                <p class="article-p fade-in">И тут неожиданно: без context files этот момент часто наступает раньше. То есть поход в репозиторий не ускоряет попадание в нужные места — а иногда даже наоборот.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2602.11988v1/x5.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Сколько шагов нужно агенту, чтобы впервые дотронуться до “правильного” файла из эталонного патча: зачастую без context files быстрее.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Сценарий, где автогенерация всё-таки полезна</h2>
+                <p class="article-p fade-in">Есть важная оговорка, которая делает работу особенно честной. Авторы проверяют гипотезу: может быть, LLM-сгенерированные context files кажутся вредными лишь потому, что в популярных репозиториях и так много документации, и файл просто дублирует лишнее?</p>
+                <p class="article-p fade-in">Они искусственно удаляют документацию из кодовой базы (md-файлы, docs и т.п.) и повторяют оценку. И вот в такой “пустыне” автогенерированные context files начинают выигрывать и иногда даже обходят человеческие файлы. Это хорошо объясняет, почему на практике разработчики нередко ощущают пользу: в плохо документированных проектах любой связный “быстрый гайд” действительно помогает.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2602.11988v1/x7.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Когда документацию удаляют, LLM-сгенерированные context files чаще оказываются полезнее human-файлов.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Что из этого следует для тех, кто пишет AGENTS.md</h2>
+                <p class="article-p fade-in">Работа не говорит нам “не используйте context files”. Она скорее приземляет ожидания и подсказывает стиль: чем больше в файле требований, тем выше шанс, что агент станет медленнее и дороже — и не факт, что точнее. Лучший человекописный AGENTS.md, судя по выводам, — минимальный: только то, без чего агент реально не запустит проект (команды, тест-раннер, ключевые переменные окружения), а не попытка пересказать архитектуру и правила на все случаи жизни.</p>
+                <p class="article-p fade-in">А вот автогенерацию “по кнопке” авторы прямо не рекомендуют: в среднем она ухудшает успешность и стабильно повышает стоимость. Если уж генерировать, то, возможно, как временную замену отсутствующей документации — и затем редактировать человеком, вырезая всё лишнее.</p>
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in"><a href="https://agents.md/" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="external-link" class="w-5 h-5"></i><span class="font-sans text-sm md:text-base font-medium">Полная статья</span></a></div>
+                <section class="mt-16 md:mt-20 fade-in" aria-labelledby="related-heading">
+                    <h2 id="related-heading"
+                        class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight mb-6 md:mb-8">
+                        Читайте также
+                    </h2>
+                    
+                    <div class="rel-wrap relative -mx-4 md:mx-0" data-left="0" data-right="1"
+                         data-date="2026-02-25">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l"
+                                aria-label="Предыдущие материалы">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r"
+                                aria-label="Следующие материалы">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0">
+                            
+                            <a href="https://dataist.ai/2026-02-23/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://iili.io/qKneHMJ.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-02-23">2026-02-23</time>
+                                <span class="rel-title">Иллюзия социализации: урок Moltbook для будущего интернета</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-02-22/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/JFWJbsqx/Chat-GPT-Image-Feb-22-2026-10-03-59-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-02-22">2026-02-22</time>
+                                <span class="rel-title">Коллективное поведение ИИ-агентов в социальных дилеммах: почему умные агенты разрушают общее благо</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-02-17/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/cS7Qv508/Chat-GPT-Image-Feb-17-2026-02-15-14-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-02-17">2026-02-17</time>
+                                <span class="rel-title">Как ИИ-ассистенты незаметно лишают нас самостоятельности</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-02-13/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/LqgmMYb/Chat-GPT-Image-Feb-13-2026-08-36-51-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-02-13">2026-02-13</time>
+                                <span class="rel-title">Не один агент, а целая команда: мультиагентный подход к автономной разработке</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-02-11/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/Y7MgrT6x/Chat-GPT-Image-Feb-11-2026-09-29-28-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-02-11">2026-02-11</time>
+                                <span class="rel-title">От симуляции к пониманию: как собрать настоящую модель мира</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-02-06/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/DP0v4Gkw/Chat-GPT-Image-Feb-6-2026-11-17-45-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-02-06">2026-02-06</time>
+                                <span class="rel-title">Когда агенту нужен дирижёр:  AOrchestra и динамическая оркестрация LLM через субагентов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-02-03/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/Zp2pfCfw/Chat-GPT-Image-Feb-4-2026-12-03-32-AM.jpg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-02-03">2026-02-03</time>
+                                <span class="rel-title">Open-source наносит ответный удар: Управляемая симуляция мира, которая работает в реальном времени</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-02-01/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/Q37dxCzB/Chat-GPT-Image-Feb-1-2026-09-31-23-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-02-01">2026-02-01</time>
+                                <span class="rel-title">Как LLM помогают дата инженерам наводить порядок в «грязных» данных</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-01-31/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/j9VbZDbK/Chat-GPT-Image-Jan-31-2026-08-45-35-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-01-31">2026-01-31</time>
+                                <span class="rel-title">GameTalk: как научить LLM выигрывать в переговорах</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-01-30/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/V0f1Yqc6/Chat-GPT-Image-Jan-30-2026-07-42-25-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-01-30">2026-01-30</time>
+                                <span class="rel-title">Аналитика без SQL и отчётов: как продавцы в Amazon получают инсайты напрямую из данных</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-01-25/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/VWRJnDz4/Chat-GPT-Image-Jan-25-2026-07-56-21-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-01-25">2026-01-25</time>
+                                <span class="rel-title">RoboBrain: как робот понимает глубину 3D-сцены и учится самоконтролю</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-01-24/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/q3WtJY8T/Chat-GPT-Image-Jan-24-2026-10-43-47-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-01-24">2026-01-24</time>
+                                <span class="rel-title">Общество мыслей: как LLM становятся сильнее, когда спорят сами с собой</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-01-20/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/mC9W1VpB/43d52e55-84d0-489f-a796-c9b5f989605a.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-01-20">2026-01-20</time>
+                                <span class="rel-title">От прототипа к продакшену: с какими проблемами сталкиваются мультиагентные системы</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-01-19/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/Z6mqzr6Z/Chat-GPT-Image-Jan-19-2026-09-48-42-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-01-19">2026-01-19</time>
+                                <span class="rel-title">Агентный RAG против модульного: что реально лучше на практике</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-01-16/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/wZsQ6gVx/69fb4be2-56fc-43f4-aca4-4cd98278f079.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-01-16">2026-01-16</time>
+                                <span class="rel-title">Как превратить GitHub в память для ИИ-агента</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-01-14/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/QFr2ntBr/Chat-GPT-Image-Jan-14-2026-09-41-44-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-01-14">2026-01-14</time>
+                                <span class="rel-title">Когда данных нет совсем, а учиться всё равно нужно: как ИИ сам придумывает задачи и сам себя проверяет</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-01-13/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/TXqDyyc/122.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-01-13">2026-01-13</time>
+                                <span class="rel-title">Как LLM находит нужный код в репозитории, который не помещается в контекст</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-01-10/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/DDr5pVMN/Chat-GPT-Image-Jan-10-2026-09-55-31-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-01-10">2026-01-10</time>
+                                <span class="rel-title">LLM — не тупик. Проблема AGI совсем в другом</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-01-09/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/FbTwdrWT/Chat-GPT-Image-Jan-9-2026-09-23-47-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-01-09">2026-01-09</time>
+                                <span class="rel-title">Профессиональные разработчики не вайбят с агентами — они их контролируют</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/2026-01-08/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/JFKRz9HY/db34db6f-d58a-4fa0-b1c8-cd403c1a6dc9.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-01-08">2026-01-08</time>
+                                <span class="rel-title">Почему ИИ-агенты не помнят собственную жизнь — и как агенту Софье дали автобиографию, мотивацию и долгосрочную память</span>
+                            </a>
+                            
+                        </div>
+                    </div>
+                    
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка мигает
+                                // в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+                            function step(dir) {
+                                // Листаем на видимую ширину минус нахлёст,
+                                // чтобы следующая карточка подсказывала, что
+                                // лента продолжается.
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            sync();
+
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них в
+                            // страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую подложку,
+                                    // а не значок сломанной картинки.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = item.date; }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            function same(url) {
+                                try { return new URL(url, location.href).pathname === location.pathname; }
+                                catch (e) { return false; }
+                            }
+
+                            // Лента дотягивается ОДИН раз и только когда
+                            // читатель до неё добрался: 125 КБ фида не должны
+                            // грузиться у того, кто до подвала не дошёл.
+                            var loaded = false;
+                            function fill() {
+                                if (loaded) return;
+                                loaded = true;
+                                fetch('/papers.json')
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) return;
+                                        var all = list.filter(function (x) {
+                                            return x && x.url && x.title;
+                                        });
+                                        // Свежие вперёд. Фид приходит уже в
+                                        // этом порядке, но сортировка здесь
+                                        // стоит явно: порядок ленты — правило
+                                        // блока, а не побочный эффект того,
+                                        // как список собрали на сервере.
+                                        all.sort(function (a, b) {
+                                            return String(b.date || '').localeCompare(String(a.date || ''));
+                                        });
+                                        // Где в этом списке стоит сама статья.
+                                        // Считаем ДО того, как её выбросить:
+                                        // её место и есть «здесь», а первым
+                                        // после неё идёт ровно предыдущий
+                                        // разбор.
+                                        var mineAt = -1;
+                                        for (var i = 0; i < all.length; i++) {
+                                            if (same(all[i].url)) { mineAt = i; break; }
+                                        }
+                                        var rows = all.filter(function (x) { return !same(x.url); });
+                                        if (!rows.length) return;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+
+                                        // ЛЕНТА ОТКРЫВАЕТСЯ НА МЕСТЕ ЭТОЙ
+                                        // СТАТЬИ, а не с самого свежего
+                                        // разбора. Влево от стартовой позиции
+                                        // остаётся то, что вышло ПОСЛЕ неё,
+                                        // вправо уходит то, что было ДО.
+                                        //
+                                        // Без этого лента получалась одинаковой
+                                        // на всех страницах сайта: у майской
+                                        // статьи она начиналась бы с сентября,
+                                        // и соседство по времени — то самое,
+                                        // ради чего блок и нужен, — пропадало
+                                        // ровно в тот момент, когда страница
+                                        // становится интерактивной.
+                                        //
+                                        // Позицию берём по месту самой статьи
+                                        // в фиде. Сравнивать по дате нельзя:
+                                        // за один день выходит по два разбора
+                                        // («2026-07-05» и «2026-07-05_1»), и
+                                        // правило «дата меньше моей» проскочит
+                                        // собрата того же дня — лента откроется
+                                        // на разборе через один.
+                                        //
+                                        // Дата остаётся запасным ответом на
+                                        // случай, если статьи в фиде нет
+                                        // вовсе: свежая страница попадает туда
+                                        // не раньше, чем пересоберётся индекс.
+                                        var at = 0;
+                                        if (mineAt >= 0) {
+                                            at = mineAt;
+                                        } else {
+                                            var mine = wrap.dataset.date || '';
+                                            if (mine) {
+                                                for (var k = 0; k < rows.length; k++) {
+                                                    if (String(rows[k].date || '') < mine) { at = k; break; }
+                                                }
+                                            }
+                                        }
+                                        // Самый старый разбор: предыдущего у
+                                        // него нет, поэтому лента встаёт в
+                                        // конец — слева от края всё свежее.
+                                        if (at > rows.length - 1) at = rows.length - 1;
+                                        var target = rail.children[at];
+                                        if (target) {
+                                            // Без плавности: это не жест
+                                            // читателя, а исходное положение.
+                                            rail.scrollLeft = target.offsetLeft - rail.offsetLeft;
+                                        }
+                                        sync();
+                                    })
+                                    .catch(function () { /* остаёмся с разметкой */ });
+                            }
+                            if ('IntersectionObserver' in window) {
+                                var io = new IntersectionObserver(function (es) {
+                                    if (es.some(function (e) { return e.isIntersecting; })) {
+                                        io.disconnect();
+                                        fill();
+                                    }
+                                }, { rootMargin: '400px' });
+                                io.observe(wrap);
+                            } else {
+                                fill();
+                            }
+                        })();
+                    </script>
+                <nav data-hub-nav aria-label="Темы и справочники"
+                     class="mt-8 md:mt-10 font-sans text-sm text-black/50 dark:text-white/50">
+                    Темы: <a href="https://dataist.ai/topic/agents" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">ИИ-агенты</a>, <a href="https://dataist.ai/topic/code" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">ИИ в разработке</a> · <a href="https://dataist.ai/papers" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Разобранные работы</a> · <a href="https://dataist.ai/glossary" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Словарь терминов</a>
+                </nav>
+                </section>
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-16 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i></div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">ИИ-обзоры статей</h2>
+                        </div>
+                        <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium mb-10">Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.</p>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">Новые обзоры — каждый день.</p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span><i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50"><div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div></div>
+    <script>
+        lucide.createIcons();
+        const themeToggleBtn=document.getElementById('theme-toggle'), html=document.documentElement;
+        function applyTheme(d){ if(d){html.classList.add('dark');localStorage.setItem('theme','dark');}else{html.classList.remove('dark');localStorage.setItem('theme','light');} setTimeout(()=>lucide.createIcons(),50); }
+        const tg=window.Telegram?.WebApp;
+        if(tg&&tg.initData){ tg.ready();tg.expand(); if(tg.colorScheme){ applyTheme(tg.colorScheme==='dark'); tg.onEvent('themeChanged',()=>applyTheme(tg.colorScheme==='dark')); } }
+        themeToggleBtn.addEventListener('click',()=>applyTheme(!html.classList.contains('dark')));
+        window.addEventListener('scroll',()=>{ let h=document.documentElement.scrollHeight-document.documentElement.clientHeight; document.getElementById("progress-bar").style.width=((document.documentElement.scrollTop/h)*100)+"%"; });
+        document.addEventListener("DOMContentLoaded",function(){ const o=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');o.unobserve(e.target);}});},{threshold:0.05}); document.querySelectorAll('.fade-in').forEach(el=>o.observe(el)); });
+    </script>
 </body>
 </html>
