@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Self-written explanations are what let models read dark humor in memes</title>
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Self-written explanations are what let models read dark humor in memes" />
+    <meta property="og:description" content="Not all jokes work the same way. Clean humor runs on wordplay and harmless incongruity; dark humor runs on painful subjects, cultural references and fine contrasts between the image and the caption. In memes this is especially visible: the picture says one thing, the text says another, and the meaning appears where they meet. Until recently there was no good multimodal dataset for dark humor…" />
+    <meta name="description" content="Шутка шутке рознь.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/self-written-explanations-are-what-let-models-read-dark-humor-in-memes/" />
+    <link rel="canonical" href="https://dataist.ai/research/self-written-explanations-are-what-let-models-read-dark-humor-in-memes/">
+    <meta property="og:image" content="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1757582127/c4ulznm6vywvpt0dpnl5.png" />
+    <meta property="article:published_time" content="2025-09-11T10:00:00+03:00">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1757582127/c4ulznm6vywvpt0dpnl5.png" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function () { try { var s=localStorage.getItem('theme'); var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; if(s?s==='dark':p) document.documentElement.classList.add('dark'); } catch(e){ document.documentElement.classList.add('dark'); } })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {
+            colors: { apple: { light:'#F5F5F7', dark:'#000000', grayLight:'#E5E5EA', grayDark:'#1C1C1E', textMutedLight:'#86868B', textMutedDark:'#8E8E93' } },
+            fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','"Inter"','sans-serif'], mono: ['"Space Mono"','monospace'] },
+            boxShadow: { 'apple':'0 4px 24px rgba(0,0,0,0.04)', 'apple-dark':'0 4px 24px rgba(255,255,255,0.04)' }
+        } } };
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header { @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10; }
+        }
+        body { @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300; }
+        ::selection { @apply bg-black text-white dark:bg-white dark:text-black; }
+        .article-p { @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85; }
+        .article-p strong { @apply font-semibold text-black dark:text-white; }
+        .article-h2 { @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white; }
+        .apple-img { @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white; }
+        .fade-in { opacity:0; transform:translateY(20px); transition:opacity .8s cubic-bezier(0.2,0.8,0.2,1), transform .8s cubic-bezier(0.2,0.8,0.2,1); will-change:opacity,transform; }
+        .fade-in.visible { opacity:1; transform:translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Self-written explanations are what let models read dark humor in memes",
+  "url": "https://dataist.ai/research/self-written-explanations-are-what-let-models-read-dark-humor-in-memes/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/self-written-explanations-are-what-let-models-read-dark-humor-in-memes/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Not all jokes work the same way. Clean humor runs on wordplay and harmless incongruity; dark humor runs on painful subjects, cultural references and fine contrasts between the image and the caption. In memes this is especially visible: the picture says one thing, the text says another, and the meaning appears where they meet. Until recently there was no good multimodal dataset for dark humor…",
+  "image": "https://res.cloudinary.com/dqc5jfgqw/image/upload/v1757582127/c4ulznm6vywvpt0dpnl5.png",
+  "datePublished": "2025-09-11",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "D-HUMOR: Dark Humor Understanding via Multimodal Open-ended Reasoning — A Benchmark Dataset and Method",
+    "identifier": "arXiv:2509.06771",
+    "url": "https://arxiv.org/abs/2509.06771"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2509.06771"
+}</script>
+</head>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white"><i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">i</div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">DATAIST</div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i><i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i><span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i><span>Review · 2025-09-11</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white">Self-written explanations are what let models read dark humor in memes</h1>
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-white"><img src="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1757582127/c4ulznm6vywvpt0dpnl5.png" alt="Self-written explanations are what let models read dark humor in memes" class="w-full h-auto object-cover"></div>
+            </header>
+            <div class="max-w-3xl mx-auto w-full">
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">Not all jokes work the same way. Clean humor runs on wordplay and harmless incongruity; dark humor runs on painful subjects, cultural references and fine contrasts between the image and the caption. In memes this is especially visible: the picture says one thing, the text says another, and the meaning appears where they meet. Until recently there was no good multimodal dataset for dark humor specifically, and models kept confusing irony, sarcasm and plain aggression. The D-Humor team closes that gap: they assembled a dataset of memes and proposed a way to teach models to reason — not just look and read, but also explain what exactly makes a joke dark.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2509.06771v1/0EKYU1QY4.jpeg" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Clean humor</figcaption></figure>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2509.06771v1/345908.jpeg" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Dark humor</figcaption></figure>
+                <h2 class="article-h2 fade-in">Why this matters</h2>
+                <p class="article-p fade-in">Understanding dark humor is about context, not censorship. Platforms need to tell malicious speech apart from a humorous comment, however harsh it is. Researchers want to see which groups end up as targets most often. And for the people building AI, it is a way to find where a model fails because of cultural differences or ambiguous visual cues.</p>
+                <h2 class="article-h2 fade-in">How the data was collected</h2>
+                <p class="article-p fade-in">The authors collected 4,397 memes from Reddit, keeping both the image and the OCR text pulled from it. Every meme was labeled along three axes:</p>
+                <ul class="list-disc pl-6 my-6 space-y-2 text-lg md:text-[21px] text-black/85 dark:text-white/85 fade-in"><li class="leading-relaxed">whether it is dark humor;</li><li class="leading-relaxed">the target of the joke: gender/sex, mental health, violence/death, race/ethnicity, disability, other;</li><li class="leading-relaxed">intensity: mild, moderate, high.</li></ul>
+                <p class="article-p fade-in">Labeling was done by three trained annotators with regular cross-checks. The split between dark and non-dark humor is close to even. The most frequent targets are gender/sex and the "other" category, and milder cases dominate the intensity scale. The team makes a point of the ethics: the data is sensitive, access is granted under an agreement, and no personal data is included.</p>
+                <h3 class="font-sans font-bold text-xl md:text-2xl tracking-tight mt-10 mb-4 text-black dark:text-white fade-in">Warning: examples from the dataset may contain offensive content</h3>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2509.06771v1/349286.jpeg" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Example: dark humor; target — gender/sex; high intensity</figcaption></figure>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2509.06771v1/506006.jpeg" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Example: dark humor; target — race/ethnicity; high intensity</figcaption></figure>
+                <h2 class="article-h2 fade-in">How the proposed method works</h2>
+                <p class="article-p fade-in">The core idea is to add one more layer on top of the image and the text: a structured explanation that the model writes itself. The authors take a VLM (Qwen-2.5-7B) and ask it to break the meme down briefly across six fields: what is happening in it, where the punchline is hidden, how the narrative is built, what feeling it produces, which dark cues are present, and who the potential target is. Then they run iterative self-improvement: the model steps into the role of the meme's author, criticizes its own explanation and refines it. Three iterations are usually enough to make the explanation fuller and more coherent.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2509.06771v1/Frame_38.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">System diagram: image + OCR text → explanation → fused in TCRNet for the predictions</figcaption></figure>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2509.06771v1/Self_Loop_Final.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Feedback loop with a role switch: the model extends and corrects its own explanation</figcaption></figure>
+                <p class="article-p fade-in">Then comes feature extraction. The OCR text goes through BERT, the explanation through S-BERT, the image through ViT. Where they meet sits the Tri-stream Cross-Reasoning Network (TCRNet): it matches text, image and explanation pairwise, catches the mismatches and fuses everything into a single representation. Those mismatches are often what produces the dark humor in the first place, so catching them is critical.</p>
+                <h2 class="article-h2 fade-in">What the experiments showed</h2>
+                <p class="article-p fade-in">Baseline language models are already decent at recognizing dark humor, but they get weaker on the target and weaker still on intensity. Vision models do worse. Zero-shot VLMs without fine-tuning are not reliable either: they lack alignment between the modalities.</p>
+                <p class="article-p fade-in">Adding structured explanations to the OCR text lifts the numbers noticeably: DistilBERT's Macro-F1 on target goes from roughly 56% to 63%, and the correlation on intensity from 26% to 33%. The best results come from TCRNet, which explicitly combines image, text and reasoning:</p>
+                <ul class="list-disc pl-6 my-6 space-y-2 text-lg md:text-[21px] text-black/85 dark:text-white/85 fade-in"><li class="leading-relaxed">dark humor recognition: 75.0% accuracy;</li><li class="leading-relaxed">target prediction: 64.2% weighted F1;</li><li class="leading-relaxed">intensity prediction: 62.7% accuracy, 38.6% Pearson correlation.</li></ul>
+                <p class="article-p fade-in">The ablation is honest about how much the explanations carry: remove the reasoning stream and Macro-F1 on target falls from about 60.5% to about 35.1%, while weighted F1 on whether the meme is dark humor at all drops from about 74.1% to about 67.3%.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2509.06771v1/ch1.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Task 1: is it dark humor</figcaption></figure>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2509.06771v1/ch2.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Task 2: who or what the joke targets</figcaption></figure>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2509.06771v1/ch3.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Task 3: how harsh the joke is</figcaption></figure>
+                <h2 class="article-h2 fade-in">What this changes</h2>
+                <p class="article-p fade-in">The scientific contribution comes down to two things. First, the community gets an open multimodal dataset that clearly labels not only whether a meme is dark humor, but also its target and its intensity. Second, it shows that models get better at subtle memes when they are made to explain the joke and match that explanation against the image and the text. Not just recognizing a pattern, but assembling a causal picture: who is joking, about what, on the strength of which contrast, and why it reads as dark.</p>
+                <h2 class="article-h2 fade-in">Where the limits are</h2>
+                <p class="article-p fade-in">The data comes from Reddit and is in English, so transfer to other platforms and cultures may be uneven, and the distribution across intensity levels is unbalanced. And any model working on sensitive subjects needs responsible usage protocols, from the psychological safety of the annotators to careful control over data access.</p>
+                <h2 class="article-h2 fade-in">Bottom line</h2>
+                <p class="article-p fade-in">D-Humor offers a realistic route to understanding dark humor: add explicit reasoning on top of the multimodal signal and teach the model to align facts with interpretations. That makes the decisions more transparent and more useful, both for research and for applied moderation.</p>
+                <p class="article-p fade-in"><a href="https://github.com/Sai-Kartheek-Reddy/D-Humor-Dark-Humor-Understanding-via-Multimodal-Open-ended-Reasoning" target="_blank" rel="noopener" class="underline underline-offset-2 hover:opacity-70 transition-opacity">💾 Code</a></p>
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in"><a href="https://arxiv.org/abs/2509.06771" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i><span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a></div>
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-16 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i></div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">AI paper breakdowns</h2>
+                        </div>
+                        <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium mb-10">Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.</p>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">New breakdowns every day.</p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span><i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50"><div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div></div>
+    <script>
+        lucide.createIcons();
+        const themeToggleBtn=document.getElementById('theme-toggle'), html=document.documentElement;
+        function applyTheme(d){ if(d){html.classList.add('dark');localStorage.setItem('theme','dark');}else{html.classList.remove('dark');localStorage.setItem('theme','light');} setTimeout(()=>lucide.createIcons(),50); }
+        const tg=window.Telegram?.WebApp;
+        if(tg&&tg.initData){ tg.ready();tg.expand(); if(tg.colorScheme){ applyTheme(tg.colorScheme==='dark'); tg.onEvent('themeChanged',()=>applyTheme(tg.colorScheme==='dark')); } }
+        themeToggleBtn.addEventListener('click',()=>applyTheme(!html.classList.contains('dark')));
+        window.addEventListener('scroll',()=>{ let h=document.documentElement.scrollHeight-document.documentElement.clientHeight; document.getElementById("progress-bar").style.width=((document.documentElement.scrollTop/h)*100)+"%"; });
+        document.addEventListener("DOMContentLoaded",function(){ const o=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');o.unobserve(e.target);}});},{threshold:0.05}); document.querySelectorAll('.fade-in').forEach(el=>o.observe(el)); });
+    </script>
+</body>
+</html>
