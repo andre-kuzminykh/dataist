@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lumine plays Genshin Impact for hours and transfers to other games</title>
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Lumine plays Genshin Impact for hours and transfers to other games" />
+    <meta property="og:description" content="General-purpose agents are back at the center of the conversation. The team behind Lumine offers a concrete recipe for an agent that holds up for hours on hard tasks — 3D navigation, puzzles and dialogue — inside the open world of Genshin Impact, and then carries over to other games with no additional training." />
+    <meta name="description" content="Проблема универсальных агентов снова вышла на передний план.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/lumine-plays-genshin-impact-for-hours-and-transfers-to-other-games/" />
+    <link rel="canonical" href="https://dataist.ai/research/lumine-plays-genshin-impact-for-hours-and-transfers-to-other-games/">
+    <meta property="og:image" content="https://i.ibb.co/PZvS5kZS/photo-2025-11-15-21-52-41.jpg" />
+    <meta property="article:published_time" content="2025-11-15T10:00:00+03:00">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://i.ibb.co/PZvS5kZS/photo-2025-11-15-21-52-41.jpg" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function () { try { var s=localStorage.getItem('theme'); var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; if(s?s==='dark':p) document.documentElement.classList.add('dark'); } catch(e){ document.documentElement.classList.add('dark'); } })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {
+            colors: { apple: { light:'#F5F5F7', dark:'#000000', grayLight:'#E5E5EA', grayDark:'#1C1C1E', textMutedLight:'#86868B', textMutedDark:'#8E8E93' } },
+            fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','"Inter"','sans-serif'], mono: ['"Space Mono"','monospace'] },
+            boxShadow: { 'apple':'0 4px 24px rgba(0,0,0,0.04)', 'apple-dark':'0 4px 24px rgba(255,255,255,0.04)' }
+        } } };
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header { @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10; }
+        }
+        body { @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300; }
+        ::selection { @apply bg-black text-white dark:bg-white dark:text-black; }
+        .article-p { @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85; }
+        .article-p strong { @apply font-semibold text-black dark:text-white; }
+        .article-h2 { @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white; }
+        .apple-img { @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white; }
+        .fade-in { opacity:0; transform:translateY(20px); transition:opacity .8s cubic-bezier(0.2,0.8,0.2,1), transform .8s cubic-bezier(0.2,0.8,0.2,1); will-change:opacity,transform; }
+        .fade-in.visible { opacity:1; transform:translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Lumine plays Genshin Impact for hours and transfers to other games",
+  "url": "https://dataist.ai/research/lumine-plays-genshin-impact-for-hours-and-transfers-to-other-games/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/lumine-plays-genshin-impact-for-hours-and-transfers-to-other-games/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "General-purpose agents are back at the center of the conversation. The team behind Lumine offers a concrete recipe for an agent that holds up for hours on hard tasks — 3D navigation, puzzles and dialogue — inside the open world of Genshin Impact, and then carries over to other games with no additional training.",
+  "image": "https://i.ibb.co/PZvS5kZS/photo-2025-11-15-21-52-41.jpg",
+  "datePublished": "2025-11-15",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Lumine: An Open Recipe for Building Generalist Agents in 3D Open Worlds",
+    "identifier": "arXiv:2511.08892",
+    "url": "https://arxiv.org/abs/2511.08892"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2511.08892"
+}</script>
+</head>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white"><i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">i</div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">DATAIST</div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i><i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i><span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i><span>Review · 2025-11-15</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white">Lumine plays Genshin Impact for hours and transfers to other games</h1>
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-white"><img src="https://i.ibb.co/PZvS5kZS/photo-2025-11-15-21-52-41.jpg" alt="Lumine plays Genshin Impact for hours and transfers to other games" class="w-full h-auto object-cover"></div>
+            </header>
+            <div class="max-w-3xl mx-auto w-full">
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">General-purpose agents are back at the center of the conversation. The team behind Lumine offers a concrete recipe for an agent that holds up for hours on hard tasks — 3D navigation, puzzles and dialogue — inside the open world of Genshin Impact, and then carries over to other games with no additional training.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2511.08892v1/x1.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Lumine is the first AI agent able to run hours-long missions in real time across large open 3D worlds.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Why this is hard</h2>
+                <p class="article-p fade-in">Closed environments gave us plenty of good algorithms and taught us very little about surviving in an open world, where an agent has to read a 3D scene and a 2D GUI at the same time, plan over long horizons, handle keyboard and mouse precisely, hold context in memory — all under hard timing constraints. Genshin Impact is a brutal testbed: enormous, full of dialogue, side quests, distinct mechanics, physics and weather, and the interface exposes only what is on screen, with no access to any internal game state.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2511.08892v1/x2.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">An overview of the Genshin Impact world: large-scale open-world exploration and multi-stage tasks in an interactive 3D environment. Players move freely across regions, glide, swim, dive, talk to characters and take part in quests, puzzles and combat.</figcaption></figure>
+                <h2 class="article-h2 fade-in">How the agent works</h2>
+                <p class="article-p fade-in">At its core is an open-architecture vision-language model, Qwen2-VL-7B-Base. The agent sees the world the way a person does — through its eyes, taking in a 1280×720 frame every 200 ms. It acts like a person too, through keyboard and mouse, with one important caveat: those are encoded as text descriptions that emulate every keypress and micro-movement. At each nominal step the agent emits six chunks (one per 33 ms) carrying compressed information about what was on screen and exactly how the player moved the mouse and pressed keys. The six chunks are then turned into a virtual K&amp;M action covering 200 ms of game time. This is what makes click positioning accurate in the GUI, supports mouse aiming in combat, and cuts errors in dialogue and menu choices.</p>
+                <p class="article-p fade-in">The key idea is hybrid reasoning. At every step the agent decides whether to think right now — to generate a short plan in words — or simply emit the next useful K&amp;M chunk. Thoughts are not needed in most situations; they tend to appear at turning points in the story and serve as long-horizon notes. The last 20 steps of history are kept separately. Together that is enough to make the agent tolerant of latency and consistent in how it behaves.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2511.08892v1/x3.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">The Lumine architecture: a VLM takes pixel input and historical context (previous actions and reasoning) and emits keyboard and mouse commands as text. It uses a hybrid reasoning strategy — generating new reasoning only when needed, otherwise emitting actions directly for efficient real-time control.</figcaption></figure>
+                <h2 class="article-h2 fade-in">How it was trained</h2>
+                <p class="article-p fade-in">The researchers propose three stages, each with its own logic. First, imitation learning. That takes a lot of varied human data: video and K&amp;M logs from playing Genshin from scratch — 2,424 hours in total. They filter for clean K&amp;M traces with no idle time or camera jitter, which leaves 1,731 hours in which players make good use of every game mechanic. At this stage the model learns more than walking forward and pressing buttons: it interacts with objects, fights, handles the GUI reliably, switches quests quickly and navigates the map.</p>
+                <p class="article-p fade-in">Second, imitation data alone is not enough. The agent has to get from "complete the quest" to "get closer" or "change your route" — it needs robustness and a grasp of how to follow the instruction it was given. For that they use 165 hours of short human episodes with instructions drawn from three different tasks, then expand that with a helper model and filtering into 200 hours of episodes in which the agent has to follow instructions across varied situations.</p>
+                <p class="article-p fade-in">Third, clearing missions that run for hours — combat, NPC dialogue, puzzles and the rest — takes reasoning. The authors carefully annotate first-person inner thoughts on every key frame of one act of a story mission: 15 hours in all. The checkpoint thoughts come out short, so the agent gets used to reaching for them rarely.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2511.08892v1/x5.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">An overview of the data pipeline: 2,424 h of synchronized video and actions are cut by selection rules to 1,731 h for pre-training; 165 h are labeled by hand to train the auto-labeler and, with GPT-4.1 and action filtering, narrowed to 200 h of high-quality instruction-following data; 15 h of reasoning annotation train Lumine's hybrid thinking.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Speed matters</h2>
+                <p class="article-p fade-in">Everyone likes peak performance, but the authors had to sweat for it — 25.3× faster inference once the optimizations are stacked. The model keeps its KV cache in FP16, quantizes Qwen2-VL to AWQ4, uses speculative decoding for the thought and K&amp;M separators, and streams K&amp;M from every frame. Preprocessing and visual-token packing are pushed onto the GPU. The result: the first K&amp;M chunk (when no reasoning is needed) arrives in about 110 milliseconds, and inference latency for an arbitrary K&amp;M is around 3 milliseconds. The game stays smooth even when it is demanding the GPU and the AI is generating thoughts frequently on hard missions.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2511.08892v1/x7.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Latency broken down by stage, and the overall gain. The combined optimizations deliver a 25.3× speedup over the baseline.</figcaption></figure>
+                <h2 class="article-h2 fade-in">What it does in practice</h2>
+                <p class="article-p fade-in">First, the instruction-following numbers: 141 tasks across all four categories — collection, combat, NPC interaction and puzzle solving. After the instruction-tuning stage the agent clears more than 80% of the easy tasks and behaves consistently on the hard ones. History helps most on collection and puzzles, where order matters.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2511.08892v1/x8.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">An overview of the 141-task benchmark across four categories: collection, combat, NPC interaction and puzzles. Each category includes easy, hard and previously unseen tasks.</figcaption></figure>
+                <p class="article-p fade-in">Second, the long story mission. Lumine clears it in roughly 56 minutes, on par with a strong human player. The reasoning stage is what visibly improves robustness: the agent stays on purpose, wanders outside the task less often, makes fewer routing mistakes and handles the game's GUI more carefully.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2511.08892v1/x11.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Internal evaluation: the full trajectory of Lumine-Thinking through Act I (56 min) compared with novices (78 min) and experts (53 min).</figcaption></figure>
+                <p class="article-p fade-in">Third, transfer. With no additional training the agent handles missions that take over an hour of real time in Wuthering Waves, and finishes the first chapter of Honkai: Star Rail in about five hours. It is always good to see an agent that does not fall apart outside the environment it was trained in.</p>
+                <h2 class="article-h2 fade-in">How this differs from earlier approaches</h2>
+                <p class="article-p fade-in">A short memory is not a bad thing. Fewer hallucinations, more stability. The authors count two absences as their strongest move. The first is a rigid hierarchy with semantic abstractions for different tasks and skills; that kind of structure cultivates high-level chunks of behavior but is hard to optimize jointly. The second is forcing reasoning at every step, which on long missions badly hurts overall reaction time and fills the context with noise from redundant, hallucinated thoughts. The hybrid strategy looks like a simple and effective compromise.</p>
+                <h2 class="article-h2 fade-in">What is still rough</h2>
+                <p class="article-p fade-in">The paper spells out the limitations in detail. The agent rarely uses fast travel, avoids healing, dies to hard bosses, and struggles to route between large numbers of map markers because its memory is only 20 steps long. All of it looks fixable with better minimap handling, a longer memory, extra data on rare mechanics and a light pass of reinforcement fine-tuning. The authors see the next big step as giving the model a good world representation to plan with.</p>
+                <h2 class="article-h2 fade-in">Why it matters</h2>
+                <p class="article-p fade-in">This work feels encouraging. It shows that a general-purpose game agent driven by vision can be built — one that uses thinking, action and memory to behave reliably across different games, provided all of it runs in a single loop and response time is treated as the first constraint. This could become part of the architecture for a game AI that plays like a live player: watching the screen, reasoning, pressing a key and remembering what it just did. Yes, most of it is described and measured on a single story mission in Genshin. But the intuition is that the next step toward game AI built this way is within reach.</p>
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in"><a href="https://arxiv.org/abs/2511.08892" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i><span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a></div>
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-16 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i></div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">AI paper breakdowns</h2>
+                        </div>
+                        <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium mb-10">Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.</p>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">New breakdowns every day.</p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span><i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50"><div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div></div>
+    <script>
+        lucide.createIcons();
+        const themeToggleBtn=document.getElementById('theme-toggle'), html=document.documentElement;
+        function applyTheme(d){ if(d){html.classList.add('dark');localStorage.setItem('theme','dark');}else{html.classList.remove('dark');localStorage.setItem('theme','light');} setTimeout(()=>lucide.createIcons(),50); }
+        const tg=window.Telegram?.WebApp;
+        if(tg&&tg.initData){ tg.ready();tg.expand(); if(tg.colorScheme){ applyTheme(tg.colorScheme==='dark'); tg.onEvent('themeChanged',()=>applyTheme(tg.colorScheme==='dark')); } }
+        themeToggleBtn.addEventListener('click',()=>applyTheme(!html.classList.contains('dark')));
+        window.addEventListener('scroll',()=>{ let h=document.documentElement.scrollHeight-document.documentElement.clientHeight; document.getElementById("progress-bar").style.width=((document.documentElement.scrollTop/h)*100)+"%"; });
+        document.addEventListener("DOMContentLoaded",function(){ const o=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');o.unobserve(e.target);}});},{threshold:0.05}); document.querySelectorAll('.fade-in').forEach(el=>o.observe(el)); });
+    </script>
+</body>
+</html>

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>42,267 commits show multi-agent frameworks are still building, not stabilizing</title>
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="42,267 commits show multi-agent frameworks are still building, not stabilizing" />
+    <meta property="og:description" content="A new tooling layer has grown up around LLM applications: frameworks for assembling not one clever chatbot but a whole team of specialized agents. One plans, one retrieves data, one writes code, one checks the result. In demos this looks like a shortcut to complicated products. Every such trick has a back side, though: maintenance, bugs, breakage against external APIs, and a permanent chase…" />
+    <meta name="description" content="Вокруг приложений на базе LLM возник новый набор инструментов: фреймворки, которые помогают собирать не одного «умного чат-бота», а целую команду специализированных…">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/42-267-commits-show-multi-agent-frameworks-are-still-building-not-stabilizing/" />
+    <link rel="canonical" href="https://dataist.ai/research/42-267-commits-show-multi-agent-frameworks-are-still-building-not-stabilizing/">
+    <meta property="og:image" content="https://i.ibb.co/mC9W1VpB/43d52e55-84d0-489f-a796-c9b5f989605a.png" />
+    <meta property="article:published_time" content="2026-01-20T10:00:00+03:00">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://i.ibb.co/mC9W1VpB/43d52e55-84d0-489f-a796-c9b5f989605a.png" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function () { try { var s=localStorage.getItem('theme'); var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; if(s?s==='dark':p) document.documentElement.classList.add('dark'); } catch(e){ document.documentElement.classList.add('dark'); } })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {
+            colors: { apple: { light:'#F5F5F7', dark:'#000000', grayLight:'#E5E5EA', grayDark:'#1C1C1E', textMutedLight:'#86868B', textMutedDark:'#8E8E93' } },
+            fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','"Inter"','sans-serif'], mono: ['"Space Mono"','monospace'] },
+            boxShadow: { 'apple':'0 4px 24px rgba(0,0,0,0.04)', 'apple-dark':'0 4px 24px rgba(255,255,255,0.04)' }
+        } } };
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header { @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10; }
+        }
+        body { @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300; }
+        ::selection { @apply bg-black text-white dark:bg-white dark:text-black; }
+        .article-p { @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85; }
+        .article-p strong { @apply font-semibold text-black dark:text-white; }
+        .article-h2 { @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white; }
+        .apple-img { @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white; }
+        .fade-in { opacity:0; transform:translateY(20px); transition:opacity .8s cubic-bezier(0.2,0.8,0.2,1), transform .8s cubic-bezier(0.2,0.8,0.2,1); will-change:opacity,transform; }
+        .fade-in.visible { opacity:1; transform:translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "42,267 commits show multi-agent frameworks are still building, not stabilizing",
+  "url": "https://dataist.ai/research/42-267-commits-show-multi-agent-frameworks-are-still-building-not-stabilizing/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/42-267-commits-show-multi-agent-frameworks-are-still-building-not-stabilizing/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "A new tooling layer has grown up around LLM applications: frameworks for assembling not one clever chatbot but a whole team of specialized agents. One plans, one retrieves data, one writes code, one checks the result. In demos this looks like a shortcut to complicated products. Every such trick has a back side, though: maintenance, bugs, breakage against external APIs, and a permanent chase…",
+  "image": "https://i.ibb.co/mC9W1VpB/43d52e55-84d0-489f-a796-c9b5f989605a.png",
+  "datePublished": "2026-01-20",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "A Large-Scale Study on the Development and Issues of Multi-Agent AI Systems",
+    "identifier": "arXiv:2601.07136",
+    "url": "https://arxiv.org/abs/2601.07136"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2601.07136"
+}</script>
+</head>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white"><i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">i</div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">DATAIST</div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i><i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i><span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i><span>Review · 2026-01-20</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white">42,267 commits show multi-agent frameworks are still building, not stabilizing</h1>
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-white"><img src="https://i.ibb.co/mC9W1VpB/43d52e55-84d0-489f-a796-c9b5f989605a.png" alt="42,267 commits show multi-agent frameworks are still building, not stabilizing" class="w-full h-auto object-cover"></div>
+            </header>
+            <div class="max-w-3xl mx-auto w-full">
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">A new tooling layer has grown up around LLM applications: frameworks for assembling not one clever chatbot but a whole team of specialized agents. One plans, one retrieves data, one writes code, one checks the result. In demos this looks like a shortcut to complicated products. Every such trick has a back side, though: maintenance, bugs, breakage against external APIs, and a permanent chase after model updates.</p>
+                <p class="article-p fade-in">The authors of <strong class="font-semibold text-black dark:text-white">A Large-Scale Study on the Development and Issues of Multi-Agent AI Systems</strong> decided to treat multi-agent systems as live engineering projects. Their question is simple and painful in practice: <strong class="font-semibold text-black dark:text-white">how do these frameworks actually evolve, which problems recur, and how quickly does the community close them</strong>.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.07136v1/x1.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Development and maintenance activity across the eight major multi-agent AI systems, showing the commits and issues used in our large-scale study.</figcaption></figure>
+                <h2 class="article-h2 fade-in">What the study looked at, and why it matters</h2>
+                <p class="article-p fade-in">Instead of arguing about which agent architecture is better, the researchers went to GitHub and collected a large slice of eight popular open-source systems: <strong class="font-semibold text-black dark:text-white">LangChain, LlamaIndex, Haystack, Semantic Kernel, AutoGen, CrewAI, Letta, SuperAGI</strong>. These are the projects a large share of current LLM development is built on, from retrieval-augmented generation and tool use to orchestrating teams of agents.</p>
+                <p class="article-p fade-in">The trouble is that such frameworks depend on everything at once: model providers, function calling formats, code execution tools, databases, vector stores, cloud infrastructure. Any change on the outside turns into work inside the repository fast.</p>
+                <h2 class="article-h2 fade-in">How the facts were mined from the repositories</h2>
+                <p class="article-p fade-in">The authors used a mining software repositories approach: they pulled the development and maintenance history through GitHub and analyzed</p>
+                <ul class="list-disc pl-6 my-6 space-y-2 text-lg md:text-[21px] text-black/85 dark:text-white/85 fade-in"><li class="leading-relaxed"><strong class="font-semibold text-black dark:text-white">42,267 unique commits</strong> (after removing duplicates),</li><li class="leading-relaxed"><strong class="font-semibold text-black dark:text-white">4,731 closed issues</strong>, but only those closed through a pull request, so that the set covers problems actually solved rather than discussions left hanging.</li></ul>
+                <p class="article-p fade-in">To characterize the changes, they classified commits automatically from their messages by fine-tuning DistilBERT: corrective, adaptive, or perfective. To sort out the themes of agent-related problems, they ran BERTopic for topic modeling and then checked the clusters by hand.</p>
+                <h2 class="article-h2 fade-in">Growth patterns: three kinds of project life</h2>
+                <p class="article-p fade-in">The data shows an ecosystem that does not grow evenly. Three profiles stand out.</p>
+                <p class="article-p fade-in"><strong class="font-semibold text-black dark:text-white">Sustained</strong> — long, steady growth. Haystack and AutoGen behave this way: no sharp dips or spikes, a legible pace.</p>
+                <p class="article-p fade-in"><strong class="font-semibold text-black dark:text-white">Steady</strong> — stable activity without any sense of an explosion, usually on top of an architecture and a process that have already settled.</p>
+                <p class="article-p fade-in"><strong class="font-semibold text-black dark:text-white">Burst-driven</strong> — projects that fire off sharply, pile up a huge volume of changes in a short window, and then noticeably fade. SuperAGI is the clearest case: heavy activity around the middle of 2023, then decline.</p>
+                <p class="article-p fade-in"><strong class="font-semibold text-black dark:text-white">2023 was the inflection point</strong> for nearly all of them, in commits and in user-filed issues alike. It reads like the moment LLM tooling started getting bolted onto real products at scale.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.07136v1/x4.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Sparklines of monthly commit activity for each repository, showing temporal patterns.</figcaption></figure>
+                <h2 class="article-h2 fade-in">What developers do more of: fixing or improving</h2>
+                <p class="article-p fade-in">One of the most practical results is the breakdown of commit types. Across the ecosystem, <strong class="font-semibold text-black dark:text-white">feature work and improvement</strong> dominates: perfective commits account for roughly <strong class="font-semibold text-black dark:text-white">40.8%</strong>. Bug fixes (corrective) are about <strong class="font-semibold text-black dark:text-white">27.4%</strong>, and adaptive changes, the ones that keep the code in step with its environment and dependencies, about <strong class="font-semibold text-black dark:text-white">24.3%</strong>.</p>
+                <p class="article-p fade-in">That is a useful signal: the frameworks are still putting on muscle, and most of the energy goes into capability rather than stabilization. Most commits are also atomic — mixed types are rare — which usually points to tighter engineering discipline: easier to review, easier to revert, easier to trace a regression back to its cause.</p>
+                <p class="article-p fade-in">One more detail: after 2023 the volume of deleted code starts catching up with the volume added. That looks like a shift from plain expansion to <strong class="font-semibold text-black dark:text-white">architectural rework and refactoring</strong>, where old decisions have to be taken apart so the system does not collapse under its own growth.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.07136v1/x5.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Code churn patterns showing added lines, deleted lines and changed files across the different development profiles</figcaption></figure>
+                <h2 class="article-h2 fade-in">What actually lands in the issue tracker</h2>
+                <p class="article-p fade-in">Look at issue labels and the surface is predictable: <strong class="font-semibold text-black dark:text-white">bugs</strong> are a sizeable share (about <strong class="font-semibold text-black dark:text-white">22%</strong>). But close behind, and just as painful, come <strong class="font-semibold text-black dark:text-white">infrastructure questions</strong> (about <strong class="font-semibold text-black dark:text-white">14%</strong>) and a separate layer of what you might call agent engineering — <strong class="font-semibold text-black dark:text-white">agent coordination problems</strong> (about <strong class="font-semibold text-black dark:text-white">10%</strong>).</p>
+                <p class="article-p fade-in">Inside the agent-related issues, the themes will be familiar to anyone who has built an agentic workflow: group chat and communication, planning and stepwise execution, integrations with AI service providers, evaluation and metrics, function calling, exception handling. In other words, the problem is not only in the code but in the logic of how agents negotiate with each other and how the system stays controllable.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.07136v1/x11.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Cumulative growth trajectories of the main issue label categories</figcaption></figure>
+                <h2 class="article-h2 fade-in">How fast things actually get fixed</h2>
+                <p class="article-p fade-in">Resolution times vary by project but are broadly encouraging: medians run <strong class="font-semibold text-black dark:text-white">from under a day to roughly two weeks</strong>, depending on the repository. The distributions are skewed, though — plenty of issues close quickly, with a long tail of hard cases behind them.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.07136v1/x10.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Distribution of issue resolution time by repository. Box plots show the median (center line), the interquartile range (box), whiskers to 1.5 × IQR and the mean (×). Outliers are not shown.</figcaption></figure>
+                <h2 class="article-h2 fade-in">What this says about the ecosystem</h2>
+                <p class="article-p fade-in">The study's main conclusion: multi-agent systems have both strong momentum and real problems. The frameworks develop quickly, attract large communities and take in contributions freely. Yet a substantial share of their issues has nothing to do with features and everything to do with infrastructure and coordination — the things that surface when a technology leaves the prototype stage and has to live in production.</p>
+                <p class="article-p fade-in">The authors point to where the community should invest: more systematic testing, better documentation, mature maintenance practices. In a world where models, APIs and tools change faster than development patterns can settle, that reads less like a wish list and more like a survival condition.</p>
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in"><a href="https://arxiv.org/html/2601.07136v1" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i><span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a></div>
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-16 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i></div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">AI paper breakdowns</h2>
+                        </div>
+                        <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium mb-10">Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.</p>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">New breakdowns every day.</p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span><i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50"><div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div></div>
+    <script>
+        lucide.createIcons();
+        const themeToggleBtn=document.getElementById('theme-toggle'), html=document.documentElement;
+        function applyTheme(d){ if(d){html.classList.add('dark');localStorage.setItem('theme','dark');}else{html.classList.remove('dark');localStorage.setItem('theme','light');} setTimeout(()=>lucide.createIcons(),50); }
+        const tg=window.Telegram?.WebApp;
+        if(tg&&tg.initData){ tg.ready();tg.expand(); if(tg.colorScheme){ applyTheme(tg.colorScheme==='dark'); tg.onEvent('themeChanged',()=>applyTheme(tg.colorScheme==='dark')); } }
+        themeToggleBtn.addEventListener('click',()=>applyTheme(!html.classList.contains('dark')));
+        window.addEventListener('scroll',()=>{ let h=document.documentElement.scrollHeight-document.documentElement.clientHeight; document.getElementById("progress-bar").style.width=((document.documentElement.scrollTop/h)*100)+"%"; });
+        document.addEventListener("DOMContentLoaded",function(){ const o=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');o.unobserve(e.target);}});},{threshold:0.05}); document.querySelectorAll('.fade-in').forEach(el=>o.observe(el)); });
+    </script>
+</body>
+</html>

@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TSci's four agents cut forecast error 10.4% over statistical baselines</title>
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="TSci's four agents cut forecast error 10.4% over statistical baselines" />
+    <meta property="og:description" content="Real companies deal in tens of thousands of short, noisy time series, full of gaps, with horizons and sampling frequencies that keep changing. The hard part is not the model — it is everything around it: cleaning the data, validating it properly, building ensembles, producing reports that survive an audit. Narrow domain-specific solutions transfer badly between domains, and general-purpose…" />
+    <meta name="description" content="В реальных компаниях на стол падают десятки тысяч коротких, шумных временных рядов с пропусками и скачущими горизонтом и частотой.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/tscis-four-agents-cut-forecast-error-10-4-over-statistical-baselines/" />
+    <link rel="canonical" href="https://dataist.ai/research/tscis-four-agents-cut-forecast-error-10-4-over-statistical-baselines/">
+    <meta property="og:image" content="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1759483345/cmenbosojzxsntwml6xp.png" />
+    <meta property="article:published_time" content="2025-10-03T10:00:00+03:00">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1759483345/cmenbosojzxsntwml6xp.png" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function () { try { var s=localStorage.getItem('theme'); var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; if(s?s==='dark':p) document.documentElement.classList.add('dark'); } catch(e){ document.documentElement.classList.add('dark'); } })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {
+            colors: { apple: { light:'#F5F5F7', dark:'#000000', grayLight:'#E5E5EA', grayDark:'#1C1C1E', textMutedLight:'#86868B', textMutedDark:'#8E8E93' } },
+            fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','"Inter"','sans-serif'], mono: ['"Space Mono"','monospace'] },
+            boxShadow: { 'apple':'0 4px 24px rgba(0,0,0,0.04)', 'apple-dark':'0 4px 24px rgba(255,255,255,0.04)' }
+        } } };
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header { @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10; }
+        }
+        body { @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300; }
+        ::selection { @apply bg-black text-white dark:bg-white dark:text-black; }
+        .article-p { @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85; }
+        .article-p strong { @apply font-semibold text-black dark:text-white; }
+        .article-h2 { @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white; }
+        .apple-img { @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white; }
+        .fade-in { opacity:0; transform:translateY(20px); transition:opacity .8s cubic-bezier(0.2,0.8,0.2,1), transform .8s cubic-bezier(0.2,0.8,0.2,1); will-change:opacity,transform; }
+        .fade-in.visible { opacity:1; transform:translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "TSci's four agents cut forecast error 10.4% over statistical baselines",
+  "url": "https://dataist.ai/research/tscis-four-agents-cut-forecast-error-10-4-over-statistical-baselines/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/tscis-four-agents-cut-forecast-error-10-4-over-statistical-baselines/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Real companies deal in tens of thousands of short, noisy time series, full of gaps, with horizons and sampling frequencies that keep changing. The hard part is not the model — it is everything around it: cleaning the data, validating it properly, building ensembles, producing reports that survive an audit. Narrow domain-specific solutions transfer badly between domains, and general-purpose…",
+  "image": "https://res.cloudinary.com/dqc5jfgqw/image/upload/v1759483345/cmenbosojzxsntwml6xp.png",
+  "datePublished": "2025-10-03",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "TimeSeriesScientist: A General-Purpose AI Agent for Time Series Analysis",
+    "identifier": "arXiv:2510.01538",
+    "url": "https://arxiv.org/abs/2510.01538"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2510.01538"
+}</script>
+</head>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white"><i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">i</div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">DATAIST</div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i><i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i><span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i><span>Review · 2025-10-03</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white">TSci's four agents cut forecast error 10.4% over statistical baselines</h1>
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-white"><img src="https://res.cloudinary.com/dqc5jfgqw/image/upload/v1759483345/cmenbosojzxsntwml6xp.png" alt="TSci's four agents cut forecast error 10.4% over statistical baselines" class="w-full h-auto object-cover"></div>
+            </header>
+            <div class="max-w-3xl mx-auto w-full">
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">Real companies deal in tens of thousands of short, noisy time series, full of gaps, with horizons and sampling frequencies that keep changing. The hard part is not the model — it is everything around it: cleaning the data, validating it properly, building ensembles, producing reports that survive an audit. Narrow domain-specific solutions transfer badly between domains, and general-purpose ones tend to break on dirty data. The authors take a refreshing angle: instead of racing to build one more model, assemble an LLM-based multi-agent system that imitates a careful researcher and covers the whole pipeline, from input file to a report anyone can check.</p>
+                <h2 class="article-h2 fade-in">Inside TSci</h2>
+                <p class="article-p fade-in">TSci is four agents working in concert, each with its own role and its own toolset.</p>
+                <ul class="list-disc pl-6 my-6 space-y-2 text-lg md:text-[21px] text-black/85 dark:text-white/85 fade-in"><li class="leading-relaxed"><strong class="font-semibold text-black dark:text-white">Curator</strong>: diagnoses the data, repairs gaps and outliers, builds visualizations and pulls out the structure of the series — trend, seasonality, stationarity.</li><li class="leading-relaxed"><strong class="font-semibold text-black dark:text-white">Planner</strong>: reads the diagnostics and the plots, picks model families from a library of 21 options ranging from ARIMA to gradient boosting and simple neural networks, tunes the hyperparameters, and writes a short justification for each choice.</li><li class="leading-relaxed"><strong class="font-semibold text-black dark:text-white">Forecaster</strong>: trains the top-k models and decides how to combine their forecasts — take the best one, average by quality, or apply robust aggregation.</li><li class="leading-relaxed"><strong class="font-semibold text-black dark:text-white">Reporter</strong>: assembles a transparent report with metrics, assumptions, confidence estimates and a complete log of the decisions made.</li></ul>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.01538v1/x3.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Overview of the TSci framework: a cooperative multi-agent system for time series analysis and forecasting that works the way a human scientist does. Once the data arrives, a four-agent pipeline starts: Curator produces the analytical reports, Planner selects model configurations through reasoning and validation, Forecaster combines model outputs into the final forecast, Reporter writes the final report.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Looking at the plots, not just the numbers</h2>
+                <p class="article-p fade-in">TSci does not rely on textual context alone; it also extracts features from the charts. Simple visual descriptors — taken from the overview plot, the decomposition, the ACF/PACF — help Planner narrow the shortlist and help Curator make the right preprocessing calls. It is a practical compromise: lightweight visual analysis without heavy computer vision, but with a real payoff for model choice and settings.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.01538v1/x4.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Curator's workflow: the raw dataset is diagnosed and cleaned, visualizations are produced, and a final summary is compiled covering trend, seasonality and stationarity.</figcaption></figure>
+                <h2 class="article-h2 fade-in">From a forecast to a report you can audit</h2>
+                <p class="article-p fade-in">Reporter does not simply glue the pictures together. It records:</p>
+                <ul class="list-disc pl-6 my-6 space-y-2 text-lg md:text-[21px] text-black/85 dark:text-white/85 fade-in"><li class="leading-relaxed">the final ensemble forecast and its confidence intervals;</li><li class="leading-relaxed">metrics for every candidate model and for the ensemble;</li><li class="leading-relaxed">an explanation of why these models and these weights;</li><li class="leading-relaxed">assumptions and limitations;</li><li class="leading-relaxed">the full trace of tool-level decisions.</li></ul>
+                <p class="article-p fade-in">A report like that is easier to discuss with domain experts and easier to hand between teams.</p>
+                <p class="article-p fade-in">The authors tested TSci on eight benchmarks from five domains: energy, climate, finance, health. On average the system cuts error by 10.4% against statistical baselines and by 38.2–38.3% against LLM baselines. The gap is widest on hard datasets with long horizons and strong seasonality. On Weather, TSci's mean MAE is below every competitor; on ECL it comfortably beats both statistical and LLM approaches; on Exchange and ILI the advantage holds even with short histories.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.01538v1/assets/ts_line_grid3.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">TSci's performance compared with five LLM-based baselines across eight datasets.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Why it works</h2>
+                <p class="article-p fade-in">The ablations are honest about what each component contributes. Remove the preprocessing and MAE jumps by 41.8% on average. Strip out Curator's analysis stage and you add another 28.3%. Turn off hyperparameter tuning and the degradation is clear, especially at long horizons, where the cost of an error compounds. In other words, what wins is not one clever model but a well-designed process: diagnostics, a sensible shortlist, validation, and a robust ensemble.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.01538v1/x7.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Ablation study of TSci with three variants: without data preprocessing, without data analysis, and without parameter optimization. TSci reaches the lowest MAE in most settings.</figcaption></figure>
+                <p class="article-p fade-in">In pairwise comparisons of reports against five LLM systems, TSci wins more often on every quality dimension — from the soundness of the analysis and the model selection to the structure and practicality of the recommendations. The margins are largest on rigorous argumentation and explanations.</p>
+                <h2 class="article-h2 fade-in">Case study: electricity</h2>
+                <p class="article-p fade-in">The slice of ECL they picked shows pronounced cycles and non-stationarity. Planner favored ARIMA, Prophet and exponential smoothing; the ensemble raised the weights of the models that capture seasonality better. Over a long horizon the individual models accumulate error, while the ensemble stays stable and follows the cyclical pattern.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.01538v1/x10.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Example decomposition of a time series from the ECL dataset: the original series, the trend, and the seasonal and residual components.</figcaption></figure>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2510.01538v1/x15.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">A case study of the ensemble forecast alongside individual model predictions on the ECL dataset.</figcaption></figure>
+                <h2 class="article-h2 fade-in">The takeaway</h2>
+                <p class="article-p fade-in">TSci shifts the focus away from the model and onto the process around the data. For teams that means less manual routine, fewer mistakes during preparation, more stability and better explanations. It also matters that the model library is broad and the decisions are auditable, which makes adoption easier in domain-agnostic settings. The authors see the next steps as support for multimodal setups, plugging in external knowledge, and improving efficiency at scale.</p>
+                <p class="article-p fade-in"><a href="https://github.com/Y-Research-SBU/TimeSeriesScientist/" target="_blank" rel="noopener" class="underline underline-offset-2 hover:opacity-70 transition-opacity">💾 Code</a></p>
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in"><a href="https://arxiv.org/abs/2510.01538" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i><span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a></div>
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-16 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i></div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">AI paper breakdowns</h2>
+                        </div>
+                        <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium mb-10">Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.</p>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">New breakdowns every day.</p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span><i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50"><div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div></div>
+    <script>
+        lucide.createIcons();
+        const themeToggleBtn=document.getElementById('theme-toggle'), html=document.documentElement;
+        function applyTheme(d){ if(d){html.classList.add('dark');localStorage.setItem('theme','dark');}else{html.classList.remove('dark');localStorage.setItem('theme','light');} setTimeout(()=>lucide.createIcons(),50); }
+        const tg=window.Telegram?.WebApp;
+        if(tg&&tg.initData){ tg.ready();tg.expand(); if(tg.colorScheme){ applyTheme(tg.colorScheme==='dark'); tg.onEvent('themeChanged',()=>applyTheme(tg.colorScheme==='dark')); } }
+        themeToggleBtn.addEventListener('click',()=>applyTheme(!html.classList.contains('dark')));
+        window.addEventListener('scroll',()=>{ let h=document.documentElement.scrollHeight-document.documentElement.clientHeight; document.getElementById("progress-bar").style.width=((document.documentElement.scrollTop/h)*100)+"%"; });
+        document.addEventListener("DOMContentLoaded",function(){ const o=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');o.unobserve(e.target);}});},{threshold:0.05}); document.querySelectorAll('.fade-in').forEach(el=>o.observe(el)); });
+    </script>
+</body>
+</html>
