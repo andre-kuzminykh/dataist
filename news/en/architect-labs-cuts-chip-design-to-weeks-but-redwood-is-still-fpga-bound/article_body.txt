@@ -1,0 +1,33 @@
+Architect Labs says its AI system designed the Redwood accelerator in less than two weeks, starting from a high-level specification supplied by two architects and ending with a tested hardware design, firmware and kernels. The system also modeled performance, generated the hardware description and deployed the result to an FPGA. Redwood has not yet been built as a silicon chip, so the announcement is less a product launch than a test of whether chip development can become iterative enough to follow changing AI workloads.
+
+After a specification change, the modified design returned to the FPGA in less than 48 hours, according to the researchers. In a conventional process, design stages become progressively harder to change; teams either make late adjustments as exceptions or defer them until the next chip generation.
+
+Architect Labs says Redwood was designed, verified, programmed and deployed from scratch by its AI system. Each block reached 95% code and functional coverage without verification engineers. The first RTL design sent from simulation to an FPGA contained no errors, and moving optimization runs onto the FPGA cut their duration from 15 hours to 15–30 minutes.
+
+The system can explore a microarchitectural design space an order of magnitude larger than a human team can cover in the same period. For one vector engine, it generated and tested several variants over a few days, changing the control logic and data paths while optimizing for area and clock constraints.
+
+Human experts still revise the specification using feedback on functionality, area, performance, timing and power consumption. The system then regenerates and verifies the design. Hardware and software are treated as one optimization loop, with both parts designed and tested against the same objective.
+
+That workflow addresses a real weakness in chip development. In 2024, only 14% of integrated-circuit and application-specific integrated-circuit projects succeeded on first silicon, while 75% fell behind schedule. The figures came from a functional-verification study commissioned by Siemens EDA from Wilson Research Group.
+
+[INFO:facts] 14% :: projects successful on first silicon | 75% :: projects behind schedule
+
+Architect Labs says this uncertainty makes teams pay twice for design decisions: first for extra generality as insurance, and later when new workloads fit poorly with silicon that has already been fixed. AI-generated hardware projects have so far also been limited to simple or small components, according to the researchers.
+
+Redwood was built around three practical goals: lower latency, lower power consumption and greater predictability. Its architecture keeps data close to the compute blocks to reduce movement. The chip is organized as a grid of identical building blocks, or tiles; each tile performs part of the work and passes its result to neighboring blocks.
+
+Data follows a predetermined route rather than repeatedly moving through shared memory. Redwood separates control from computation so that logic can slow down or switch off entirely. Compute near memory and control over data transfers across the on-chip network reduce the energy spent moving data. A global timer schedules each kernel, making execution more predictable.
+
+The FPGA results are more modest than the headline suggests. The researchers evaluated Redwood Nano, an FPGA configuration, against Nvidia’s Jetson Orin Nano, using the commercial device as a reference for edge AI workloads. At 250 MHz, Redwood Nano produced an average of 12.1 tokens per second while running the Qwen3 0.6B large language model. The Jetson Orin Nano reached 28 tokens per second at 1020 MHz.
+
+Redwood’s lead appears only in projections for manufactured silicon. Using a Samsung-class 8 nm process comparable to the one used in the Jetson Orin Nano, the researchers forecast 49 tokens per second for Redwood Nano—1.75 times the Jetson’s measured result. Estimated power is about half as high, at 1.335 W versus 2.59 W, producing a 3.4-fold improvement in performance per watt. The authors estimate the NPU block would occupy 2.88 square millimeters.
+
+That distinction matters. The measured prototype loses to Nvidia; the advantage exists in a future implementation that has not been fabricated. The calculation is calibrated against FPGA results, but it remains a calculation for a Samsung-class 8 nm design rather than evidence from Redwood silicon.
+
+The announcement is similarly quiet about the hardest remaining transition: physical design, manufacturing and post-fabrication validation. Architect Labs says it plans to scale Redwood to larger models and compute structures, then move into physical design, tape-out and testing after fabrication. The researchers also report that they are working to transfer Redwood into production at TSMC, but no completed silicon result is described.
+
+The more consequential claim, in my view, is therefore not that Redwood could outperform the Jetson Orin Nano. It is that an accelerator team might revise assumptions about an AI workload in days instead of locking them into silicon for years. If the silicon result confirms the projections, the change would be in the development cycle as much as in the chip itself.
+
+Architect Labs also describes what it calls an early form of recursive self-improvement. The experiment is narrower than the phrase usually suggests: the team deployed Qwen3 on Redwood, connected the model to the AI design system as an inference endpoint, and ran it repeatedly. The model found several timing improvements and kernel optimizations for its own operations.
+
+The researchers describe the loop as an early demonstration of recursive self-improvement: the AI system designed an AI accelerator, deployed a model on it, and used that model to improve the next generation of the accelerator. That is not yet an autonomous hardware company in a box. It is a closed design-and-inference loop whose practical value depends on whether the final step—from FPGA and projected performance to manufactured, verified silicon—works as claimed.
