@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Синтетические компьютеры учат агентов работать неделями</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Синтетические компьютеры учат агентов работать неделями" />
+    <meta property="og:description" content="Большая проблема современных ИИ-агентов в том, что мы тестируем их на задачах, а работать им приходится в контексте." />
+    <meta name="description" content="Большая проблема современных ИИ-агентов в том, что мы тестируем их на задачах, а работать им приходится в контексте.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/ru/sinteticheskie-kompiutery-uchat-agentov-rabotat-nedeliami_ru/" />
+    <link rel="canonical" href="https://dataist.ai/research/ru/sinteticheskie-kompiutery-uchat-agentov-rabotat-nedeliami_ru/">
+    <meta property="og:image" content="https://dataist.ai/2026-05-10/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Синтетические компьютеры учат агентов работать неделями" />
+    <meta name="twitter:description" content="Большая проблема современных ИИ-агентов в том, что мы тестируем их на задачах, а работать им приходится в контексте." />
+    <meta name="twitter:image" content="https://dataist.ai/2026-05-10/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-p strong {
+            @apply font-semibold text-black dark:text-white;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .apple-img {
+            @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white;
+        }
+
+        /* Карточки-списки */
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 mb-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Синтетические компьютеры учат агентов работать неделями",
+    "url": "https://dataist.ai/research/ru/sinteticheskie-kompiutery-uchat-agentov-rabotat-nedeliami_ru/",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://dataist.ai/research/ru/sinteticheskie-kompiutery-uchat-agentov-rabotat-nedeliami_ru/"
+    },
+    "inLanguage": "ru",
+    "author": {
+      "@type": "Person",
+      "name": "@dataist_ai"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Dataist AI",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://dataist.ai/AIT_logo.png"
+      }
+    },
+    "description": "Большая проблема современных ИИ-агентов в том, что мы тестируем их на задачах, а работать им приходится в контексте.",
+    "image": "https://dataist.ai/2026-05-10/cover.png",
+    "datePublished": "2026-05-10",
+    "citation": {
+      "@type": "ScholarlyArticle",
+      "name": "Synthetic Computers at Scale for Long-Horizon Productivity Simulation",
+      "identifier": "arXiv:2604.28181",
+      "url": "https://arxiv.org/abs/2604.28181"
+    },
+    "isBasedOn": "https://arxiv.org/abs/2604.28181"
+  }
+</script>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+
+                <!-- Тег категории -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-05-10</span>
+                </div>
+
+                <!-- Заголовок -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Синтетические компьютеры учат агентов работать неделями
+                </h1>
+
+                <!-- Главная обложка -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-05-10/cover.png"
+                         alt="Обложка: Синтетические компьютеры учат агентов работать неделями"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">
+                    Большая проблема современных ИИ-агентов в том, что мы тестируем их на задачах, а работать им приходится в контексте.
+                </p>
+
+                <h2 class="article-h2 fade-in">У ИИ появился новый полигон: не просто задача, а целый чужой компьютер</h2>
+                <p class="article-p fade-in">Большая проблема современных ИИ-агентов в том, что мы тестируем их на задачах, а работать им приходится в <strong>контексте</strong>. Не в вакууме, не в аккуратной песочнице с парой файлов, а в настоящем цифровом хаосе: папки, старые версии документов, таблицы, письма, черновики, непоследовательные названия файлов, замечания коллег, забытые вложения и дедлайны, которые накладываются друг на друга. Именно там и ломается магия красивых демо.</p>
+                <p class="article-p fade-in">Авторы работы <strong>Synthetic Computers at Scale for Long-Horizon Productivity Simulation</strong> предлагают амбициозный ход: если реальные рабочие компьютеры использовать нельзя из‑за приватности и цены сбора данных, давайте синтезировать их. Не просто отдельные документы, а целые пользовательские среды — с файловой системой, профессиональными артефактами, историей работы и задачами на месяц вперёд. А затем запускать внутри них длинные симуляции, где агент должен не только что-то написать, но и реально “жить” в этом компьютере: искать нужные файлы, общаться с коллегами, исправлять ошибки, собирать пакет материалов и доводить дело до результата.</p>
+                <p class="article-p fade-in">Идея звучит как следующий логичный шаг после игрушечных бенчмарков. И, что важнее, авторы показывают, что из таких симуляций можно извлекать полезный опыт, который потом действительно улучшает поведение агентов.</p>
+
+                <h2 class="article-h2 fade-in">Что именно придумали исследователи</h2>
+                <p class="article-p fade-in">Ключевая идея статьи — создавать <strong>синтетические компьютеры</strong>, то есть правдоподобные пользовательские среды, собранные на основе персоны. Персона — это описание человека: профессия, стаж, стиль работы, типичные документы, инструменты, привычки организации файлов. Из этой заготовки модель разворачивает подробный профиль пользователя, а затем строит содержимое его компьютера.</p>
+                <p class="article-p fade-in">Это не просто генерация случайной папки “Документы”. Сначала для пользователя задаются правила: как он называет файлы, где хранит рабочие материалы, насколько он аккуратен, любит ли версии вроде _v2_ и _FINAL_, складывает ли всё на рабочий стол или раскладывает по проектам. Потом по этому профилю планируется файловая система: какие каталоги должны существовать, какие файлы в них лежат, какие из них связаны друг с другом и какой документ из какого вырос.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-10/fig_0.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Общая схема метода: из персоны создают синтетический компьютер, а затем используют его как среду для длинной рабочей симуляции.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Важный момент: файлы здесь не независимы. Таблица с прогнозами может быть основана на загруженном отчёте, презентация — на этой таблице, финальный PDF — на черновике документа. То есть исследователи пытаются моделировать не просто набор файлов, а <strong>историю работы</strong>, в которой артефакты зависят друг от друга.</p>
+                <p class="article-p fade-in">После этого в дело вступают два агента. Один формирует цели на период примерно в месяц работы конкретного пользователя. Второй играет роль этого пользователя и должен выполнить задачи, работая внутри синтетического компьютера. Это уже не “напиши краткое резюме отчёта”, а что-то вроде: собери обновлённую финансовую модель, подготовь презентацию для инвесткомитета, обработай комментарии коллег, создай финальный PDF и согласуй пакет с условным отделом комплаенса.</p>
+
+                <h2 class="article-h2 fade-in">Как выглядит такой синтетический компьютер</h2>
+                <p class="article-p fade-in">Наиболее сильная часть статьи — внимание к бытовому реализму. Исследователи не ограничиваются общими словами про “профессиональные файлы”, а действительно собирают содержательно насыщенные среды. В примере с финансовым консультантом на диске появляются прогнозы по классам активов, клиентские досье, черновики инвестиционных меморандумов, таблицы со сценарным анализом, презентации, PDF-отчёты, данные из внешних источников и даже макросы для Excel.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-10/fig_1.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Как строится синтетический компьютер: от персоны и профиля пользователя к структуре папок, файлам и связям между ними.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Сами артефакты тоже не выглядят как заглушки. Авторы отдельно показывают, что это полноценные документы и таблицы, а не пустые файлы с правдоподобным названием. Для части публичных материалов система пытается скачать реальные документы из сети; если не выходит, синтезирует их сама. Остальные файлы создаются агентом с инструментами для генерации офисных форматов.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-10/fig_2.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Примеры созданных артефактов: рабочая таблица и финальный профессиональный PDF в синтетическом компьютере.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Почему это важно? Потому что производительность агента в реальной работе упирается не только в качество текста. Ему нужно удерживать длинную цепочку зависимостей: откуда взялась цифра, какая версия документа актуальна, кто попросил конкретную правку, где лежит исходный файл, что уже обещали клиенту и что нельзя менять без согласования. Именно такого рода контекст почти всегда вырезается из коротких задач, и именно он определяет успех в долгой работе.</p>
+
+                <h2 class="article-h2 fade-in">Длинные симуляции вместо коротких задач</h2>
+                <p class="article-p fade-in">После создания среды начинается, пожалуй, самое интересное: агенту дают не одну задачу, а целый пакет рабочих обязательств на 20 рабочих дней. Причём цели завязаны на конкретный компьютер и конкретного пользователя. Если это старший финансовый консультант, задачи будут связаны с обновлением модельных портфелей, адаптацией нового клиента, меморандумами, комплаенсом и внутренними комитетами. Если другая профессия — сценарий меняется.</p>
+                <p class="article-p fade-in">Особенно ценно, что авторы моделируют <strong>сотрудничество</strong>. В симуляции есть коллеги, начальники, клиенты, внешние контрагенты. У каждого — своя роль, стиль общения, знания и иногда даже приватные материалы, которые агент получает только через взаимодействие. Это делает задачу гораздо ближе к настоящей работе: не всё известно заранее, часть информации надо запросить, уточнить, получить с задержкой и встроить в процесс.</p>
+                <p class="article-p fade-in">Средняя симуляция получилась действительно длинной: <strong>2272 хода</strong> и <strong>8,59 часа</strong> агентного времени на один запуск. Это уже не похоже на обычные бенчмарки с 10–30 шагами. По ходу работы агент планирует неделю, затем выполняет задачи по дням, читает файлы, создаёт новые, редактирует существующие, пишет сообщения коллегам и реагирует на ответы.</p>
+                <p class="article-p fade-in">Это важный сдвиг в постановке задачи. Здесь оценивается не только “может ли модель решить проблему”, но и <strong>как она работает в развёрнутом процессе</strong>: умеет ли держать состояние, исправлять курс, использовать внешние материалы и не терять нить проекта после сотен шагов.</p>
+
+                <h2 class="article-h2 fade-in">Масштаб эксперимента и что получилось</h2>
+                <p class="article-p fade-in">Авторы создали <strong>1000 синтетических компьютеров</strong> с разными персонами. До симуляции на одном таком компьютере было в среднем 111,6 файла, после месяца работы — уже 197,4. То есть агент не просто создавал итоговый документ, а реально наращивал рабочую среду новыми артефактами.</p>
+                <p class="article-p fade-in">Интересна и структура файлов: форматы вроде DOCX, XLSX, PDF и PPTX составили <strong>67,8%</strong> всех файлов. Это хороший сигнал: среда действительно похожа на офисную продуктивную работу, а не на абстрактный набор текстов.</p>
+                <p class="article-p fade-in">Для оценки качества авторы не ограничились субъективным впечатлением. Для 100 компьютеров они построили подробные рубрики и проверяли итоговые результаты по множеству критериев: наличие всех нужных файлов, согласованность цифр между документами, качество аргументации, соблюдение требований коллег, корректность оформления и так далее. Большинство результатов попали в диапазон <strong>60–80%</strong> от максимума. Это значит, что агент уже может пройти значительную часть пути, но до надёжного офисного исполнителя ему ещё далеко.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-10/fig_6.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Распределение оценок по рубрике: по компьютерам в целом и по отдельным рабочим результатам.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">И это, пожалуй, самая честная часть работы. Авторы показывают не только успехи, но и характерные провалы. В приложении к статье разбирается реальная симуляция, где агент в целом справился, но допустил типичную для длинной работы катастрофу: <strong>потерял согласованность между документами</strong>. Цифры в таблице, PDF и презентации начали расходиться. Где-то не были внесены замечания коллег. Где-то остались пустые сообщения вместо ответов. Очень узнаваемый паттерн: не фатальная “глупость”, а накопление мелких несогласованностей, из которых и состоит большинство реальных рабочих ошибок.</p>
+
+                <h2 class="article-h2 fade-in">Можно ли на таком опыте учить агента лучше</h2>
+                <p class="article-p fade-in">Самое практичное в статье — не сама симуляция, а попытка превратить её в механизм самоулучшения. После каждого длинного прогона исследователи делают ретроспективный разбор: что агент делал правильно, где ошибался, какие повторяющиеся сбои характерны для конкретной профессии. Из этих сигналов они создают “навыки” — внешние инструкции и правила поведения для агентов определённого типа.</p>
+                <p class="article-p fade-in">Например, для финансовых аналитиков в такой навык могут войти правила вроде: держать единый источник истинных чисел, не менять методологию без распространения правки по всем зависимым файлам, проверять, что презентация, меморандум и модель не расходятся между собой, отдельно отслеживать комплаенс-требования и версии документов.</p>
+                <p class="article-p fade-in">На отложенной выборке из 100 новых синтетических компьютеров такие навыки дали заметный эффект. Средняя оценка выросла с <strong>61,6% до 68,6%</strong>, то есть на <strong>7 процентных пунктов</strong>. В парных сравнениях улучшенный агент оказался лучше базового в <strong>83 случаях из 100</strong>.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-10/fig_8.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Проверка на внешнем бенчмарке: опыт из синтетических компьютеров переносится и на независимые продуктивные задачи.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Ещё интереснее, что перенос сработал и вне собственной среды авторов — на внешнем бенчмарке GDPVal с 220 задачами. Там задачи намного короче и устроены иначе, но навыки, извлечённые из длинных симуляций, всё равно улучшили результат. Это важный сигнал: модель учится не просто “играть в этот конкретный симулятор”, а усваивает более общие рабочие паттерны.</p>
+
+                <h2 class="article-h2 fade-in">Почему эта работа важна</h2>
+                <p class="article-p fade-in">Вокруг агентных систем сегодня много шума, но почти все упираются в один и тот же предел: на коротких сценариях всё выглядит убедительно, а в длинной работе ломается память, структура и дисциплина исполнения. Эта статья бьёт точно в этот болевой узел.</p>
+                <p class="article-p fade-in">Её главный вклад не в том, что авторы сделали ещё один бенчмарк. Они предложили <strong>инфраструктуру</strong> для следующего этапа развития агентов: масштабируемую генерацию рабочих миров, где можно безопасно и массово получать длинные траектории поведения без доступа к частным пользовательским данным. Если это действительно масштабируется до миллионов персон и компьютеров, появляется новый источник данных для обучения: не просто ответы на запросы, а целые истории профессиональной работы.</p>
+                <p class="article-p fade-in">Это важно и для индустрии, и для исследований. Для индустрии — потому что реальные корпоративные сценарии почти всегда завязаны на файловую систему, версии документов и взаимодействие с людьми. Для исследований — потому что здесь можно изучать не только конечный ответ, но и процесс: планирование, навигацию по среде, использование файлов, обработку обратной связи, восстановление после ошибок.</p>
+                <p class="article-p fade-in">Конечно, ограничений у подхода хватает. Синтетические компьютеры всё ещё слишком аккуратны по сравнению с реальными. Коллеги в симуляции пока скорее реактивны, чем автономны. Оформление документов может быть однообразным. Но это скорее дорожная карта, чем приговор методу.</p>
+
+                <h2 class="article-h2 fade-in">Вывод</h2>
+                <p class="article-p fade-in"><strong>Synthetic Computers at Scale</strong> — одна из тех работ, которые выглядят менее эффектно, чем очередной громкий релиз модели, но потенциально значат больше. Она предлагает смотреть на обучение агентов не как на набор отдельных задач, а как на погружение в реалистичную рабочую среду со всем её беспорядком, историей и зависимостями.</p>
+                <p class="article-p fade-in">Главный вывод статьи простой: если мы хотим агентов, способных действительно помогать в продуктивной работе, им нужно тренироваться не на стерильных промптах, а в мирах, похожих на наши компьютеры. И чем длиннее, грязнее и реалистичнее будет этот опыт, тем выше шанс, что модель научится не только красиво отвечать, но и <strong>доводить сложную работу до конца</strong>.</p>
+
+                <!-- Источник -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2604.28181" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                    <a href="https://github.com/anthropics/skills/blob/main/skills/skill-creator/SKILL.md" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Код на GitHub</span>
+                    </a>
+                    <a href="https://huggingface.co/datasets/microsoft/synthetic-computers-at-scale" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="database" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Модель (HuggingFace)</span>
+                    </a>
+                </div>
+
+                <section class="mt-16 md:mt-20 fade-in" aria-labelledby="related-heading">
+                    <h2 id="related-heading"
+                        class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight mb-6 md:mb-8">
+                        Читайте также
+                    </h2>
+                    
+                    <div class="rel-wrap relative -mx-4 md:mx-0" data-left="0" data-right="1"
+                         data-date="2026-05-10">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l"
+                                aria-label="Предыдущие материалы">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r"
+                                aria-label="Следующие материалы">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0">
+                            
+                            <a href="https://dataist.ai/research/ru/chto-na-samom-dele-delaet-multiagentnye-sistemy-umnee_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-08/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-08">2026-05-08</time>
+                                <span class="rel-title">Что на самом деле делает мультиагентные системы умнее</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/pochemu-agenty-khuzhe-uchatsia-na-dlinnykh-zadachakh_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-06/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-06">2026-05-06</time>
+                                <span class="rel-title">Почему агенты хуже учатся на длинных задачах</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/dlia-chego-nuzhna-rekursivnaia-multiagentnaia-sistema_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-05-04/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-05-04">2026-05-04</time>
+                                <span class="rel-title">Для чего нужна рекурсивная мультиагентная система</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/kak-postroit-kompaniiu-iz-odnogo-cheloveka-i-ii-agentov_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-30/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-30">2026-04-30</time>
+                                <span class="rel-title">Как построить компанию из одного человека и ИИ-агентов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/modeli-mira-dlia-agentov-novogo-pokoleniia_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-28/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-28">2026-04-28</time>
+                                <span class="rel-title">Модели мира для агентов нового поколения</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/razrabotka-igr-stala-novym-benchmarkom-dlia-ii-agentov_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-27/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-27">2026-04-27</time>
+                                <span class="rel-title">Разработка игр стала новым бенчмарком для ИИ-агентов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/arkhitektura-obshchei-pamiati-agentov-dlia-programmirovaniia_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-24/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-24">2026-04-24</time>
+                                <span class="rel-title">Архитектура общей памяти агентов для программирования</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/kak-ii-agenty-uchatsia-pomnit-cherez-okruzhaiushchii-mir_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-17/20260417.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-17">2026-04-17</time>
+                                <span class="rel-title">Как ИИ-агенты учатся помнить через окружающий мир</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/kogda-u-ii-agenta-neskolko-polzovatelei_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-14/cover%20(1).png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-14">2026-04-14</time>
+                                <span class="rel-title">Когда у ИИ-агента несколько пользователей</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/dvunapravlennaia-pamiat-kak-osnova-evoliutsii-agentov-kotorye-pomniat-proshlye-s_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/cover.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-12">2026-04-12</time>
+                                <span class="rel-title">Двунаправленная память: как основа эволюции агентов, которые помнят прошлые шаги</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/atomarnye-navyki-kak-uluchshit-agentov-dlia-programmirovaniia-na-18-7_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-10/photo_2026-04-09%2023.34.59.jpeg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-10">2026-04-10</time>
+                                <span class="rel-title">Атомарные навыки: как улучшить агентов для программирования на 18.7%</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/kogda-agent-eto-graf-kak-ustroena-optimizatsiia-protsessov-na-letu_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-05/ChatGPT%20Image%20Apr%205%2C%202026%2C%2009_53_10%20PM.jpg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-05">2026-04-05</time>
+                                <span class="rel-title">Когда агент — это граф: как устроена оптимизация процессов на лету</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/ii-ne-mozhet-zapustit-startap-i-vot-pochemu_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-04-03/_ChatGPT%20Image%20Apr%203%2C%202026%2C%2011_25_03%20PM.jpg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-04-03">2026-04-03</time>
+                                <span class="rel-title">ИИ не может запустить стартап — и вот почему</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/vasha-llm-umnee-chem-kazhetsia-vy-prosto-ispolzuete-ee-nepravilno_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-03-31/iii.jpg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-03-31">2026-03-31</time>
+                                <span class="rel-title">Ваша LLM умнее, чем кажется — вы просто используете ее неправильно</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/ii-kak-kollektivnyi-razum-kuda-vedet-epokha-agentnykh-sistem_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://dataist.ai/2026-03-30/123.jpg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-03-30">2026-03-30</time>
+                                <span class="rel-title">ИИ как коллективный разум: куда ведёт эпоха агентных систем</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/vse-chto-nuzhno-znat-ob-obuchenii-agentov-prostymi-slovami_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/9mLJgmSS/Chat-GPT-Image-Mar-8-2026-08-27-01-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-03-08">2026-03-08</time>
+                                <span class="rel-title">Всё, что нужно знать об обучении агентов простыми словами</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/pochemu-ii-agenty-plokho-integriruiutsia-s-realnymi-api-i-kak-ikh-priruchit_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/wrsbZkGj/12.jpg" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-03-06">2026-03-06</time>
+                                <span class="rel-title">Почему ИИ-агенты плохо интегрируются с реальными API и как их приручить</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/teoriia-razuma-dlia-ii-chto-proiskhodit-kogda-agenty-nachinaiut-dogadyvatsia-o-n_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/DHZPc3fF/Chat-GPT-Image-Mar-4-2026-07-35-22-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-03-04">2026-03-04</time>
+                                <span class="rel-title">Теория разума для ИИ: что происходит, когда агенты начинают «догадываться» о намерениях друг друга</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/context-engineering-novaia-distsiplina-dlia-avtonomnykh-ii-agentov_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.ibb.co/Csbbn980/Chat-GPT-Image-Mar-3-2026-07-29-15-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-03-03">2026-03-03</time>
+                                <span class="rel-title">Context Engineering: новая дисциплина для автономных ИИ-агентов</span>
+                            </a>
+                            
+                            <a href="https://dataist.ai/research/ru/ot-vospriiatiia-k-vizualnomu-myshleniiu_ru/">
+                                
+                                <span class="rel-thumb">
+                                    
+                                    <img src="https://i.postimg.cc/DZQsfGZ1/Chat-GPT-Image-Mar-2-2026-07-59-00-PM.png" alt="" loading="lazy" decoding="async">
+                                    
+                                </span>
+                                <time datetime="2026-03-02">2026-03-02</time>
+                                <span class="rel-title">От восприятия к визуальному мышлению: как добавить ИИ внутреннее «воображение»</span>
+                            </a>
+                            
+                        </div>
+                    </div>
+                    
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка мигает
+                                // в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+                            function step(dir) {
+                                // Листаем на видимую ширину минус нахлёст,
+                                // чтобы следующая карточка подсказывала, что
+                                // лента продолжается.
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            sync();
+
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них в
+                            // страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую подложку,
+                                    // а не значок сломанной картинки.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = item.date; }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            function same(url) {
+                                try { return new URL(url, location.href).pathname === location.pathname; }
+                                catch (e) { return false; }
+                            }
+
+                            // Лента дотягивается ОДИН раз и только когда
+                            // читатель до неё добрался: 125 КБ фида не должны
+                            // грузиться у того, кто до подвала не дошёл.
+                            var loaded = false;
+                            function fill() {
+                                if (loaded) return;
+                                loaded = true;
+                                fetch('/papers.json')
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) return;
+                                        var rows = list.filter(function (x) {
+                                            return x && x.url && x.title && !same(x.url);
+                                        });
+                                        // Свежие вперёд. Фид приходит уже в
+                                        // этом порядке, но сортировка здесь
+                                        // стоит явно: порядок ленты — правило
+                                        // блока, а не побочный эффект того,
+                                        // как список собрали на сервере.
+                                        rows.sort(function (a, b) {
+                                            return String(b.date || '').localeCompare(String(a.date || ''));
+                                        });
+                                        if (!rows.length) return;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+
+                                        // ЛЕНТА ОТКРЫВАЕТСЯ НА МЕСТЕ ЭТОЙ
+                                        // СТАТЬИ, а не с самого свежего
+                                        // разбора. Влево от стартовой позиции
+                                        // остаётся то, что вышло ПОСЛЕ неё,
+                                        // вправо уходит то, что было ДО.
+                                        //
+                                        // Без этого лента получалась одинаковой
+                                        // на всех страницах сайта: у майской
+                                        // статьи она начиналась бы с сентября,
+                                        // и соседство по времени — то самое,
+                                        // ради чего блок и нужен, — пропадало
+                                        // ровно в тот момент, когда страница
+                                        // становится интерактивной.
+                                        //
+                                        // Позицию берём у первой карточки
+                                        // СТАРШЕ этой статьи: её левый край и
+                                        // есть «здесь». Ширина карточки
+                                        // фиксирована, поэтому позиция
+                                        // считается точно и до загрузки
+                                        // обложек.
+                                        var mine = wrap.dataset.date || '';
+                                        var at = 0;
+                                        if (mine) {
+                                            for (var k = 0; k < rows.length; k++) {
+                                                if (String(rows[k].date || '') < mine) { at = k; break; }
+                                            }
+                                        }
+                                        var target = rail.children[at];
+                                        if (target) {
+                                            // Без плавности: это не жест
+                                            // читателя, а исходное положение.
+                                            rail.scrollLeft = target.offsetLeft - rail.offsetLeft;
+                                        }
+                                        sync();
+                                    })
+                                    .catch(function () { /* остаёмся с разметкой */ });
+                            }
+                            if ('IntersectionObserver' in window) {
+                                var io = new IntersectionObserver(function (es) {
+                                    if (es.some(function (e) { return e.isIntersecting; })) {
+                                        io.disconnect();
+                                        fill();
+                                    }
+                                }, { rootMargin: '400px' });
+                                io.observe(wrap);
+                            } else {
+                                fill();
+                            }
+                        })();
+                    </script>
+                <nav data-hub-nav aria-label="Темы и справочники"
+                     class="mt-8 md:mt-10 font-sans text-sm text-black/50 dark:text-white/50">
+                    Темы: <a href="https://dataist.ai/topic/agents" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">ИИ-агенты</a> · <a href="https://dataist.ai/papers" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Разобранные работы</a> · <a href="https://dataist.ai/glossary" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Словарь терминов</a>
+                </nav>
+                </section>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры статей
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Каждый день читаем свежие статьи по ИИ и пересказываем главное человеческим языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
