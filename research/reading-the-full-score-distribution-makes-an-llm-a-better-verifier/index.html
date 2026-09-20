@@ -1,0 +1,585 @@
+
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Reading the full score distribution makes an LLM a better verifier</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Reading the full score distribution makes an LLM a better verifier" />
+    <meta property="og:description" content="When an LLM learns to check, not just to answer" />
+    <meta name="description" content="Когда ИИ должен выбрать лучший ответ из нескольких, он нередко ошибается не потому, что плохо решает задачу, а потому, что плохо умеет проверять себя.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/reading-the-full-score-distribution-makes-an-llm-a-better-verifier/" />
+    <link rel="canonical" href="https://dataist.ai/research/reading-the-full-score-distribution-makes-an-llm-a-better-verifier/">
+    <meta property="og:image" content="https://dataist.ai/2026-07-10_1/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-10_1/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Reading the full score distribution makes an LLM a better verifier",
+  "url": "https://dataist.ai/research/reading-the-full-score-distribution-makes-an-llm-a-better-verifier/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/reading-the-full-score-distribution-makes-an-llm-a-better-verifier/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "When an LLM learns to check, not just to answer",
+  "image": "https://dataist.ai/2026-07-10_1/cover.jpg",
+  "datePublished": "2026-07-10",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "LLM-as-a-Verifier: A General-Purpose Verification Framework",
+    "identifier": "arXiv:2607.05391",
+    "url": "https://arxiv.org/abs/2607.05391"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2607.05391"
+}</script>
+    <meta property="article:published_time" content="2026-07-10T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-07-10</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Reading the full score distribution makes an LLM a better verifier</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-10_1/cover.jpg"
+                         alt="Reading the full score distribution makes an LLM a better verifier"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When an LLM learns to check, not just to answer</h2>
+<p>Large language models have an odd weakness. They keep getting better at <strong>generating</strong> solutions, but they are still not very good at <strong>telling which solution is actually right</strong>. That is not a small gap. If your AI agent writes code, works in a terminal, drives a robot arm or handles medical data, the question that matters is not "can it produce a candidate?" but "can we reliably pick a good one out of several?"</p>
+<p>That is the premise of <strong>LLM-as-a-Verifier</strong>, a paper from researchers at Stanford, Berkeley and Nvidia Research. The authors argue that checking should be treated not as a support function but as <strong>a scaling axis of its own</strong>. Models can be improved not only through pretraining, fine-tuning and a larger inference budget, but also through smarter verification.</p>
+<p>It sounds simple. The idea underneath it is not: if a model can verify reasonably well, it can choose better among its own attempts. System quality then rises with no additional training at all.</p>
+</section>
+<section>
+<h2>What goes wrong with ordinary LLM judges</h2>
+<p>The popular approach today looks like this: ask an LLM to act as a "judge" and score a solution, say from 1 to 5 or from 1 to 10. Then take the best candidate.</p>
+<p>The trouble is that this is too coarse. When two solutions are both almost right, the model often hands them the same score. Ties pile up. And when the task is long and complicated — an agent spending 20 steps editing code, installing packages, running tests and fixing errors — a coarse scale starts to break down.</p>
+<p>The authors propose moving from the idea of a judge to the idea of a <strong>verifier</strong>. A judge delivers a final verdict. A verifier tries to estimate carefully <strong>how close</strong> a solution is to being right, and where the signs of success or failure sit inside it.</p>
+<p>The key move here is elegant. Instead of taking the single most likely score token, the authors look at <strong>the whole probability distribution</strong> over score tokens and compute its expected value. The model does not just say "this is a 4 out of 5"; it produces a smoother signal, something like "this is a 4.37."</p>
+<p>That alone separates candidates far more finely.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2607.05391v2/x1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">One scheme across modalities: the verifier gives fine-grained feedback for code, video, medicine and reinforcement learning.</p>
+</div></figure>
+</section>
+<section>
+<h2>What the authors actually propose</h2>
+<p>Their scheme is called <strong>LLM-as-a-Verifier</strong>. It requires no additional training. That matters. The authors do not train a separate reward model for each domain; they take an off-the-shelf LLM or vision-language model and use it as a general-purpose checking module.</p>
+<p>The method rests on three ideas.</p>
+<p>The first is <strong>a finer scoring scale</strong>. Not 1–5 but up to 20 levels. And what matters is not only the number of levels but the fact that the probability distribution across them is used.</p>
+<p>The second is <strong>repeated checking</strong>. A single pass can be noisy. Several independent scores cut the variance.</p>
+<p>The third is <strong>criterion decomposition</strong>. Instead of one question — "is this correct?" — the model looks separately at things like:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">whether the task's requirements were met;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">whether the final result is correct;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">whether there are obvious errors in the logs and the actions.</span></div>
+<p>This mirrors a sane human review process. When we assess complicated work, we do not eyeball a grade either. We break it into parts.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2607.05391v2/x3.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Verification accuracy improves along three directions at once: a finer scoring scale, repeated checks and criterion decomposition.</p>
+</div></figure>
+<p>The results look convincing. On Terminal-Bench V2, pairwise comparison accuracy rose:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">from 73.1% to 77.5% as scoring granularity increased;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">from 74.7% to 77.5% as the number of repeated checks increased;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">to 78.3% with an ensemble of three criteria.</span></div>
+<p>This is not a cosmetic improvement. When the job is picking the best trajectory, even a few points on top is a lot.</p>
+</section>
+<section><h2>Why this matters in practice</h2>
+<p>The paper's central message is this: <strong>many models already hold quality in reserve</strong>. They can often solve a task in at least one of several attempts. What the system lacks is a good mechanism for recognizing that lucky attempt and picking it.</p>
+<p>The authors demonstrate this on Terminal-Bench. If a perfect "oracle" existed that always picked the best answer from a set of candidates, accuracy would climb to almost 99%. That is an enormous reserve. It means the bottleneck is often not generation itself but selection.</p>
+<p>To keep selection from getting too expensive, the authors add one more component: a candidate-ranking algorithm that works under a bounded checking budget. They call it a <strong>probabilistic tournament with anchor candidates</strong>. The idea is simple: rather than comparing everything against everything, which is costly, first sift out the strong candidates quickly, then spend the bulk of the budget on comparisons around the leaders. That drops the cost from quadratic to nearly linear in the number of candidates, with a small constant factor.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2607.05391v2/x4.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The probabilistic tournament: how to pick the best candidate out of many without comparing every pair head to head.</p>
+</div></figure>
+<p>For AI agents this matters especially. A coding agent can usually make several runs at the same task. Once you have a reliable verifier, the system starts working in a "generate several solutions, then take the best" mode. That is a very practical route to higher quality.</p></section>
+<section>
+<h2>Results: code, robotics, medicine</h2>
+<p>The strongest part of the paper is the breadth of the experiments. The authors did not stop at one benchmark in one domain. They tested the method on code, on video from robotics tasks and on medical scenarios.</p>
+<p>The final numbers look like this:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Terminal-Bench V2 — <strong>86.5%</strong>;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">SWE-Bench Verified — <strong>78.2%</strong>;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">RoboRewardBench — <strong>87.4%</strong>;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">MedAgentBench — <strong>73.3%</strong>.</span></div>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2607.05391v2/figures/SOTA.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Final results: the method sets the current best result in coding, robotics and medical tasks alike.</p>
+</div></figure>
+<p>The RoboRewardBench case is especially telling. There the model has to judge which of two robot video trajectories is making better progress toward the goal — that is, read physical progress off the frames. And here the proposed approach beats not only an ordinary LLM judge but also specialized reward models trained specifically on robotics data.</p>
+<p>That is an important point. We are used to assuming that a domain like this goes nowhere without narrow, dedicated training. The authors show that a strong general-purpose verifier can sometimes do better.</p>
+</section>
+<section>
+<h2>Not just picking an answer, but tracking progress</h2>
+<p>Another interesting part of the paper is the idea of using the verifier's signal as <strong>a progress estimate</strong> along a long trajectory.</p>
+<p>If an agent solves a task step by step, you can feed the verifier not only the final result but intermediate prefixes of the trajectory. Then you can see whether the agent is moving toward the goal or wandering.</p>
+<p>The authors give a nice example with a task about getting MNIST inference running. The successful trajectory follows a coherent chain of steps, and the verifier's scores climb steadily. The failed one veers off, installs packages it does not need, runs out of disk space, and its scores are visibly lower.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2607.05391v2/x6.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The verifier's score rises as a successful trajectory advances, which helps separate real progress from wandering.</p>
+</div></figure>
+<p>This is no longer just a tool for picking the best of five answers. It is close to a dashboard for an AI agent. You can watch when it is genuinely making headway and when it is stuck. For long coding-agent runs that can be very useful: stop the process early, roll back bad actions, switch to another candidate.</p>
+</section>
+<section>
+<h2>What this gives reinforcement learning</h2>
+<p>The most unexpected piece of the work is using the verifier inside reinforcement learning.</p>
+<p>One of the perennial problems there is <strong>sparse reward</strong>. The agent usually learns it did well only at the very end. Working out which steps actually led to that success is hard.</p>
+<p>The authors use the verifier's signal as a <strong>dense reward</strong>: not just success or failure, but a smoother estimate of progress at intermediate stages.</p>
+<p>In experiments this sped up training:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">on a robotics task in LIBERO, roughly <strong>1.8×</strong> in sample efficiency;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">on a math benchmark with GRPO, roughly <strong>1.1×</strong>.</span></div>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://arxiv.org/html/2607.05391v2/x7.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">A dense reward from the verifier speeds up reinforcement learning and reaches the same quality level sooner.</p>
+</div></figure>
+<p>This does not look like a magic jump, but it does look like a very practical thing. If you can get a meaningful progress signal without training anything extra, that takes real cost out of tuning a system.</p>
+</section>
+<section>
+<h2>Where the approach is weak</h2>
+<p>The work is strong, but it has limits.</p>
+<p>First, the method wants a model that will hand back token log probabilities. Many closed APIs will not. The authors offer a workaround: one model writes the reasoning, and a second, more open one turns that into a continuous score. It works, but it is a crutch all the same.</p>
+<p>Second, the checking criteria here are often written by hand. For code that is still fine: requirements, output, errors. But new domains will need their own decompositions worked out from scratch. The obvious next step is for the model itself to build criteria dynamically.</p>
+<p>Third, repeated checks and a finer scale improve things but do not remove the model's systematic biases. If the verifier reasons wrongly about some class of task, plain averaging will not save it.</p>
+<p>Even so, none of these limits spoil the paper's main conclusion.</p>
+</section>
+<section>
+<h2>The takeaway</h2>
+<p>The paper offers a well-timed shift of focus. We are used to arguing about how to make generation stronger. The authors remind us that <strong>teaching the system to check well matters just as much</strong>.</p>
+<p>And this is not philosophy but a workable engineering idea. Instead of a coarse judge, a probabilistic verifier with a continuous score. Instead of one score, scaling along three axes: granularity, repetition, criteria. Instead of an expensive full tournament, a leaner way to surface the best candidates.</p>
+<p>The main thing is that all of it already pays off in practice: better quality in coding, in robotics, in medicine, and even more efficient reinforcement learning.</p>
+<p>Put briefly, the paper's thought is this: <strong>the next gain in AI agent quality may come not only from how they think, but from how they check themselves</strong>. And that looks like one of the more useful ideas going for systems that have to act reliably, not just talk well.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.05391" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
