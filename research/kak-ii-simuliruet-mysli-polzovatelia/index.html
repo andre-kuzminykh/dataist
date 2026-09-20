@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>How AI Simulates a User’s Thoughts</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="How AI Simulates a User’s Thoughts" />
+    <meta property="og:description" content="ИИ может научиться понимать не только слова пользователя, но и то, что тот на самом деле думает, хочет и пытается сделать.
+
+Исследователи предлагают сначала создавать правдоподобные модели пользователей, которые сохраняют их особенности и меняют свои мысли по ходу разговора. Затем отдельный «идеальный помощник» отвечает с учётом этих скрытых намерений, а обычная модель учится помогать так же хорошо, не имея прямого доступа к мыслям человека. Благодаря этому ИИ лучше подстраивается под собеседника, объясняет его решения и поддерживает цели в долгом взаимодействии.
+
+В этом обзоре разбираем, как устроена такая симуляция человеческих мыслей и почему она может изменить обучение ИИ-помощников для учёбы, работы и повседневных задач." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/kak-ii-simuliruet-mysli-polzovatelia/" />
+    <meta property="og:image" content="https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-09-20" />
+
+    <meta name="description" content="ИИ может научиться понимать не только слова пользователя, но и то, что тот на самом деле думает, хочет и пытается сделать.
+
+Исследователи предлагают сначала создавать правдоподобные модели пользователей, которые сохраняют их особенности и меняют свои мысли по ходу разговора. Затем отдельный «идеальный помощник» отвечает с учётом этих скрытых намерений, а обычная модель учится помогать так же хорошо, не имея прямого доступа к мыслям человека. Благодаря этому ИИ лучше подстраивается под собеседника, объясняет его решения и поддерживает цели в долгом взаимодействии.
+
+В этом обзоре разбираем, как устроена такая симуляция человеческих мыслей и почему она может изменить обучение ИИ-помощников для учёбы, работы и повседневных задач." />
+    <link rel="canonical" href="https://dataist.ai/research/kak-ii-simuliruet-mysli-polzovatelia/" />    <link rel="alternate" hreflang="ru" href="https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/">
+    <link rel="alternate" hreflang="en" href="https://dataist.ai/research/kak-ii-simuliruet-mysli-polzovatelia/">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "How AI Simulates a User\u2019s Thoughts",
+      "description": "\u0418\u0418 \u043c\u043e\u0436\u0435\u0442 \u043d\u0430\u0443\u0447\u0438\u0442\u044c\u0441\u044f \u043f\u043e\u043d\u0438\u043c\u0430\u0442\u044c \u043d\u0435 \u0442\u043e\u043b\u044c\u043a\u043e \u0441\u043b\u043e\u0432\u0430 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u044f, \u043d\u043e \u0438 \u0442\u043e, \u0447\u0442\u043e \u0442\u043e\u0442 \u043d\u0430 \u0441\u0430\u043c\u043e\u043c \u0434\u0435\u043b\u0435 \u0434\u0443\u043c\u0430\u0435\u0442, \u0445\u043e\u0447\u0435\u0442 \u0438 \u043f\u044b\u0442\u0430\u0435\u0442\u0441\u044f \u0441\u0434\u0435\u043b\u0430\u0442\u044c.\n\n\u0418\u0441\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u0442\u0435\u043b\u0438 \u043f\u0440\u0435\u0434\u043b\u0430\u0433\u0430\u044e\u0442 \u0441\u043d\u0430\u0447\u0430\u043b\u0430 \u0441\u043e\u0437\u0434\u0430\u0432\u0430\u0442\u044c \u043f\u0440\u0430\u0432\u0434\u043e\u043f\u043e\u0434\u043e\u0431\u043d\u044b\u0435 \u043c\u043e\u0434\u0435\u043b\u0438 \u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u0435\u043b\u0435\u0439, \u043a\u043e\u0442\u043e\u0440\u044b\u0435 \u0441\u043e\u0445\u0440\u0430\u043d\u044f\u044e\u0442 \u0438\u0445 \u043e\u0441\u043e\u0431\u0435\u043d\u043d\u043e\u0441\u0442\u0438 \u0438 \u043c\u0435\u043d\u044f\u044e\u0442 \u0441\u0432\u043e\u0438 \u043c\u044b\u0441\u043b\u0438 \u043f\u043e \u0445\u043e\u0434\u0443 \u0440\u0430\u0437\u0433\u043e\u0432\u043e\u0440\u0430. \u0417\u0430\u0442\u0435\u043c \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u044b\u0439 \u00ab\u0438\u0434\u0435\u0430\u043b\u044c\u043d\u044b\u0439 \u043f\u043e\u043c\u043e\u0449\u043d\u0438\u043a\u00bb \u043e\u0442\u0432\u0435\u0447\u0430\u0435\u0442 \u0441 \u0443\u0447\u0451\u0442\u043e\u043c \u044d\u0442\u0438\u0445 \u0441\u043a\u0440\u044b\u0442\u044b\u0445 \u043d\u0430\u043c\u0435\u0440\u0435\u043d\u0438\u0439, \u0430 \u043e\u0431\u044b\u0447\u043d\u0430\u044f \u043c\u043e\u0434\u0435\u043b\u044c \u0443\u0447\u0438\u0442\u0441\u044f \u043f\u043e\u043c\u043e\u0433\u0430\u0442\u044c \u0442\u0430\u043a \u0436\u0435 \u0445\u043e\u0440\u043e\u0448\u043e, \u043d\u0435 \u0438\u043c\u0435\u044f \u043f\u0440\u044f\u043c\u043e\u0433\u043e \u0434\u043e\u0441\u0442\u0443\u043f\u0430 \u043a \u043c\u044b\u0441\u043b\u044f\u043c \u0447\u0435\u043b\u043e\u0432\u0435\u043a\u0430. \u0411\u043b\u0430\u0433\u043e\u0434\u0430\u0440\u044f \u044d\u0442\u043e\u043c\u0443 \u0418\u0418 \u043b\u0443\u0447\u0448\u0435 \u043f\u043e\u0434\u0441\u0442\u0440\u0430\u0438\u0432\u0430\u0435\u0442\u0441\u044f \u043f\u043e\u0434 \u0441\u043e\u0431\u0435\u0441\u0435\u0434\u043d\u0438\u043a\u0430, \u043e\u0431\u044a\u044f\u0441\u043d\u044f\u0435\u0442 \u0435\u0433\u043e \u0440\u0435\u0448\u0435\u043d\u0438\u044f \u0438 \u043f\u043e\u0434\u0434\u0435\u0440\u0436\u0438\u0432\u0430\u0435\u0442 \u0446\u0435\u043b\u0438 \u0432 \u0434\u043e\u043b\u0433\u043e\u043c \u0432\u0437\u0430\u0438\u043c\u043e\u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0438.\n\n\u0412 \u044d\u0442\u043e\u043c \u043e\u0431\u0437\u043e\u0440\u0435 \u0440\u0430\u0437\u0431\u0438\u0440\u0430\u0435\u043c, \u043a\u0430\u043a \u0443\u0441\u0442\u0440\u043e\u0435\u043d\u0430 \u0442\u0430\u043a\u0430\u044f \u0441\u0438\u043c\u0443\u043b\u044f\u0446\u0438\u044f \u0447\u0435\u043b\u043e\u0432\u0435\u0447\u0435\u0441\u043a\u0438\u0445 \u043c\u044b\u0441\u043b\u0435\u0439 \u0438 \u043f\u043e\u0447\u0435\u043c\u0443 \u043e\u043d\u0430 \u043c\u043e\u0436\u0435\u0442 \u0438\u0437\u043c\u0435\u043d\u0438\u0442\u044c \u043e\u0431\u0443\u0447\u0435\u043d\u0438\u0435 \u0418\u0418-\u043f\u043e\u043c\u043e\u0449\u043d\u0438\u043a\u043e\u0432 \u0434\u043b\u044f \u0443\u0447\u0451\u0431\u044b, \u0440\u0430\u0431\u043e\u0442\u044b \u0438 \u043f\u043e\u0432\u0441\u0435\u0434\u043d\u0435\u0432\u043d\u044b\u0445 \u0437\u0430\u0434\u0430\u0447.",
+      "image": "https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/cover.jpg",
+      "url": "https://dataist.ai/research/kak-ii-simuliruet-mysli-polzovatelia/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/research/kak-ii-simuliruet-mysli-polzovatelia/"
+      },
+      "datePublished": "2026-09-20",
+      "inLanguage": "en",
+      "citation": {
+        "@type": "ScholarlyArticle",        "name": "Mind2Dialogue: Training Human-Aware Language Models by Simulating User Mental States",        "identifier": "arXiv:2609.15972",
+        "url": "https://arxiv.org/abs/2609.15972"
+      },
+      "isBasedOn": "https://arxiv.org/abs/2609.15972",      "author": {"@type": "Person", "name": "@dataist_ai"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="How AI Simulates a User’s Thoughts" />
+    <meta name="twitter:description" content="ИИ может научиться понимать не только слова пользователя, но и то, что тот на самом деле думает, хочет и пытается сделать.
+
+Исследователи предлагают сначала создавать правдоподобные модели пользователей, которые сохраняют их особенности и меняют свои мысли по ходу разговора. Затем отдельный «идеальный помощник» отвечает с учётом этих скрытых намерений, а обычная модель учится помогать так же хорошо, не имея прямого доступа к мыслям человека. Благодаря этому ИИ лучше подстраивается под собеседника, объясняет его решения и поддерживает цели в долгом взаимодействии.
+
+В этом обзоре разбираем, как устроена такая симуляция человеческих мыслей и почему она может изменить обучение ИИ-помощников для учёбы, работы и повседневных задач." />
+    <meta name="twitter:image" content="https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script><link rel="stylesheet" href="/static/css/tailwind.css">
+    <style>
+.glass-header{border-bottom-width:1px;border-color:rgba(0,0,0,.05);background-color:hsla(0,0%,100%,.7);--tw-backdrop-blur:blur(40px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.glass-header:is(.dark *){border-color:hsla(0,0%,100%,.1);background-color:rgba(0,0,0,.7)}.glass-panel{border-width:1px;border-color:rgba(0,0,0,.05);--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px rgba(0,0,0,.06);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.glass-panel:is(.dark *){border-color:hsla(0,0%,100%,.1);--tw-bg-opacity:1;background-color:rgb(28 28 30/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px hsla(0,0%,100%,.04);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);--tw-shadow-color:#000;--tw-shadow:var(--tw-shadow-colored)}body{--tw-bg-opacity:1;background-color:rgb(245 245 247/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1));transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.3s}body:is(.dark *){--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::-moz-selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}:is(.dark *)::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}:is(.dark *)::selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.article-content p{font-family:Inter,sans-serif;font-size:1.125rem;line-height:1.75;margin-bottom:1.5rem;color:rgba(0,0,0,.85)}.dark .article-content p{color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-content p{font-size:1.3125rem;line-height:1.8;margin-bottom:2rem}}.article-content strong{font-weight:600;color:#000}.dark .article-content strong{color:#fff}.article-content em{font-style:italic}.article-content h2{font-family:Inter,sans-serif;font-weight:700;font-size:1.5rem;line-height:1.15;letter-spacing:-.02em;margin-top:4rem;margin-bottom:2rem;color:#000}.dark .article-content h2{color:#fff}@media (min-width:768px){.article-content h2{font-size:1.875rem}}@media (min-width:1024px){.article-content h2{font-size:2.25rem}}.article-content section{max-width:48rem;margin-left:auto;margin-right:auto;width:100%}.article-content figure{margin:3rem auto;max-width:48rem}.apple-img,.article-content .arxiv-chart{width:100%;border-radius:1.5rem;overflow:hidden;background:#fff;border:1px solid rgba(0,0,0,.05);box-shadow:0 4px 24px rgba(0,0,0,.04);display:block;padding:0}.dark .apple-img,.dark .article-content .arxiv-chart{border-color:hsla(0,0%,100%,.1);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.article-content figure img{width:100%;height:auto;display:block;-o-object-fit:cover;object-fit:cover}.article-content figure p{font-family:Space Mono,monospace;font-size:.875rem;color:#86868b;margin:1rem auto 0;text-align:center;line-height:1.6;max-width:42rem}.dark .article-content figure p{color:#8e8e93}.article-content .tech-card{display:flex;gap:1rem;align-items:flex-start;padding:1.25rem 1.5rem;margin-bottom:.75rem;border-radius:1rem;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.05)}.dark .article-content .tech-card{background:hsla(0,0%,100%,.04);border-color:hsla(0,0%,100%,.1)}.article-lead{font-family:Inter,sans-serif;font-weight:500;font-size:1.25rem;line-height:1.6;margin:.5rem 0 3rem;padding-left:1.25rem;border-left:2px solid #000;color:#86868b}.dark .article-lead{border-color:#fff;color:#8e8e93}@media (min-width:768px){.article-lead{font-size:1.5rem;padding-left:2rem}}.rel-rail{display:flex;gap:16px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x proximity;padding:4px 2px 12px;overscroll-behavior-x:contain;scrollbar-width:none;-ms-overflow-style:none}.rel-rail::-webkit-scrollbar{display:none}.rel-rail>a{flex:0 0 auto;width:208px;scroll-snap-align:start;text-decoration:none;display:block;transition:transform .25s cubic-bezier(.2,.8,.2,1)}@media (min-width:640px){.rel-rail>a{width:244px}}.rel-rail>a:hover{transform:translateY(-4px)}.rel-thumb{display:block;position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:18px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.1);box-shadow:0 4px 24px rgba(0,0,0,.05)}.dark .rel-thumb{background:hsla(0,0%,100%,.045);border-color:hsla(0,0%,100%,.14);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.rel-thumb img{width:100%;height:100%;-o-object-fit:cover;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}.rel-rail>a:hover .rel-thumb img{transform:scale(1.05)}.rel-rail time{display:block;margin:12px 0 5px;font-family:Space Mono,monospace;font-size:.625rem;letter-spacing:.08em;color:#86868b}.dark .rel-rail time{color:#8e8e93}.rel-title{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.875rem;font-weight:600;line-height:1.4;letter-spacing:-.01em;color:#000}.dark .rel-title{color:#fff}.rel-fade{position:absolute;top:0;bottom:12px;width:96px;pointer-events:none;opacity:0;z-index:2;transition:opacity .35s ease}.rel-fade-l{left:0;background:linear-gradient(90deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.rel-fade-r{right:0;background:linear-gradient(270deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.dark .rel-fade-l{background:linear-gradient(90deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.dark .rel-fade-r{background:linear-gradient(270deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.rel-arrow{position:absolute;top:calc(50% - 34px);translate:0 -50%;z-index:3;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid rgba(0,0,0,.1);background:#fff;color:#000;box-shadow:0 8px 26px rgba(0,0,0,.14);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,transform .25s ease}.dark .rel-arrow{border-color:hsla(0,0%,100%,.14);background:#1c1c1e;color:#fff}.rel-arrow:hover{transform:scale(1.08)}.rel-arrow-l{left:6px}.rel-arrow-r{right:6px}.rel-wrap[data-left="1"] .rel-fade-l,.rel-wrap[data-right="1"] .rel-fade-r{opacity:1}.rel-wrap[data-left="1"] .rel-arrow-l,.rel-wrap[data-right="1"] .rel-arrow-r{opacity:1;visibility:visible;pointer-events:auto}@media (hover:none){.rel-arrow{display:none}}@media (prefers-reduced-motion:reduce){.rel-arrow,.rel-fade,.rel-rail>a,.rel-thumb img{transition:none}}
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    Dataist
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">            <nav id="lang-switch" aria-label="Language" class="flex items-center gap-1.5 md:gap-2 font-mono text-[11px] md:text-sm font-bold uppercase tracking-widest select-none"><a href="/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/" hreflang="ru" lang="ru" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="text-apple-textMutedLight dark:text-apple-textMutedDark hover:text-black dark:hover:text-white transition-colors no-underline">RU</a><span aria-hidden="true" class="text-apple-textMutedLight dark:text-apple-textMutedDark opacity-40">|</span><span aria-current="true" class="text-black dark:text-white">EN</span></nav>            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://x.com/andre_dataist" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">X</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-09-20</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    How AI Simulates a User’s Thoughts
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/cover.jpg"
+                         alt="Cover: How AI Simulates a User’s Thoughts"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When AI Starts to Understand Who It’s Talking To</h2>
+<p>An ordinary chatbot sees a message. A good assistant tries to understand <strong>who wrote it, what they want, and what has changed over the course of the conversation</strong>.</p>
+<p>That is harder than it sounds. A user may ask for career advice while actually worrying about a loss of status. They may ask about budgeting while hiding a fear of conflict at home. An important part of the request often remains unspoken.</p>
+<p>The Mind2Dialogue paper proposes teaching models this skill through simulation. Researchers create a virtual user with a personality, goals, emotions, and a changing internal state. They then start a conversation with an assistant that can see this state directly. That assistant serves as a teacher. Its responses are used to train an ordinary model that, at deployment time, no longer has access to the hidden data.</p>
+<p>The idea resembles learning with information available to the teacher but not the student. The model does not receive a ready-made description of the user’s thoughts. Instead, it learns to respond as if it could reconstruct them from the conversation.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Overview of Mind2Dialogue: the simulator generates a changing user state, the teacher assistant responds with that state in mind, and the student model is trained without access to it.</p>
+</div></figure>
+</section>
+<section>
+<h2>The Problem of the Hidden User</h2>
+<p>Modern dialogue datasets are good at teaching models to answer individual questions. But they rarely show <strong>how to connect an answer to a person’s circumstances</strong>.</p>
+<p>There are two obvious sources of data. The first is real conversations between people who know each other well. These contain plenty of useful context: friends remember each other’s past decisions, know their habits, and can infer their intentions. But collecting such conversations at scale would raise serious consent and privacy concerns.</p>
+<p>The second source is public dialogue and synthetic data. These scale more easily, but they typically describe the user statically: their age, profession, interests, and a few preferences. Such a profile cannot explain why someone changed their mind, became irritated, or started trusting the other person more.</p>
+<p>Mind2Dialogue divides the user’s state into several parts:</p>
+<p>🟠 <strong>Persistent information</strong> — values, biography, constraints, and attitude toward the assistant.</p>
+<p>🟠 <strong>Current information</strong> — mood, unresolved goals, immediate concerns, and conclusions drawn from the previous response.</p>
+<p>🟠 <strong>Interaction history</strong> — a brief conversation summary, the level of trust, and changes caused by previous turns.</p>
+<p>This is not a measurement of anyone’s actual psyche. The authors explicitly describe the state as an artificial structure defined by the simulator. Its purpose is to connect the cause of a behavior with the assistant’s response.</p>
+<p>For example, a virtual user might be an engineer who values safety and is used to working with limited resources. They begin the conversation by asking about a project deadline. On the surface, it is a technical question. But the user’s state may also include anxiety over a past mistake and a reluctance to sacrifice quality for speed again.</p>
+<p>The teacher assistant can see that state. So it responds not only with a schedule, but also with advice about risks, responsibility, and the user’s experience. The student model sees only the profile and message history. It must learn to reconstruct the relevant context on its own.</p>
+</section>
+<section>
+<h2>What Is Mind2Dialogue?</h2>
+<p>The framework has three parts: a simulator, a dataset, and a trained model.</p>
+<p>First, the researchers create three types of scenarios for each persona:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">everyday requests;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">emotionally significant situations;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">long-term questions about growth, relationships, and life decisions.</span></div>
+<p>The simulator then selects the user’s behavior. It has 14 modes to choose from, including information seeking, clarification, analysis, requests for step-by-step help, content creation, and social conversation. This keeps the dialogues from turning into a series of identical questions.</p>
+<p>At each turn, the pipeline works roughly as follows:</p>
+<p>🟣 the user’s state is updated based on the conversation history;</p>
+<p>🟣 a behavior mode is selected;</p>
+<p>🟣 the simulator writes the user’s message;</p>
+<p>🟣 the teacher assistant generates a response with access to the user’s state;</p>
+<p>🟣 the new pair of messages is added to the conversation trajectory.</p>
+<p>If the assistant’s response changes the user’s trust, mood, or goal, that change is reflected in the next turn.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Generation pipeline: the profile and scenario define the start of the conversation, the state changes after each turn, and validation checks discard incoherent trajectories.</p>
+</div></figure>
+<p>After generation, each conversation goes through automatic and model-based checks. The system verifies that the structure is correct, the roles alternate properly, the full state trajectory has been recorded, and the user does not contradict their profile. Separate checks assess personality consistency and conflicts with the user’s persistent characteristics.</p>
+<p>The conversations that pass the filters are used to create two types of examples:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">dialogues containing responses from the teacher assistant;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">questions and answers about the user’s preferences, memories, and beliefs.</span></div>
+<p>The training mixture contains 8,244 examples in total: 3,312 dialogue examples and 4,932 question-and-answer examples. The researchers fine-tuned Qwen2.5-7B, Llama-3.1-8B, and OLMo-3-7B using lightweight adapters and four different dataset sizes.</p>
+<p>One restriction was preserved throughout: <strong>the student model never saw the user’s structured state</strong>.</p>
+</section>
+<section>
+<h2>What the Researchers Found</h2>
+<p>The researchers first compared the new simulator with ordinary profile-based generation. The standard setup had no memory of the user’s changing state and no separate control over behavior.</p>
+<p>The difference was small in the early turns. The longer the conversation continued, the more pronounced Mind2Dialogue’s advantage became. By turn 30, topic depth reached an effect size of 1.22, while the personalization of the assistant’s responses also continued to improve as the dialogue progressed. A simple profile was not enough: without a dynamic state, the virtual user gradually lost its connection to the original persona and scenario.</p>
+<p>An evaluation of 1,240 filtered conversations found that 1,216 of them — 98.06% — met the criteria for consistency, coherence, alignment between the state and the responses, and relevance.</p>
+<p>The models were then tested on three groups of tasks: remembering information about the user, following their preferences, and reasoning about other people’s beliefs and actions.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/fig_6.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Personalization quality as the training mixture grows: the full dataset produced the best results for all three models.</p>
+</div></figure>
+<p>Performance on personalization tasks improved for all three models:</p>
+<p>🟠 Qwen’s preference-aware generation improved by 33.4 percentage points;</p>
+<p>🟠 Llama’s improvement on the same task was 40.9 points;</p>
+<p>🟠 OLMo’s improvement reached 26.6 points;</p>
+<p>🟠 memory for the profile and hidden preferences improved by 5.6–13.6 points, depending on the model.</p>
+<p>The most notable result was the models’ ability to follow preferences in open-ended responses. They became better not only at choosing the correct option, but also at writing an answer that independently took the relevant context into account.</p>
+<p>That distinction matters because answer selection and generation are different skills. Qwen, for example, showed a clear improvement in classification with just half of the training mixture, but open-ended generation did not rise sharply until the full dataset was used.</p>
+</section>
+<section>
+<h2>Transfer to Reasoning About Other People</h2>
+<p>The authors also tested whether the effect went beyond personalization. They used belief-understanding tasks in which the model had to determine what another character knew, what they believed, and what action would follow.</p>
+<p>For Qwen, belief prediction accuracy rose from 31% to 44%. Action prediction increased from 23.5% to 31%. Llama showed an even larger improvement: belief prediction rose from 18.5% to 43.3%, while action prediction increased from 39.5% to 57.3%.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/fig_7.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Improved performance on tasks involving other people’s beliefs and actions as the amount of training data increases for Llama-3.1-8B.</p>
+</div></figure>
+<p>But the transfer was not consistent across models. OLMo improved on personalization and on one of the belief-related tasks, yet lost 8.2 points on belief prediction and 7 points on action prediction on another test set.</p>
+<p>That limits the broader conclusion. Simulation can teach a model to work better with an individual, but improvements in reasoning about other people’s mental states depend on the base model, its training mix, and the specific task.</p>
+<p>The results of separate training were also revealing. Dialogue examples were more helpful for open-ended generation. Question-and-answer examples were better for selecting the correct option. The full mixture delivered the best average performance on reasoning tasks while preserving almost all of the generation quality.</p>
+</section>
+<section>
+<h2>Where the Boundaries Lie</h2>
+<p>Mind2Dialogue addresses the problem of scaling data, but it does not eliminate the risk of simulation errors.</p>
+<p>All conversations were created by a single model, GPT-4o-mini. Its style, stereotypes, and mistakes may therefore have carried over into the training set. The researchers did not compare different teachers, model ensembles, or a more powerful simulator.</p>
+<p>The user state was also designed in advance by people. It includes persistent and current characteristics, trust, goals, and mood, but it may leave out important details. In addition, an artificial framework does not necessarily match the way a real person’s beliefs change over time.</p>
+<p>Finally, the tests do not show how the model would behave in a long conversation with a real user. The benchmarks evaluate individual skills, while the validation process assesses synthetic dialogues. That is not yet a test of an assistant’s long-term usefulness.</p>
+<p>There are risks in applying the approach as well. A system that tries to infer a person’s goals and emotions could be used for intrusive profiling, pressure, or manipulation. Personalization should therefore come with clear memory controls, the option to disable it, and honest communication about uncertainty.</p>
+</section>
+<section>
+<h2>Conclusion</h2>
+<p>Mind2Dialogue proposes teaching AI to understand people through <strong>privileged learning</strong>. The teacher can see the user’s hidden state and produce a more meaningful response. The student receives only what would be available in an ordinary conversation, but it absorbs some of the teacher’s behavior.</p>
+<p>The results point to three conclusions:</p>
+<p>🟣 a dynamic state is more useful than a static profile in long conversations;</p>
+<p>🟣 synthetic conversations can significantly improve personalization in smaller open models;</p>
+<p>🟣 the ability to take an individual into account and the ability to reason about that person’s beliefs are related, but not identical.</p>
+<p>For future assistants, this means moving beyond remembering facts to tracking change: what the user wants now, why they changed their mind, and how a previous response affected the conversation. Systems that can reliably understand people’s real long-term goals are still a long way off. But the direction is becoming clear: <strong>a model must learn not only to respond to messages, but also to take into account the person behind them</strong>.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2609.15972" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span>
+                    </a>
+                </div>
+
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI reviews in simple way
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read fresh AI papers and retell the essentials in plain human language — no hype, no fluff. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New reviews — every day
+                            </p>
+                            <a href="https://x.com/andre_dataist" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">Follow on X</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        // BR436: ЧУЖАЯ БИБЛИОТЕКА НЕ РЕШАЕТ, УВИДИТ ЛИ ЧИТАТЕЛЬ ТЕКСТ.
+        // `lucide` едет с unpkg.com, а чужой сервер отвечает не всегда. Без
+        // проверки первая же строка бросала исключение — и ВЕСЬ остальной
+        // блок не исполнялся: ни кнопка темы, ни полоса прогресса, ни лента
+        // «Читайте также». Раньше к ним добавлялся и сам текст разбора: он
+        // был спрятан под `opacity: 0` до тех пор, пока наблюдатель не
+        // проставит `visible`, а наблюдатель регистрировался здесь же. Теперь
+        // правил `.fade-in` в стилях нет вовсе, и текст виден всегда — даже
+        // если JavaScript выключен или не дошёл. Иконка не показалась —
+        // досадно; разбор не показался — потеряли читателя.
+        if (window.lucide) lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
