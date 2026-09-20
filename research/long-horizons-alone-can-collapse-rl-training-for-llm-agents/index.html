@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Long horizons alone can collapse RL training for LLM agents</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Long horizons alone can collapse RL training for LLM agents" />
+    <meta property="og:description" content="Analysis · 2026-05-06
+                
+
+                
+                
+                    Long horizons alone can collapse RL training for LLM agents" />
+    <meta name="description" content="Вокруг LLM-агентов сегодня много шума: мы учим модели пользоваться инструментами, ходить по сайтам, чинить код, решать многошаговые задачи.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/long-horizons-alone-can-collapse-rl-training-for-llm-agents/" />
+    <link rel="canonical" href="https://dataist.ai/research/long-horizons-alone-can-collapse-rl-training-for-llm-agents/">
+    <meta property="og:image" content="https://dataist.ai/2026-05-06/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-05-06/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-p strong {
+            @apply font-semibold text-black dark:text-white;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .apple-img {
+            @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white;
+        }
+
+        /* Карточки-списки */
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 mb-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Long horizons alone can collapse RL training for LLM agents",
+  "url": "https://dataist.ai/research/long-horizons-alone-can-collapse-rl-training-for-llm-agents/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/long-horizons-alone-can-collapse-rl-training-for-llm-agents/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Analysis · 2026-05-06\n                \n\n                \n                \n                    Long horizons alone can collapse RL training for LLM agents",
+  "image": "https://dataist.ai/2026-05-06/cover.png",
+  "datePublished": "2026-05-06",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "On Training Large Language Models for Long-Horizon Tasks: An Empirical Study of Horizon Length",
+    "identifier": "arXiv:2605.02572",
+    "url": "https://arxiv.org/abs/2605.02572"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2605.02572"
+}</script>
+    <meta property="article:published_time" content="2026-05-06T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in"><!-- Category tag -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Analysis · 2026-05-06</span>
+                </div>
+
+                <!-- Headline -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Long horizons alone can collapse RL training for LLM agents</h1>
+
+                <!-- Main cover -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-05-06/cover.png"
+                         alt="Cover: Long horizons alone can collapse RL training for LLM agents"
+                         class="w-full h-auto object-cover">
+                </div></header>
+
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">There is a lot of noise around LLM agents right now: we teach models to use tools, browse websites, fix code, work through multi-step tasks. It looks as though the central question is the quality of the model itself, the size of the context window, or the cleverness of the training algorithm. But the authors of <strong>"On Training Large Language Models for Long-Horizon Tasks"</strong> offer a far more mundane and far more useful explanation: sometimes an agent fails not because it cannot reason, but because the goal is simply too far away.</p>
+
+                <h2 class="article-h2 fade-in">Agents break down because the path is long, not because they are dumb</h2>
+                <p class="article-p fade-in">It is a subtle distinction, but a fundamental one. A model that knows the rules of Sudoku and can solve a puzzle in one shot will not necessarily solve the same puzzle reliably across 25–30 consecutive steps of interaction with an environment. Errors pile up along the way, the reward signal thins out, and reinforcement learning starts behaving less and less predictably.</p>
+                <p class="article-p fade-in">This paper separates <strong>reasoning difficulty</strong> from <strong>the length of the path to the goal</strong> carefully, almost surgically — and shows that a long horizon is a serious bottleneck in its own right. For anyone building agent systems that is a consequential finding: before inventing ever more elaborate RL recipes, it may be worth first cutting the number of steps the agent is forced to take.</p>
+
+                <h2 class="article-h2 fade-in">What the paper actually tested</h2>
+                <p class="article-p fade-in">The core idea is simple: work out how horizon length affects the training of LLM agents when everything else is held as constant as possible.</p>
+                <p class="article-p fade-in">By "horizon" the authors mean not just a cap on steps but the actual length of the action chain needed to reach the goal. They separate several things:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">the minimum number of primitive actions required to reach the goal;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">the maximum interaction budget the environment allows;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">the number of steps the policy actually takes.</span>
+                </div>
+
+                <p class="article-p fade-in">The key move is to build tasks where <strong>the rules and the structure of the reasoning stay the same</strong> and essentially only the length of the solution changes.</p>
+                <p class="article-p fade-in">For that the authors picked two convenient text worlds:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">Sudoku</strong>, where solution length is controlled through the number of empty cells;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">Rush Hour</strong>, the sliding-car puzzle, where solution length is the minimum number of moves.</span>
+                </div>
+
+                <p class="article-p fade-in">In the Sudoku case the authors deliberately filtered the puzzles so that only basic solving techniques are required. That keeps two causes of failure apart: "the model does not know how to solve this" and "the model knows how, but cannot hold a long sequence of actions together."</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-06/fig_0.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">The paper's central claim: horizon length is a bottleneck in its own right, and shortening the horizon stabilizes training and improves transfer to longer tasks.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Another strong methodological move: the authors checked whether the model could solve the same instance in a compressed, short-horizon format — emitting the entire finished board at once instead of filling Sudoku in cell by cell. If the model handles that, the underlying solving ability is there, and whatever goes wrong afterwards can be pinned on the length of the interaction.</p>
+
+                <h2 class="article-h2 fade-in">The main result: a long horizon breaks RL all by itself</h2>
+                <p class="article-p fade-in">The central finding reads almost like a diagnosis: <strong>increase only the length of the solution and reinforcement learning becomes unstable, and can collapse outright</strong>.</p>
+                <p class="article-p fade-in">The authors trained Qwen3-1.7B, first with SFT on expert trajectories and then with RL on top. On short tasks everything looks familiar: RL helps, scores go up. As soon as the distance to the goal grows, the picture changes sharply — heavy oscillation first, then a collapse in performance.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-06/fig_1.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Training dynamics at different path lengths to the goal: RL is stable on short tasks and quickly becomes unstable on long ones.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">What makes this valuable is that the authors do not stop at "long tasks are worse." They try to isolate the cause, and their conclusion is that the task has not necessarily become intellectually harder. Even when the reasoning is essentially the same, adding steps by itself makes training far more brittle.</p>
+                <p class="article-p fade-in">Why does this happen? The paper points to two mechanisms.</p>
+                <p class="article-p fade-in">First, <strong>exploration of the action space</strong>. The longer the chain, the smaller the chance of stumbling into a successful trajectory by accident or half-intent. A mistake near the start poisons everything that follows.</p>
+                <p class="article-p fade-in">Second, <strong>credit assignment</strong>. When reward is sparse and arrives only at the end, a failure pushes a bad signal onto the whole chain — including intermediate steps that may have been correct. For a language model that is particularly nasty: a negative signal does not carefully nudge it toward the right answer, it spreads probability mass across an enormous vocabulary and amplifies noise.</p>
+                <p class="article-p fade-in">The observation maps cleanly onto real systems. A coding agent may know how to fix an individual bug, but if success requires twenty dependent steps — reading logs, editing a file, running tests, fixing the errors that fix caused, checking again — training becomes far less reliable.</p>
+
+                <h2 class="article-h2 fade-in">Horizon reduction turns out to be a surprisingly plain fix</h2>
+                <p class="article-p fade-in">The most practical takeaway: you do not necessarily fight a long horizon with cleverer RL, but with <strong>a structural cut in the number of steps</strong>.</p>
+                <p class="article-p fade-in">The authors call this the horizon-reduction principle and propose two main ways to apply it:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">use <strong class="font-semibold text-black dark:text-white">macro-actions</strong>, where a single turn carries several primitive actions at once;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">break the goal into <strong class="font-semibold text-black dark:text-white">subgoals</strong>, so that a long task becomes a chain of short, checkable segments.</span>
+                </div>
+
+                <p class="article-p fade-in">This is where the paper is at its most convincing: the idea looks obvious, and the experimental effect is very large.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-06/fig_2.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Primitive actions versus macro-actions in Sudoku and Rush Hour: horizon reduction markedly improves stability and final performance on long tasks.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">In Sudoku the agent was allowed to fill several cells per step rather than one. In Rush Hour it could make larger moves. The result: training is steadier, converges faster and, most importantly, does not fall apart on the long scenarios where the primitive-action baseline fails outright.</p>
+                <p class="article-p fade-in">The authors checked separately whether the gain is a side effect of "a stronger policy." The ablation is elegant: a policy trained with macro-actions was made to act in the environment as though only single primitive steps were available. Stability degraded again. So the operative factor really is the reduction of the <strong>effective</strong> horizon, not the model simply having gotten smarter.</p>
+                <p class="article-p fade-in">Separately interesting: not all macro-actions are equally useful. Rigidly fixed batches of steps work worse than flexible macro-actions whose length the policy picks for itself. That matches a sound engineering instinct: aggregation that is too coarse can hurt as much as no aggregation at all.</p>
+
+                <h2 class="article-h2 fade-in">Subgoals work too, which is good news for real agents</h2>
+                <p class="article-p fade-in">The second route is decomposition into subgoals. In Sudoku the authors used intermediate, checkable targets such as correctly completing an individual block. That turns one long episode with sparse reward into a sequence of shorter segments with dense signal.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-06/fig_5.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Splitting the task into subgoals helps RL on long Sudoku instances, where the sparse-reward baseline barely makes progress.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">This matters beyond puzzles. In real systems we already build agents around intermediate checkpoints by instinct: find the relevant file, then localize the bug, then propose a fix, then run the tests. The paper gives that habit an empirical justification rather than a merely engineering one: <strong>subgoals shrink the effective horizon and make training easier</strong>.</p>
+                <p class="article-p fade-in">In effect, the paper leads carefully to the thought that many successful agent architectures work not because their planning is especially elegant, but because they quietly shorten the horizon — through action hierarchies, API calls, code as a high-level action, intermediate checks and dense feedback.</p>
+
+                <h2 class="article-h2 fade-in">The best part: horizon reduction helps even on longer tasks the model never saw</h2>
+                <p class="article-p fade-in">One of the most satisfying parts of the work is an observation the authors call <strong>horizon generalization</strong>. A model trained on tasks of moderate length can transfer decently to longer instances, as long as the reasoning difficulty stays the same.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-06/fig_7.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Horizon generalization: policies trained on a bounded task length transfer to longer scenarios, and the horizon-reduction variants do it markedly better.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">It is an important result and, honestly, a slightly counterintuitive one. You would expect an agent that never trained on very long episodes to do badly on them. It turns out that if training was stable and per-step accuracy is good enough, the model can stretch further than anything it saw during training.</p>
+                <p class="article-p fade-in">The macro-action variants transfer best, for two reasons:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">they raise accuracy at every step;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">they reduce the number of points at which error can accumulate.</span>
+                </div>
+
+                <p class="article-p fade-in">In practice that means this: you do not always have to train an agent on the longest and most expensive scenarios from the start. It is often smarter to get it through shorter trajectories reliably first, then rely on transfer and a curriculum over task length.</p>
+                <p class="article-p fade-in">The authors test that idea too. In Rush Hour they compare training directly on long instances against a schedule that starts short and then moves to long. The curriculum wins. That is one more argument that short-horizon competence is not a pleasant bonus but the foundation everything else is built on.</p>
+
+                <h2 class="article-h2 fade-in">Why this paper matters beyond Sudoku</h2>
+                <p class="article-p fade-in">At first glance the work can look like "another RL-on-toy-environments paper." That would be a shallow reading.</p>
+                <p class="article-p fade-in">Its real value is that it offers <strong>a simple axis for analyzing agent systems</strong>: before arguing about model size, optimizer tricks and prompt quality, ask what the effective horizon is here.</p>
+                <p class="article-p fade-in">That question is useful across a lot of applied settings:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">a coding agent that can generate and run a script in a single step will often be more robust than one making dozens of small calls;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">a web agent with high-level actions through an API may train better than one imitating every click;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">systems with verifiable intermediate results get more than "a nicer interface" — they get a structural reduction in the difficulty of training.</span>
+                </div>
+
+                <p class="article-p fade-in">The authors also show that the effect is not confined to one task, one model or one optimizer. Similar patterns show up in WebShop, on a larger model and under a different style of optimization. That strengthens the central claim: <strong>horizon length is not a quirk of one implementation but a constraint that cuts across the whole class of LLM agent systems</strong>.</p>
+                <p class="article-p fade-in">There is an important limitation as well. The paper is honest that horizon generalization does not mean generalization across reasoning techniques. Once Sudoku starts demanding fundamentally harder techniques, transfer breaks. That is a sober conclusion: RL is good at stretching abilities a model already has over longer trajectories, but it is under no obligation to produce qualitatively new ones.</p>
+
+                <h2 class="article-h2 fade-in">The takeaway</h2>
+                <p class="article-p fade-in">The value of this paper is not in headline numbers but in how precisely it names the problem. <strong>For LLM agents the bottleneck is often not the reasoning itself but the length of the path to the goal.</strong> And if that is right, the best next move is not necessarily to complicate RL but to shorten the effective horizon.</p>
+                <p class="article-p fade-in">What follows is close to an engineering manifesto:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">design actions at a higher level;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">break tasks into verifiable subgoals;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">build curricula that run from short horizons to long ones;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">measure not only "can the model solve the task," but "how many dependent steps does it have to take."</span>
+                </div>
+
+                <p class="article-p fade-in">For anyone building agent systems — from web automation to developer tooling — this is a very practical lesson. Sometimes the way to a stronger agent runs not through a bigger brain but through <strong>a shorter path</strong>.</p>
+
+                <!-- Источник -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2605.02572" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://github.com/fogleman/rush" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                    <a href="https://huggingface.co/datasets/Ritvik19/Sudoku-Dataset" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="database" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Model (Hugging Face)</span></a>
+                </div>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI paper breakdowns
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

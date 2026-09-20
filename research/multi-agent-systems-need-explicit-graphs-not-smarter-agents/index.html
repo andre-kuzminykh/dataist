@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Multi-agent systems need explicit graphs, not smarter agents</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Multi-agent systems need explicit graphs, not smarter agents" />
+    <meta property="og:description" content="When one agent is not enough" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/multi-agent-systems-need-explicit-graphs-not-smarter-agents/" />
+    <meta property="og:image" content="https://dataist.ai/2026-08-25/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-08-25">
+
+    <meta name="description" content="Когда один ИИ-агент берётся за сложную задачу в одиночку, он быстро упирается в потолок.
+
+Исследователи предлагают смотреть не на одного умного исполнителя, а на целую систему, где несколько ИИ-агентов делят работу, сверяют друг друга и двигаются к общей цели. Для этого они описывают задачу, роли и текущее состояние как сеть связей, чтобы системе было проще понимать, кто что делает, что уже готово и что зависит друг от друга.
+
+В обзоре разберём, как такой подход помогает ИИ-агентам работать вместе, не терять ход задачи и справляться с тем, что одному агенту уже не по силам." />
+    <link rel="canonical" href="https://dataist.ai/research/multi-agent-systems-need-explicit-graphs-not-smarter-agents/" />
+
+    <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Multi-agent systems need explicit graphs, not smarter agents",
+  "description": "When one agent is not enough",
+  "image": "https://dataist.ai/2026-08-25/cover.jpg",
+  "url": "https://dataist.ai/research/multi-agent-systems-need-explicit-graphs-not-smarter-agents/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/multi-agent-systems-need-explicit-graphs-not-smarter-agents/",
+    "inLanguage": "en"
+  },
+  "datePublished": "2026-08-25",
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Graph Engineering in the Era of LLM Agents: From Individual Intelligence to System Intelligence",
+    "identifier": "arXiv:2608.21156",
+    "url": "https://arxiv.org/abs/2608.21156"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2608.21156"
+}</script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-25/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-08-25</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Multi-agent systems need explicit graphs, not smarter agents</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-25/cover.jpg"
+                         alt="Multi-agent systems need explicit graphs, not smarter agents"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When one agent is not enough</h2>
+<p>Over the past year the industry has picked up an odd habit: when an agent fails a task, you give it more tools, more memory, a bigger context window and another try. Sometimes that works. But only up to the point where the task stops looking like a conversation with a smart model and starts looking like the work of a small team.</p>
+<p>Fixing a bug in a large repository, say. Or assembling a research pipeline. Or running a long business procedure with checks, approvals and rollbacks. On tasks like these a single AI agent hits a ceiling fast. It has to hold everything in one head: the plan, intermediate results, errors, verification, tool calls, and a memory of what has already happened.</p>
+<p>The authors of a broad new paper propose a different framing. The next step for AI agents is a system of several specialized agents with an explicit structure linking tasks, roles and states. For this they introduce the term <strong>graph engineering</strong>.</p>
+<p>The idea is practical: if you want an agentic system to hold up on long, complex tasks, you have to describe explicitly:</p>
+<p>🟠 what exactly needs to be done</p>
+<p>🟠 who exactly is doing it</p>
+<p>🟠 what state the whole system is in right now</p>
+<p>That, in the authors' view, is what separates a mere pile of agents from <strong>system intelligence</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-25/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The move from model intelligence to system intelligence: from prompts and context to scaffolding, loops and graph engineering.</p>
+</div></figure>
+</section>
+<section>
+<h2>From model to agent, from agent to system</h2>
+<p>The paper's argument is built as a ladder.</p>
+<p>First comes <strong>model intelligence</strong>. These are the base capabilities of an LLM: understanding text, answering, writing code, reasoning. They come out of pretraining and fine-tuning, and at inference time they are amplified by prompts and context.</p>
+<p>Then comes <strong>individual intelligence</strong>. This is no longer a bare model call but an agent with scaffolding: access to tools, memory, skills and an action loop. It can plan, run commands, look at the result, correct itself and keep going.</p>
+<p>On long tasks, that still is not enough.</p>
+<p>A single agent almost always runs in one main loop. Branches that could run in parallel collapse into a sequential chain. Roles blur. The work is often checked by the same agent that produced it. And the state of the task is smeared across the context window, the logs and stray notes.</p>
+<p>The authors put it bluntly: many real tasks <strong>architecturally do not fit</strong> inside one agent. The problem is no longer that the agent is one tool or a slightly larger context window short. What it lacks is organization.</p>
+<p>In short, the problem looks like this:</p>
+<p>🟣 complex tasks are made of interdependent subtasks</p>
+<p>🟣 some of the steps have to run in parallel</p>
+<p>🟣 different steps call for different specializations</p>
+<p>🟣 results need to be verified independently</p>
+<p>🟣 state has to outlive a single agent loop</p>
+<p>Hence the paper's central move: from individual intelligence to <strong>system intelligence</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-25/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">How a model's capabilities turn into an agent: prompts, context, scaffolding and execution loops.</p>
+</div></figure>
+</section>
+<section>
+<h2>What graph engineering is</h2>
+<p>By graph engineering the authors mean more than using graphs as a data structure. The point is to make graphs the <strong>working control layer</strong> of an agentic system.</p>
+<p>In this scheme there are three main graphs, or three main kinds of structure.</p>
+</section>
+<section>
+<h2>1. Task organization</h2>
+<p>The first question: <strong>what to do</strong>.</p>
+<p>A large goal has to be broken down into subtasks, dependencies, branches, checks and an executable pipeline. As long as all of that lives only in the text of a prompt, the system is fragile. Once the structure is explicit, you can manage it: run independent steps in parallel, rebuild the plan, insert checks, roll back the branches that failed.</p>
+<p>This shows up most clearly in coding tasks, research pipelines and business processes. A single linear trajectory is rare there. Usually there is a tree or a directed graph: gather data, test a hypothesis, run a test, compare results, back up if the check does not pass.</p>
+<p>The authors name two key mechanisms:</p>
+<p>🟠 <strong>goal decomposition</strong> — splitting the overall task into subtasks with dependencies</p>
+<p>🟠 <strong>pipeline optimization</strong> — turning those subtasks into an executable scheme with agents, tools and checks</p>
+<p>Here the survey pulls together a lot of recent work: from systems that explicitly break a task into sub-stages to methods that search for the best agentic pipeline outright, treating the pipeline itself as the thing being optimized.</p>
+<p>The deeper point: the task stops being a chain of thought inside the model's head and becomes an external structure you can work with.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-25/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Task organization: how a goal decomposes into subgoals, dependencies and an executable pipeline.</p>
+</div></figure>
+</section>
+<section>
+<h2>2. Agent coordination</h2>
+<p>The second question: <strong>who does the work</strong>.</p>
+<p>Having several agents is not enough on its own. You need an explicit model of capabilities, roles and communication channels. Otherwise you get a crowd, not a system.</p>
+<p>The authors split coordination into three layers:</p>
+<p>🟣 <strong>the capability graph</strong> — who can do what, which tools they can reach, where they are reliable</p>
+<p>🟣 <strong>the team graph</strong> — which roles are assigned, who delegates to whom, who checks whom</p>
+<p>🟣 <strong>the communication graph</strong> — who exchanges information with whom, and when</p>
+<p>The distinction matters. One agent may be good at reading logs but wrong for writing the fix. Another writes excellent code but cannot reliably check for regressions. A third is not there to generate anything at all — it is there to verify.</p>
+<p>In an ordinary single agent all of this blurs together. In a multi-agent system these differences have to be stated explicitly.</p>
+<p>The authors give plenty of examples of such structures:</p>
+<p>🟠 role chains, where the output of one stage passes to the next</p>
+<p>🟠 routing, where a dispatcher sends subtasks to the right specialists</p>
+<p>🟠 fan-out schemes, where several agents work in parallel and their answers are then aggregated</p>
+<p>🟠 dynamic topologies that rewire themselves as the task goes on</p>
+<p>One observation here: more links between agents is not always better. Extra communication buys noise, cost and the spread of errors. So the communication graph has to be designed too, not left to form on its own.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-25/fig_5.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Agent coordination: capabilities, team structure and the message flows between agents.</p>
+</div></figure>
+</section>
+<section>
+<h2>3. Runtime state management</h2>
+<p>The third question: <strong>what is happening right now</strong>.</p>
+<p>This is probably the most underrated part of the paper. People who build agentic systems like to talk about planning and roles; they talk far less about execution state.</p>
+<p>If a system runs for a long time, in parallel, with external tools, a log is not enough. It needs a legible, checkable state layer:</p>
+<p>🟣 which steps are already finished</p>
+<p>🟣 which results have been confirmed</p>
+<p>🟣 which changes are still only proposed</p>
+<p>🟣 where exactly the failure happened</p>
+<p>🟣 which known-good state it can recover from</p>
+<p>The authors call this <strong>runtime state management</strong>. It holds three jobs:</p>
+<p>🟠 recording state</p>
+<p>🟠 localizing failures</p>
+<p>🟠 recovering from failures</p>
+<p>This is already very close to how ordinary reliable systems are built: transactions, version control, rollbacks, invariant checks, replaying history. Only now all of it has to be carried over into the world of AI agents.</p>
+<p>And it matters, because long agentic tasks do not fail only from bad reasoning. They fail because the system does not know where it went wrong, which piece of the work is still valid, and what can be reused in recovery.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-25/fig_6.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Runtime state management: recording history, finding failures and restoring the system.</p>
+</div></figure>
+</section>
+<section>
+<h2>Why this matters now</h2>
+<p>The value of the paper is not the new name. It is that it describes a shift in the industry accurately.</p>
+<p>For the past year and a half everyone has been building ever more elaborate scaffolding around LLMs: memory, tools, browsers, shells, coding agents, long loops with self-checking. But the harder the task, the clearer one thing becomes: the problem is no longer the individual model call.</p>
+<p>The problem is the system.</p>
+<p>You can see it across several areas at once:</p>
+<p>🟠 in coding you have to run parallel branches, tests, reviews and rollbacks</p>
+<p>🟠 in scientific work you have to separate hypothesis generation, critique, data analysis and verification</p>
+<p>🟠 in enterprise processes you need roles, access rights, approvals and a change log</p>
+<p>🟠 in medicine you need a long history, a source for every conclusion and a clear chain of accountability</p>
+<p>In all of these cases, one very smart agent is simply an awkward unit to build with.</p>
+<p>One more point: the paper says outright that <strong>being multi-agent guarantees nothing by itself</strong>. You can add five agents and end up with a system that is more chaotic than before. System intelligence appears only where the work is explicitly organized, the roles are coordinated and the state is managed.</p>
+</section>
+<section>
+<h2>How the authors map the field</h2>
+<p>This is not an experimental paper with one new model and a table of results. It is a broad survey of the field.</p>
+<p>The authors walk the whole chain:</p>
+<p>🟣 base models and fine-tuning</p>
+<p>🟣 prompts and context</p>
+<p>🟣 agent scaffolding: tools, memory, skills</p>
+<p>🟣 execution loops and feedback</p>
+<p>🟣 the limits of a single agent</p>
+<p>🟣 graph engineering as the next level</p>
+<p>🟣 benchmarks, libraries and applied cases</p>
+<p>🟣 open problems: privacy, evaluation, semantics, infrastructure</p>
+<p>It helps that they do not stop at theory. The paper includes a large cross-section of applied systems: software engineering, research, medicine, enterprise pipelines, personal agents, social simulations. What comes through is that many working teams are already moving toward system-level organization, even if they do not call it graph engineering.</p>
+<p>Evaluation is another layer. The authors show that current benchmarks usually measure either the capabilities of a model or the success of a single agent, and do a much worse job on the properties of the whole system: whether the decomposition was correct, how good the coordination was, how stable the state stayed, how well the system recovered from an error, whether improvements carry from one run to the next.</p>
+</section>
+<section>
+<h2>What comes next</h2>
+<p>At the end the authors look a step past graph engineering and raise one more layer — <strong>ontology engineering</strong>. The idea is simple: drawing a graph of tasks and roles is not enough, you also have to agree on what the nodes and edges mean.</p>
+<p>What counts as a task being finished? What is confirmed evidence? Who has the right to change state? Which actions are permitted? When are two different subsystems saying the same thing in different words?</p>
+<p>Without shared semantics, even a well-organized system starts to get lost in its own structures.</p>
+<p>This starts to look like future infrastructure for agentic systems: not just pipelines and orchestrators but something closer to an operating system for agents, where tasks, capabilities, state and rules are first-class objects.</p>
+</section>
+<section>
+<h2>The takeaway</h2>
+<p>The dividing line now is not between a model and an agent. It runs between <strong>a single agent</strong> and <strong>a system of agents</strong>.</p>
+<p>Building long, complex agentic pipelines without explicit structure is getting harder. The work, the roles and the state each need a description of their own. Failures have to be localizable, and recovery has to be possible without a full restart. And you have to know which organizational choices improve the system and which only add noise.</p>
+<p>The paper's main claim, briefly:</p>
+<p>🟠 complex tasks require distributed intelligence</p>
+<p>🟠 distributed intelligence requires explicit structure</p>
+<p>🟠 graphs are becoming the way to specify that structure</p>
+<p>🟠 the next step is learning not just to execute such structures but to improve them safely over time</p>
+<p>For anyone building AI agents, this is a shift of focus: less thinking about prompt magic, more about designing the system.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2608.21156" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://github.com/DEEP-JLU/Awesome-Graph-Engineering" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Compiling a paper into a repo-level spec cuts AI's algorithmic shortcuts</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Compiling a paper into a repo-level spec cuts AI's algorithmic shortcuts" />
+    <meta property="og:description" content="When AI writes code from a paper, it cuts corners too often" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/compiling-a-paper-into-a-repo-level-spec-cuts-ais-algorithmic-shortcuts/" />
+    <meta property="og:image" content="https://dataist.ai/2026-09-08/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-09-08">
+
+    <meta name="description" content="Научную статью легко прочитать, но превратить её в живой рабочий код без потерь — совсем другая история.
+
+Исследователи предлагают способ, при котором ИИ-агент не просто пишет код по общему пересказу статьи, а сначала собирает из неё чёткий план реализации на уровне всего проекта. В этом плане отдельно отмечено, что прямо сказано в статье, что можно разумно достроить, что требует внешних решений, а что пока остаётся неясным. За счёт этого код меньше уходит в упрощения, лучше держит логику метода и не разваливается на несвязанные куски в разных файлах.
+
+В этом обзоре разбираем, как ИИ-агент превращает текст статьи в понятную карту для разработки и почему такой подход помогает получать более точный и цельный код." />
+    <link rel="canonical" href="https://dataist.ai/research/compiling-a-paper-into-a-repo-level-spec-cuts-ais-algorithmic-shortcuts/" />
+
+    <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Compiling a paper into a repo-level spec cuts AI's algorithmic shortcuts",
+  "description": "When AI writes code from a paper, it cuts corners too often",
+  "image": "https://dataist.ai/2026-09-08/cover.jpg",
+  "url": "https://dataist.ai/research/compiling-a-paper-into-a-repo-level-spec-cuts-ais-algorithmic-shortcuts/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/compiling-a-paper-into-a-repo-level-spec-cuts-ais-algorithmic-shortcuts/",
+    "inLanguage": "en"
+  },
+  "datePublished": "2026-09-08",
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "PaperCompiler: Faithful Paper-to-Code Generation via Repository-Level Specification Compilation",
+    "identifier": "arXiv:2609.02272",
+    "url": "https://arxiv.org/abs/2609.02272"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2609.02272"
+}</script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-09-08/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-09-08</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Compiling a paper into a repo-level spec cuts AI's algorithmic shortcuts</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-09-08/cover.jpg"
+                         alt="Compiling a paper into a repo-level spec cuts AI's algorithmic shortcuts"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When AI writes code from a paper, it cuts corners too often</h2>
+<p>Picture the task: you hand an AI a machine learning paper and ask it to build an entire repository from it. Not one file — a real project: the model, data loading, training, evaluation, run scripts. On paper it sounds straightforward. In practice the AI almost always starts simplifying.</p>
+<p>Somewhere an important detail of the algorithm goes missing. Somewhere one file expects a tensor in one layout and another produces a different one. The result looks plausible, but the method is no longer the one in the paper.</p>
+<p>This is exactly the problem <strong>PaperCompiler</strong> sets out to solve. The authors propose treating paper-to-code as <strong>compiling a specification</strong>. First the system pulls the requirements out of the paper. Then it binds them to specific files and interfaces. Only after that does it write code.</p>
+<p>It sounds like bureaucracy for an AI agent. But that scaffolding layer appears to be exactly what you need if you want <strong>a repository that preserves the logic of the method</strong>.</p>
+</section>
+<section>
+<h2>Where ordinary pipelines fail</h2>
+<p>The authors start from an observation familiar to anyone who has pointed a coding agent at a long task. Between reading the paper and generating code there is usually an intermediate step: a plan, a short summary, a task list, the model's own reasoning. The problem is that the next stage of the pipeline can ignore that summary, restate it in its own words, or simplify it.</p>
+<p>What gets lost in that setup is the crucial part: <strong>which requirements from the paper must not be weakened</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-08/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Three approaches to paper-to-code: general AI agents, specialized pipelines, and the PaperCompiler scheme with a repository-level specification.</p>
+</div></figure>
+<p>PaperCompiler is built around a simple idea:</p>
+<p>🟠 <strong>The paper should turn into an explicit specification</strong></p>
+<p>🟠 <strong>Every important requirement has to be bound to the place in the repository where it is implemented</strong></p>
+<p>🟠 <strong>The links between files must be defined before code generation, not left for the model to guess</strong></p>
+<p>This matters because most of the failures in these tasks are not syntactic. They are semantic. The code can run and still not match the paper.</p>
+</section>
+<section>
+<h2>What PaperCompiler is</h2>
+<p>PaperCompiler is a <strong>pipeline that generates a repository from a paper</strong>, with the specification at the center of it. The authors split the work into three large steps.</p>
+<p>The first step is <strong>grounding the paper</strong>. The system turns the paper into a structured description of what actually has to be implemented: the core model, data processing, training, evaluation, external dependencies. And instead of writing a plain summary, it tags the status of every fact:</p>
+<p>🟣 <strong>Confirmed by the paper</strong></p>
+<p>🟣 <strong>Inferred from indirect evidence</strong></p>
+<p>🟣 <strong>Delegated to an external source, such as another repository or protocol</strong></p>
+<p>🟣 <strong>Left explicitly unresolved</strong></p>
+<p>In ordinary AI pipelines all of this gets blended together. Here the system at least knows what it took from the paper and what it filled in itself.</p>
+<p>The second step is <strong>compiling the specification</strong>. Here the facts stop being a description and become requirements:</p>
+<p>🟠 <strong>What must be preserved without simplification</strong></p>
+<p>🟠 <strong>Which substitutions are forbidden</strong></p>
+<p>🟠 <strong>Which file is responsible for what</strong></p>
+<p>🟠 <strong>Which artifacts one module produces and another consumes</strong></p>
+<p>🟠 <strong>Which constraints have to hold across files</strong></p>
+<p>The third step is <strong>constrained repository generation</strong>. Code is written file by file, in dependency order. Each file receives not the whole paper but a <strong>local specification</strong>: what it must do, which interfaces it has to expose, what it must accept from other files, and what it may not simplify.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-08/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The full PaperCompiler pipeline: parsing the paper, assembling the specification, assigning responsibility to files, and generating the repository in dependency order.</p>
+</div></figure>
+<p>In short, instead of one big prompt saying "build a repository from this paper," the authors make the coding agent work against <strong>contracts</strong>.</p>
+</section>
+<section>
+<h2>A telling example: when the algorithm quietly gets simpler</h2>
+<p>The paper includes a case study on <strong>Universal Neural Functionals</strong>. A key part of that method is constructing basis elements over all admissible partitions. Keep a single candidate and the method changes.</p>
+<p>In this example the standard PaperCoder-based pipeline makes exactly that cut: it effectively keeps one partition and throws away most of the basis. From the outside the code still looks like the code you wanted. Inside, it is a different implementation.</p>
+<p>PaperCompiler holds on to that requirement and generates code that really does enumerate the admissible partitions and assemble the corresponding basis blocks.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-08/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The Universal Neural Functionals case: the ordinary pipeline collapses an important rule of the algorithm, while PaperCompiler preserves the enumeration of admissible partitions.</p>
+</div></figure>
+<p>This is a clear illustration of what the paper is about. The failure is not that the model forgot a line. The failure is that <strong>semantically, the algorithm became simpler than the paper requires</strong>.</p>
+<p>For research code that is fatal. Especially if someone later uses the repository as the basis for experiments, or as a "reproduction" of the method.</p>
+</section>
+<section>
+<h2>How they evaluated it</h2>
+<p>The authors tested the system on <strong>90 papers</strong> from Paper2CodeBench and an additional P2C-Ex set. These are papers from ICLR, ICML and NeurIPS 2024. The comparison covered not only general <strong>multi-agent</strong> systems like ChatDEV and MetaGPT, but also specialized paper-to-code systems: <strong>PaperCoder, AutoP2C and AutoReproduce</strong>.</p>
+<p>Scoring ran in three modes:</p>
+<p>🟣 <strong>Reference-free</strong> — the judge sees only the paper</p>
+<p>🟣 <strong>P2C-Ex</strong> — a more detailed reference-free evaluation</p>
+<p>🟣 <strong>Reference-based</strong> — the judge compares the generated code against the authors' repository</p>
+<p>The last mode is the interesting one. It shows best whether the system really hit the implementation details or merely assembled a convincing facade.</p>
+</section>
+<section>
+<h2>What the numbers came out to</h2>
+<p>Against the closest comparable baseline, PaperCoder, the new approach raises the average score:</p>
+<p>🟠 <strong>from 4.562 to 4.777</strong> in the reference-free evaluation</p>
+<p>🟠 <strong>from 4.535 to 4.728</strong> on P2C-Ex</p>
+<p>🟠 <strong>from 3.647 to 4.152</strong> in the evaluation against the authors' code</p>
+<p><strong>The number that matters</strong> here is the last one. That is a <strong>13.8% relative improvement</strong> in precisely the mode where semantic errors are hardest to hide.</p>
+</section>
+<section>
+<h2>The numbers in brief</h2>
+<p>🟣 <strong>The biggest gain comes in the comparison with the authors' implementation</strong></p>
+<p>🟣 <strong>13.8% relative improvement in the strictest mode</strong></p>
+<p>🟣 <strong>PaperCompiler preserves the details of the method, not just the appearance of a repository</strong></p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-08/fig_6.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Per-paper win rates on a ten-paper subset: PaperCompiler beats AutoP2C, AutoReproduce and PaperCoder more often, especially in the comparison against the authors' code.</p>
+</div></figure>
+<p>In plain terms: PaperCompiler is better not only at producing a complete set of files. It is better at <strong>not distorting the method itself</strong>.</p>
+<p>The authors also break down the error types. With PaperCompiler, the share of severe findings from the judge drops noticeably:</p>
+<p>🟣 <strong>Severe errors: from 13.2% to 6.1%</strong></p>
+<p>🟣 <strong>Algorithmic simplifications: from 28.0% to 24.6%</strong></p>
+<p>🟣 <strong>Missing key components: from 12.3% to 6.8%</strong></p>
+<p>🟣 <strong>Evaluation protocol mismatches: from 13.4% to 8.4%</strong></p>
+<p>So the progress is not only in the average score but in the character of the failures. Repositories less often end up looking roughly right with something critical broken inside.</p>
+</section>
+<section>
+<h2>The results in brief</h2>
+<p>🟠 <strong>The biggest gain is where the comparison is against the authors' implementation</strong></p>
+<p>🟠 <strong>Severe errors cut roughly in half</strong></p>
+<p>🟠 <strong>Fewer key parts of the method left out</strong></p>
+<p>🟠 <strong>Fewer mismatches between files and pipeline stages</strong></p>
+</section>
+<section>
+<h2>Why it works</h2>
+<p>The interesting part here is not the bump in scores but the mechanism.</p>
+<p>PaperCompiler does three things coding agents usually lack:</p>
+<p>🟣 <strong>It records explicitly which requirements may not be degraded</strong></p>
+<p>🟣 <strong>It assigns an owner to every requirement — the file responsible for implementing it</strong></p>
+<p>🟣 <strong>It describes how artifacts pass between files before any code is generated</strong></p>
+<p>This sounds a lot like ordinary engineering. That is the point. Many paper-to-code pipelines still count on the LLM holding everything in its head: the details of the method, the project structure, the dependencies, the interface constraints. On short tasks that sometimes works. On repositories it does not.</p>
+<p>The authors also run ablations, switching off parts of the system one at a time. The sharpest drop in quality comes when they remove <strong>requirement alignment</strong> and <strong>file-level contracts</strong>. Those two layers matter most for matching the authors' code.</p>
+<p>That matters. The gain here does not come from simply handing the system more tokens. AutoP2C, for instance, spends a comparable token budget and still loses by a clear margin. So what decides is not the budget alone but <strong>the way information is organized inside the pipeline</strong>.</p>
+</section>
+<section>
+<h2>Where the problems remain</h2>
+<p>PaperCompiler does not solve the problem outright.</p>
+<p>First, the system relies mostly on <strong>text-based parsing of the paper</strong>. If an important detail lives in a complicated figure, a visual example or an architecture diagram, the pipeline may fail to recover it.</p>
+<p>Second, the specification helps during generation but <strong>gives no formal guarantee of correctness</strong>. A repository can be well put together structurally and still fall over on external dependencies, rare cases, or simply running at all.</p>
+<p>Third, PaperCompiler picked up slightly more findings about <strong>APIs and data schemas</strong>. The system holds the method better but can still get the finer interface plumbing wrong.</p>
+<p>Finally, the approach costs more compute. On average it spends <strong>1.71 million tokens per repository</strong> against <strong>0.98 million</strong> for PaperCoder. In absolute dollars, by the authors' estimate, that is still a moderate price for a visible quality gain.</p>
+</section>
+<section>
+<h2>Where the limits show most</h2>
+<p>🟣 <strong>Text-based parsing can miss meaning carried by figures and diagrams</strong></p>
+<p>🟣 <strong>A specification does not guarantee the code runs correctly</strong></p>
+<p>🟣 <strong>Errors in APIs and data schemas are still there</strong></p>
+<p>🟣 <strong>The approach demands more compute and more tokens</strong></p>
+</section>
+<section>
+<h2>Why this matters</h2>
+<p><strong>On a long task, quality increasingly depends less on the model than on the scaffolding around it</strong>.</p>
+<p>When the task is small, you can hope one good prompt will carry it. When the task is a repository built from a research paper, writing code is no longer enough — you also have to <strong>hold on to commitments</strong>:</p>
+<p>🟠 what the paper actually says;</p>
+<p>🟠 what we filled in ourselves;</p>
+<p>🟠 what must not be simplified;</p>
+<p>🟠 where in the project it belongs;</p>
+<p>🟠 who passes what between files.</p>
+<p>This goes beyond paper-to-code. The same logic matters for AI agents in analytics, robotics, research automation and large software tasks. The longer the pipeline, the more expensive it is to lose meaning between the steps.</p>
+</section>
+<section>
+<h2>The takeaway</h2>
+<p>Turning papers into code more accurately takes more than giving the model more context and more tokens. You have to <strong>build the repository-level specification first</strong>, and write the files after that.</p>
+<p>That approach visibly reduces algorithmic simplifications, cuts the number of severe errors, and preserves more of the method's details in the comparison against the authors' code. In long engineering workflows, progress comes not only from the model but from <strong>how the pipeline stores, passes and defends semantic requirements</strong>.</p>
+<p>If you want AI to do more than generate plausible code — to actually reproduce the method — going without specifications like these will only get harder.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2609.02272" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

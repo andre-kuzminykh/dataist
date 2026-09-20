@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MEG decodes typed sentences without surgery, EEG still far behind</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="MEG decodes typed sentences without surgery, EEG still far behind" />
+    <meta property="og:description" content="When the brain is already typing and the hands are optional" />
+    <meta name="description" content="Оказывается, ИИ уже может довольно точно восстанавливать фразы по сигналам мозга — и для этого не нужно ничего вживлять в голову.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/meg-decodes-typed-sentences-without-surgery-eeg-still-far-behind/" />
+    <link rel="canonical" href="https://dataist.ai/research/meg-decodes-typed-sentences-without-surgery-eeg-still-far-behind/">
+    <meta property="og:image" content="https://dataist.ai/2026-07-01/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-01/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "MEG decodes typed sentences without surgery, EEG still far behind",
+  "url": "https://dataist.ai/research/meg-decodes-typed-sentences-without-surgery-eeg-still-far-behind/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/meg-decodes-typed-sentences-without-surgery-eeg-still-far-behind/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "When the brain is already typing and the hands are optional",
+  "image": "https://dataist.ai/2026-07-01/cover.png",
+  "datePublished": "2026-07-01",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Brain-to-Text Decoding: A Non-invasive Approach via Typing",
+    "identifier": "arXiv:2502.17480",
+    "url": "https://arxiv.org/abs/2502.17480"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2502.17480"
+}</script>
+    <meta property="article:published_time" content="2026-07-01T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-07-01</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">MEG decodes typed sentences without surgery, EEG still far behind</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-01/cover.png"
+                         alt="MEG decodes typed sentences without surgery, EEG still far behind"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When the brain is already typing and the hands are optional</h2>
+<p>"Mind reading" usually sounds like science fiction. But this particular fiction has a very practical goal: to give people who cannot speak or move a way back into conversation. The best brain-computer interfaces today are already decent at turning neural activity into text or speech. The problem is that almost every genuinely strong system is <strong>invasive</strong>. It requires brain surgery.</p>
+<p>A new paper from Meta and academic partners takes a different route. The researchers showed that text can be decoded from brain activity <strong>without surgery</strong> — from EEG and MEG signals recorded while a person types a memorized sentence on a keyboard. Their model is called Brain2Qwerty, and it is one of the strongest non-invasive results to date for decoding <strong>text production</strong>, rather than simple commands or responses to stimuli.</p>
+<p>Worth keeping expectations in check. This is not a device that reads a patient's mind in real time today. But it is a substantial step. The gap between invasive and non-invasive systems is still wide; it just got narrower.</p>
+</section>
+<section>
+<h2>What the researchers actually did</h2>
+<p>The experiment is elegantly set up. Participants — 35 of them — saw short sentences presented word by word on a screen. The sentence then disappeared. After a brief pause, the person had to type it from memory on a keyboard with almost no visual feedback. During that window, the researchers recorded brain activity with EEG or MEG.</p>
+<p>Why does this scenario matter? Because it is closer to real language production than the usual brain-computer interface task. The person is not merely imagining a hand movement or picking letters with their eyes from a slow menu. They recall a phrase, hold it in memory, plan the typing, and press the keys. So the signal mixes motor control, language processes and error monitoring all at once.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-01/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The experimental setup and the Brain2Qwerty architecture: from EEG/MEG signals to text via a convolutional block, a transformer and a language model.</p>
+</div></figure>
+<p>The system itself has three parts.</p>
+<p>The first is a convolutional module. It takes 500-millisecond windows of brain signal around each keystroke and tries to extract useful features.</p>
+<p>The second is a transformer. It looks not at an isolated keystroke but at the whole sentence. That matters: in real language, neighboring characters and words support each other. When the model is torn between several letters, context often points to the right one.</p>
+<p>The third part is a separate character-level language model. It corrects the output using the statistics of the language. Roughly: if the network produced something noisy and a more plausible character sequence sits nearby, the language model can nudge the answer in the right direction.</p>
+<p>Quality was measured by <strong>character error rate</strong>: how many insertions, deletions and substitutions it takes to turn the predicted text into the correct one.</p>
+</section>
+<section>
+<h2>Why it matters</h2>
+<p>The point of the work is not a neat trick but a clinical prospect. The best communication neuroprostheses today are built on implants. They give an excellent signal, but they require neurosurgery, and with it risk: infection, hemorrhage, degradation of the implant over time.</p>
+<p>Non-invasive approaches are safer, but until now they have been far behind on quality — especially when the task is free text rather than choosing among a handful of options. So the question was: can non-invasive systems be pushed anywhere near usefulness, given good sensors and modern models?</p>
+<p>This paper's answer: <strong>yes, they can</strong>. Not up to implant level yet, but nowhere near the old EEG spellers either.</p>
+<p>There is a second important point. The work shows that what can be decoded is not only the perception of speech or text, but <strong>active production</strong>. That is far more interesting for future communication aids.</p>
+</section>
+<section>
+<h2>Main results: MEG is far better than EEG</h2>
+<p>The paper's most striking number is the gap between MEG and EEG.</p>
+<p>On average, Brain2Qwerty reached:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">for MEG — <strong>32% character error rate</strong>;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">for EEG — <strong>67% character error rate</strong>.</span></div>
+<p>That difference is enormous. In effect, MEG proved about twice as useful for this task. For the best participants, MEG results reached <strong>19%</strong> error. That is the level at which some sentences decode very well, occasionally with no errors at all.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-01/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Decoding quality compared: MEG clearly outruns EEG, and the full Brain2Qwerty beats both the baselines and the stripped-down variants.</p>
+</div></figure>
+<p>Before running the full model, the authors checked a simpler question: is there anything in the brain signal related to typing at all? There is. Even linear classifiers could tell whether a key was pressed with the left or right hand, and could guess the character well above chance. Here too, MEG came out ahead.</p>
+<p>The researchers then compared Brain2Qwerty against baselines — a linear model and EEGNet, a popular architecture for brain-computer interfaces. The new system beat both, and not marginally. Especially on MEG.</p>
+<p>More interesting still is the ablation. The convolutional module alone already does better than the baselines. Add the transformer and quality rises further. Put the language model on top and it improves again. That is a good sign: the architecture is not arbitrary, and every piece of it earns its place.</p>
+</section>
+<section>
+<h2>What the model is actually decoding</h2>
+<p>The subtlest question in work like this: what exactly is the model reading out of the brain? Language itself? Finger movement? Memory? Some mixture of all three?</p>
+<p>The authors show carefully that a great deal of it rides on <strong>the motor component</strong>. When the model gets a letter wrong, it often confuses letters that sit physically close together on the keyboard. The closer the keys, the more often they are mixed up.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-01/fig_4.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The model's errors track the keyboard layout: nearby keys are confused more often, and a person's typos degrade decoding.</p>
+</div></figure>
+<p>That is an important finding. It says the system leans heavily on brain signals tied to the movements of typing. For now this is closer to "a brain in the act of typing" than to direct reading of abstract linguistic thought.</p>
+<p>But motor activity is not the whole picture. The researchers looked at typos. When a person made a typing mistake, the intervals between keystrokes grew noticeably — the familiar signature of hesitation or internal error monitoring. And decoding quality dropped at exactly those moments. That follows: if the motor program is executed sloppily, it is also harder to reconstruct from the brain.</p>
+<p>At the same time, the language model could sometimes <strong>correct</strong> a participant's actual typos. So the system is not simply copying the keys that were pressed; it uses knowledge of language structure to recover the more plausible text.</p>
+</section>
+<section>
+<h2>Where the model is strong and where it stumbles</h2>
+<p>The authors go through what quality depends on in detail.</p>
+<p>Frequent words decode better than rare ones. Frequent characters decode better than rare ones. Letters that are rare in Spanish, such as "k" or "w", are recognized markedly worse. No surprise there: the model simply has too few examples.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-01/fig_3.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Quality depends on the type and frequency of words and characters, and improves noticeably as the volume of training data grows.</p>
+</div></figure>
+<p>Another expected but important conclusion: more training data, lower error. For systems like this, data is almost always the main resource. The researchers recorded roughly an hour per person, and even that was enough for a meaningful result. But the paper makes it plain: with more data, quality should keep climbing.</p>
+<p>There is a pleasant detail too: the system sometimes handled words that were not in training. Worse than familiar ones, yes. But the fact itself matters. It means the model is not just memorizing a stock of phrases — it really is learning to work at the level of characters and sequences.</p>
+<p>At the level of individual sentences, the spread across participants is wide. For the best, the phrases come out nearly clean. For the worst, the text can fall apart badly. That too is typical of neural decoding: signal quality and individual differences still count for an enormous amount.</p>
+</section>
+<section>
+<h2>Limitations you cannot ignore</h2>
+<p>The work is strong, but a finished product it is not.</p>
+<p>First, the system <strong>does not run in real time</strong>. The transformer and the language model process the whole sentence after the typing is over. On top of that, the input windows are anchored to keystroke times. A real interface for a patient needs to decode a continuous stream, and immediately.</p>
+<p>Second, every experiment was run on <strong>healthy participants</strong> who were genuinely typing on a keyboard. That is a serious limitation. For a fully paralyzed person the scenario does not apply. So the next step is either imagined typing, or models that transfer well between people and need minimal personal calibration.</p>
+<p>Third, the best signal here comes from MEG. And MEG today is not a wearable — it is a large, expensive laboratory system. For a clinic, let alone a home, that is impractical. The paper does offer a reasonable bridge to the future: new MEG sensors based on optically pumped magnetometers could eventually make such systems more compact and more usable.</p>
+<p>And finally, even the best result here is still worse than what invasive systems deliver. For comparison, implant work already reports much higher speed and far lower error. So this is not a replacement but a new class of tradeoff between safety and quality.</p>
+</section>
+<section>
+<h2>The bottom line</h2>
+<p>Brain2Qwerty is not magical mind reading but a very concrete engineering step. The researchers showed that non-invasive decoding of text from brain activity can be <strong>substantive, scalable and surprisingly strong</strong>, given a good signal, a carefully designed experiment and a modern model architecture.</p>
+<p>The main takeaway is simple: <strong>MEG plus deep learning can already reconstruct sentences from brain activity considerably better than many expected</strong>. There are still plenty of errors. Live communication for patients is still far off. But the direction has become much more serious.</p>
+<p>Seen from a distance, what makes this work good is precisely how grounded it is. The authors promise no telepathy. They show honestly where the system is strong, where it bottoms out in motor activity, and what stands in the way of moving it to the clinic. That is exactly why the result is convincing.</p>
+<p>For brain-computer interfaces this is an important signal. Safe communication systems that need no surgery no longer look like a permanent dream. They are now an engineering problem. A hard, expensive, in places unfinished one — but a real one.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2502.17480" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

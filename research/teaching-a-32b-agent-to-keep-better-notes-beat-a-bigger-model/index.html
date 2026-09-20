@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Teaching a 32B agent to keep better notes beat a bigger model</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Teaching a 32B agent to keep better notes beat a bigger model" />
+    <meta property="og:description" content="When the problem isn't the brain, it's the memory" />
+    <meta name="description" content="Оказалось, что для ИИ иногда важнее не лучше думать, а лучше помнить.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/teaching-a-32b-agent-to-keep-better-notes-beat-a-bigger-model/" />
+    <link rel="canonical" href="https://dataist.ai/research/teaching-a-32b-agent-to-keep-better-notes-beat-a-bigger-model/">
+    <meta property="og:image" content="https://dataist.ai/2026-07-09/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-09/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Teaching a 32B agent to keep better notes beat a bigger model",
+  "url": "https://dataist.ai/research/teaching-a-32b-agent-to-keep-better-notes-beat-a-bigger-model/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/teaching-a-32b-agent-to-keep-better-notes-beat-a-bigger-model/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "When the problem isn't the brain, it's the memory",
+  "image": "https://dataist.ai/2026-07-09/cover.jpg",
+  "datePublished": "2026-07-09",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "AutoMem: Automated Learning of Memory as a Cognitive Skill",
+    "identifier": "arXiv:2607.01224",
+    "url": "https://arxiv.org/abs/2607.01224"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2607.01224"
+}</script>
+    <meta property="article:published_time" content="2026-07-09T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-07-09</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Teaching a 32B agent to keep better notes beat a bigger model</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-09/cover.jpg"
+                         alt="Teaching a 32B agent to keep better notes beat a bigger model"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When the problem isn't the brain, it's the memory</h2>
+<p>AI agents have an old and very mundane problem: they forget fast. Not in the sense that the context window runs out — everyone knows that one. The worse version is this: give a model external memory and it often keeps that memory like a bad set of student notes. Writes down the wrong things. Searches in the wrong place. Duplicates the obvious. Then it wanders the map, repeats useless actions, and dies in the first hard game it plays.</p>
+<p>A Stanford paper called <strong>AutoMem</strong> proposes a different view. Memory for an LLM, the authors argue, is not just a module or a store. It is <strong>a skill in its own right</strong>, and it can be improved on purpose. A model can be taught not only to act but to <strong>remember well</strong>: what to write down, when to search, how to organize its notes, and how to keep from cluttering its own head.</p>
+<p>And this is not philosophy for its own sake. In the experiments, upgrading memory alone produced a gain of roughly <strong>2–4×</strong> on long game tasks — without touching the underlying model that picks the game actions. It sounds almost like a cheat code: no bigger model, no architectural magic, just teaching it to keep better records.</p>
+</section>
+<section>
+<h2>What they actually did</h2>
+<p>AutoMem's central idea is very simple, and that is its strength. The authors turn file operations into <strong>first-class agent actions</strong>. Not helper machinery running somewhere under the hood, but behavior on par with moving, attacking or crafting.</p>
+<p>The agent can:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">read a file;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">search across files;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">append an entry;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">create a file;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">update existing information.</span></div>
+<p>In other words, memory here is an ordinary file system. The agent has a folder of files and decides for itself how to work with it. It can keep a map, log its inventory, store goals, strategy notes and observations about the world.</p>
+<p>That sounds almost primitive. Which is exactly the advantage. File memory is easy to observe: every decision the model makes shows up in the trace. You can literally look at where the agent wrote down garbage, where it dropped an important fact, and where it went searching for something that was never there.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-09/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The AutoMem setup: one loop improves the structure of memory, the other trains the model to use that memory better.</p>
+</div></figure>
+<p>This is where it gets interesting. AutoMem improves memory along two axes.</p>
+<p>The first is <strong>structure</strong> — how memory itself is laid out: which files exist, what format the map is stored in, what prompts the agent gets, which operations are available to it.</p>
+<p>The second is <strong>skill at handling memory</strong> — how well the model itself decides when to write, when to search first, how to avoid breeding duplicates, and how to pull up the right thing at the right moment.</p>
+<p>And the authors automate both of these with two outer loops.</p>
+</section>
+<section>
+<h2>Two loops: fix the shelves first, then learn to use the library</h2>
+<p>The first loop works like this: <strong>a strong LLM reads the full episode logs and rewrites the agent's memory design</strong>. It sees the entire run across thousands of steps and tries to work out where the failures were about memory organization rather than intelligence.</p>
+<p>This matters because a memory error rarely surfaces right away. The agent may record a coordinate badly on step 50 and only suffer for it on step 800, when it returns to the same spot and doesn't realize it has already been there. You cannot find that kind of failure in the final reward. You have to read the long trace end to end.</p>
+<p>The second loop does something else: <strong>it collects good memory decisions from many episodes and uses them for fine-tuning</strong>. But not the whole model. The authors carve out a separate "memory specialist" responsible for the file operations, while the model that makes the game moves stays frozen.</p>
+<p>That is a clean engineering move. It lets you improve memory without risking what the base model already does well in the environment itself.</p>
+</section>
+<section>
+<h2>Where it was tested, and why the test is a good one</h2>
+<p>Memory was not evaluated on question answering or toy tasks, but on three long games:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Crafter</strong> — survival, resources, crafting;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>MiniHack</strong> — mazes, combat, navigation tasks;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>NetHack</strong> — a legendarily hard game where episodes run tens of thousands of steps.</span></div>
+<p>That is a good choice. These environments are procedurally generated, so the model cannot simply lean on what it absorbed in pretraining. Every episode is new. It has to actually build a map, track resources, remember where it has been, and keep hold of the goal.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-09/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Three game environments for testing memory, from survival and crafting to the extremely long and difficult dungeons of NetHack.</p>
+</div></figure>
+<p>This is where memory stops being decoration and becomes a condition for survival. A short task you can improvise your way through. NetHack you cannot.</p>
+</section>
+<section>
+<h2>Results: memory turned out to be a bigger lever than model size</h2>
+<p>The paper's strongest result sounds almost provocative: <strong>organizing memory properly bought more than moving to a bigger model</strong>.</p>
+<p>The base was Qwen2.5-32B-Instruct. Hand it file memory in its initial form and the results are modest. After automatic optimization of the memory structure, quality climbs sharply:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">in Crafter: from 25.0% to 47.27%;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">in MiniHack: from 7.5% to 27.5%;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">in NetHack: from 0.42% to 1.57%.</span></div>
+<p>After additional training of the "memory specialist" it got better still:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">51.36% in Crafter;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">30.0% in MiniHack;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">1.85% in NetHack.</span></div>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-09/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Quality rises as memory improves: first from structure, then from training the skill of working with memory.</p>
+</div></figure>
+<p>At first glance the NetHack numbers look modest. That is deceptive. NetHack is one of the hardest environments of its kind, and even a small gain there is already a visible change in behavior. And the authors show that their 32B model with good memory becomes comparable to markedly stronger closed systems such as Claude Opus 4.5 and Gemini 3.1 Pro.</p>
+<p>The practical conclusion matters most here: <strong>on long tasks the bottleneck is often not how smart the model is, but how well it can store and retrieve information</strong>.</p>
+</section>
+<section>
+<h2>What actually changed in the memory</h2>
+<p>The most vivid part of the paper is not the tables but the concrete examples of how the agent's memory changed.</p>
+<p>In NetHack, for instance, the original agent kept its map file as an endless log: see a tile, append a line. See the same tile again, append again. Thousands of times over. The useful information drowned in duplicates.</p>
+<p>After optimization the scheme was different: every map coordinate got its own key, and new observations <strong>updated</strong> the entry instead of spawning copies. On top of that came automatically synchronized inventory and status files, so the model no longer had to parse and reconcile that data itself every time.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-09/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">How memory changed in NetHack: instead of an endless map log, updatable entries with no duplicates, plus separate state and inventory files.</p>
+</div></figure>
+<p>This looks like a small thing, and the effect is enormous. The authors report that memory growth per step fell from 138 characters to 6 — roughly 95%. Less junk in memory means a smaller context, fewer empty reads, and less chance of getting lost in your own notes.</p>
+<p>Across all three environments after optimization:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the share of useless actions dropped by 32–65%;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the number of redundant memory writes fell by 68–83%;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the rate of empty searches went down by 13–50%;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the input context per step also shrank.</span></div>
+<p>That is an important point. The authors did not simply "move a metric." They showed <strong>which behavior</strong> produced the gain. The agent spins in place less, writes less garbage, and searches more precisely.</p>
+</section>
+<section>
+<h2>What the memory specialist learned</h2>
+<p>Once the memory structure was already sensible, the authors fine-tuned a separate model specifically on memory. And an interesting behavioral shift surfaced.</p>
+<p>After training, the agent followed one principle far more often: <strong>look first, write second</strong>.</p>
+<p>It blindly appended new entries less often and checked first whether the information was already in the files more often. It is a very human pattern. A good secretary does not write the same fact down ten times; they check the archive first.</p>
+<p>The paper measures this as the ratio of writes to searches. After training it drops noticeably in every environment. So the model really does absorb a more disciplined style of working with memory rather than just fitting the metric.</p>
+</section>
+<section>
+<h2>Why this matters beyond games</h2>
+<p>The paper's most valuable conclusion is a fairly broad one. <strong>Memory can be treated as a distinct capability of an AI agent, not as a secondary interface</strong>.</p>
+<p>That changes the lens. Usually, when an agent handles a long task badly, the first instinct is to reach for a bigger model, add more elaborate planning, bolt on another retrieval layer or a new tool. AutoMem shows that it is sometimes more useful to ask whether the agent can keep decent records at all.</p>
+<p>For real systems this is especially relevant. A coding agent, a research assistant, an operations agent, a robotics system — all of them live in long-running scenarios. They need to remember intermediate decisions, statuses, dependency maps, previous attempts, errors, environment constraints. If memory is badly organized, the model will not merely "forget." It will get in its own way.</p>
+<p>Another strong signal is the value of automated analysis of long traces. People struggle to read episodes tens of thousands of steps long by hand. A strong LLM acting as an external reviewer already handles it well enough to improve the system iteratively. That is a very practical idea: using a model not only as an executor but as an inspector of another agent's behavior.</p>
+</section>
+<section>
+<h2>What is unconvincing, and where the limits are</h2>
+<p>The work has its limits. First, memory here is <strong>episodic</strong>: it is wiped at the start of every new run. So this is not yet long-term memory in the full sense.</p>
+<p>Second, the authors tuned separate variants for each game environment. It is still unclear how easily the same "memory specialist" transfers between very different tasks.</p>
+<p>Third, games are still games. They are good for testing a long horizon, yes, but the transfer to real working scenarios has yet to be shown.</p>
+<p>Even so, these limits do not devalue the result. If anything, the opposite: if memory buys this much even in such a narrow setting, the effect in applied systems could be more interesting still.</p>
+</section>
+<section>
+<h2>The takeaway</h2>
+<p>AutoMem is not a paper about yet another "magic architecture." It is common sense carried through into solid engineering. The authors take a simple thought — <strong>the ability to remember has to be trained too</strong> — and turn it into a working system.</p>
+<p>The main result is this: on long tasks, memory is not an appendage to the model but one of the main levers on quality. And a very cheap lever at that. Sometimes it is cheaper and more useful to teach a 32B model to keep its files properly than to reach for a 72B and hope for a miracle.</p>
+<p>For the industry this is an important signal. The next jump in AI agents may come not only from more powerful models but from a more grown-up handling of memory: careful, trainable, observable. AutoMem makes a convincing case that this is no longer an abstract idea but a genuinely workable path.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.01224" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://github.com/autoLearnMem/AutoMem" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Readers can't spot AI literary translation but still prefer the human one</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Readers can't spot AI literary translation but still prefer the human one" />
+    <meta property="og:description" content="Good enough to read, still not the one readers pick" />
+    <meta name="description" content="ИИ уже переводит книги так хорошо, что читатель часто не может понять, кто сделал перевод — машина или человек.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/readers-cant-spot-ai-literary-translation-but-still-prefer-the-human-one/" />
+    <link rel="canonical" href="https://dataist.ai/research/readers-cant-spot-ai-literary-translation-but-still-prefer-the-human-one/">
+    <meta property="og:image" content="https://dataist.ai/2026-07-03/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-03/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Readers can't spot AI literary translation but still prefer the human one",
+  "url": "https://dataist.ai/research/readers-cant-spot-ai-literary-translation-but-still-prefer-the-human-one/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/readers-cant-spot-ai-literary-translation-but-still-prefer-the-human-one/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Good enough to read, still not the one readers pick",
+  "image": "https://dataist.ai/2026-07-03/cover.png",
+  "datePublished": "2026-07-03",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "AI translation of literary texts is \"fine\", but readers still prefer human translations",
+    "identifier": "arXiv:2606.26040",
+    "url": "https://arxiv.org/abs/2606.26040"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2606.26040"
+}</script>
+    <meta property="article:published_time" content="2026-07-03T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-07-03</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Readers can't spot AI literary translation but still prefer the human one</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-03/cover.png"
+                         alt="Readers can't spot AI literary translation but still prefer the human one"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Good enough to read, still not the one readers pick</h2>
+<p>One question has hung over machine translation of literature for years: if a model can carry the meaning across more or less accurately, does that mean it can <strong>translate a novel as a novel</strong> — with voice, rhythm, atmosphere, and that feeling when a text carries you along?</p>
+<p>A new paper that puts its conclusion right in the title answers honestly: <strong>AI translations are already fine, but readers still choose the human version more often</strong>. That is probably the most interesting result. Not because the machines lost. Because the gap turned out to be far narrower than many would like, and — more importantly — because of the specific reasons humans are still ahead.</p>
+<p>The researchers did not reach for the usual automatic metrics. Instead they sat 15 avid readers down with real excerpts from contemporary novels — French, Polish and Japanese, translated into English. First the readers went through long stretches the way they would read any book; then they went back over the translations up close, passage by passage. It is a rare case of the question of translation quality being put not to models and not to annotators, but to <strong>readers themselves</strong>.</p>
+</section>
+<section>
+<h2>What the study actually tested</h2>
+<p>The authors assembled 15 book excerpts of roughly 8,000 words each. Each one came with a professional published English translation and a machine translation produced not by a single prompt but by a multi-step pipeline built on LLMs and coding agents. So this is not a weak baseline — it is closer to the best attempt at AI literary translation available today.</p>
+<p>Participants read one version of an excerpt end to end, then the other. After each, they rated how fluent the text was, whether it was publishable, whether it helped them get absorbed, and whether they wanted to keep reading. Then they compared the two versions directly. A day later they returned to the same texts in slow-reading mode: aligned chunks of about 300 words, marking what worked and what didn't, and picking the better version.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-03/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The experimental design: ordinary reading of a long excerpt first, then a comparison of the two versions, and a day later a close side-by-side reading of short passages.</p>
+</div></figure>
+<p>Machine translation is usually judged on short sentences or paragraphs. Literature doesn't work that way. A novel lives not only in the accuracy of its words but in how easily you enter a scene, hear a character's intonation, and get through three lines without stumbling. That is exactly the difference the authors were trying to capture: between "reads okay overall" and "this is genuinely good literary translation."</p>
+</section>
+<section>
+<h2>Why this matters</h2>
+<p>Because machine translation of fiction is no longer a lab experiment. Publishers are testing it on commercial titles. Platforms are offering authors a fast route into new markets. Which means that very soon — and in places already — a reader can buy a novel without knowing how deeply a human was involved in translating it.</p>
+<p>The trouble is that the standard metrics are little help here. They pick up adequacy of meaning and general fluency reasonably well. But they barely see whether a text breathes, whether it holds its pace, whether the narrative voice falls apart between paragraphs. And this paper shows that <strong>if you look only at automatic scores, you will come away far too optimistic about the quality of AI translation</strong>.</p>
+</section>
+<section>
+<h2>How the machine translation was built</h2>
+<p>Notably, the researchers were not comparing humans against a naive take-a-model-and-ask-it-to-translate setup. They tested several pipeline configurations first and kept the best one.</p>
+<p>The final design went like this: split the text into chunks, attach style guidance, then have one agent translate the chunks while others checked the output for both accuracy and literary quality. Anything flagged went back for revision. The assembled draft was then checked again at the level of the whole excerpt — for consistency, coherence and retention of voice.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-03/fig_2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The AI literary translation pipeline: chunking, translation, local revision and a final pass over the whole text.</p>
+</div></figure>
+<p>So this is not a raw machine output but a fairly expensive, carefully designed process. That is what makes the results telling: even with all of that, the human translation stays ahead.</p>
+</section>
+<section>
+<h2>The headline result: AI is acceptable, humans are still better</h2>
+<p>Across whole long excerpts, the human translation wins, but not by a landslide: readers preferred it in 19 of 30 cases. In slow reading the gap widened considerably: of 772 short-passage comparisons, <strong>522 went to the human translation</strong> and only 250 to the machine.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-03/fig_5.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">How reader preferences break down: after reading long excerpts and after slow reading of short passages, the human translation wins more often.</p>
+</div></figure>
+<p>That contrast says a lot. Read a long stretch with nothing to compare it against and the machine translation often seems perfectly fine. It isn't necessarily irritating. It can be smooth, clear, at moments even gripping. Put the two versions side by side, though, and you can see where the human worked deeper and with a finer hand.</p>
+<p>The authors also asked what specifically was better in each version. Human translations more often scored high on <strong>fluency, clarity and immersion</strong>. Readers said more often that such a text was easier to read, that it didn't make them reread a sentence, that it kept them inside the scene and sounded more natural in English.</p>
+<p>None of which made the machine translation a failure. It won roughly a third of the passages. Sometimes on a well-chosen word. Sometimes because it sounded livelier or hit the register of a line more precisely. The AI can already make <strong>good individual choices</strong>. What it lacks is consistency.</p>
+</section>
+<section>
+<h2>Where the human actually wins</h2>
+<p>The most interesting part of the paper is not the raw percentages but <strong>why</strong> readers chose one version over the other.</p>
+<p>The human translation usually won because the text flows more easily. Not in the sense of fewer errors, but in the sense of the reading experience: you don't stumble, you don't get thrown out of the scene, you aren't untangling odd word order. Readers kept pointing to clarity, naturalness, rhythm, and how easy it was to follow the action and the dialogue.</p>
+<p>The machine translation, by contrast, broke down locally again and again: a phrase too literal, a word with the wrong shade of meaning, an overloaded sentence, a sudden roughness in dialogue. And the core problem was not that it was always bad but that it was <strong>uneven</strong>. One paragraph is excellent; two paragraphs later an awkward turn of phrase spoils the effect.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-03/fig_8.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The machine translation has noticeably more passages with a high density of spots readers marked as weak.</p>
+</div></figure>
+<p>The authors measured that unevenness through the readers' markup of good and bad stretches. Weak spots in the machine translation turned out to cluster far more tightly. The problem is not only average quality; it is that within a single excerpt the AI swings harder between a hit and a miss.</p>
+<p>For fiction that is critical. In a news item you might forgive a couple of strange sentences. In a novel, one or two false notes at the wrong moment can wreck the atmosphere of a scene or blur a character.</p>
+</section>
+<section>
+<h2>AI is hard to spot, and that may be the most unsettling finding</h2>
+<p>Probably the most striking result: readers <strong>could not reliably tell machine translation from human translation</strong>. Even after comparing the two versions directly, they identified the machine version correctly in just 17 of 30 cases — barely above chance.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-03/fig_15.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Accuracy at identifying the machine translation is close to chance, even after comparing the two versions of a text.</p>
+</div></figure>
+<p>More than that, people almost always assumed the version they preferred was the human one. That is a powerful psychological effect. We don't simply judge a text — we build a story around it about authorship, intent and quality.</p>
+<p>The study turns up another detail that is both funny and important: readers were regularly thrown off by false tells. One saw em dashes and decided it was the machine. Another figured an AI wouldn't swear like that. A third read an unfamiliar style as machine-made. Folk theories about how AI is "supposed to sound" work badly.</p>
+<p>This goes beyond translation. There is a lot of overconfidence around AI text in general: people are certain they can spot machine writing, and in practice they often get it wrong.</p>
+</section>
+<section>
+<h2>Automatic metrics get it backwards</h2>
+<p>Here is where the paper gets uncomfortable for anyone who likes simple numbers. The researchers compared reader preferences against automatic quality metrics, including LLM-as-a-judge approaches. The metrics <strong>systematically lean toward the machine translation</strong> — that is, they run against what human reading says.</p>
+<p>If you are building a product for a publisher and looking only at automatic scores, you might conclude the machine version is already close to better than the human one. Live readers say the opposite: yes, it is readable, but the human still delivers an easier, clearer, more absorbing experience.</p>
+<p>The reason is clear enough. Metrics see closeness of meaning, surface fluency, sometimes consistency. They are poor at catching what matters most in literature: rhythm, voice, the sense of a sentence moving naturally, the density of weak spots, and the way one local rough patch breaks the whole effect.</p>
+</section>
+<section>
+<h2>One caveat: this is mostly a story about translating into English</h2>
+<p>The authors are upfront about the limits. The main experiment covers translations from French, Polish and Japanese <strong>into English</strong>. And English is the strongest language for LLMs today. Even in that best case, the human still wins.</p>
+<p>In a smaller additional analysis of translations into other languages — French, Polish, Spanish and Japanese — the human advantage was larger still. There the AI was caught out more often and rejected more often.</p>
+<p>The implication is straightforward: if the gap holds even in English, it may be wider in other language directions.</p>
+</section>
+<section>
+<h2>What it comes down to</h2>
+<p>This is a sober piece of work. It tips into neither techno-optimism nor alarmism.</p>
+<p>The conclusion reads like this: <strong>machine translation of literature has reached the level of "you can read this"</strong>. Sometimes it even wins. Sometimes it is hard to identify. Sometimes it looks surprisingly strong. But if the question is not whether the meaning comes through, but which text a reader wants to keep going with as a novel, the advantage stays with the human.</p>
+<p>And the human wins not through magic but through the things that matter most in literature: flow, clarity, natural word choice, holding the voice, and steadiness across the length of a text.</p>
+<p>For the industry, that is the practical takeaway. AI is already perfectly usable as a drafting tool, an assistant, an accelerator. But the idea of simply shipping novels in machine translation because readers won't notice is still too sure of itself. Readers may not always work out where the machine is. But when a good human translation sits next to it, <strong>they still pick it more often</strong>.</p>
+<p>Which may be the best compliment the translator's profession could ask for.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2606.26040" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://github.com/Yves575/lait" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

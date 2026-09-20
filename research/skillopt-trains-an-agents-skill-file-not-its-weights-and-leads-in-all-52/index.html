@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SkillOpt trains an agent's skill file, not its weights, and leads in all 52 comparisons</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="SkillOpt trains an agent's skill file, not its weights, and leads in all 52 comparisons" />
+    <meta property="og:description" content="Review · 2026-05-26
+                
+
+                
+                
+                    SkillOpt trains an agent's skill file, not its weights, and leads in all 52 comparisons" />
+    <meta name="description" content="В ИИ-индустрии долгое время господствовала такая идея: если агент ошибается, значит, надо либо переписать промт, либо дообучить модель, либо надеяться на более мощную…">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/skillopt-trains-an-agents-skill-file-not-its-weights-and-leads-in-all-52/" />
+    <link rel="canonical" href="https://dataist.ai/research/skillopt-trains-an-agents-skill-file-not-its-weights-and-leads-in-all-52/">
+    <meta property="og:image" content="https://dataist.ai/2026-05-26/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-05-26/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-p strong {
+            @apply font-semibold text-black dark:text-white;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .apple-img {
+            @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white;
+        }
+
+        /* Карточки-списки */
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 mb-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "SkillOpt trains an agent's skill file, not its weights, and leads in all 52 comparisons",
+  "url": "https://dataist.ai/research/skillopt-trains-an-agents-skill-file-not-its-weights-and-leads-in-all-52/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/skillopt-trains-an-agents-skill-file-not-its-weights-and-leads-in-all-52/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Review · 2026-05-26\n                \n\n                \n                \n                    SkillOpt trains an agent's skill file, not its weights, and leads in all 52 comparisons",
+  "image": "https://dataist.ai/2026-05-26/cover.png",
+  "datePublished": "2026-05-26",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "SkillOpt: Executive Strategy for Self-Evolving Agent Skills",
+    "identifier": "arXiv:2605.23904",
+    "url": "https://arxiv.org/abs/2605.23904"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2605.23904"
+}</script>
+    <meta property="article:published_time" content="2026-05-26T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in"><!-- Category tag -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-05-26</span>
+                </div>
+
+                <!-- Headline -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">SkillOpt trains an agent's skill file, not its weights, and leads in all 52 comparisons</h1>
+
+                <!-- Cover image -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-05-26/cover.png"
+                         alt="Cover: SkillOpt trains an agent's skill file, not its weights, and leads in all 52 comparisons"
+                         class="w-full h-auto object-cover">
+                </div></header>
+
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">For years the default answer in AI has been the same: if an agent fails, rewrite the prompt, fine-tune the model, or wait for a stronger one. The authors of <strong>SkillOpt</strong> take a different line — leave the weights alone and train <strong>how the agent works</strong> instead, as a compact text "skill".</p>
+
+                <h2 class="article-h2 fade-in">When capability isn't enough: teaching an agent working habits</h2>
+                <p class="article-p fade-in">The setup sounds almost too simple: a frozen LLM, a document of instructions for one domain, and a separate optimizer model that reads successful and failed trajectories and then carefully edits that document. Underneath the simplicity is a real idea: if the skill is an external layer of adaptation, it can be optimized almost the way network parameters are — with a learning rate, validation, a buffer of failed updates and protection against degradation.</p>
+                <p class="article-p fade-in">And the results suggest this is more than a neat metaphor. In 52 out of 52 comparisons the method is either best or tied for first. In a field where a lot of the work amounts to "we rewrote the prompt and it seemed to help," that is a loud claim.</p>
+
+                <h2 class="article-h2 fade-in">What SkillOpt actually optimizes</h2>
+                <p class="article-p fade-in">The authors start from a practical problem: in real agent systems, adaptation is not only about what the model knows but about its <strong>procedures</strong>. How to search for information, when to call tools, how to check a result, what format to answer in, how to avoid looping in a multi-step task. All of that is easier to keep outside the weights, in a portable text artifact — a skill.</p>
+                <p class="article-p fade-in">In SkillOpt the skill becomes the thing being trained. The target model stays frozen; it simply solves tasks using the current version of the skill. A separate, stronger model then takes over: it analyzes the trajectories, identifies recurring errors and proposes bounded edits of three kinds — add, delete or replace passages of text.</p>
+                <p class="article-p fade-in">The key point: an edit is accepted not because it sounds smart but only if it <strong>improves accuracy on a held-out validation set</strong>. If it doesn't, the edit is rejected and kept as a negative example for later iterations.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-26/fig_0.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">The basic idea behind SkillOpt: the agent solves tasks with the current skill, the optimizer proposes edits, and a validation filter lets through only the changes that actually help.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">That matters, because most self-editing agent systems share one failure mode: they happily produce plausible explanations of their own mistakes, and those explanations often do nothing for behavior. SkillOpt turns self-reflection into a stricter loop — propose, test, accept or discard.</p>
+
+                <h2 class="article-h2 fade-in">Why this matters</h2>
+                <p class="article-p fade-in">The method has several strong practical consequences.</p>
+                <p class="article-p fade-in">First, <strong>no fine-tuning is required</strong>. For closed models that is often the only realistic route to adaptation. For open ones it is cheaper and faster.</p>
+                <p class="article-p fade-in">Second, the output is a small text file you can read, review, move between environments and even edit by hand. As model behavior becomes harder and harder to inspect, that is a rare virtue.</p>
+                <p class="article-p fade-in">Third, SkillOpt works not only in plain chat but inside agent loops with tools — including environments like Codex and Claude Code. This is not prompt polishing for toy problems; it is a procedure that helps an agent act better in working setups.</p>
+                <p class="article-p fade-in">Finally, the paper touches a broader question: can you train not only model parameters but <strong>external procedural state</strong>? If you can, that is an intriguing alternative to the race for ever more expensive models.</p>
+
+                <h2 class="article-h2 fade-in">How the optimization loop works</h2>
+                <p class="article-p fade-in">The methodology is arguably more interesting than the numbers. The authors borrow the logic of deep learning outright and move it into text space.</p>
+                <p class="article-p fade-in">At each step the target model runs a batch of tasks with the current skill. Trajectories are collected: messages, tool calls, intermediate observations, final answers, signals from the verifier. The optimizer then splits the examples into successes and failures, analyzes them in mini-batches and proposes local edits.</p>
+                <p class="article-p fade-in">Those edits are then merged and ranked. Not all of them get applied: there is a <strong>text analogue of the learning rate</strong> — an edit budget. The reasoning is simple. Let the model rewrite the whole skill every round and it will overwrite rules that worked, overfit to the latest failures and swing from one extreme to the other. Bounded edits preserve continuity.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-26/fig_1.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">The SkillOpt pipeline: collect trajectories, analyze successes and failures, apply bounded edits to the skill, and check each one against validation.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Two more stability mechanisms complete the picture.</p>
+                <p class="article-p fade-in">The first is a <strong>buffer of rejected edits</strong>. When a change makes results worse, the system doesn't just forget it; it feeds the change back as negative signal. That makes it less likely to go in circles.</p>
+                <p class="article-p fade-in">The second is a <strong>slow cross-epoch update</strong>. At the end of an epoch the method compares how the skill behaves on the same tasks before and after the run of local edits, then writes the longer-lived guidance into a protected section. Local steps cannot touch that section. In effect, it separates fast tactical fixes from strategic lessons.</p>
+                <p class="article-p fade-in">This is where SkillOpt stops being another way to auto-generate a prompt and starts to look like a disciplined training loop.</p>
+
+                <h2 class="article-h2 fade-in">What the experiments show</h2>
+                <p class="article-p fade-in">The experimental section is large: six benchmarks, seven target models, three execution modes. The tasks cover question answering, spreadsheets, office documents, visual documents, math and an embodied environment along the lines of ALFWorld.</p>
+                <p class="article-p fade-in">The authors state the headline result bluntly: <strong>best or tied for best in 52 out of 52 cells</strong>.</p>
+                <p class="article-p fade-in">On GPT–5.5 in direct chat, the average gain over running with no skill was <strong>+23.5 percentage points</strong>. Inside the Codex loop it was <strong>+24.8</strong>; inside Claude Code, <strong>+19.1</strong>.</p>
+                <p class="article-p fade-in">The most striking cases are tasks where the failure is not "forgot a fact" but "broke the procedure." For example:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">SpreadsheetBench 41,8 → 80,7</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">OfficeQA 33,1 → 72,1</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">LiveMath 37,6 → 66,9</span>
+                </div>
+
+                <p class="article-p fade-in">In other words, the method is strongest where the agent needs working discipline: inspect the structure of the file first, then extract the data correctly, then return the answer in a strict format.</p>
+                <p class="article-p fade-in">And it isn't only the top models that gain. Weaker versions and open models such as Qwen pick up a noticeable boost too. That is an important observation: a compact text skill can act as external procedural memory, covering what a small model lacks in its weights.</p>
+
+                <h2 class="article-h2 fade-in">Why the results look credible</h2>
+                <p class="article-p fade-in">Papers like this always invite suspicion: maybe the gain comes from a longer prompt, a stronger teacher model or a lucky hyperparameter setting. The authors try to close that off with several rounds of checks.</p>
+                <p class="article-p fade-in">First, they compare SkillOpt not only against having no skill but against hand-written skills, skills generated in a single pass, and competing methods such as TextGrad, GEPA, Trace2Skill and EvoSkill. SkillOpt is consistently ahead.</p>
+                <p class="article-p fade-in">Second, there are ablations. Remove the bounded edit budget and results get worse. Remove the buffer of rejected edits and they get worse as well. Remove the slow cross-epoch update and some tasks degrade sharply, spreadsheet tasks most of all.</p>
+                <p class="article-p fade-in">Third, the authors show the per-epoch dynamics: the checkpoint that validation picks usually lines up with the best test accuracy. That does not prove the method generalizes perfectly, but it at least shows the validation filter is not walking the system into an obvious dead end.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-26/fig_2.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">How skill accuracy changes across epochs on the different benchmarks: validation is usually a decent guide to the version that generalizes to the test set.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">This is probably one of the most convincing parts of the paper. The authors don't just show a metric going up; they try to show <strong>which constraints keep it from falling apart</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Transferability: the skill as an artifact</h2>
+                <p class="article-p fade-in">The transfer experiments are interesting in their own right. A skill optimized on one model can be run on another; one trained in one agent environment can be moved to a different one; and in some cases it can even be applied to a neighboring benchmark.</p>
+                <p class="article-p fade-in">A spreadsheet skill trained in the Codex environment, for instance, transfers well to Claude Code. There is cross-model transfer too: a skill trained on GPT–5.4 also helps more compact variants.</p>
+                <p class="article-p fade-in">This may be the most practical takeaway in the paper. If a skill can be <strong>trained once, checked, saved as text and then reused</strong>, it becomes an engineering artifact in its own right. Not an ephemeral prompt living in a researcher's notebook, but something closer to a library of procedural rules.</p>
+                <p class="article-p fade-in">Transfer doesn't always deliver the same gain as training in place, of course, but almost every shift is positive. That is already a good sign that SkillOpt picks up more than the local patterns of one dataset.</p>
+
+                <h2 class="article-h2 fade-in">What gets learned: habits, not facts</h2>
+                <p class="article-p fade-in">One of the more rewarding parts of the paper is the qualitative analysis of the final skills. They are small — usually a few hundred to a couple of thousand tokens. More to the point, they consist of procedural rules rather than patches for individual examples.</p>
+                <p class="article-p fade-in">For spreadsheets, the skill learns to inspect the workbook's structure and formulas first instead of trusting a preview. For document tasks, to anchor the question to a specific row, heading or field before extracting the answer. For math, to tell the strongest statement apart from one that is merely correct but weaker. For embodied tasks, to keep a memory of places already visited and not repeat useless actions.</p>
+                <p class="article-p fade-in">That distinction matters. SkillOpt does appear to train <strong>behavioral invariants</strong> rather than simply rephrasing the instructions a little more elegantly.</p>
+                <p class="article-p fade-in">One more detail: large improvements often take only <strong>1–4 accepted edits</strong>. The system's real work is not rewriting the whole skill over and over, but picking the handful of useful proposals out of many.</p>
+
+                <h2 class="article-h2 fade-in">Limits, and the skepticism worth keeping</h2>
+                <p class="article-p fade-in">Strong as the results are, this is not a silver bullet.</p>
+                <p class="article-p fade-in">First, the method needs <strong>reliable quality signals</strong>: verifiers, exact metrics, executable checks. For open-ended creative work, where success is multidimensional and subjective, this loop will be much harder to build.</p>
+                <p class="article-p fade-in">Second, training a skill isn't free. There are no extra calls at inference time, but offline optimization takes a substantial number of runs and calls to the optimizer model.</p>
+                <p class="article-p fade-in">Third, SkillOpt so far works with one compact skill for one domain. Genuinely heterogeneous workloads would probably need more than a single document: a library of skills, routing between them and something like composition of procedures.</p>
+                <p class="article-p fade-in">Finally, some of the rules may still be tied to the specific format of a benchmark. The transfer experiments offset that in part, but the question of broad external validity stays open.</p>
+
+                <h2 class="article-h2 fade-in">The takeaway</h2>
+                <p class="article-p fade-in"><strong>SkillOpt</strong> is one of those papers that promises no magic but offers a very strong engineering idea: if you can't or don't want to change a model's weights, then change and train its external working instructions with the same discipline you would apply to parameters.</p>
+                <p class="article-p fade-in">The paper's strength is not only in the numbers, impressive as they are. It is in the framing. The authors treat the skill as a genuine object of optimization: a bounded step, validation, protection against degradation and accumulated negative feedback. Because of that, self-improvement through text stops looking like a pile of heuristics and starts to resemble a coherent training process.</p>
+                <p class="article-p fade-in">For the industry that matters. We have gotten used to thinking that agent progress means either new weights or new tools. SkillOpt points to a third route: <strong>a trainable procedural layer on top of a frozen model</strong>. If this line of work pans out, we get not just a way to improve agents without fine-tuning, but a new class of portable, checkable artifacts — text skills that can be stored, versioned and developed almost like code.</p>
+
+                <!-- Источник -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/html/2605.23904v2" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://aka.ms/SkillOpt" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                </div>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI paper breakdowns
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

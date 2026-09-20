@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Coding agents fix more bugs when they ask the repo two questions first</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Coding agents fix more bugs when they ask the repo two questions first" />
+    <meta property="og:description" content="Understand the code before you fix it" />
+    <meta name="description" content="ИИ лучше чинит чужой код, когда сначала не спешит с ответом, а задаёт правильные вопросы.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/coding-agents-fix-more-bugs-when-they-ask-the-repo-two-questions-first/" />
+    <link rel="canonical" href="https://dataist.ai/research/coding-agents-fix-more-bugs-when-they-ask-the-repo-two-questions-first/">
+    <meta property="og:image" content="https://dataist.ai/2026-07-16/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-16/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Coding agents fix more bugs when they ask the repo two questions first",
+  "url": "https://dataist.ai/research/coding-agents-fix-more-bugs-when-they-ask-the-repo-two-questions-first/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/coding-agents-fix-more-bugs-when-they-ask-the-repo-two-questions-first/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Understand the code before you fix it",
+  "image": "https://dataist.ai/2026-07-16/cover.png",
+  "datePublished": "2026-07-16",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Know Before Fix: QA-Driven Repository Knowledge Acquisition for Software Issue Resolution",
+    "identifier": "arXiv:2607.11111",
+    "url": "https://arxiv.org/abs/2607.11111"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2607.11111"
+}</script>
+    <meta property="article:published_time" content="2026-07-16T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-07-16</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Coding agents fix more bugs when they ask the repo two questions first</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-16/cover.png"
+                         alt="Coding agents fix more bugs when they ask the repo two questions first"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Understand the code before you fix it</h2>
+<p>Coding agents have an old and very human problem: they start <strong>fixing too early</strong>. They see a bug report, latch onto familiar words, race through the repository and make a quick edit — in the wrong place, about the wrong thing. Tests fail, steps pile up, tokens burn, and the agent goes in circles.</p>
+<p>The authors of <strong>Know Before Fix</strong> propose a simple but powerful idea: before writing a patch, the agent should first ask the right questions about the codebase and have them answered against the repository's actual files. Not "how would I fix this," but "what am I missing to understand what is even going on."</p>
+<p>Out of that grew <strong>ACQUIRE</strong>, a two-stage pipeline for solving SWE-bench Verified tasks. The idea turned out to be more than elegant. In practice it raises the quality of the fixes, and it does so without a wild jump in cost or time.</p>
+</section>
+<section>
+<h2>The core idea</h2>
+<p>Large models already reason about code reasonably well. But on real repositories the problem is usually not the logic itself — it is a <strong>shortage of facts</strong>. A task description rarely contains everything that matters: where the relevant logic actually lives, what hidden dependencies run between modules, what constraints an internal API imposes, what assumptions are baked into the code.</p>
+<p>Many existing methods try to treat this with a preliminary pass over the repository. But those passes are still shaped around the fix: find the suspicious files, assemble a summary, highlight the relevant spots. Useful, but it does not answer the key question: <strong>what exactly does the agent not understand</strong>?</p>
+<p>ACQUIRE turns the process toward something closer to how a strong developer works. Understanding first. Editing second.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-16/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The ACQUIRE pipeline: the agent first formulates questions and gets them answered against the repository, then a separate agent builds the patch.</p>
+</div></figure>
+<p>The system splits the work into two stages:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Knowledge gathering</strong>: one agent formulates the questions, another separately searches the repository for answers.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Fixing</strong>: a third agent receives the bug report plus the question–answer set, and only then writes the patch.</span></div>
+<p>The separation matters. It stops the agent from mixing guesses about the cause of the bug with premature edits to the code.</p>
+</section>
+<section>
+<h2>How ACQUIRE works</h2>
+<p>Inside, ACQUIRE has three roles.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 The <strong>questioner</strong> takes the task apart and comes up with targeted questions.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 The <strong>answerer</strong> goes into the repository, reads the files and grounds its answers in concrete artifacts: paths, functions, the actual behavior of the code.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 The <strong>solver</strong> takes the gathered knowledge and makes the fix.</span></div>
+<p>The questions are not improvised. The authors identified four kinds of knowledge gap that most often get in the way of a fix:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Mechanism and behavior</strong> — how the relevant logic actually works, how data flows, where the behavior breaks.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Design and usage</strong> — the API contracts, the conventions, the constraints on classes and interfaces.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Location and structure</strong> — where the relevant code lives and how the modules connect.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 <strong>Ecosystem and standards</strong> — external libraries, protocols, language rules.</span></div>
+<p>It is, in effect, a template for curiosity. Instead of hunting for a "suspicious file," the agent asks things like: how is this mechanism built here? where is the part I need implemented? which contract must not be broken?</p>
+<p>One more piece of the design matters. Every question gets its own instance of the answering agent, and they run <strong>in parallel</strong>. That cuts latency and keeps one search trail from contaminating another. One agent looks for one thing, another for something else.</p>
+<p>By default the system asks <strong>two questions</strong> per task. As the authors later found, that is close to the optimal point.</p>
+</section>
+<section>
+<h2>Why this should work at all</h2>
+<p>The authors started with an almost magical experiment. They took 116 tasks the baseline agent had failed and handed it one <strong>oracle</strong> question–answer pair: the question was written with the reference patch in view, and the answer was built from the files the correct fix touched.</p>
+<p>The result: <strong>26 of the 116</strong> previously failed tasks were recovered.</p>
+<p>This is not the finished system so much as a proof of the idea. But it makes the point well: give the agent the right knowledge before it starts fixing, and it often turns out that it can think just fine — what it lacked was grounding in the repository itself.</p>
+<p>The authors then removed the magic and automated the process: the agent generates the questions itself, and the answers come from real search through the code.</p>
+</section>
+<section>
+<h2>What happened on SWE-bench Verified</h2>
+<p>The main experiment ran on SWE-bench Verified — 500 real GitHub issues where the fix is checked by tests.</p>
+<p>Compared with the baseline Mini-SWE-Agent, ACQUIRE delivers:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>+3.8 percentage points</strong> on Pass@1 with GPT-5-mini</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>+4.4 percentage points</strong> on Pass@1 with DeepSeek-V3.2</span></div>
+<p>That is the best result so far among the pre-analysis methods it is compared against.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-16/fig_3.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Accuracy and average cost at different numbers of question–answer pairs: the best balance lands at two questions.</p>
+</div></figure>
+<p>What is interesting here is not only the accuracy but the <strong>price of the improvement</strong>. Some competing methods help too, but expensively: more traversal, more steps, more time. ACQUIRE's overhead is moderate. With DeepSeek-V3.2, for instance, average cost rises from $0.055 to $0.073 per task, and time from 815 to 1,042 seconds. Noticeable, but not dramatic.</p>
+<p>Set against methods that cost 2–14× more, that looks like a very reasonable trade.</p>
+<p>Why? Because ACQUIRE does not try to read the whole repository. It gathers <strong>narrow, meaningful knowledge</strong> that actually helps it decide.</p>
+</section>
+<section>
+<h2>Not just more accurate, but shorter</h2>
+<p>One of the strongest parts of the paper is its account of <strong>how exactly</strong> the agent's behavior changes.</p>
+<p>With the question–answer block added, the agent makes fewer useless loops. Across the full task set the number of rounds drops by 7.1% on average. On the 44 cases that flipped from failure to success, the reduction is 17.1%.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-16/fig_2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The composition of trajectory steps on tasks where ACQUIRE turned failure into success: less time spent searching and editing blind.</p>
+</div></figure>
+<p>The authors split each trajectory into four stages: reproduction, localization, fixing, verification. The shift they found is telling:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 the <strong>localization</strong> stage shrinks by roughly 24%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 the <strong>fixing</strong> stage shrinks by roughly 24%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 the share of effort going into <strong>verification</strong> and reproduction grows instead</span></div>
+<p>That looks like a good engineer at work: less blind wandering, more time spent checking deliberately.</p>
+<p>More important still, the gathered knowledge actually gets used. About 40% of the steps in successful trajectories tie back to the questions and answers — most visibly in localization and fixing, where knowing the repository is critical.</p>
+</section>
+<section>
+<h2>How far the answers can be trusted</h2>
+<p>The approach carries an obvious risk: what if the agent invents its own wrong "facts," and another agent then leans on them?</p>
+<p>The authors checked this by hand. They went through 232 question–answer pairs. The result is strong: <strong>99.1%</strong> of the answers were judged to be supported by the repository. Of those:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 42.2% were fully accurate</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 56.9% contained small inaccuracies — a wrong line, a not-quite-right owner for a function — that did not break the overall conclusion</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 only 0.9% contained genuinely unsupported claims</span></div>
+<p>That is an important result. It shows that breaking the task into small, concrete questions really does reduce the model's tendency to make things up. Answering a narrow question about code is easier than understanding and fixing everything at once.</p>
+<p>There is a catch, though. Even a factually correct answer can <strong>pull the focus in the wrong direction</strong>. The authors found 22 cases where the baseline agent solved a task and ACQUIRE did not. Inspected by hand, only 5 of those regressions came from genuinely misleading knowledge. The rest happened because the solving agent misused an otherwise useful hint: it generalized too broadly, fixed only part of the problem, or added changes that were not needed.</p>
+<p>The conclusion is simple: the bottleneck is no longer the quality of the gathered knowledge so much as <strong>how well the agent can argue with it and check it again</strong>.</p>
+</section>
+<section>
+<h2>Why two questions beat one or three</h2>
+<p>The authors tested separately how many question–answer pairs are actually needed.</p>
+<p>The answer is very true to life:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 no questions — the baseline, 66.4% Pass@1</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 one question — 69.0%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 two questions — the peak, 70.8%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 three questions — back down to 69.0%, and the cost keeps rising</span></div>
+<p>More context, in other words, is not always better. Past two questions the familiar long-context problem sets in: information repeats, attention spreads thin, and it gets harder for the agent to pick out what matters.</p>
+<p>This is one of the paper's most practical findings. There is no need to bury the model in every reference you can produce. <strong>Two good hints</strong> beat five mediocre ones.</p>
+</section>
+<section>
+<h2>The most telling example</h2>
+<p>One case in the paper shows clearly where the strength of the approach lies. In a Sphinx task, the bug looked like a rendering problem with documentation parameters. The baseline agent latched onto words from the report and ran around the files responsible for display. It never opened the right file at all.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-16/fig_4.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The Sphinx case: ACQUIRE finds the root cause through a question about the parsing mechanism rather than through a keyword match.</p>
+</div></figure>
+<p>ACQUIRE went a different way. The questioner asked not "where does the rendering break" but about the <strong>mechanism that parses the parameter type</strong>. That moved the search toward causes rather than symptoms. The answering agent ended up finding `docfields.py`, where `split` mishandled spaces inside the type's brackets.</p>
+<p>From there the solving agent opened the right file immediately, made a targeted edit and closed the task in 52 steps instead of 117.</p>
+<p>Which is telling: the problem was never that the agent could not write the code it needed. It was simply looking in the wrong place from the start.</p>
+</section>
+<section>
+<h2>What this means for coding agents</h2>
+<p>The work matters as more than another tick on SWE-bench. It hits one of the weakest spots in today's agents: <strong>they are bad at telling a knowledge gap apart from a reasoning error</strong>.</p>
+<p>When an agent does not understand a repository, it usually does not say "I am missing facts." It starts improvising. ACQUIRE imposes a useful discipline: name the knowledge gaps first, close them, and only then edit the code.</p>
+<p>For the field, that is a meaningful shift:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 from keyword search to an explicit account of what is not known</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 from a monolithic "just fix it" to a split between understanding and acting</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 from opaque agent behavior to more interpretable intermediate artifacts in the form of question–answer pairs</span></div>
+<p>And that is especially valuable on real codebases, where bugs often sit across more than one file and never on the surface.</p>
+</section>
+<section>
+<h2>Takeaways</h2>
+<p>ACQUIRE shows something simple: <strong>generating a patch is not enough to fix code well</strong>. You also have to work out what you do not know about the repository, and go get exactly that knowledge, fast.</p>
+<p>The question-and-answer approach produced a consistent gain on two different models, cut the number of wasted steps, and came out markedly cheaper than heavy schemes built on deep upfront traversal. Most important, it changes the agent's working style: less thrashing, more understanding.</p>
+<p>The main lesson here sounds almost human. A good coding agent should not only fix. It should first <strong>ask the right questions</strong>.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.11111" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://github.com/LionLin2003/ACQUIRE" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

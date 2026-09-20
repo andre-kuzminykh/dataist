@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Many systems called world models stop at one-step prediction</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Many systems called world models stop at one-step prediction" />
+    <meta property="og:description" content="Review · 2026-04-28
+                
+
+                
+                
+                    World models for the next generation of agents" />
+    <meta name="description" content="У генеративного ИИ есть удобная иллюзия компетентности: модель пишет, рисует, иногда даже «планирует», и кажется, что у нее внутри есть нечто вроде картины мира.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/many-systems-called-world-models-stop-at-one-step-prediction/" />
+    <link rel="canonical" href="https://dataist.ai/research/many-systems-called-world-models-stop-at-one-step-prediction/">
+    <meta property="og:image" content="https://dataist.ai/2026-04-28/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-04-28/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-p strong {
+            @apply font-semibold text-black dark:text-white;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .apple-img {
+            @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white;
+        }
+
+        /* Карточки-списки */
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 mb-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Many systems called world models stop at one-step prediction",
+  "url": "https://dataist.ai/research/many-systems-called-world-models-stop-at-one-step-prediction/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/many-systems-called-world-models-stop-at-one-step-prediction/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Review · 2026-04-28\n                \n\n                \n                \n                    World models for the next generation of agents",
+  "image": "https://dataist.ai/2026-04-28/cover.png",
+  "datePublished": "2026-04-28",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Agentic World Modeling: Foundations, Capabilities, Laws, and Beyond",
+    "identifier": "arXiv:2604.22748",
+    "url": "https://arxiv.org/abs/2604.22748"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2604.22748"
+}</script>
+    <meta property="article:published_time" content="2026-04-28T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in"><!-- Category tag -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-04-28</span>
+                </div>
+
+                <!-- Headline -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Many systems called world models stop at one-step prediction</h1>
+
+                <!-- Cover image -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-04-28/cover.png"
+                         alt="Cover: World models for the next generation of agents"
+                         class="w-full h-auto object-cover">
+                </div></header>
+
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">Generative AI comes with a convenient illusion of competence: the model writes, draws, sometimes even "plans," and it looks as though there is something like a picture of the world inside it. But the moment a system is asked not to continue text but to <strong>act toward a goal over a long horizon</strong> — drive a robot, navigate websites, negotiate with people, run scientific experiments — an uncomfortable fact surfaces. The binding constraint is not the polish of the answers but the ability to <strong>model the dynamics of the environment</strong>: what happens after an action, where the system will go wrong, and how it should rewrite its own assumptions when the world fails to match the prediction.</p>
+
+                <h2 class="article-h2 fade-in">When AI stops guessing the next token and starts understanding the world</h2>
+                <p class="article-p fade-in">That is exactly the subject of the long survey <em>Agentic World Modeling: Foundations, Capabilities, Laws, and Beyond</em>. It is not another catalog of models and benchmarks but an attempt to bring order to the chaos around the term <em>world model</em>, which means very different things in RL, computer vision, LLM agents and AI for science. The authors propose a simple approach: look at a world model along two axes — <strong>level of capability</strong> and <strong>the type of world laws</strong> the system has to work with.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-04-28/fig_0.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">How this survey positions itself relative to agents and world models: at the center, a single taxonomy by capability and world type.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Why does this matter? Because today one team calls a video generator a world model if it predicts frames well, and another means a dynamics model for planning in RL. Formally both are right; in practice, comparing such systems is close to meaningless. The new survey offers a shared vocabulary that could connect communities that have been talking past each other, and finally answer the question: <strong>which model actually helps an agent make decisions, and which one merely imitates plausibility</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Not one world model, but three levels of maturity</h2>
+                <p class="article-p fade-in">The paper's central idea is to split the world model into three levels.</p>
+                <p class="article-p fade-in"><strong>L1: Predictor</strong> — a local predictor. It forecasts the next step: the next latent state, frame, token, observation. This covers classic latent dynamics models, a share of video models, and in general anything that works well over a short horizon. Such models are useful, but they carry a fundamental weakness: single-step quality is no guarantee that the model will not drift into fantasy once it is rolled out repeatedly.</p>
+                <p class="article-p fade-in"><strong>L2: Simulator</strong> — a simulator in the working sense of the word. It has to support <strong>multi-step, action-conditioned rollouts</strong> that are good enough to select actions from. Here the authors introduce three strict criteria for the jump from L1 to L2: long-horizon consistency, sensitivity to interventions, and satisfaction of domain constraints. Put differently, if a model paints a convincing future but does not react when the action changes, or breaks the laws of its world, it is not yet a real simulator.</p>
+                <p class="article-p fade-in"><strong>L3: Evolver</strong> — the most ambitious level. A system like this does not merely simulate the environment; it <strong>revises its own world model</strong> when it runs into a systematic error. This is no longer planning inside a fixed model but a loop that resembles the scientific method: design an action or an experiment, run it, observe, diagnose the failure, update the model, and verify that the update actually improved behavior.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-04-28/fig_3.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">The hierarchy of world models: from local prediction to simulation, and on to revising the model in light of new data.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">The ladder looks almost obvious, and that is precisely where the survey's value sits. The authors do not argue philosophy about whether a model "understands" the world; they give a practical criterion: <strong>what it is capable of in decision-making</strong>. One step? Several steps under an action? Or correcting itself as well?</p>
+
+                <h2 class="article-h2 fade-in">Worlds differ: physical, digital, social, scientific</h2>
+                <p class="article-p fade-in">The second axis of the taxonomy is the type of "laws" a model has to obey. This is where the paper is especially useful: it reminds you that a world model for a robot, for a browser agent and for a lab AI are not just different applications of one technique. They have different sources of truth and different kinds of error.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-04-28/fig_1.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Four regimes of laws: the physical, digital, social and scientific worlds.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in"><strong>The physical world</strong> is mechanics, geometry, contact, stability. If a robot predicts that a cup will pass through a table, the problem is obvious.</p>
+                <p class="article-p fade-in"><strong>The digital world</strong> is interfaces, APIs, file systems, code, UI state. Here the world is often more deterministic than physics, but it is full of branches, exceptions and rare cases. An error is checkable: a nonexistent API call or a broken DOM is not "almost right," it is simply wrong.</p>
+                <p class="article-p fade-in"><strong>The social world</strong> is a different animal altogether. What matters here is beliefs, goals, norms, promises, roles, expectations. A system can carry a grammatically flawless conversation and still fail the social dynamics: forgetting commitments, ignoring reputation, confusing who intends what.</p>
+                <p class="article-p fade-in"><strong>The scientific world</strong> is a regime of its own, where the laws are often known only in part. Here the model has to be tested not just for formal correctness but for <strong>agreement with experiment</strong>. This is the world of surrogate models for climate, molecules, materials, cells and automated labs.</p>
+                <p class="article-p fade-in">This four-part scheme helps explain why a single "generation quality" metric says so little about how useful a model is. A video world model can look impressive, but if it fails to preserve contact dynamics or causal structure, planning on top of it will be dangerous. For a web agent it is the other way around: pixel-level prediction matters less than a correct model of transitions between interface states.</p>
+
+                <h2 class="article-h2 fade-in">How the survey was built: 400+ papers</h2>
+                <p class="article-p fade-in">This is a large piece of work: the authors synthesize more than 400 papers and pull together over 100 representative systems from model-based RL, video generation, web and GUI agents, multi-agent social simulation, and AI for science. But the value is not only in the count.</p>
+                <p class="article-p fade-in">Instead of the usual split by modality — computer vision here, language there, robots somewhere else — the authors deliberately cut across the field. They ask: <strong>what capability does the system demonstrate, and by what laws does it live</strong>?</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-04-28/fig_2.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">A timeline of world models from 2018 to 2026, laid out by L1/L2/L3 level and world type.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">That angle clears up several things immediately.</p>
+                <p class="article-p fade-in">First, many "world models" are in practice still L1 systems: strong at short-horizon prediction, but falling apart over rollouts. Second, L2 is not simply "generate for longer" but holding three properties at once: consistency, sensitivity to interventions, and constraint satisfaction. Third, L3 so far shows up rarely and in fragments: usually not as a full end-to-end system but as isolated self-checking or automated-experiment loops.</p>
+                <p class="article-p fade-in">The authors also propose an important shift in how quality is judged: from prediction-oriented metrics to decision-oriented ones. That is, measuring not just visual similarity but whether a good world model actually changes an agent's real decisions for the better.</p>
+
+                <h2 class="article-h2 fade-in">The main findings: where we actually stand</h2>
+                <p class="article-p fade-in">Compressed to a handful of theses, the paper's conclusions look like this.</p>
+                <p class="article-p fade-in">First: <strong>the world-model field is fragmented</strong>. The RL community has long worked with dynamics models as a planning tool. The computer vision community usually discusses world models through video and 3D scene generation. LLM agents arrive at the same problems through browser use, tool use and social simulation. AI for science gets there through surrogates and autonomous labs. These branches have barely spoken to each other.</p>
+                <p class="article-p fade-in">Second: <strong>most of the noise around world models comes from confusing plausibility with usefulness</strong>. A good video generator is not a good simulator. Handsome rollouts with no sensitivity to actions and no domain constraints amount to an animated hallucination.</p>
+                <p class="article-p fade-in">Third: <strong>L3 is a separate qualitative step</strong>, not just "an even longer rollout." Once a system starts actively gathering data, hunting down the causes of its errors, adding new rules, tests or hypotheses, and validating the update, it belongs to a different class of capability. Scientific systems and some evolutionary loops stand out here.</p>
+                <p class="article-p fade-in">Fourth: <strong>different worlds require different rollout validation</strong>. In physics you can check collisions and stability; in the digital world, executability and contracts; in the social world, consistency of norms and commitments; in science, the chain from hypothesis to experiment to measurement. A single universal benchmark is unlikely to be possible here.</p>
+                <p class="article-p fade-in">Fifth: the paper builds, quietly but insistently, toward a deeper claim: <strong>genuine L3 may require not only latent representations but more explicit, partly symbolic structures</strong>. Neural networks absorb regularities superbly, yet they are poor at transparently revising "laws" as objects. This is especially visible in scientific problems, where human world models have historically taken symbolic form — equations, principles, invariants.</p>
+
+                <h2 class="article-h2 fade-in">What this means for agentic AI right now</h2>
+                <p class="article-p fade-in">Set against the market and the research agenda, the paper lands right on the nerve of the moment. We are moving from the era of "the LLM as an interface" to the era of "the agent as the thing that gets tasks done." Which means the bottleneck shifts: speaking plausibly is no longer enough. You need a reliable answer to <strong>"what happens if I do X?"</strong></p>
+                <p class="article-p fade-in">For robots that means a world sitting between perception and control. For coding agents and web agents, a move from reactive chains to models of the environment in which actions can be safely replayed before execution. For multi-agent systems, the ability not just to generate dialogue but to hold on to the hidden state of social interaction. For scientific AI, closing the discovery loop instead of predicting from data that already exists.</p>
+                <p class="article-p fade-in">The authors' point that a closed planning loop and L3 evolution are not the same thing is particularly useful. An agent can act in a closed loop without ever changing its world model. And in reverse, a system can have a mechanism for revising the model without being a full embodied agent. Pulling these two apart will make it easier to judge the many claims about "self-improving" systems soberly.</p>
+
+                <h2 class="article-h2 fade-in">Takeaways</h2>
+                <p class="article-p fade-in">This survey is good not because it promises AGI soon but because it <strong>clears the romantic fog off the subject of world models</strong>. It offers a working frame in which you can ask honestly of any system: does it simply predict the next step, can it simulate alternative courses of action, or is it already able to rewrite itself after a collision with reality?</p>
+                <p class="article-p fade-in">For a data and AI audience, the core point is this. The future of agentic systems most likely does not lie in endlessly scaling a universal predictor. It lies in combining three things: <strong>a dynamics model, respect for the laws of the specific world, and a mechanism for controlled revision of its own hypotheses</strong>. That junction is where the move toward "a system that can find its way in the world and improve its understanding of it" begins.</p>
+                <p class="article-p fade-in">Perhaps the most valuable thing in the paper is that it turns the vague phrase <em>world model</em> into an engineering object with testable boundaries. That is already a rarity in this industry.</p>
+
+                <!-- Источник -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2604.22748" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://github.com/Genesis-Embodied-AI/Genesis" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                </div>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI paper breakdowns
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

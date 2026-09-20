@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>A harness trained on past runs lifts Terminal-Bench from 0.722 to 0.806</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="A harness trained on past runs lifts Terminal-Bench from 0.722 to 0.806" />
+    <meta property="og:description" content="When the problem isn't the model but the harness" />
+    <meta name="description" content="Обычно ИИ-агенту дают одну и ту же схему работы на все случаи, но новая идея в том, чтобы он учился перестраивать её по ходу дела.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/a-harness-trained-on-past-runs-lifts-terminal-bench-from-0-722-to-0-806/" />
+    <link rel="canonical" href="https://dataist.ai/research/a-harness-trained-on-past-runs-lifts-terminal-bench-from-0-722-to-0-806/">
+    <meta property="og:image" content="https://dataist.ai/2026-07-18/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-18/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "A harness trained on past runs lifts Terminal-Bench from 0.722 to 0.806",
+  "url": "https://dataist.ai/research/a-harness-trained-on-past-runs-lifts-terminal-bench-from-0-722-to-0-806/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/a-harness-trained-on-past-runs-lifts-terminal-bench-from-0-722-to-0-806/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "When the problem isn't the model but the harness",
+  "image": "https://dataist.ai/2026-07-18/cover.jpg",
+  "datePublished": "2026-07-18",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "MemoHarness: Agent Harnesses That Learn from Experience",
+    "identifier": "arXiv:2607.14159",
+    "url": "https://arxiv.org/abs/2607.14159"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2607.14159"
+}</script>
+    <meta property="article:published_time" content="2026-07-18T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-07-18</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">A harness trained on past runs lifts Terminal-Bench from 0.722 to 0.806</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-18/cover.jpg"
+                         alt="A harness trained on past runs lifts Terminal-Bench from 0.722 to 0.806"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When the problem isn't the model but the harness</h2>
+<p>In conversations about AI agents, almost all the attention goes to models. Which LLM is stronger, whose code is better, who sits higher on the leaderboard. In practice, what decides the outcome is often not only the model but <strong>how exactly it is packaged into an agent</strong>: what context it gets, which tools it can call, how its steps are structured, what stays in memory, how the answer is checked.</p>
+<p>The authors of <strong>MemoHarness: Agent Harnesses That Learn from Experience</strong> aim straight at that point. Instead of touching up a prompt or rearranging a pipeline, they propose training the agent's harness itself on the experience of past runs. And not on average across everything — with adaptation to the specific task at the moment it runs.</p>
+<p>That is an important shift, because most AI agents today live with a single global configuration for every occasion. One template. One way of calling tools. One step schema. But tasks differ: one needs a short precise answer, another a long stretch of terminal work, another careful handling of output format, another search and verification. The same configuration inevitably suits one task and gets in the way of the next.</p>
+<p>MemoHarness is aimed at exactly this problem.</p>
+</section>
+<section>
+<h2>What an agent harness is and why it matters</h2>
+<p>Put plainly, the agent harness is the control layer wrapped around the LLM. It decides:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 what exactly goes into the model's context;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 which tools it is allowed to call;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 how generation is configured;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 whether to make one model call or several steps;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 what to keep in memory between steps;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 how to turn the raw output into a final result.</span></div>
+<p>This sounds like technical detail, but details like these often move the final success rate by tens of percentage points. The same model performs noticeably better or worse purely because of how its input was assembled, when it was given search access, how the answer length was capped, or how the final output was checked.</p>
+<p>The authors make a fair point: the industry already has plenty of methods that automatically improve prompts, instructions or workflows. But almost nobody optimizes <strong>the entire agent control system as a whole</strong>. Rarer still is making that system change per test case without new labels and without a separate search at run time.</p>
+<p>That is precisely what MemoHarness sets out to do.</p>
+</section>
+<section>
+<h2>How MemoHarness works</h2>
+<p>The core of the work is the idea that a harness need not be treated as one monolithic object. It can be broken into six controllable dimensions.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-18/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The MemoHarness scheme: search for a good global harness during training, then adapt it to the specific test case.</p>
+</div></figure>
+<p>Here are the six parts:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>Context</strong> — what exactly to show the model, how to assemble instructions, examples and constraints.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>Tools</strong> — when and how to use external tools or search.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>Generation</strong> — output parameters: length, temperature, number of attempts.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2 flex justify-between items-center"><span class="font-mono font-bold text-sm">🟣 <strong>Orchestration</strong> — how the process is built</span><span class="font-mono text-sm"><span class="opacity-50">a single call, or a "plan</span> → <span class="text-cyber-orange font-bold">execute → refine" schema.</span></span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>Memory</strong> — what to carry between steps and what to throw away.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 <strong>Output handling</strong> — how to extract the final result, check the format, apply a fallback.</span></div>
+<p>This is a sound engineering move. Instead of "magically improving the agent", the system can pinpoint <strong>where the failure actually happened</strong>. Not enough context? Tool used wrong? Needed a multi-step plan rather than a single call? Output broke on the final formatting?</p>
+<p>Then comes the second key element: an <strong>experience bank</strong>. It has two layers.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 The first layer stores experience per task: what was run, what came out, where it failed, how many tokens it burned.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 The second stores a distilled set of general patterns: which kinds of errors repeat and which changes usually help.</span></div>
+<p>That is less a run log than a system's memory of its own successes and failures.</p>
+</section>
+<section>
+<h2>Training without gradients: a guided search</h2>
+<p>MemoHarness does not fine-tune the model in the usual sense. It runs a <strong>search over the space of harness configurations</strong>.</p>
+<p>It starts from a very plain baseline configuration: no demonstrations, no memory, no tools, no complex orchestration. From there the system proposes new variants step by step. Each variant is run against labeled tasks, scored on quality, and its execution traces are written into the experience bank.</p>
+<p>One detail matters here: selection follows a <strong>correctness first, cost second</strong> rule. Solving the task correctly is the primary criterion. Tokens and cost enter only as a tiebreaker when variants score the same on quality.</p>
+<p>This sounds almost obvious, but against the current fashion for "cheap and fast" the emphasis is useful. The authors clearly do not want the system drifting toward cheap but wrong configurations.</p>
+<p>After several rounds, what gets picked is not the luckiest peak on the test set but a final global harness selected on validation. Another healthy choice: less risk of overfitting to one small set of tasks.</p>
+</section>
+<section>
+<h2>What happens when a new task arrives</h2>
+<p>The interesting part starts at test time. MemoHarness does not apply the same final harness to every task in a row. It takes the globally found variant and <strong>nudges it toward the specific input</strong>.</p>
+<p>How exactly:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 it searches the experience bank for similar past tasks;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 it looks at similar successful cases;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 it looks separately at similar failures;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 it pulls out the general patterns that apply to cases like these;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 and on that basis it modifies the harness for the current task.</span></div>
+<p>Crucially, all of this happens <strong>with no feedback at test time</strong>. The system does not know the correct answer, gets no reward and starts no new search loop. It simply uses the experience it has already accumulated. That makes the approach more realistic for production use.</p>
+<p>In effect, the paper argues for treating an agent not as a fixed product but as a system that can recall: "on tasks like this, memory is usually where I break" or "in cases like this it is better to switch on the multi-step schema and check the output format more strictly".</p>
+</section>
+<section>
+<h2>What the experiments showed</h2>
+<p>The authors tested MemoHarness on three very different kinds of task:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Terminal-Bench — hard terminal tasks;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 LiveCodeBench — code generation;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 FinanceAgent — multi-step analytical tasks in finance.</span></div>
+<p>The headline result: on Terminal-Bench the system reached <strong>0.806</strong> average success against <strong>0.722</strong> for the strongest baseline. For that setting, a noticeable gain.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-18/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Comparison against baseline systems on Terminal-Bench: MemoHarness posts the best average result.</p>
+</div></figure>
+<p>What matters is that this is not a comparison against a deliberately weak opponent. The strongest baseline is already a system specialized for terminal work. The gain was not taken from a straw man; it came out of a fairly demanding setup.</p>
+<p>The trajectory over the course of the search is more interesting still. On all three benchmarks the final version beat the starting one, but the shape of the improvement differed.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-18/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Harness quality at different stages of the search: the final result beats the baseline on all three benchmarks.</p>
+</div></figure>
+<p>FinanceAgent saw the largest gain: roughly 0.600 to 0.767. LiveCodeBench improved too, but less, because the base model there was already close to the ceiling. That is a telling detail. MemoHarness helps most where the task is longer, harder and demands more control over the process. Where the model already solves the task in one shot, there is less headroom.</p>
+<p>The per-iteration chart says the same.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-18/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">On FinanceAgent additional search iterations keep paying off, while on LiveCodeBench the gain saturates quickly.</p>
+</div></figure>
+<p>On FinanceAgent extra search rounds kept helping almost to the end. On LiveCodeBench everything flattened out fast. The conclusion is simple: <strong>the more multi-step work, tools and chances to go off course a task involves, the more a good harness matters</strong>.</p>
+</section>
+<section>
+<h2>Does it transfer to other task sets and models</h2>
+<p>One of the most useful questions: did the system merely learn local tricks for one set of tasks?</p>
+<p>The authors checked this two ways.</p>
+<p>First, transfer to other task sets. The picture here is not magical but normal and plausible: transfer happens, and it is <strong>selective</strong>. The harness found on Terminal-Bench produced gains on several external sets, including comprehension tasks, refusal of harmful requests, and software engineering. But not everywhere. On saturated sets, where the baseline is already near maximum, there was almost no movement.</p>
+<p>That is a good sign. The paper promises no universal incantation. It does show that some of what the search found outlives one particular benchmark.</p>
+<p>Second, transfer to other models. This is probably one of the most interesting results. The harness was searched on GPT-5.3-Codex and then run on six other models with no new search. All of them improved. The average gain was about <strong>+0.098</strong>.</p>
+<p>The jump for GLM-5 stands out: 0.500 to 0.733. GPT-4.1 gained less, but still gained. That hints that MemoHarness learns more than per-model tricks — it learns more transferable rules for organizing an agent's work.</p>
+<p>This is not yet conclusive proof of generality, of course. But as a practical signal it is a strong one.</p>
+</section>
+<section>
+<h2>What about cost</h2>
+<p>A scheme like this carries an obvious risk: if you constantly pull past experience into the context, everything can get expensive.</p>
+<p>The authors checked this on Terminal-Bench. MemoHarness does consume more input tokens. But most of that context is cached, so the final dollar cost stays competitive. In their accounting the system came out cheaper than some strong commercial baselines while scoring higher.</p>
+<p>There is a caveat: much depends on <strong>how well the retrieved experience caches</strong>. If a real deployment gets less out of the cache, the economics change. The authors admit this openly.</p>
+<p>And that is one of the paper's stronger traits: no attempt to sell the result as absolute truth. There is a clear engineering idea, a noticeable gain and carefully stated limits.</p>
+</section>
+<section>
+<h2>What actually matters in this work</h2>
+<p>The paper's main value is not only in the specific numbers. It is that MemoHarness offers a different view of how AI agents get better.</p>
+<p>Progress today is usually reduced to three levers:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 take a stronger model;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 keep grinding on prompts;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 hand-tune the workflow.</span></div>
+<p>Here a fourth lever appears: <strong>accumulate execution experience and turn it into an adaptive control system for the agent</strong>.</p>
+<p>It reads like the field growing up. Instead of "what is our best prompt?", the question becomes "how does the agent learn to work better from its own past actions?". That is closer to real engineering of complex systems than to fishing for a lucky phrase.</p>
+</section>
+<section>
+<h2>Takeaways</h2>
+<p>An AI agent can be improved beyond the model and beyond the prompt — the whole external control layer is fair game.</p>
+<p>The approach pays off most on hard tasks that need many steps, tools, memory and format control. That is where an adaptive harness wins the most. On simple tasks already near the quality ceiling the effect is smaller — which is also what you would expect.</p>
+<p>It also matters that the system does not learn blind. It stores experience from successful and failed runs, extracts the patterns that recur, and uses them to adjust to a new case with no feedback at test time.</p>
+<p>Which leads to a fairly practical conclusion: the next visible jump in AI agents may come not only from bigger models but from <strong>systems that remember, diagnose and rewrite their own harness better</strong>. Not one setting for every occasion, but a live configuration that adapts to the task. For agent systems, that looks like one of the most promising paths in the near term.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.14159" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://github.com/HowieHwong/MemoHarness" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

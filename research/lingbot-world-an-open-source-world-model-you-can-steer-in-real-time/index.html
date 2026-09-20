@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LingBot-World: an open-source world model you can steer in real time</title>
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="LingBot-World: an open-source world model you can steer in real time" />
+    <meta property="og:description" content="Not long ago, models learned to generate video from text with a few seconds of coherent motion. But ask one of those systems to walk forward, look back and return to a familiar object, and the magic stops. Objects trade places, details drift, and causal logic gives way to statistical coincidence. That gap between a nice-looking picture and an actual simulation of a world is what the authors…" />
+    <meta name="description" content="Ещё недавно модели научились генерировать видео по тексту с несколькими секундами связного движения.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/lingbot-world-an-open-source-world-model-you-can-steer-in-real-time/" />
+    <link rel="canonical" href="https://dataist.ai/research/lingbot-world-an-open-source-world-model-you-can-steer-in-real-time/">
+    <meta property="og:image" content="https://i.ibb.co/Zp2pfCfw/Chat-GPT-Image-Feb-4-2026-12-03-32-AM.jpg" />
+    <meta property="article:published_time" content="2026-02-03T10:00:00+03:00">
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://i.ibb.co/Zp2pfCfw/Chat-GPT-Image-Feb-4-2026-12-03-32-AM.jpg" />
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script>
+        (function () { try { var s=localStorage.getItem('theme'); var p=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches; if(s?s==='dark':p) document.documentElement.classList.add('dark'); } catch(e){ document.documentElement.classList.add('dark'); } })();
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: {
+            colors: { apple: { light:'#F5F5F7', dark:'#000000', grayLight:'#E5E5EA', grayDark:'#1C1C1E', textMutedLight:'#86868B', textMutedDark:'#8E8E93' } },
+            fontFamily: { sans: ['-apple-system','BlinkMacSystemFont','"Inter"','sans-serif'], mono: ['"Space Mono"','monospace'] },
+            boxShadow: { 'apple':'0 4px 24px rgba(0,0,0,0.04)', 'apple-dark':'0 4px 24px rgba(255,255,255,0.04)' }
+        } } };
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header { @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10; }
+        }
+        body { @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300; }
+        ::selection { @apply bg-black text-white dark:bg-white dark:text-black; }
+        .article-p { @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85; }
+        .article-p strong { @apply font-semibold text-black dark:text-white; }
+        .article-h2 { @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white; }
+        .apple-img { @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white; }
+        .fade-in { opacity:0; transform:translateY(20px); transition:opacity .8s cubic-bezier(0.2,0.8,0.2,1), transform .8s cubic-bezier(0.2,0.8,0.2,1); will-change:opacity,transform; }
+        .fade-in.visible { opacity:1; transform:translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "LingBot-World: an open-source world model you can steer in real time",
+  "url": "https://dataist.ai/research/lingbot-world-an-open-source-world-model-you-can-steer-in-real-time/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/lingbot-world-an-open-source-world-model-you-can-steer-in-real-time/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Not long ago, models learned to generate video from text with a few seconds of coherent motion. But ask one of those systems to walk forward, look back and return to a familiar object, and the magic stops. Objects trade places, details drift, and causal logic gives way to statistical coincidence. That gap between a nice-looking picture and an actual simulation of a world is what the authors…",
+  "image": "https://i.ibb.co/Zp2pfCfw/Chat-GPT-Image-Feb-4-2026-12-03-32-AM.jpg",
+  "datePublished": "2026-02-03",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Advancing Open-source World Models",
+    "identifier": "arXiv:2601.20540",
+    "url": "https://arxiv.org/abs/2601.20540"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2601.20540"
+}</script>
+</head>
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white"><i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i></a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">i</div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">DATAIST</div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i><i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i><span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i><span>Review · 2026-02-03</span>
+                </div>
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white">LingBot-World: an open-source world model you can steer in real time</h1>
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-white"><img src="https://i.ibb.co/Zp2pfCfw/Chat-GPT-Image-Feb-4-2026-12-03-32-AM.jpg" alt="LingBot-World: an open-source world model you can steer in real time" class="w-full h-auto object-cover"></div>
+            </header>
+            <div class="max-w-3xl mx-auto w-full">
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">Not long ago, models learned to generate video from text with a few seconds of coherent motion. But ask one of those systems to walk forward, look back and return to a familiar object, and the magic stops. Objects trade places, details drift, and causal logic gives way to statistical coincidence. That gap between a nice-looking picture and an actual simulation of a world is what the authors call one of the central problems on the way to real world models.</p>
+                <p class="article-p fade-in">LingBot-World is an attempt to move from text-to-video to interactive text-to-world: a system that does not just render a clip but supports controllable, stable and reasonably plausible time spent inside a scene. A big part of the intent is openness — both the code and the weights are published, to close the distance between open-source and closed systems.</p>
+                <h2 class="article-h2 fade-in">Data: where to get experience for an interactive world</h2>
+                <p class="article-p fade-in">The most painful part of any interactive model is data. There is plenty of good-looking video on the internet, but it almost never carries the link between an action and the world's reaction, and without that it is hard to teach a model to act in an environment. The authors go hybrid: ordinary real-world video, plus game recordings where the keypresses and camera motion are known, plus synthetic footage from Unreal Engine. What makes the synthetic part especially valuable is exact camera parameters and the ability to generate specific trajectories — 360-degree turns, say, or returning to an object to probe spatial memory.</p>
+                <p class="article-p fade-in">Then comes the cleanup: filtering, cutting into clips, semantic scoring for quality and motion, and approximate geometric annotation for ordinary video where the camera parameters are unknown. On top of that sits a hierarchical text annotation: separate captions for the overall storyline, separate ones for the static scene with no action in it, and separate dense temporal descriptions per interval. The reasoning is simple: fold everything into a single caption and the model has trouble telling what in the scene is set dressing and what is the result of an action or a camera move.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.20540v1/x1.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Collecting game and synthetic data: frame capture is synchronized with actions and camera states so the model learns causal links.</figcaption></figure>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.20540v1/x2.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Data profiling: filtering, semantic scoring and geometric labels turn a raw video stream into training material for a world model.</figcaption></figure>
+                <h2 class="article-h2 fade-in">How a video generator becomes a controllable world model</h2>
+                <p class="article-p fade-in">The core idea in LingBot-World is not to build a simulator from scratch but to grow one out of a strong video model across several stages. It starts from a powerful open video generator — the paper mentions Wan2.2 image-to-video diffusion at 14B parameters — as the source of visual quality and baseline coherence. The model is then fine-tuned to hold a longer context, forget less of the scene structure and start following user actions. This is where Mixture-of-Experts enters: two experts, one better at global structure, the other at detail. The goal is to keep stability and image quality at the same time.</p>
+                <p class="article-p fade-in">Actions are fed in explicitly: discrete signals such as W/A/S/D, plus continuous camera rotation encoded through dedicated representations. So that control actually shapes generation, actions are woven into the network's layers through adaptive normalization. At the same time the authors try not to wreck the visual capability the model already has: the base blocks are frozen, and training mostly touches the adapters responsible for control.</p>
+                <p class="article-p fade-in">There is one more obstacle: speed. Classic diffusion models are heavy for interactive use — waiting seconds, or minutes, for a render is not an option. So the third stage converts the system to a causal, streaming mode and distills it down to a handful of steps. The final LingBot-World-Fast is claimed to run in real time at 16 fps with sub-second latency.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.20540v1/x3.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Multi-stage training: from a base video prior to controllability and long memory, then on to a causal architecture and the speedups needed for real time.</figcaption></figure>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.20540v1/x5.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Two key engineering steps: causal block attention for streaming generation, and a discriminator head that helps fight quality drift over long trajectories.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Almost a game: long memory and real control</h2>
+                <p class="article-p fade-in">By the authors' account, the strength of LingBot-World is the combination of three things that rarely appear together in open source: domain diversity, a long horizon, and high dynamics at interactive speed. In the demos the model holds scenes consistent on the scale of minutes: landmarks are not repainted once they leave the frame, and some off-screen processes keep unfolding plausibly even while they cannot be seen.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.20540v1/x11.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Emergent memory: examples where landmarks survive a long absence from the frame and off-screen dynamics stay consistent.</figcaption></figure>
+                <p class="article-p fade-in">There is a quantitative side as well: on VBench for long videos, over 30 seconds, the model shows a particularly clear gain in Dynamic Degree — the richness and plausibility of motion. Motion smoothness and flicker scores stay competitive, which matters if the result is to feel like a living world rather than a stack of frames.</p>
+                <p class="article-p fade-in">The applications are worth a look of their own. First, the world can be branched with prompts: change the weather or the style, add local events like fireworks, without breaking geometry or dynamics. Second, the authors demonstrate a pairing with an action agent: an LLM (Qwen3-VL-2B) predicts a sequence of actions several seconds ahead, and the world model rolls video forward along them. Third, the generated clips can be turned into 3D reconstructions: the point clouds look consistent enough to suggest, indirectly, that the model is not merely painting frames but maintaining a more stable representation of the scene.</p>
+                <figure class="fade-in my-12"><div class="apple-img my-0"><img src="https://arxiv.org/html/2601.20540v1/x13.png" alt="" loading="lazy" class="w-full h-auto"></div><figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Prompt-driven events: global changes such as winter and local interventions such as fireworks, with the world staying consistent.</figcaption></figure>
+                <h2 class="article-h2 fade-in">Open by default, honest about the limits</h2>
+                <p class="article-p fade-in">What makes the work land is that the authors are not hiding the system: a fully open-source pipeline, weights and inference code. That is a real step for a community that wants more than pretty clips — it wants to build tools on top, from content generation to training environments for embodied AI.</p>
+                <p class="article-p fade-in">The limits are laid out plainly. Memory comes mostly from the context window, with no dedicated module, so very long sessions can drift apart. Inference is still expensive and needs serious GPUs. The action space is fairly narrow for now: navigation and basic movement, with no precise object manipulation. And this is still a single-agent view, without a proper multi-agent system.</p>
+                <p class="article-p fade-in">Taken together, LingBot-World reads as a bridge between video generation and an interactive world model: not the dream game, but already something you can experiment with, compare against and improve — and, above all, do it in the open.</p>
+                <p class="article-p fade-in"><a href="https://github.com/robbyant/lingbot-world" target="_blank" rel="noopener" class="underline underline-offset-2 hover:opacity-70 transition-opacity">💾 Code</a></p>
+                <p class="article-p fade-in"><a href="https://huggingface.co/robbyant/lingbot-world" target="_blank" rel="noopener" class="underline underline-offset-2 hover:opacity-70 transition-opacity">🤖 Model</a></p>
+                <p class="article-p fade-in"><br></p>
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in"><a href="https://arxiv.org/html/2601.20540v1" target="_blank" rel="noopener" class="inline-flex items-center gap-3 px-6 py-3 bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i><span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a></div>
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-16 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0"><i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i></div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">AI paper breakdowns</h2>
+                        </div>
+                        <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium mb-10">Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.</p>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">New breakdowns every day.</p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span><i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+    </main>
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50"><div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div></div>
+    <script>
+        lucide.createIcons();
+        const themeToggleBtn=document.getElementById('theme-toggle'), html=document.documentElement;
+        function applyTheme(d){ if(d){html.classList.add('dark');localStorage.setItem('theme','dark');}else{html.classList.remove('dark');localStorage.setItem('theme','light');} setTimeout(()=>lucide.createIcons(),50); }
+        const tg=window.Telegram?.WebApp;
+        if(tg&&tg.initData){ tg.ready();tg.expand(); if(tg.colorScheme){ applyTheme(tg.colorScheme==='dark'); tg.onEvent('themeChanged',()=>applyTheme(tg.colorScheme==='dark')); } }
+        themeToggleBtn.addEventListener('click',()=>applyTheme(!html.classList.contains('dark')));
+        window.addEventListener('scroll',()=>{ let h=document.documentElement.scrollHeight-document.documentElement.clientHeight; document.getElementById("progress-bar").style.width=((document.documentElement.scrollTop/h)*100)+"%"; });
+        document.addEventListener("DOMContentLoaded",function(){ const o=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');o.unobserve(e.target);}});},{threshold:0.05}); document.querySelectorAll('.fade-in').forEach(el=>o.observe(el)); });
+    </script>
+</body>
+</html>

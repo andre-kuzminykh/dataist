@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rewiring the agent harness cut cost 41% with no drop in quality</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Rewiring the agent harness cut cost 41% with no drop in quality" />
+    <meta property="og:description" content="When the bottleneck isn't the model, it's the harness" />
+    <meta name="description" content="Мы привыкли думать, что сильный ИИ всегда стоит дороже, но часто деньги уходят не на ум модели, а на плохо устроенный процесс вокруг неё.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/rewiring-the-agent-harness-cut-cost-41-with-no-drop-in-quality/" />
+    <link rel="canonical" href="https://dataist.ai/research/rewiring-the-agent-harness-cut-cost-41-with-no-drop-in-quality/">
+    <meta property="og:image" content="https://dataist.ai/2026-07-12/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-12/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Rewiring the agent harness cut cost 41% with no drop in quality",
+  "url": "https://dataist.ai/research/rewiring-the-agent-harness-cut-cost-41-with-no-drop-in-quality/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/rewiring-the-agent-harness-cut-cost-41-with-no-drop-in-quality/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "When the bottleneck isn't the model, it's the harness",
+  "image": "https://dataist.ai/2026-07-12/cover.jpg",
+  "datePublished": "2026-07-12",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "The Harness Effect: How Orchestration Design Sets the Token Economics of Enterprise Agentic AI",
+    "identifier": "arXiv:2607.06906",
+    "url": "https://arxiv.org/abs/2607.06906"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2607.06906"
+}</script>
+    <meta property="article:published_time" content="2026-07-12T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-07-12</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Rewiring the agent harness cut cost 41% with no drop in quality</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-12/cover.jpg"
+                         alt="Rewiring the agent harness cut cost 41% with no drop in quality"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When the bottleneck isn't the model, it's the harness</h2>
+<p>There's a reflex in the AI industry: when an agent underperforms, it gets more tokens. A longer prompt. More steps. More tools. More replaying of the history. More thinking. On paper this often looks like progress. On the infrastructure bill it looks like a disaster.</p>
+<p>A new paper with a fitting title, <strong>The Harness Effect</strong>, goes straight at that sore spot. Its central claim is simple: <strong>the cost and speed of an AI agent are set not only by the model but by the orchestration layer around it</strong>. How the system assembles context, when it calls tools, how it stores history, what it replays on every turn and what it doesn't — all of that can move the economics more than the choice between the models themselves.</p>
+<p>And this isn't theory. The authors took six models and 22 enterprise tasks and ran something close to a lab experiment: the models and the tasks stayed the same, only the agent's harness changed. The result is uncomfortably clear for the whole industry: <strong>38% fewer tokens, 41% lower cost and 44% less time — with no noticeable loss in quality</strong>.</p>
+<p>That matters for the market. We're used to arguing about which LLM is smarter. This paper is a reminder that sometimes the right question is <strong>how smart the thing running that LLM is</strong>.</p>
+</section>
+<section>
+<h2>What the authors call token escalation</h2>
+<p>The authors introduce a new term: <strong>token escalation</strong>. It's the case where a system's usefulness grows more slowly than the number of tokens per task. Put bluntly, you buy a little quality at the price of a lot more spend.</p>
+<p>With AI agents this happens naturally. One user request isn't one model call, it's a whole chain. The system prompt. Tool schemas. Documents from retrieval. Intermediate answers. Tool outputs. And if the system is built naively, all of it goes back to the model in full at every next step.</p>
+<p>Hence the core problem: cost grows not linearly but sometimes almost quadratically. The more steps the agent takes, the longer the tail of past messages it drags along.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-12/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Why the token bill for AI agents balloons so fast: naive history replay grows close to quadratically, while careful orchestration stays nearer to linear.</p>
+</div></figure>
+<p>This is probably the paper's most useful conceptual contribution. The authors show that tokens are consumed not only by the model itself and not only by its taste for long answers. A huge share of the bill is created by orchestration — the code around the model. It decides what lands in the context, what gets cached, what needs compressing and what can live outside the current window.</p>
+<p>For the past two years the market has mostly hunted for optimizations inside a single model call: shorten the prompt, speed up inference, cap the length of the reasoning. This paper points at a different level — <strong>between calls</strong>. At how many calls add up to a working agent.</p>
+</section>
+<section>
+<h2>How the experiment was set up</h2>
+<p>The authors didn't compare "our good system" against "someone else's bad system" in the abstract. They made a controlled swap of the orchestration layer.</p>
+<p>What exactly was compared:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the same set of 22 tasks;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the same six models: Claude Sonnet 4.6, Gemini 3.1, Gemini Flash 3.5, Qwen 3.6, GLM 5.1 and Palmyra X6;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the same grading rules;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the same price table;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">only the orchestration layer changed.</span></div>
+<p>On one side was an ordinary production agent loop: a large system prompt, full replay of the history, sloppy handling of context overflow, waiting by polling and the other compromises the industry is used to. On the other side, the Writer Agent Harness — a stricter and more frugal execution system.</p>
+<p>The tasks aren't toys either. They're an enterprise profile: retrieval and grounding in documents, content creation, running workflows, working with external tools, presentations, voice, images. The things companies actually buy AI agents for.</p>
+<p>How quality was measured matters too. The authors say plainly that with 22 tasks you cannot draw loud conclusions from a small gain in quality. So they call the final <strong>0.78 versus 0.81</strong> not an improvement but <strong>parity</strong>. That's a good sign. The paper makes no attempt to sell a statistically shaky plus as a breakthrough.</p>
+</section>
+<section>
+<h2>What actually changed in the orchestration</h2>
+<p>The most interesting part of the work isn't the numbers, it's the engineering mechanisms that produced them.</p>
+<p>The first key technique is a <strong>two-zone prompt</strong>. Everything that can stay stable between turns goes into a fixed prefix: the tool catalog, the system instruction, the durable part of the conversation. Everything that changes at every step goes into a volatile tail.</p>
+<p>Why bother? Caching. If the start of the prompt is byte-for-byte identical, model providers will often serve it from cache at a steeply reduced price. The authors show one call in which <strong>99.9% of the prompt tokens</strong> came from cache.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-12/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The two-zone prompt: a stable prefix for caching and a volatile tail for everything that changes from step to step.</p>
+</div></figure>
+<p>You can't simply hope the cache will somehow do its job. The prompt has to be structured so that nearly everything long and expensive stays unchanged.</p>
+<p>The second mechanism is <strong>structured compaction of the history</strong>. Instead of blindly truncating the middle of the context, the system builds checkpoint summaries: what has been decided, what the constraints are, what was tried and why it was dropped, which files were touched, what to do next. And not from scratch each time — incrementally.</p>
+<p>The third is <strong>moving heavy context outside the window</strong>. Large tool outputs don't have to sit inside the model's context window. They can be written to files, passed along as short excerpts and pulled back in by reference when needed. Subagents work the same way: a child agent can run a broad search inside its own local context and hand the parent only a short summary.</p>
+<p>The fourth is <strong>waiting without tokens</strong>. When an agent is waiting for human approval or for a long background job to finish, it shouldn't sit there polling the system and burning tokens. It should sleep and wake on an event.</p>
+<p>The fifth is <strong>spend control on failure</strong>. Retries, loops, repeated failing tool calls are a hidden black hole in the budget. Good orchestration has to tell error types apart and stop the agent from buying the same failure three times in a row.</p>
+<p>Compressed into one line, it comes out as a very practical principle: <strong>as many tokens as possible should either come from cache, or carry new useful information, or be spent only on steps that are genuinely needed</strong>.</p>
+</section>
+<section>
+<h2>The main results: savings almost everywhere and for everyone</h2>
+<p>Now to the numbers. Pooled across all six models and 22 tasks, swapping the orchestration layer gave:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>cost per task: down 41%</strong> — from $0.21 to $0.12;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>run time: down 44%</strong> — from 48 to 27 seconds;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>tokens per task: down 38%</strong> — from 14,200 to 8,800;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">task completion quality — at roughly the same level.</span></div>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-12/fig_2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The paper's headline result: with the same model, the new orchestration noticeably cuts cost, latency and token spend.</p>
+</div></figure>
+<p>That alone is a strong result. But something else is more interesting: <strong>the effect turned out to be almost independent of the model</strong>.</p>
+<p>Cost fell for all six models, in a range from 33% to 61%. So the win didn't go to one lucky provider or one particular class of models. It went to the execution architecture itself.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-12/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Cost and latency drop for every model: the effect comes from the orchestration layer, not from any particular LLM.</p>
+</div></figure>
+<p>This is perhaps the most unwelcome finding for teams that argue endlessly about model choice and think little about their agent's infrastructure. The authors say it outright: <strong>on their task set, the orchestration layer moved cost more than switching from the most expensive model to the cheapest one</strong>.</p>
+<p>A sobering thought. You can spend weeks choosing between providers to save tens of percent on the price of a token, and lose more than that to a carelessly built agent loop.</p>
+</section>
+<section>
+<h2>What about quality?</h2>
+<p>Here the paper is more careful, and rightly so. On average, quality didn't drop. Better than that: across the 48 model × capability cells there were more gains than losses — 30 improvements, 11 unchanged, 7 regressions.</p>
+<p>But those regressions aren't randomly distributed. Almost all of them land on the weaker models and on the scenarios where orchestration loads the model hardest: complex workflows, working with external tools, presentations.</p>
+<p>From this the authors draw an interesting idea: <strong>stronger models extract more from good orchestration</strong>. They call it the orchestration leverage effect. The same infrastructure layer can give a powerful model both savings and a quality gain, while a weak model gets only the savings — and sometimes extra cognitive load on top.</p>
+<p>That's an important nuance. The paper doesn't say good orchestration automatically makes any model better. It says something else: <strong>good orchestration almost always makes the system cheaper, but the quality on top depends on whether the model can use that structure at all</strong>.</p>
+<p>For practitioners this is very useful. You can count two things separately:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the unconditional win on economics;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">the conditional win on quality, which depends on the class of model.</span></div>
+</section>
+<section>
+<h2>Why this matters for the AI market right now</h2>
+<p>The work has a clear business moral. While the industry celebrates falling prices per token, teams start spending even more tokens. It's the classic it-got-cheaper-so-we-use-more effect.</p>
+<p>Which is why a lower price per token doesn't save you on its own. If an agent answers every new capability with a longer context and more steps, the total bill still climbs.</p>
+<p>Hence the main practical takeaway: <strong>the maturity metric for an AI agent should be not just quality but task completions per million tokens</strong>. Or, more simply, how much useful work you get per unit of spend.</p>
+<p>The authors give a good example: completions per million tokens rose from 54.9 to 92. That isn't cosmetic optimization, it's a change of economic regime.</p>
+<p>For companies with high task volume the gain becomes material fast. The authors estimate that at a million agent tasks a month the difference between the two approaches is on the order of <strong>$90,000 a month</strong>. Even treating those estimates cautiously, the scale is clear: orchestration stops being an internal engineering detail and becomes a line in the P&L.</p>
+</section>
+<section>
+<h2>The takeaway</h2>
+<p>We're used to thinking of an AI agent as a model plus tools. The authors make a convincing case that <strong>there is one more critical layer between the model and the product: orchestration</strong>. It largely decides whether your agent spends tokens sensibly or burns them without thinking.</p>
+<p><strong>If you want a cheaper and faster AI agent, don't rush to change the model — first look at how its working loop is built</strong>.</p>
+<p>The work has limits, of course. The task set isn't huge. The authors work for the company whose system is being tested. The comparison with outside frameworks is mostly architectural rather than experimental. But even with those caveats, the result looks serious.</p>
+<p>And it may be one of the most useful pieces written about AI agents in a while, because it's a reminder of something simple: <strong>a breakthrough in AI isn't only a new LLM. Sometimes it's knowing how not to pay twice for the same context</strong>.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.06906" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

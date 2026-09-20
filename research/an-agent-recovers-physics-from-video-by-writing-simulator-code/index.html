@@ -1,0 +1,625 @@
+
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>An agent recovers physics from video by writing simulator code</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="An agent recovers physics from video by writing simulator code" />
+    <meta property="og:description" content="Code as a world model" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/an-agent-recovers-physics-from-video-by-writing-simulator-code/" />
+    <meta property="og:image" content="https://dataist.ai/2026-09-01/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-09-01">
+
+    <meta name="description" content="Можно ли научить ИИ не просто смотреть видео, а самому выводить из него законы мира?
+
+Исследователи предлагают подход, в котором ИИ собирает увиденное в понятное описание мира: какие есть объекты, в каком они состоянии, как они движутся и что будет, если на них повлиять. Для этого ИИ-агент выдвигает догадки, проверяет их в виде работающего описания, сверяет с видео и шаг за шагом исправляет ошибки, пока не получит картину, которая действительно объясняет происходящее.
+
+В этом обзоре разбираем, как ИИ превращает видео в проверяемую модель физического мира и почему такой способ помогает машине рассуждать о причинах и последствиях, а не просто узнавать знакомые картинки." />
+    <link rel="canonical" href="https://dataist.ai/research/an-agent-recovers-physics-from-video-by-writing-simulator-code/" />
+
+    <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "An agent recovers physics from video by writing simulator code",
+  "description": "Code as a world model",
+  "image": "https://dataist.ai/2026-09-01/cover.jpg",
+  "url": "https://dataist.ai/research/an-agent-recovers-physics-from-video-by-writing-simulator-code/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/an-agent-recovers-physics-from-video-by-writing-simulator-code/",
+    "inLanguage": "en"
+  },
+  "datePublished": "2026-09-01",
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Code as Worlds: Agentic Discovery of Executable World Representations for Physical Reasoning",
+    "identifier": "arXiv:2608.27549",
+    "url": "https://arxiv.org/abs/2608.27549"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2608.27549"
+}</script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-09-01/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-09-01</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">An agent recovers physics from video by writing simulator code</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-09-01/cover.jpg"
+                         alt="An agent recovers physics from video by writing simulator code"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Code as a world model</h2>
+<p>Large multimodal models can already describe what happens in a video: a ball rolls, a cup falls, a car turns. Physics is where the old problem persists. They see the phenomenon, not the mechanism. They can give a tidy account of a clip but don't always understand <strong>why</strong> the object moved the way it did, how fast it was going, what would change if you pushed it harder, or what is hidden behind the picture at all.</p>
+<p>The authors of <strong>Code-as-World</strong> propose representing the physical world not as pixels, not only as text and not only as a 3D scene, but as <strong>executable code</strong> — a description you can run in a simulator, check, correct and run again.</p>
+<p>If you want a model that doesn't just retell what it saw but can compute velocity, estimate sizes, reason about collisions and answer "what happens if" questions, it needs a <strong>world model</strong> with objects, their parameters, state and dynamics written out explicitly. Code turns out to be a convenient language for that.</p>
+</section>
+<section>
+<h2>Why pixels and text fall short</h2>
+<p>The paper opens with an honest account of how the world is usually represented in AI today.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-01/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Why code complements pixels, 3D and language: every representation has gaps, and executable code closes some of them.</p>
+</div></figure>
+<p>Pixels preserve an enormous amount of detail. They are poor at showing causes. When something shifts in a video, the image alone doesn't always tell you whether the object moved on its own, was pushed, the camera moved, or one thing simply occluded another.</p>
+<p>3D holds geometry better. That still isn't enough. Recovering an object's shape is not the same as understanding its physics. A 3D model alone won't tell you mass, friction, momentum or the rules of interaction.</p>
+<p>Language works well as a compact description. It compresses meaning: "a person picked up a cup", "the ball bounced off the wall". But language breaks down where you need exact numbers and continuous states: distances, velocities, accelerations, contacts, angles, scales.</p>
+<p>Hence the paper's central claim: <strong>code can serve as an executable abstraction of the world</strong>. In it you can state explicitly:</p>
+<p>🟠 which objects are in the scene</p>
+<p>🟣 what sizes and physical parameters they have</p>
+<p>🟠 how they move and interact</p>
+<p>🟣 how all of it looks from the camera's point of view</p>
+<p>This is no longer just a description of a clip. It is a description of a world that can be run through a simulator and checked against data.</p>
+</section>
+<section>
+<h2>What an executable world representation is</h2>
+<p>The authors introduce their basic object — an <strong>executable world representation</strong>. It is essentially a program split into three parts.</p>
+<p>🟣 <strong>Physical composition</strong>: which objects exist, their shape, size, mass, friction, gravity, tables, walls, floor and other scene elements</p>
+<p>🟣 <strong>Dynamics</strong>: initial states, events over time, trajectories, collisions, episode length</p>
+<p>🟣 <strong>Visuals</strong>: camera, background, materials, lighting, frame rate, render settings</p>
+<p>The split looks practical. You can change the world and the way it looks independently. Keep the same collision physics, for instance, but move the camera. Or change the ball's initial velocity and watch the outcome change.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-01/fig_12.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">An example of an executable world representation: the scene is described in structured code and then run in a simulator.</p>
+</div></figure>
+<p>Under the hood this is built on MuJoCo and a structured scene description. "World as code" is not a metaphor here but a concrete format you can run.</p>
+</section>
+<section>
+<h2>How the agent builds a world from video and text</h2>
+<p>The most interesting part of the work isn't the format itself but how it gets built from the input. Recovering world code from a clip is an inverse problem: you have the observation and need to reconstruct the hidden mechanism.</p>
+<p>For this the authors build an <strong>agentic search loop</strong>. It runs as an iterative hypothesis:</p>
+<p>🟠 propose a version of the world</p>
+<p>🟠 assemble it in the simulator</p>
+<p>🟠 run it</p>
+<p>🟠 render the result</p>
+<p>🟠 compare it with the source video or text</p>
+<p>🟠 correct the hypothesis and repeat</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-01/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The search loop for an executable world representation: propose, run, render, check and refine.</p>
+</div></figure>
+<p>This resembles how a person explains a physical scene. You watch a video of a billiard ball, form an internal hypothesis about positions and forces, run it forward in your head, then check it against what you see.</p>
+<p>Text and video get different input adapters.</p>
+<p>With text as input, the system extracts entities, relations, events and the expected outcome. Missing parameters are then filled in with physical assumptions and refined inside the loop.</p>
+<p>With video as input, the system first builds auxiliary observations: depth, object masks and their tracks. Then it tries to assemble a 3D scene, assign each object a position, scale and motion, run it all through the simulator and see how closely the render matches the original video.</p>
+<p>Here the agent doesn't just produce an answer in one pass. It <strong>checks itself against an external environment</strong>.</p>
+</section>
+<section>
+<h2>What the approach buys you in practice</h2>
+<p>The first useful thing is <strong>controllable re-simulation</strong>. Once the world exists as code, you can change the conditions and get new clips with the same scene logic.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-01/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Once the world is recovered, scene parameters can be changed and the event re-simulated from another angle or with different physics.</p>
+</div></figure>
+<p>For example:</p>
+<p>🟣 change an object's initial velocity</p>
+<p>🟣 change the direction of motion</p>
+<p>🟣 move the camera</p>
+<p>🟣 get a new realistic clip that preserves the same physical structure</p>
+<p>That gives you a way to build data with control over the physics, not just over the image.</p>
+<p>The second is a <strong>better match to the video across iterations</strong>. The authors compare a single pass against the iterative loop and against a "sample five independent candidates and pick the best" mode. The iterative loop wins on several metrics at the same verification budget.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-01/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">With each round, iterative world search improves the match to the video and beats independent sampling at the same budget.</p>
+</div></figure>
+<p>Put differently, correcting a hypothesis from feedback works better than guessing from scratch many times over.</p>
+<p><strong>The results in short:</strong></p>
+<p>🟠 visual match improves round by round</p>
+<p>🟣 object mask agreement improves as well</p>
+<p>🟠 trajectory error drops</p>
+<p>🟣 object position accuracy goes up</p>
+</section>
+<section>
+<h2>Executable worlds as training data</h2>
+<p>The most practical application in the paper is <strong>training models for quantitative physical reasoning</strong>. These are tasks where the model has to answer with a number rather than say "the object is moving fast": what size, what velocity, what acceleration, what displacement.</p>
+<p>That is harder than ordinary video questions. Real clips rarely come with such answers labeled. But with a verified executable world representation, the quantities can be read straight out of the simulation: object dimensions, trajectory, velocity, acceleration, world coordinates.</p>
+<p>The authors train in two stages:</p>
+<p>🟣 first they fine-tune the model on measurement tasks in image space — sizes, coordinates, velocity in pixels</p>
+<p>🟣 then they add training on data from executable worlds, where physical quantities already come in real-world units</p>
+<p>Both supervised fine-tuning on labeled data and reinforcement learning are used. The reward accounts for how close the numeric answer is to the correct one, along with correct units and answer format.</p>
+<p>The idea: first the model learns to <strong>see and measure</strong>, then to <strong>calibrate those measurements to the physical world</strong>.</p>
+</section>
+<section>
+<h2>Results on QuantiPhy</h2>
+<p>The paper's main <strong>benchmark</strong> is <strong>QuantiPhy</strong>, which asks quantitative physics questions about video.</p>
+<p>The <strong>Code-as-World-VL</strong> family posts the best or near-best result among the models compared, closed systems included.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-01/fig_8.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">QuantiPhy scores rise with model size, and the 27B version reaches the best result.</p>
+</div></figure>
+<p><strong>The key numbers:</strong></p>
+<p>🟠 <strong>Code-as-World-VL-4B</strong>: average score of 50.6</p>
+<p>🟣 <strong>Code-as-World-VL-9B</strong>: 55.4</p>
+<p>🟠 <strong>Code-as-World-VL-27B</strong>: 58.6</p>
+<p>🟣 for comparison, <strong>Gemini-3.1 Flash</strong>: 54.8</p>
+<p>🟠 many open models land well below that — around 30–40</p>
+<p>Something else matters here: the 9B model beats a number of larger and more expensive systems. So it isn't scale alone that counts, but the kind of data and representation.</p>
+<p>Another interesting detail: adding training on executable worlds on top of pixel-space measurement also improves the model's basic ability to measure directly from an image. Physical supervision helps the "lower-level" visual skill too.</p>
+</section>
+<section>
+<h2>Where the limits are</h2>
+<p>The approach has clear limitations, and the authors don't hide them.</p>
+<p>First, the current version mostly handles rigid bodies and relatively controlled physics. The real world is harder: fluids, cloth, deformation, fire, fine contacts, complex friction, long chains of interaction.</p>
+<p>Second, if the simulator can't reproduce a process faithfully, the loop may settle on a <strong>plausible</strong> but not necessarily correct mechanistic explanation.</p>
+<p>Third, the question-answering model itself doesn't yet run the whole world-search loop internally. It learns from the pipeline's output but doesn't inherit the procedure — hypothesis, simulation, check, correction. That logic still lives in the external scaffolding.</p>
+<p>Today the system benefits from <strong>data produced through a world model</strong>, but it hasn't become a physical investigator in its own right.</p>
+</section>
+<section>
+<h2>Why this matters</h2>
+<p>There is one idea in this work that reaches well beyond video physics. <strong>Executable code can be a good intermediate language between observation and reasoning</strong>.</p>
+<p>Pixels are too raw. Text is too vague. A network's hidden state is too opaque. Code offers a rare combination:</p>
+<p>🟣 compactness</p>
+<p>🟣 explicit structure</p>
+<p>🟣 verifiability</p>
+<p>🟣 room to intervene</p>
+<p>🟣 compatibility with simulators</p>
+<p>That makes code a convenient scaffolding for tasks where a model must not only recognize a scene but also compute, test hypotheses and answer questions about the consequences of actions.</p>
+<p>Seen more broadly, this bridges to several directions at once: more physically consistent video generation, AI systems with an explicit <strong>world model</strong>, robotics that needs scene-level planning, and multimodal agents that can treat the world as an executable system instead of merely talking about it.</p>
+</section>
+<section>
+<h2>The takeaway</h2>
+<p><strong>Code-as-World</strong> proposes treating a physical scene as a program, not just as a stream of pixels or a text description. That changes how you work with the world: instead of one answer off the top, you get a loop of hypothesis, simulation and check.</p>
+<p>For physical <strong>reasoning</strong> this is especially useful. When a model gets access to even the traces of that procedure — through data from executable worlds — it answers quantitative questions about size, velocity and acceleration better. And the QuantiPhy results show the approach can outperform large closed models.</p>
+<p>The core idea is simple: <strong>to understand physics, a system needs not just a visible world but an executable model of it</strong>. Code turned out to be a convenient format for that model — because you can run it, edit it and check it against reality.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2608.27549" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://github.com/mirros-lab/code-as-world" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12.5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0.97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0.31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12.5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Orca learns one latent world state and reads out text, images and robot actions</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Orca learns one latent world state and reads out text, images and robot actions" />
+    <meta property="og:description" content="When models stop talking and start understanding what is happening in the world" />
+    <meta name="description" content="Похоже, путь к более общему ИИ лежит не в умении продолжать текст или картинку, а в попытке понять, как устроен сам мир.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/orca-learns-one-latent-world-state-and-reads-out-text-images-and-robot-actions/" />
+    <link rel="canonical" href="https://dataist.ai/research/orca-learns-one-latent-world-state-and-reads-out-text-images-and-robot-actions/">
+    <meta property="og:image" content="https://dataist.ai/2026-07-02/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-02/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Orca learns one latent world state and reads out text, images and robot actions",
+  "url": "https://dataist.ai/research/orca-learns-one-latent-world-state-and-reads-out-text-images-and-robot-actions/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/orca-learns-one-latent-world-state-and-reads-out-text-images-and-robot-actions/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "When models stop talking and start understanding what is happening in the world",
+  "image": "https://dataist.ai/2026-07-02/cover.png",
+  "datePublished": "2026-07-02",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Orca: The World is in Your Mind",
+    "identifier": "arXiv:2606.30534",
+    "url": "https://arxiv.org/abs/2606.30534"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2606.30534"
+}</script>
+    <meta property="article:published_time" content="2026-07-02T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-07-02</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Orca learns one latent world state and reads out text, images and robot actions</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-02/cover.png"
+                         alt="Orca learns one latent world state and reads out text, images and robot actions"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When models stop talking and start <strong>understanding what is happening in the world</strong></h2>
+<p>For the past couple of years AI has been learning a grab bag of tricks. Some models continue text well. Others fill in an image. Others try to control a robot. But nearly all of them solve <strong>narrow problems</strong>: predict the next token, the next frame or the next action.</p>
+<p>The authors of Orca propose a different framing. What if a model should be learning neither the “next word” nor the “next pixel,” but the <strong>next state of the world</strong>? Not guessing the shape of an answer, but grasping internally what changes in a scene when a person does something, an object shifts, a cup falls, a robot misses its grip and tries again.</p>
+<p>Ambitious, and in places overly so. But the paper is interesting for its engineering bet rather than its promises: build one general <strong>world model</strong>, train it on video, events and questions about video, then check whether text, images and robot actions can all be read out of the same internal representation.</p>
+<p>In short: the idea is strong, some of the results are genuinely impressive, especially in robotics. But this is an <strong>early step</strong>, not a finished general-purpose machine for understanding the world.</p>
+</section>
+<section>
+<h2>The core idea behind Orca</h2>
+<p>Instead of building separate models for text, video and robots, Orca tries to learn a single <strong>latent state</strong> of the world. That internal representation is meant to answer one simple question: “what is happening right now, and how might it change next?”</p>
+<p>The authors bet on two training regimes.</p>
+<p>The first is <strong>“unconscious” learning</strong>. The model watches continuous video and learns to predict what the scene's next state will be. No labels. Just a stream of observations. That is how it is supposed to pick up dense, natural dynamics: objects moving, collisions, occlusions, inertia, everyday physics.</p>
+<p>The second is <strong>“conscious” learning</strong>. Here language is added to the video: event descriptions, instructions, questions and answers. The model learns not just to guess the immediate future but to understand <strong>meaningful transitions</strong>: the “before” and “after” of an action, the goal, the intent, the causal link.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-02/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Orca's overall design: one encoder learns the latent world state, and separate lightweight decoders turn it into text, an image or an action.</p>
+</div></figure>
+<p>The architecture is tidy. There is an encoder and a decoder. The encoder learns the shared internal space. It is then <strong>frozen</strong>, and lightweight readout modules are trained on top of it for whichever modality is needed: text, image or robot control. That detail matters. It is there to show the gains do not come from separately fine-tuning a large model for every task. They come from the quality of the shared latent state.</p>
+<p>Why does that matter? Because, at least in principle, this setup is closer to how we think about the world ourselves. We do not have one brain for text and another for picking up a spoon. We have a single picture of what is going on, and words, expectations and actions come out of it.</p>
+</section>
+<section>
+<h2>How Orca was trained</h2>
+<p>The authors went big on data. They assembled a “world training” corpus that includes:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">125,000 hours of video,</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">160 million event annotations,</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">11.5 million video question-answer pairs.</span></div>
+<p>Only a tenth of the video data was actually used in this version. That alone says the authors see this as a long program rather than a one-off experiment.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-02/fig_2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The data Orca uses: continuous video for natural transitions, text-annotated events for meaningful changes, and video QA for semantics and common sense.</p>
+</div></figure>
+<p>Pretraining rests on three tasks.</p>
+<p>The first is predicting the next state from the current frame. This is the “unconscious” part.</p>
+<p>The second is predicting a state specified by an event or an instruction. The model sees a scene together with a text condition pointing to the previous or the next significant event. This is the “conscious” part.</p>
+<p>The third is answering questions about video. That is there to push language, semantics and everyday common sense into the latent state.</p>
+<p>Notably, Orca is not trained to reconstruct pixels directly. It predicts the representation of the next state inside the visual encoder's space. The bet is not on a pretty picture but on <strong>the semantic dynamics of the scene</strong>.</p>
+<p>After that the encoder is frozen, and three readouts are trained separately:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">to text, through the existing language head;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">to images, through a lightweight adapter and a frozen image generation model;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">to actions, through a separate robot control module.</span></div>
+<p>It is a good design for testing the hypothesis. If performance on three different tasks improves while the core stays frozen, the internal representation really does carry useful information about the world.</p>
+</section>
+<section>
+<h2>The results: the paper's central claim holds up</h2>
+<p>The first check is scaling. If the idea is right, training loss should fall as the model and the data grow. It does.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-02/fig_5.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The larger the model and the data, the better the decoders perform: text, image prediction and robot actions all improve.</p>
+</div></figure>
+<p>The second check is far more interesting: does a stronger world model help on downstream tasks? Here too the answer is yes. As pretraining scales, all three readouts improve — text, image and actions.</p>
+<p>That is probably the paper's most important result. It shows the authors did not just train one more video model — they got a <strong>shared internal representation</strong> that transfers across tasks.</p>
+<p>The gain shows up in robotics as well, even though the model never saw labeled actions during pretraining. In a field where real robot data is always scarce and expensive, that is a strong signal: some skills may be growable from ordinary video, provided the model can understand state transitions.</p>
+</section>
+<section>
+<h2>Text: Orca is better at change, causality and motion</h2>
+<p>On the text side, Orca was evaluated on four benchmarks covering video understanding, temporal dynamics, spatial relations and causal questions.</p>
+<p>Orca-4B does well: on average it beats models of comparable size and some specialized approaches. The gain is clearest on tasks where recognizing an object is not enough and you have to work out <strong>how the scene changes over time</strong>.</p>
+<p>The authors break performance down into four broad categories:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">state transitions,</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">commonsense reasoning,</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">spatial relations,</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">motion dynamics.</span></div>
+<p>Orca looks strongest on state transitions and dynamics. That follows: train on video and events, and you should be better at telling what leads to what.</p>
+<p>No one here is claiming magic — that it understands everything better than everyone. On the spatial tasks the margin is already thin. But the overall picture is clear: betting on next-state prediction does help with questions that require thinking in time rather than looking at a single frame.</p>
+</section>
+<section>
+<h2>Images: not prettier, but <strong>more physical</strong></h2>
+<p>The image section is the most unusual. The authors are not competing on artistic generation. They want something else: can Orca's latent state help predict <strong>how a real scene changes after an action</strong>.</p>
+<p>For that they built their own benchmark of real-world interactions. The input is a source image plus an instruction. The output should be a picture of the result. What is scored is not beauty but fidelity to the action, preservation of the scene and physical plausibility.</p>
+<p>Orca-4B posts the best average score among the models compared. The description and the examples show where the advantage lies: fewer objects “teleporting,” fewer extra items appearing out of thin air, better preservation of the robot's pose, of contact relations and of the scene's logic.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-02/fig_6.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Image prediction on real scenes: Orca does better at preserving scene structure, objects and plausible changes after an action.</p>
+</div></figure>
+<p>It is a subtle but important shift. Image generators are usually excellent at visual plausibility and can be poor at <strong>causal plausibility</strong>. The picture looks good, but there is no telling how the world got into that state. On these results, Orca holds the causal thread better.</p>
+</section>
+<section>
+<h2>Robots: the strongest part of the paper</h2>
+<p>The liveliest and most convincing part of the work is the experiments on a real bimanual robot. Five tasks. Two hard generalization settings: new environments and new objects. Fine-tuning on just 200 trajectories per task. That is very little.</p>
+<p>And this is where the world-model idea proves useful beyond comprehension benchmarks, in physical action. On average Orca clearly beats Qwen3.5 running the same action module, and comes out comparable to — in places better than — π0.5, a strong specialized robotics model pretrained on large robot datasets.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-02/fig_7.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Orca recovers better from failed grasps: the robot does not freeze, it tries again and makes progress on the task.</p>
+</div></figure>
+<p>The most interesting thing here is not the bare success rate. The authors look at <strong>intermediate progress</strong> and at the ability to recover from errors. Orca looks stronger precisely as a system that “notices what went wrong” and tries to get back to a working state. If the robot fumbles a spoon, Orca more often makes another sensible attempt instead of stalling.</p>
+<p>That is a very good sign. In the real world, failures happen constantly. A robot that simply follows a template breaks at the first deviation. A robot with even a crude model of the world's state can notice the goal was not reached and correct itself.</p>
+</section>
+<section>
+<h2>What the paper gets right</h2>
+<p>The paper has several genuine strengths.</p>
+<p>First, <strong>the problem is framed correctly</strong>. Moving from “next token” to “next state” is not just marketing. It is a useful frame if what we want is systems that understand the world rather than imitate answers.</p>
+<p>Second, <strong>one idea tested across three channels at once</strong>: text, images, actions. That makes the case far more convincing.</p>
+<p>Third, <strong>methodological honesty</strong>. The authors freeze the core and train only the lightweight readouts. That reduces the risk that the results come down to a larger number of trainable parameters on a particular task.</p>
+<p>Fourth, <strong>a focus on the real world</strong>. Not synthetic data, not pretty generation, but scenes with objects, contact, failure and a second attempt.</p>
+</section>
+<section>
+<h2>The weak spots, and why a general world model is still far off</h2>
+<p>Strong as the idea is, the paper is honest about its limits.</p>
+<p>First, Orca lives mostly in vision and language. The real world also has sound, touch, force, temperature, and the state of your own body. Without those, the world model stays incomplete.</p>
+<p>Second, the model learns to predict states not directly but inside the space of an off-the-shelf visual encoder. That is convenient engineering, but it means the “world” partly inherits the limits of someone else's visual space.</p>
+<p>Third, the scale is modest so far — 0.8B and 4B. For an idea this ambitious that is clearly not enough. The authors write themselves that a small model ends up trading off between text, image and action.</p>
+<p>Fourth, the prediction horizon is short. Orca learns local state transitions well, but this is not yet a model of processes that run for hours or days.</p>
+<p>And finally, some of the evaluation, especially on images, is still rough. Building your own benchmark is fine, but it has to be put through its paces by the community.</p>
+</section>
+<section>
+<h2>The takeaway</h2>
+<p>Orca is not “another LLM with video.” Nor is it one more robotics model. It is an attempt to redefine what is being learned in the first place: instead of words, frames and actions — <strong>world states and the transitions between them</strong>.</p>
+<p>Not everything worked. A general world model is still an enormous distance away. But the paper already delivers a practical conclusion: train a system on the natural dynamics of video, on meaningful events and on language conditions, and you get an internal representation that is useful for several different tasks at once.</p>
+<p>Orca's main value is that it returns the AI conversation to a more fundamental question: <strong>does the model understand how the world changes</strong>. And on that question the paper gives, for the first time, an answer that is engineering rather than philosophy.</p>
+<p>Cautious so far. But already very interesting.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2606.30534" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

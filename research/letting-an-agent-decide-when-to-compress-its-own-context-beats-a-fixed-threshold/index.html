@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Letting an agent decide when to compress its own context beats a fixed threshold</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Letting an agent decide when to compress its own context beats a fixed threshold" />
+    <meta property="og:description" content="When an agent runs out of memory mid-task" />
+    <meta name="description" content="Когда ИИ-агент долго решает задачу, он легко тонет в собственных заметках и начинает путаться в том, что было важным.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/letting-an-agent-decide-when-to-compress-its-own-context-beats-a-fixed-threshold/" />
+    <link rel="canonical" href="https://dataist.ai/research/letting-an-agent-decide-when-to-compress-its-own-context-beats-a-fixed-threshold/">
+    <meta property="og:image" content="https://dataist.ai/2026-07-28/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-28/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Letting an agent decide when to compress its own context beats a fixed threshold",
+  "url": "https://dataist.ai/research/letting-an-agent-decide-when-to-compress-its-own-context-beats-a-fixed-threshold/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/letting-an-agent-decide-when-to-compress-its-own-context-beats-a-fixed-threshold/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "When an agent runs out of memory mid-task",
+  "image": "https://dataist.ai/2026-07-28/cover.jpg",
+  "datePublished": "2026-07-28",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "ACM: Agentic Context Management for Long Horizon Tasks",
+    "identifier": "arXiv:2607.23809",
+    "url": "https://arxiv.org/abs/2607.23809"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2607.23809"
+}</script>
+    <meta property="article:published_time" content="2026-07-28T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-07-28</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Letting an agent decide when to compress its own context beats a fixed threshold</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-28/cover.jpg"
+                         alt="Letting an agent decide when to compress its own context beats a fixed threshold"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When an agent runs out of memory mid-task</h2>
+<p>AI agents have a problem on long tasks: they get tangled in their own steps. Web searches, documents read, attempts, rollbacks, fresh hypotheses — all of it piles up in the context. At some point the history gets too long. The model either hits the limit or simply starts thinking worse because there is too much noise around it.</p>
+<p>A new paper from Carnegie Mellon University and Meta offers more than another way to compress history — it reframes the problem. The authors call it ACM, agentic context management. The idea is simple: the decision to trim the history belongs to the agent itself, not to an external crutch bolted on around it. And it happens without losing the original data.</p>
+<p>There is a lot of talk about million-token context windows, but in practice a long context does not cancel out overload. If you want an agent to spend hours hunting for an answer, writing code or working through a repository, it needs more than a large memory — it needs the skill to manage it.</p>
+</section>
+<section>
+<h2>What's wrong with ordinary context compression</h2>
+<p>The standard recipe goes like this: once the history grows past a threshold, an external module writes a summary, the old messages are thrown away, and the agent carries on from the short retelling. Better than nothing, but it brings two problems at once.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Compression loses detail. If a specific line from an old document turns out to be needed later, it may no longer be there.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 The decision to compress is made not by the agent but by a rigid rule along the lines of "compress at 90% of the window."</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Such a rule has no idea what is happening in the reasoning right now: the agent may be at a critical turn and using exactly that old context.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 The longer the task, the higher the chance the summary flattens the history too crudely.</span></div>
+<p>The authors set against this a model closer to human memory: a working memory for what is needed right now, and an external memory where the rest can be put away — but not forever.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-28/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The ACM scheme: a plain agent hits the limit, a summarizing agent compresses the history by force, and ACM decides for itself when to put context away without losing the original messages.</p>
+</div></figure>
+<p>In ACM the agent has just two special tools:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Context management — compress part of the past history into a short summary and save the original messages to external storage.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Memory query — when needed, pull out of external memory exactly the fragment that is required at that moment.</span></div>
+<p>The key point: the original history does not disappear. It simply moves out of the working window into external memory. So the compression here is effectively lossless.</p>
+</section>
+<section>
+<h2>What the authors actually propose</h2>
+<p>The paper's main idea is not compression as such but that context management becomes an action of the agent — a deliberate step like searching the web, opening a document or submitting a patch in a coding task.</p>
+<p>The agent decides for itself:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 when it is time to clear out the working context;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 what exactly can be removed from the current window;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 when it is worth going back to the archive;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 when no compression is needed and it is better to keep searching.</span></div>
+<p>This sounds natural, but for today's models it is not an obvious skill. Even very large models, the authors show, rarely start managing context well on their own. They have to be shown how and fine-tuned on trajectories of that kind.</p>
+</section>
+<section>
+<h2>How they are taught to do it</h2>
+<p>This is the most interesting part of the work. The authors did not just bolt two tools onto the model; they worked out how to teach it to use them at the right moment.</p>
+<p>The training setup is a student-teacher pair. The student is Qwen3.5-9B; the teacher is the much larger Qwen3.5-397B-A17B.</p>
+<p>The process runs in two passes:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 The student solves the task without the context-management tools.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 The student solves the same task with the context-management tools.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 The teacher reviews both trajectories and corrects them.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 The student is then fine-tuned on the corrected examples.</span></div>
+<p>But there is a subtlety that matters. The teacher makes two kinds of edits.</p>
+<p>In the first, it looks at the trajectory without ACM and inserts the moment where context management should have been called — when the agent is looping, repeating the same searches, or has piled up too much useless history.</p>
+<p>In the second, it looks at the trajectory with ACM and does the opposite: strips out compression that was not needed. So the model learns not only when to clear the context but also when to leave it alone.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-28/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The training-data pipeline: the student runs the task with and without the tools, and the teacher adds or removes context-management calls.</p>
+</div></figure>
+<p>That is a sensible move. Telling an agent to compress the history more often is not enough — it will start doing it too early and get in its own way. Here the model is taught the balance: where a cleanup helps and where it breaks the line of the solution.</p>
+</section>
+<section>
+<h2>What it did in practice</h2>
+<p>The authors tested ACM on three long-horizon benchmarks:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 BrowseComp-Plus — hard agentic search;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 DeepSearchQA — multi-step search questions;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 SWE-Bench Verified — coding tasks on real repositories.</span></div>
+<p>The baseline comparison is against ReAct, a plain agent with no context management, and against systems with external threshold-triggered compression.</p>
+<p>The results look like this: simply adding ACM already improves how the agent behaves, and fine-tuning on the purpose-built trajectories adds another clear gain.</p>
+<p>For Qwen3.5-9B the authors report:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 a 27% gain over ReAct on BrowseComp-Plus;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 a 16% gain on DeepSearchQA;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 an 8% gain on SWE-Bench Verified.</span></div>
+<p>On BrowseComp-Plus, Pass@1 accuracy rises from 0.570 for ReAct to 0.727 for the fine-tuned ACM version. And the model stays an order of magnitude smaller than some of the best open and closed systems available right now.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-28/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Qwen3.5-9B accuracy on BrowseComp-Plus: ReAct, plain ACM, and three epochs of fine-tuning with ACM. Fine-tuning raises both mean accuracy and the consistency of the answers.</p>
+</div></figure>
+<p>Another result that matters: ACM lowers peak pressure on the context. On average the peak token count drops by roughly 20% compared with a plain agent. That counts not only for quality but for inference cost: a lower peak means less load on server memory and on the model's cache.</p>
+</section>
+<section>
+<h2>Why the quality goes up</h2>
+<p>The authors analyze agent behavior separately, and the mechanism there is easy to follow. ACM does not merely save tokens. It lets the agent explore the task longer without cluttering the working window.</p>
+<p>On the context-growth chart it shows up as a sawtooth: the agent periodically trims the history itself, before it hits the ceiling. Unlike ReAct, which only accumulates messages, ACM pauses to tidy up and then goes on searching.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-28/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Input tokens over the course of a solution: with ACM the context shrinks periodically, so the agent can work longer and does not run into the limit as fast.</p>
+</div></figure>
+<p>Three effects follow from that.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 The agent can take more search and verification steps.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 The working context carries less junk from old dead ends.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Answers become more stable across different runs of the same task.</span></div>
+<p>The last point is the most interesting. The authors look beyond Pass@1 at metrics for agreement across several independent runs. ACM improves not only the ceiling of what the model can do but its repeatability. Put simply, the model does not just occasionally find the right path — it holds onto it to the end more often.</p>
+</section>
+<section>
+<h2>One telling example</h2>
+<p>The paper includes a vivid case: a multi-step question from BrowseComp-Plus that requires tying together several constraints drawn from an author's biography, a dissertation, a co-authorship and a restaurant's founding date. Without context management the base model failed in all four runs.</p>
+<p>The ACM version behaved differently:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 it tracked the size of its current context;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 it called context management several times;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 it went to external memory as needed;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 it kept searching until it had gathered every confirmation;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 it closed out the solution only once the context was compact again.</span></div>
+<p>In that trajectory the raw history grew to 222,000 tokens, while the working window stayed below the base model's limit. The agent effectively solved a task that would have fallen apart long before the finish without external memory.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-28/fig_5.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">An example of a long ACM trajectory: the agent watches its own context size, alternates compression with memory queries, and covers a path that would otherwise have exceeded the window limit.</p>
+</div></figure>
+<p>This is probably the most convincing passage in the paper. It shows the point is not a cosmetic tweak to the prompt but a new working habit for the agent.</p>
+</section>
+<section>
+<h2>What the comparison with big models shows</h2>
+<p>There is one more curious observation. Even GPT-5.5, inside this architecture, barely uses the context-management tools. A large model does not necessarily start clearing its memory sensibly just because the option is there.</p>
+<p>That matters for two reasons.</p>
+<p>First, context management is not a skill that arrives automatically as a model grows.</p>
+<p>Second, distilling solutions from a strong model is not enough on its own. If the teacher solved the task without ever calling memory, the student never sees the behavior it needs. That is why the authors bet on purpose-built data in which the moments to compress and the moments to refrain are labeled explicitly.</p>
+<p>A separate experiment confirms it, in fact. Plain distillation from GPT-5.5 does not produce the same gain as training on the ACM data itself. And a combination of the two approaches works best on part of the task set.</p>
+</section>
+<section>
+<h2>Where the approach runs out</h2>
+<p>The authors are straightforward about the limit as well: ACM is not useful for every model. If a model is too weak and gives up after two or three steps, there is nothing for it to manage. The context never has time to get long.</p>
+<p>They give the example of a smaller model with 4B parameters. It almost always runs a single search, then guesses an answer quickly and ends the trajectory. It never reaches long-horizon problems at all. So the memory tools are useless there not because they are bad but because the underlying ability to sustain long reasoning is not there yet.</p>
+<p>That is an important qualifier for the agent market. Context management is not a substitute for a model's capabilities but a layer on top of them. The agent first has to be able to work long and coherently; only then does memory start to help in earnest.</p>
+</section>
+<section>
+<h2>The takeaway</h2>
+<p>Long tasks break agents not only through the size of the window but through the mess inside it. ACM offers a simple, practical answer: make context management an action the agent takes itself, rather than an external timer with a summarizer attached.</p>
+<p>Several things come through in the results:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 keeping the old history losslessly beats replacing it with a summary for good;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 the decision to compress should depend on the course of the reasoning, not just on how full the window is;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 training explicitly on when to compress and when not to gives a clear gain on long tasks;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 context management improves not only accuracy but also how far the agent can explore and how repeatable its solutions are.</span></div>
+<p>If agents keep moving toward long autonomous tasks — deep search, working with code, complicated tool chains — mechanics like these will almost inevitably become a standard part of the stack. Not because context windows are small, but because even a large window has to be kept in order.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.23809" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://github.com/lixiaochuan2020/agentic-context-management" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Theory of mind modules don't reliably improve LLM agent coordination</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Theory of mind modules don't reliably improve LLM agent coordination" />
+    <meta property="og:description" content="Analysis · 2026-03-04
+                
+
+                
+                
+                    Theory of mind for AI:
+                    what happens when agents start guessing at each other's intentions" />
+    <meta name="description" content="Оценка Theory of Mind и внутренних убеждений в мультиагентных системах на базе LLM. Станет ли координация лучше?">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/theory-of-mind-modules-dont-reliably-improve-llm-agent-coordination/" />
+    <link rel="canonical" href="https://dataist.ai/research/theory-of-mind-modules-dont-reliably-improve-llm-agent-coordination/">
+    <meta property="og:image" content="https://i.ibb.co/DHZPc3fF/Chat-GPT-Image-Mar-4-2026-07-35-22-PM.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://i.ibb.co/DHZPc3fF/Chat-GPT-Image-Mar-4-2026-07-35-22-PM.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-p strong {
+            @apply font-semibold text-black dark:text-white;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .apple-img {
+            @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white;
+        }
+
+        /* Карточки-списки */
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 mb-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Theory of mind modules don't reliably improve LLM agent coordination",
+  "url": "https://dataist.ai/research/theory-of-mind-modules-dont-reliably-improve-llm-agent-coordination/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/theory-of-mind-modules-dont-reliably-improve-llm-agent-coordination/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Analysis · 2026-03-04\n                \n\n                \n                \n                    Theory of mind for AI:\n                    what happens when agents start guessing at each other's intentions",
+  "image": "https://i.ibb.co/DHZPc3fF/Chat-GPT-Image-Mar-4-2026-07-35-22-PM.png",
+  "datePublished": "2026-03-04",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Evaluating Theory of Mind and Internal Beliefs in LLM-Based Multi-Agent Systems",
+    "identifier": "arXiv:2603.00142",
+    "url": "https://arxiv.org/abs/2603.00142"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2603.00142"
+}</script>
+    <meta property="article:published_time" content="2026-03-04T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in"><!-- Category tag -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Analysis · 2026-03-04</span>
+                </div>
+
+                <!-- Headline -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Theory of mind modules don't reliably improve LLM agent coordination</h1>
+
+                <!-- Cover image -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://i.ibb.co/DHZPc3fF/Chat-GPT-Image-Mar-4-2026-07-35-22-PM.png"
+                         alt="Theory of mind for AI cover"
+                         class="w-full h-auto object-cover">
+                </div></header>
+
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">Evaluating theory of mind and internal beliefs in LLM-based multi-agent systems. Does coordination actually get better?</p>
+
+                <p class="article-p fade-in">LLM-based multi-agent systems are usually described as a team of agents that negotiates, plans and works through hard tasks on its own. In practice it is less romantic: the moment there is more than one agent, they share a second problem on top of what to do — how to read each other correctly. One agent confidently assumes, another claims to know for sure, a third says nothing in the shared channel, and the team falls apart into uncoordinated moves.</p>
+                <p class="article-p fade-in">The authors of <strong>Evaluating Theory of Mind and Internal Beliefs in LLM-Based Multi-Agent Systems</strong> take on a question worth asking: if you give agents more human-like cognitive machinery — the ability to reason about what others intend (theory of mind, ToM) and internal beliefs in the BDI style (belief–desire–intention) — does coordination improve? And what happens if those beliefs are also checked by formal logic, so that an agent never acts on a contradiction?</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://arxiv.org/html/2603.00142v1/img/intro.png" alt="Theory of mind modules don't reliably improve LLM agent coordination" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Internal and external reasoning in an LLM-based agent: what it observes, what it thinks, and what it reports to the others.</figcaption>
+                </figure>
+
+                <h2 class="article-h2 fade-in">A city to save, and agents that (sometimes) get in each other's way</h2>
+                <p class="article-p fade-in">To measure team intelligence on something other than abstract dialogue, the researchers built a simulation: a city of four districts. Three agents are each responsible for one resource — food, medicine and security. District stockpiles drain continuously, and when something runs short, that district's health drops. Agents are limited in how far they can move and how much they can carry. The winning team is the one that keeps average district health as high as possible.</p>
+                <p class="article-p fade-in">It shows clearly that a multi-agent system is not three independent decisions but continuous synchronization: who goes where, who is already carrying what, which district is closest to critical. And above all, how far you can trust another agent to actually do what it said it would.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://arxiv.org/html/2603.00142v1/img/system.png" alt="Theory of mind modules don't reliably improve LLM agent coordination" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">System overview: agents act in the game, draw on shared and private memory, and coordinate through real-time updates.</figcaption>
+                </figure>
+
+                <h2 class="article-h2 fade-in">How the agent thinks: ToM, internal beliefs and a logic check</h2>
+                <p class="article-p fade-in">The architecture is built around two levels of memory. Shared memory is a common space where agents post messages about observations and plans. Private memory holds internal notes that are never published: the agent's model of the world, its assumptions about the others, and a draft of its next action.</p>
+                <p class="article-p fade-in">Then comes the interesting part. The authors switched two cognitive modules on and off to isolate their effect:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">ToM</strong> forces the agent to state its expectations explicitly: what the other agents are likely to do, what their goals are, where they are heading.</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">Internal Beliefs</strong> is an attempt to compile observations into a stricter world model that can actually be reasoned over.</span>
+                </div>
+
+                <p class="article-p fade-in">They went further: internal beliefs are run through Answer Set Programming with the Clingo solver. If a contradiction turns up in the beliefs, the agent gets feedback and rebuilds its reasoning (up to three attempts). The system does not merely ask the model to think more carefully — it formally checks whether the description of the situation has collapsed into mutually incompatible statements.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://arxiv.org/html/2603.00142v1/img/convo.png" alt="Theory of mind modules don't reliably improve LLM agent coordination" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">The iterative logic-verification pipeline: beliefs are translated into ASP, checked by Clingo, and revised when they conflict.</figcaption>
+                </figure>
+
+                <h2 class="article-h2 fade-in">The shared channel and the telephone-game effect</h2>
+                <p class="article-p fade-in">Communication is sequential: agents take turns reading the shared context and adding a message of their own. That is realistic — it is how LLM orchestrators are usually wired — but it has a side effect. If one agent gets a prediction wrong or states a plan vaguely, the others can build bad decisions on top of it. ToM cuts both ways here. It can help anticipate a partner's move, or it can reinforce confidence in a wrong guess.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://arxiv.org/html/2603.00142v1/img/logic.png" alt="Theory of mind modules don't reliably improve LLM agent coordination" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">An exchange between the Food, Medicine and Security agents: observations, beliefs and actions passed around.</figcaption>
+                </figure>
+
+                <h2 class="article-h2 fade-in">Results across models: there is no universal upgrade</h2>
+                <p class="article-p fade-in">The experiments ran on several LLMs: ChatGPT-3.5-Turbo, ChatGPT-4o, ChatGPT-4o-mini, Meta Llama 3.1 8B and Claude 3.5 Sonnet. Each model was tested in four configurations: baseline (no ToM, no beliefs), ToM only, internal beliefs with logic verification only, and ToM+IB together.</p>
+                <p class="article-p fade-in">The result is unexpectedly honest: ToM and internal beliefs buy you no guaranteed gain. On strong models such as ChatGPT-4o, performance is already high and fairly stable — turning the modules on barely moves the picture, or shifts it only slightly. Claude 3.5 Sonnet also scores high, but it responds to the modules differently.</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">Weaker models are messier: adding ToM sometimes helps and sometimes hurts, apparently because of the extra cognitive load and a tendency to over-infer what the others intend. On Meta Llama 3.1 8B, for instance, ToM-only looks clearly better than some of the other combinations, while ToM+IB can fall off.</span>
+                </div>
+
+                <p class="article-p fade-in">That ambiguity is the authors' point: in a multi-agent system what matters is not that the smart modules are present, but whether a given LLM can carry them all at once, and whether the communication protocol keeps guesses from snowballing into errors.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://arxiv.org/html/2603.00142v1/img/plot.png" alt="Theory of mind modules don't reliably improve LLM agent coordination" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Final district health: medians and 95% confidence intervals across models and configurations.</figcaption>
+                </figure>
+
+                <h2 class="article-h2 fade-in">What this means in practice</h2>
+                <p class="article-p fade-in">The paper's main takeaway is a practical one: if you are building an LLM-based multi-agent system, you cannot simply bolt on ToM or add a world model and expect coordination to take off. These mechanisms can make a team work better, and they can also get in the way — especially when the LLM spends its effort on elaborate reasoning and then gets the basics wrong.</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">5</strong> — LLMs tested</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">ToM + IB</strong> — No guarantees</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">Clingo</strong> — Logic verification</span>
+                </div>
+
+                <p class="article-p fade-in">The paper's strength is that it shows the engineering reality: cognitive add-ons only work in combination with the quality of the LLM itself, the memory design, the communication protocol and plain consistency checks. Symbolic verification through Clingo looks promising as a safety belt, but it is not free either: translation from natural language is ambiguous, and the compute cost can become a limit at scale.</p>
+
+                <!-- Источник -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2603.00142" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI paper breakdowns
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

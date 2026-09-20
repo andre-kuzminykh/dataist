@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Even the best agents forget, loop and lose the plan over hundreds of steps</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Even the best agents forget, loop and lose the plan over hundreds of steps" />
+    <meta property="og:description" content="When an AI has to live in a world, not just answer" />
+    <meta name="description" content="Почему даже сильные ИИ-агенты теряются там, где человеку нужно просто немного освоиться, запомнить важное и додумать план до конца?">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/even-the-best-agents-forget-loop-and-lose-the-plan-over-hundreds-of-steps/" />
+    <link rel="canonical" href="https://dataist.ai/research/even-the-best-agents-forget-loop-and-lose-the-plan-over-hundreds-of-steps/">
+    <meta property="og:image" content="https://dataist.ai/2026-06-30/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-06-30/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Even the best agents forget, loop and lose the plan over hundreds of steps",
+  "url": "https://dataist.ai/research/even-the-best-agents-forget-loop-and-lose-the-plan-over-hundreds-of-steps/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/even-the-best-agents-forget-loop-and-lose-the-plan-over-hundreds-of-steps/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "When an AI has to live in a world, not just answer",
+  "image": "https://dataist.ai/2026-06-30/cover.png",
+  "datePublished": "2026-06-30",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "AgentOdyssey: Open-Ended Long-Horizon Text Game Generation for Test-Time Continual Learning Agents",
+    "identifier": "arXiv:2606.24893",
+    "url": "https://arxiv.org/abs/2606.24893"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2606.24893"
+}</script>
+    <meta property="article:published_time" content="2026-06-30T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-06-30</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Even the best agents forget, loop and lose the plan over hundreds of steps</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-06-30/cover.png"
+                         alt="Even the best agents forget, loop and lose the plan over hundreds of steps"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When an AI has to live in a world, not just answer</h2>
+<p>Most of the talk about LLMs is about writing code, solving problems and holding a conversation. But nearly every test of those abilities has the same shape: the model is handed a task, it answers, and that is the end of it. <strong>A real AI agent does not work that way</strong>. It has to act step by step, remember, learn as it goes, come back to objects and plans it set aside, keep track of where things are, and stop repeating the same mistake.</p>
+<p>That is exactly the sore spot a new paper on <strong>AgentOdyssey</strong> presses on. The authors offer not one more benchmark but an entire game environment for testing whether AI agents can <strong>learn during use</strong> rather than just look good on static tests. The results are sobering: even the best agents fall well short of humans.</p>
+</section>
+<section>
+<h2>What AgentOdyssey is and why it exists</h2>
+<p>AgentOdyssey is a generator of open-ended text games. The agent sees the world as text: where it is, which objects are nearby, which characters are around, what it is carrying, how much health it has, what time it is. Then it picks an action — move to another area, pick up an item, talk to a character, craft something, attack, wait, and so on.</p>
+<p>At first glance this looks like an old text adventure. The point runs deeper. The world is built to test five basic abilities, without which a long-lived AI agent gets nowhere:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">exploration;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">episodic memory;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">acquiring knowledge about the world;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">skill acquisition;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">long-horizon planning.</span></div>
+<p>Working out the next move is not enough. The agent has to figure out how the world works, notice hidden regularities, remember events from hundreds of steps back, and tie all of it into a single plan.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-30/fig_0.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">A long trajectory in the game: the agent explores the world, remembers events, learns the rules, and links it all into a long chain of actions.</p>
+</div></figure>
+<p>Why does this matter? Because most familiar LLM evaluations assume that the model <strong>does not learn</strong> while it is being tested. It is already trained; you hand it an input and look at the output. Real deployments are nothing like that. An agent working in an open environment — inside an application, on a website, in a game, in a robot — has to keep adapting. And this is where today's systems turn out to be far weaker than the loud demos suggest.</p>
+</section>
+<section>
+<h2>How the world is built</h2>
+<p>The strength of AgentOdyssey is not only the game itself but how the game is made. The authors assemble the world out of entities: locations, objects, characters and rules. There is a world graph, there are the agent's actions, and there is environment dynamics that runs independently of both. Enemies can get more dangerous at night, some events fire at random, and an item dropped long ago can suddenly become necessary a hundred steps later.</p>
+<p>That matters. In many game environments the world changes only in response to the agent. Here it moves on its own. So the agent cannot simply react — it has to <strong>build an internal picture of the world</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-30/fig_1.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The AgentOdyssey pipeline: the agent receives a text observation, picks an action, the world updates by its rules, and new games are generated automatically with an LLM.</p>
+</div></figure>
+<p>Games are generated procedurally. A base game serves as the seed, then LLMs help create new objects, rules and quests. The authors did not stop at generate-and-hope: they added automatic validity checking and error repair through program synthesis, which lowers the risk of an environment that is broken or unplayable.</p>
+<p>Another good idea is multi-level evaluation. Game tasks usually score progress alone: did it reach the goal or not. That is not enough here. The authors measure separately:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">how far the agent got through the main quest;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">how many side tasks it solved;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">how thoroughly it explored objects and actions;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">what it learned about the world;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">what it remembers of its own trajectory;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">how varied its actions were;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">how many tokens it spent.</span></div>
+<p>That last one earns its place. Plenty of agent designs look powerful right up until you price them.</p>
+</section>
+<section>
+<h2>Which agents were compared</h2>
+<p>The paper tests several popular classes of AI agent.</p>
+<p>First, <strong>long-context</strong> agents. They simply put the whole history into the prompt: observations, reasoning, actions. Brute force, but often strong.</p>
+<p>Second, agents with <strong>fixed-size memory</strong>. They keep only a sliding window of recent steps or a bounded memory buffer.</p>
+<p>Third, agents with <strong>memory retrieval</strong>, where past experience is stored separately and the relevant fragments are pulled back in when they are needed.</p>
+<p>Fourth, agents with <strong>fine-tuning at run time</strong>, where experience is encoded not only in the text of the context but in the model weights, through parameter updates.</p>
+<p>The authors also tried add-on mechanisms: short-term memory, reflection, summarization.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-30/fig_2.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">A taxonomy of agents: different approaches to memory and learning at run time, from long context to agents that update their parameters.</p>
+</div></figure>
+<p>This is a well-posed experiment. It shows not "which model is better overall" but <strong>which kind of memory and adaptation holds up over a long run</strong>.</p>
+</section>
+<section>
+<h2>The headline result: the best agents are still weak</h2>
+<p>The sharpest finding in the paper is a simple one: <strong>yes, stronger models and larger memory help, but humans are still far ahead</strong>.</p>
+<p>In the first large experiment the winner was a long-context agent built on GPT-5. It remembered the past better than the rest, absorbed knowledge about the world better, and got further through the main quest. Even so, it trailed humans by a wide margin.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-30/fig_4.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Results of the first experiment: the long-context agent leads but still falls well short of humans; the diagnostic metrics line up closely with actual progress in the game.</p>
+</div></figure>
+<p>This is the important part. We watch LLMs handle short tasks well and conclude that the next step is simply to hand them more tools. AgentOdyssey says otherwise: <strong>the bottleneck is not only tools but stable behavior over a long horizon</strong>.</p>
+<p>The authors go through the typical failures in detail.</p>
+<p>First, weak exploration. Agents dislike picking up items whose usefulness is not obvious, and they are reluctant to try the full set of actions. As a result they never collect the resources they will need later.</p>
+<p>Second, episodic memory. An agent can be told many times over that this action does not work here and still repeat the same mistake. Or forget where it already saw the object it now needs.</p>
+<p>Third, hallucinated world knowledge. Weaker models especially: they try to craft items that do not exist, mix up recipes, and misread the dynamics of the environment.</p>
+<p>Fourth, poor skill acquisition. Even when an enemy follows a repeating pattern, most agents never learn an effective tactic against it.</p>
+<p>Fifth, poor goal retention. An agent can solve a local subtask well enough and then fail to return to the main line, losing the thread of its plan.</p>
+<p>This is probably the most useful part of the paper: it shows not just a final score but <strong>exactly where agent behavior breaks</strong>.</p>
+</section>
+<section>
+<h2>Memory helps, with a catch</h2>
+<p>One of the most interesting findings concerns short-term memory. The authors found that it helps consistently across agent types — not only the ones that work through the context, but fine-tuned agents as well.</p>
+<p>The logic is mundane. Even in a long game the agent needs more than an archive of everything that has happened; it needs working memory: what am I collecting right now, how many items have I found, why did I come to this area, which substep am I on at this moment.</p>
+<p>In the second experiment, on a simpler game, the best result came from exactly that — a fine-tuned agent reinforced with short-term memory.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-06-30/fig_5.png" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">In the second experiment the best result came from the agent with fine-tuning plus short-term memory; a small working memory noticeably improves learning at run time.</p>
+</div></figure>
+<p>A subtle result, and an important one. It says that learning in the weights does not solve the problem by itself. The agent still needs convenient scratch memory for its immediate goals. Otherwise it can learn over the long run and still lose track of the step it is on.</p>
+<p>Parameter updates came with an unpleasant side of their own: signs of <strong>catastrophic forgetting</strong>. After training, some agents answered questions about the world worse than they had before. They were picking something up while losing part of their general ability along the way. For systems meant to run in production, that is a serious warning.</p>
+</section>
+<section>
+<h2>Long context is the strongest and the most expensive</h2>
+<p>On paper the long-context agent looks better than everyone else. It has one almost comic flaw: the price.</p>
+<p>If the agent drags its entire history along at every step, the token count climbs fast. The authors show directly that the cost of this approach becomes quadratic as the trajectory grows. The longer the agent lives, the harder that hits both budget and latency.</p>
+<p>This is not an abstract problem. You can build a very smart agent that plays well for 200 steps. But if at step 500 it becomes too expensive or no longer fits in the context window, its useful horizon ends there.</p>
+<p>In that sense AgentOdyssey is also an antidote to self-deception. It shows that <strong>quality measured without cost is half a picture</strong>.</p>
+</section>
+<section>
+<h2>Why this matters beyond games</h2>
+<p>It is easy to wave this off as just text adventures. That is precisely the strength of the work. The authors deliberately stripped out vision, mouse control, sensor noise and the rest of the external difficulty in order to isolate what matters: memory, learning on the fly, goal retention and long causal chains.</p>
+<p>If an agent cannot handle that reliably in a controlled text world, it is too early to expect miracles in a browser, an operating system or a robot.</p>
+<p>The paper also nudges the field, carefully, toward an honest framing of the question. Not "can the model reason?" but "can an agent live in a world for a month, accumulate knowledge, hold together and not bankrupt you on tokens?" That is a grown-up question.</p>
+</section>
+<section>
+<h2>Takeaways</h2>
+<p>AgentOdyssey is one of those papers that promises no magic and does something more useful: <strong>it supplies a good ruler</strong>. With it you can measure not only the handsome final scores but the real weak points of AI agents.</p>
+<p>The main findings:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">stronger base models help;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">more memory helps even more;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">short-term memory is especially important;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">long context is still the strongest approach and too expensive;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">even the best agents still fall far short of humans;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">learning at run time can lead to forgetting.</span></div>
+<p>The short version: the paper shows an uncomfortable but important truth. <strong>Today's AI agents are still bad at living a long life</strong>. They can shine on a single step, but over hundreds of steps they start forgetting, looping, confusing facts and losing the plan.</p>
+<p>Which means that the next real progress in agent systems will probably come not only from more powerful LLMs but from new memory architectures, more careful learning at run time and cheaper reasoning. In that sense AgentOdyssey arrives at exactly the right moment. It does not solve the problem, but it shows precisely where the problem has to be solved.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2606.24893" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

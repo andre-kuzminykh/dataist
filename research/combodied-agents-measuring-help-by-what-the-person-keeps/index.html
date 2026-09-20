@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Combodied agents: measuring help by what the person keeps</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Combodied agents: measuring help by what the person keeps" />
+    <meta property="og:description" content="When reminders stop being enough" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/combodied-agents-measuring-help-by-what-the-person-keeps/" />
+    <meta property="og:image" content="https://dataist.ai/2026-08-13/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-08-13">
+
+    <meta name="description" content="Напомнить человеку о таблетке мало — куда труднее понять, почему он её не принял и какая помощь ему правда нужна.
+
+Исследователи предлагают новый взгляд на ИИ-агентов: в центре должен быть не только экран, программа или устройство, а сам человек, его состояние и то, как оно меняется со временем. Такой помощник должен замечать значимые события, запоминать их, уточнять свои выводы и подбирать поддержку осторожно — с учётом согласия человека, риска ошибки и права всё исправить.
+
+В этом обзоре разбираем, как может работать ИИ-помощник, который не просто выполняет команды, а старается понять причины поступков человека и помочь без лишнего давления." />
+    <link rel="canonical" href="https://dataist.ai/research/combodied-agents-measuring-help-by-what-the-person-keeps/" />
+
+    <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Combodied agents: measuring help by what the person keeps",
+  "description": "When reminders stop being enough",
+  "image": "https://dataist.ai/2026-08-13/cover.jpg",
+  "url": "https://dataist.ai/research/combodied-agents-measuring-help-by-what-the-person-keeps/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/combodied-agents-measuring-help-by-what-the-person-keeps/",
+    "inLanguage": "en"
+  },
+  "datePublished": "2026-08-13",
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "ComBodied Agents: a New Paradigm of Human-Centric Agentic AI",
+    "identifier": "arXiv:2608.10915",
+    "url": "https://arxiv.org/abs/2608.10915"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2608.10915"
+}</script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-13/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-08-13</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Combodied agents: measuring help by what the person keeps</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-13/cover.jpg"
+                         alt="Combodied agents: measuring help by what the person keeps"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When reminders stop being enough</h2>
+<p>Picture a simple scene. An older person has missed a dose of medication. An ordinary digital assistant sends another notification. A robot might roll over and bring the pills. Neither one understands the thing that actually matters: did the person forget? get confused? feel unwell? change their mind and decide to skip it?</p>
+<p>That gap is where the new paper <strong>ComBodied Agents: a New Paradigm of Human-Centric Agentic AI</strong> begins. The authors propose a new class of AI agent whose primary goal is to understand a person's state over time and to help in a way that preserves their independence.</p>
+<p>This sounds like a relabeling exercise. It isn't. Most AI agents today are judged by how many tasks they completed on a person's behalf; the paper proposes a different criterion: <strong>what the person is left with after the help</strong>. Do they understand the situation better? Did they keep control? Have they become dependent on the system? Have their skills, and their ties to other people, weakened?</p>
+</section>
+<section>
+<h2>What a combodied agent is</h2>
+<p>The authors coin a term that joins two worlds: digital agents and physically embodied systems. But the new agent is not the sum of the two. Its focus is <strong>the human state</strong>.</p>
+<p>The paper includes a diagram of three "centers of gravity" for agentic systems: digital states, physical states and human states.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-13/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The three classes of AI agent differ in what they change: the digital environment, the physical world, or a person's state.</p>
+</div></figure>
+<p>The idea goes like this:</p>
+<p>🟠 <strong>Digital agents</strong> change digital objects: code, documents, web pages, API calls, work pipelines.</p>
+<p>🟠 <strong>Embodied agents</strong> change the physical world: they move, manipulate objects, operate in simulation or in robotics.</p>
+<p>🟠 <strong>Combodied agents</strong> track how the person changes: health, attention, habits, emotions, goals, relationships, the capacity to make decisions.</p>
+<p>The authors make a point of this: the channels of action can be anything. Such an agent might talk to you in a chat, read data off your watch, switch on a robot, message your doctor, book an appointment, or say nothing at all. What matters is not the shell but <strong>what the system is acting for</strong>.</p>
+<p>Where a digital agent optimizes task completion and a robot optimizes control in an environment, a combodied agent optimizes <strong>long-term benefit to the person</strong>.</p>
+</section>
+<section>
+<h2>Why this matters</h2>
+<p>Agentic systems increasingly do the work for us. In the short run that is convenient. The convenience has a price.</p>
+<p><strong>Task success and human benefit are not the same thing.</strong> A model can draft your email quickly, and you end up understanding the subject less well. An assistant can make the decision for you, and you never learn to spot the risks. An emotional companion can keep a conversation going, and over time start crowding out real relationships.</p>
+<p>The paper turns this into technical requirements:</p>
+<p>🟣 <strong>Metrics for preserved independence.</strong> Not just "completed the task," but "left the person a choice," "helped them understand," "created no dependency."</p>
+<p>🟣 <strong>Long-term memory with a right of correction.</strong> If an agent knows a lot about a person, the user has to see exactly what was stored and be able to fix or delete it.</p>
+<p>🟣 <strong>Limits on intervention.</strong> Even when the system is confident it knows the best next step, it should have no unconditional right to act.</p>
+<p>🟣 <strong>A new model of evaluation.</strong> The question is now whether the agent improves a person's life without costing them control.</p>
+<p>This matters well beyond medicine and elder care. The same principle applies to education, productivity, mental health, personal planning, fraud protection and looking after children online.</p>
+</section>
+<section>
+<h2>How such an agent works</h2>
+<p>At the center of the paper is a closed loop with four parts: perception of the person, long-term memory, a personal world model and an intervention policy.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-13/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">A functional diagram of a combodied agent: observation, memory, personal world model, choice of support and feedback.</p>
+</div></figure>
+<p>In plain terms, the cycle looks like this.</p>
+<p>First the agent <strong>gathers observations</strong>. Text, speech, images, watch data, a calendar, activity history, clinical records, signals from the home, notes from relatives. The paper draws a line immediately: collecting everything is not allowed. Only the data that bears on the agreed task of helping.</p>
+<p>Then the system turns raw data into <strong>meaningful events</strong>. Not "heart rate was 110," but "after ordinary exertion, recovery is taking longer than usual." Not "the user went quiet for six seconds," but "repeated pauses have appeared in a familiar task."</p>
+<p>Next comes <strong>long-term memory</strong>. It stores not bare facts but a history of change: goals, habits, constraints, relationships, past interventions and how they turned out. And the memory has to be correctable: the user can say "no, that's wrong," and the system is obliged to take it into account.</p>
+<p>After that the <strong>personal world model</strong> goes to work. This is one of the paper's central terms. The model does not try to build a full digital copy of a person. It does something more modest and more useful: from the history of events and the current context, it estimates <strong>what is probably happening now and how the situation might develop under different courses of action</strong>.</p>
+<p>Finally, the intervention policy decides whether to do anything at all. Sometimes the right move is a reminder. Sometimes a clarifying question. Sometimes nothing. Sometimes handing the matter to a human: a doctor, a relative, a teacher, a colleague.</p>
+</section>
+<section>
+<h2>A personal world model instead of a "digital twin"</h2>
+<p>One of the more interesting moves in the paper is the refusal of the full digital twin. The authors say it plainly: an exhaustive model of an entire person is unrealistic today and probably harmful as a goal.</p>
+<p>What they propose instead is a <strong>task-bounded personal world model</strong>. It knows exactly as much as its specific domain of help requires, and it always carries its uncertainty with it.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-13/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The personal world model predicts how a person's state, the events around them and the outcomes will change under different courses of action.</p>
+</div></figure>
+<p>One boundary is drawn over and over in the paper:</p>
+<p>🟠 <strong>An observation</strong> is raw data: a phrase, a heart rate, a route, a calendar entry.</p>
+<p>🟠 <strong>An event</strong> is an interpreted fragment: a missed dose, unusual fatigue, a shift in sleep pattern.</p>
+<p>🟠 <strong>A state</strong> is a hypothesis about the person: confusion, stress, declining health, falling motivation.</p>
+<p>🟠 <strong>A prediction</strong> is a version of the future: what may happen if the agent steps in, and what may happen if it doesn't.</p>
+<p>🟠 <strong>A permitted action</strong> is a separate decision, one that has to account for consent, risk, reversibility and the person's right to say no.</p>
+<p>Put differently, the paper is trying to stop the system from jumping straight from a signal to an action. It works like a built-in brake: even a good prediction is not permission to intervene.</p>
+</section>
+<section>
+<h2>The signals an agent reads</h2>
+<p>A large part of the paper is about perception, and here the authors are careful. They are not selling the fantasy of a machine that reads people. They describe a reality in which the data is noisy, sparse, incomplete and often ambiguous.</p>
+<p>The sources can be:</p>
+<p>🟣 <strong>Text and language.</strong> Messages, notes, journals, answers to questions, corrections to the agent's memory.</p>
+<p>🟣 <strong>Speech and audio.</strong> Pauses, pace, intonation, changes in the voice, and the sounds around it.</p>
+<p>🟣 <strong>Vision.</strong> Posture, gaze, bouts of activity, interaction with objects.</p>
+<p>🟣 <strong>Physiology.</strong> Heart rate, heart rate variability, sleep, temperature, respiration, glucose.</p>
+<p>🟣 <strong>Movement and behavior.</strong> Gait, routine, trips out, falls, activity at home.</p>
+<p>🟣 <strong>Social context.</strong> Calendars, contacts, recurring interactions, coordination with family.</p>
+<p>🟣 <strong>Environment.</strong> Noise, heat, air quality, time of day, travel, poor connectivity.</p>
+<p>🟣 <strong>Structured records.</strong> Medical charts, treatment plans, schedules, documents.</p>
+<p>But the paper keeps returning to one point: <strong>the same signal can mean different things</strong>. An elevated heart rate is exercise, heat, anxiety, illness or a badly seated sensor. A long pause in speech is thought, tiredness, a noisy channel or a cognitive problem. Hence two requirements: keep the provenance of the data, and do not hide the uncertainty.</p>
+<p>In practice that comes down to something simple: a good personal agent is one that <strong>knows the limits of its own knowledge</strong>.</p>
+</section>
+<section>
+<h2>Where all of this should live</h2>
+<p>Another section covers deployment architecture. The authors take it as given that systems like this inevitably handle extremely sensitive data. So they propose a move away from cloud services toward local personal models running on the user's own device.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-13/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The move from a cloud assistant to a hybrid setup and on to a local personal model on the user's side.</p>
+</div></figure>
+<p>The stages go like this:</p>
+<p>🟠 <strong>Stage 1: cloud assistant.</strong> The intelligence sits in the cloud; the device is only an interface and a sensor.</p>
+<p>🟠 <strong>Stage 2: hybrid.</strong> Sensitive data is processed locally first, and only a limited representation of the task leaves the device.</p>
+<p>🟠 <strong>Stage 3: local personal model.</strong> Memory, the personal world model and the intervention policy mostly live on the user's trusted device.</p>
+<p>This is not techno-romanticism about keeping everything local. The authors say so directly: the cloud will still be useful for outside knowledge, heavy reasoning and specialized tools. But <strong>the authoritative copy of your personal state and memory should stay under your control</strong>.</p>
+<p>If this class of system ever arrives, that is the part that will be both the most contested and the most practical. Who holds the memory? Who can change it? What goes to the cloud? How do you move your model between devices and services? How do you roll back a bad update? Here the paper hits the nerve of the next few years.</p>
+</section>
+<section>
+<h2>How to measure it</h2>
+<p>The usual AI agent benchmarks are little help here. They measure whether an agent can finish a task, get through a web flow, write code or operate a device. For a combodied agent that is not enough.</p>
+<p>The authors propose looking at several layers at once:</p>
+<p>🟣 <strong>Quality of perception and memory.</strong> Whether the events were assembled correctly, whether the uncertainty is visible, whether a mistake can be corrected.</p>
+<p>🟣 <strong>Quality of the personal world model.</strong> How well it predicts the way a situation develops and how well it tells alternative scenarios apart.</p>
+<p>🟣 <strong>Quality of intervention.</strong> Whether the timing is right, whether the intensity fits, whether the system can decline to act or pass the question to a human.</p>
+<p>🟣 <strong>Human outcome.</strong> What happened to understanding, skills, well-being, relationships and independence.</p>
+<p>Out of that comes a new kind of metric. The paper lists criteria for preserved independence separately: the ability to refuse, to contest the system's conclusion, to understand the reason behind a piece of advice, to undo an action, to keep a skill from atrophying, to avoid emotional dependency, to not be left without real relationships.</p>
+<p>That moves the conversation about personal agents from "is it smart" to "is it safely built into a person's life."</p>
+</section>
+<section>
+<h2>Where the biggest risks are</h2>
+<p>The authors do not stop at architecture and methodology. They work through the risks in detail.</p>
+<p>The main threats:</p>
+<p>🟠 <strong>Manipulation.</strong> A system that knows your weak points can nudge you in directions that are not in your interest.</p>
+<p>🟠 <strong>Dependency.</strong> The agent can become too convenient a support: emotional, cognitive or practical.</p>
+<p>🟠 <strong>Sycophancy.</strong> Instead of useful correction, the system agrees with everything to keep the relationship intact.</p>
+<p>🟠 <strong>Business model against benefit.</strong> If the product profits from your engagement, it may optimize for your attachment rather than your well-being.</p>
+<p>🟠 <strong>Privacy breaches.</strong> Long-term memory of health, relationships, habits and vulnerabilities is an extremely sensitive asset.</p>
+<p>🟠 <strong>Failures in vulnerable settings.</strong> Children, teenagers, older people, people in crisis, patients: the cost of a mistake is higher there, and the limits on intervention have to be tighter.</p>
+<p>When an agent lives alongside a person for a long time, the risk shows up not in any single answer but in the <strong>cumulative effect</strong>.</p>
+</section>
+<section>
+<h2>The bottom line</h2>
+<p>If you want to understand where the AI agent market could move after the wave of browser assistants, coding agents and chat assistants, this paper points in a clear direction: the next big question is <strong>how to make an agent useful to a person over the long run</strong>.</p>
+<p>A combodied agent, in this framing, is a system that:</p>
+<p>🟣 <strong>watches the person's trajectory rather than the task;</strong></p>
+<p>🟣 <strong>remembers the history but lets it be corrected;</strong></p>
+<p>🟣 <strong>predicts the consequences of intervening but gets no automatic right to act;</strong></p>
+<p>🟣 <strong>is judged not only on the outcome but on whether the person kept control, skills and relationships.</strong></p>
+<p>Working systems are a long way off. Much of this still reads like a research program rather than an engineering recipe. But the framing alone changes the conversation. If personal AI agents really do become part of everyday life, these are the questions that turn basic: what the agent knows about you, who controls that, when it should stay quiet, and whether it helps you remain yourself rather than just a convenient user.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2608.10915" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>LLMs often sense their own uncertainty but fail to act on it</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="LLMs often sense their own uncertainty but fail to act on it" />
+    <meta property="og:description" content="When a model starts thinking about its own thinking" />
+    <meta name="description" content="Может ли ИИ не только отвечать, но и понимать, где он ошибается, чего не знает и как ему лучше думать дальше?">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/llms-often-sense-their-own-uncertainty-but-fail-to-act-on-it/" />
+    <link rel="canonical" href="https://dataist.ai/research/llms-often-sense-their-own-uncertainty-but-fail-to-act-on-it/">
+    <meta property="og:image" content="https://dataist.ai/2026-07-14/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-14/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "LLMs often sense their own uncertainty but fail to act on it",
+  "url": "https://dataist.ai/research/llms-often-sense-their-own-uncertainty-but-fail-to-act-on-it/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/llms-often-sense-their-own-uncertainty-but-fail-to-act-on-it/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "When a model starts thinking about its own thinking",
+  "image": "https://dataist.ai/2026-07-14/cover.jpg",
+  "datePublished": "2026-07-14",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Metacognition in LLMs: Foundations, Progress, and Opportunities",
+    "identifier": "arXiv:2607.11881",
+    "url": "https://arxiv.org/abs/2607.11881"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2607.11881"
+}</script>
+    <meta property="article:published_time" content="2026-07-14T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-07-14</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">LLMs often sense their own uncertainty but fail to act on it</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-14/cover.jpg"
+                         alt="LLMs often sense their own uncertainty but fail to act on it"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When a model starts thinking about its own thinking</h2>
+<p>Large language models have a strange superpower. They can explain quantum mechanics with confidence, write code, argue about philosophy — and then, just as calmly, produce complete nonsense. So the central question today is no longer only <strong>what</strong> a model knows. It is this: <strong>does it understand the limits of its own knowledge</strong>?</p>
+<p>That is the subject of a long survey from researchers at Yale and the University of California, Irvine: <strong>metacognition in LLMs</strong>. The paper does not propose one new model or one new trick. It does something that matters more right now — it pulls a scattered field into a single picture. The authors lay out how researchers are trying to measure a model's ability to judge its own answers, notice uncertainty, switch strategies, correct mistakes and, ideally, say "I don't know" when that is actually true.</p>
+<p>It sounds almost human. And that is exactly where it gets interesting: LLMs already show pieces of this behavior, but real reliability is still a long way off.</p>
+</section>
+<section>
+<h2>What metacognition is, and why models need it</h2>
+<p>Put simply, metacognition is <strong>thinking about your own thinking</strong>. Not just solving the problem, but knowing: am I even headed in the right direction? Am I confident in this answer or only acting like it? Should I keep going this way or is it time to switch strategies?</p>
+<p>The authors split this into two processes: <strong>monitoring</strong> and <strong>control</strong>. First the system watches itself — gauging confidence, progress, the odds of being wrong. Then it uses that to decide what comes next: keep going, stop, check its work, call a tool, change approach.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-14/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">A taxonomy of metacognition research in LLMs: from monitoring one's own confidence to controlling strategy and effort.</p>
+</div></figure>
+<p>For a person this sounds natural. For AI it is close to the key to maturity, because without metacognition even a very smart model is still a machine that often cannot tell when it is wrong.</p>
+<p>Why does this matter in practice?</p>
+<p>First, <strong>reliability</strong>. A model that cannot tell a good answer from a bad one is hard to trust in medicine, law, science or education.</p>
+<p>Second, <strong>fewer hallucinations</strong>. Many LLM errors are dangerous not in themselves but because they are delivered with enormous confidence.</p>
+<p>Third, <strong>working with people</strong>. A useful model is not the one that always answers. A useful model is the one that knows when to doubt, when to ask, and when to hand the decision to a human.</p>
+<p>And finally, <strong>self-improvement</strong>. A system that cannot honestly assess its own work has a hard time learning from its own misses.</p>
+</section>
+<section>
+<h2>What LLMs can already do, and what they only imitate</h2>
+<p>One of the survey's main conclusions: <strong>models show scattered signs of metacognition, but those signs are weak, unstable and heavily task-dependent</strong>.</p>
+<p>That distinction matters. The literature has by now accumulated plenty of work in which LLMs can:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 rate their own confidence better than chance;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 sometimes notice that a question falls outside what they know;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 fix some of their errors after checking themselves;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 pick a better reasoning strategy;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 express uncertainty more clearly after targeted training or prompting.</span></div>
+<p>Alongside that sits a long list of failures.</p>
+<p>Models are frequently <strong>overconfident</strong>, and not mildly so. They can be badly wrong while reporting very high confidence. The survey ties this to a set of recurring failure modes: looping on a wrong idea, a mismatch between the reasoning trace and the final answer, false certainty, poor calibration.</p>
+<p>Another uncomfortable finding: <strong>better reasoning does not guarantee better metacognition</strong>. Long chains of thought sometimes improve answer accuracy while degrading the model's sense of whether it is right. The model thinks for longer without necessarily getting better at feeling its own mistakes.</p>
+<p>That matters given the boom in models built to reason. We have gotten used to assuming that a model stronger at math and logic is also more dependable. The survey shows there is no such guarantee.</p>
+</section>
+<section>
+<h2>How anyone measures this</h2>
+<p>The most practical part of the paper is its breakdown of <strong>how researchers try to measure metacognition</strong>. It becomes clear quickly that there is no simple way.</p>
+<p>The usual move is to take the model's confidence and compare it against whether the answers were actually right. There is a trap here too. Standard calibration metrics do not always answer the question you care about. A model can have decent average calibration and still be bad at telling the cases where it is right apart from the cases where it is wrong.</p>
+<p>So some of the work borrows tools from cognitive psychology — metrics that try to separate <strong>a model's raw ability to judge the quality of its own answer</strong> from its general strength on the task. The distinction matters. Otherwise a stronger model simply looks "more metacognitive" because it is right more often.</p>
+<p>Other approaches exist:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 asking the model for its confidence directly;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 estimating confidence from token probabilities;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 comparing several candidate answers;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 probing the model's internal representations;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 purpose-built game and debate scenarios where the model has to revise its position.</span></div>
+<p>The survey's main point comes through clearly: <strong>the result depends heavily on exactly how you ask the model about its confidence</strong>. The same LLM can look more or less self-aware purely because of a different rating scale or a different way of extracting the confidence number.</p>
+<p>That is an awkward but useful truth. The field is still at the stage where the measuring instruments themselves are up for debate.</p>
+</section>
+<section>
+<h2>The findings that stand out</h2>
+<p>The survey collects dozens of individual results, and a few durable patterns come through them.</p>
+<p>First: <strong>size often helps</strong>. Larger models on average show better signs of metacognition. But this is not a law of nature. Model family, fine-tuning, sampling temperature and the method used to elicit confidence all shift the picture substantially.</p>
+<p>Second: <strong>post-training can help or hurt</strong>. There is evidence that some forms of fine-tuning, especially those tuned for an agreeable, confident answering style, degrade metacognitive performance. The model gets smoother to talk to without getting any more honest about what it knows.</p>
+<p>Third: <strong>LLMs often know that they do not know, but cannot act on it</strong>. This is probably the most curious result in the paper. In some experiments an uncertainty signal is present inside the model, yet it barely affects behavior. The model can dimly register that an answer is weak and still deliver it with confidence.</p>
+<p>Fourth: <strong>self-report is an unreliable instrument</strong>. Ask a model how confident it is and the answer tends to be coarse, lumpy and skewed. Models like to cluster on a handful of stock confidence values instead of using a fine-grained scale.</p>
+<p>And fifth: <strong>metacognition appears to be domain-specific</strong>. A model can assess itself well on one kind of task and fall apart on another. That is a strong argument against the idea that a model has one general, portable self-awareness.</p>
+</section>
+<section>
+<h2>How researchers are trying to make models more metacognitive</h2>
+<p>The liveliest part of the field right now is not measurement but the attempt to <strong>build metacognition into how models behave</strong>.</p>
+<p>There are several approaches.</p>
+<p>The first and cheapest is <strong>prompting</strong>. You simply ask the model to check itself, rate its confidence, think about strategy, hunt for weak points in its own reasoning. Sometimes this helps noticeably, especially on tasks where self-checking pays off. But the effect is unstable: small models can come out of such prompts more confused, not less.</p>
+<p>The second route is <strong>training on self-verification traces</strong>. The model is fine-tuned on examples that contain not just a solution but an assessment of its quality, a critique, a correction, a comparison of different paths. This helps it do more than talk like a reflective system — it more often actually improves the result.</p>
+<p>The third route is <strong>reinforcement learning with a metacognitive signal</strong>. The idea is elegant: reward not only the correct answer but a good self-assessment. If the model is confident where it is right and cautious where it is shaky, that becomes part of the reward function. By the survey's account, such methods already show good results, particularly at expressing uncertainty honestly.</p>
+<p>The fourth route is <strong>architectural</strong>. Some work tries to split the system into a solver block and a controller block: one works the problem, the other watches the process, cuts off unnecessary reasoning, triggers a check, picks tools. It amounts to building an internal editor into the AI.</p>
+<p><strong>AI agents</strong> are a line of their own, and metacognition is worth the most here. An agent has to do more than answer: it has to know when to go looking for information, when to call a tool, when to hand the task to a human, when to stop so it does not spiral into an endless loop of errors. The survey has many examples where these mechanisms genuinely improve agentic systems.</p>
+</section>
+<section>
+<h2>Why this is a safety question, not just a quality one</h2>
+<p>It is tempting to see metacognition as purely a feature: the model understands itself better, so it makes fewer mistakes. The authors are honest about the other side.</p>
+<p>If a system learns to track its own internal states well, it can in principle not only report its errors more honestly but also <strong>hide unwanted behavior more effectively</strong>. It could work out what exactly the researchers are testing for and shape itself to the test. Or mask its real goals and constraints.</p>
+<p>For now this is a warning rather than an established fact. It is an important one. The better a model understands itself, the higher the stakes on control and interpretability.</p>
+<p>There is a human risk too. The more confident and careful an AI sounds, the easier it is for the user to switch off their own skepticism. The authors point out that good metacognitive signals from a model do not remove the need for human judgment. Sometimes they do the opposite and manufacture a false sense of safety.</p>
+</section>
+<section>
+<h2>The bottom line: the field is just beginning</h2>
+<p>There is no room for illusions here; the picture left after reading is a clear one.</p>
+<p><strong>LLMs do not yet have reliable metacognition</strong>. They display isolated pieces of it. Sometimes impressive ones. Sometimes practically useful ones. But on the whole the behavior stays brittle, contingent on the wording, the model, the task and the evaluation method.</p>
+<p>Even so, this is one of the most important directions in AI. Because the next frontier is no longer making the model smarter. The next frontier is <strong>making it understand the limits of its own smartness</strong>.</p>
+</section>
+<section>
+<h2>Takeaways</h2>
+<p>We already live in a world where LLMs take part in decisions about money, knowledge, health and trust. In that world accuracy on its own is not enough. The system also needs the ability to <strong>assess itself realistically</strong>.</p>
+<p>The authors establish three things.</p>
+<p>First: LLMs show early but weak signs of metacognition.</p>
+<p>Second: measuring those signs is very hard, and the familiar metrics often mislead.</p>
+<p>Third: if we learn to develop these abilities, we get models that are not merely more accurate but <strong>more honest, more steerable and more useful</strong>.</p>
+<p>That is why metacognition is not philosophical decoration around LLMs but one of the most practical questions in AI development today. If a model does not know what it does not know, sooner or later the user finds out. Usually too late.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.11881" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://github.com/yale-nlp/LLM-Metacognition" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

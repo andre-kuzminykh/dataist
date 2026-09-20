@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EvolvingWorld makes models track the world, not just play the character</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="EvolvingWorld makes models track the world, not just play the character" />
+    <meta property="og:description" content="When characters finally stop being cardboard" />
+    <meta name="description" content="Обычная проблема почти всех литературных ИИ-симуляций проста: персонажи умеют говорить «в образе», но не умеют жить дальше.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/evolvingworld-makes-models-track-the-world-not-just-play-the-character/" />
+    <link rel="canonical" href="https://dataist.ai/research/evolvingworld-makes-models-track-the-world-not-just-play-the-character/">
+    <meta property="og:image" content="https://dataist.ai/2026-07-23/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-23/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "EvolvingWorld makes models track the world, not just play the character",
+  "url": "https://dataist.ai/research/evolvingworld-makes-models-track-the-world-not-just-play-the-character/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/evolvingworld-makes-models-track-the-world-not-just-play-the-character/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "When characters finally stop being cardboard",
+  "image": "https://dataist.ai/2026-07-23/cover.jpg",
+  "datePublished": "2026-07-23"
+}</script>
+    <meta property="article:published_time" content="2026-07-23T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-07-23</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">EvolvingWorld makes models track the world, not just play the character</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-23/cover.jpg"
+                         alt="EvolvingWorld makes models track the world, not just play the character"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When characters finally stop being cardboard</h2>
+<p>The usual problem with almost every literary AI simulation is this: characters can talk in character, but they cannot keep living. They copy the speech patterns of Sherlock Holmes or Elizabeth Bennet well enough, and then after a few scenes they start coming apart. One suddenly forgets his own motives. Another's personality shifts for no reason. The world around them behaves strangely too: a fire happened, but the house is still standing; a relationship soured, but in the next scene everyone is chatting pleasantly again as though nothing had occurred.</p>
+<p>The authors of <strong>EvolvingWorld</strong> take on exactly this problem. What they propose is not another pile of role-play dialogues but a full framework for long-running simulation in which <strong>characters and the world change together</strong>. Not one speaks, the other listens, and then everything resets. Instead the story moves, scenes follow one another, objects in the world change state, and the characters accumulate experience, emotion and consequences.</p>
+<p>This sounds like the obvious thing to want from interactive fiction, games and AI agents. But as the paper shows, it is exactly what is usually missing.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-23/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">A sample simulation: from a single snapshot of the story, the system unfolds new scenes in which both the characters and the world itself change.</p></div></figure>
+</section>
+<section>
+<h2>What went wrong in earlier systems</h2>
+<p>The authors are candid about three weak spots in the previous generation of role-play systems.</p>
+<p>🟠 <strong>Characters are static.</strong> The model normally has a profile for each character: age, personality, speech style, maybe a goal. But that profile barely develops.</p>
+<p>🟣 <strong>The world is scenery.</strong> In many systems the setting exists only as a backdrop for dialogue. Roughly: "they're in a castle" — and that will do. What happens to rooms, objects, institutions, the rules of the world is hardly tracked at all.</p>
+<p>🟠 <strong>Length breaks quality.</strong> Over one short scene everything looks respectable. By the tenth the failures begin: motivation jumps, coherence drops, scenes cut to one another at random.</p>
+<p>The core idea of EvolvingWorld is that a literary world has to be modeled as a <strong>long joint process</strong>. The character acts on the world. The world acts on the character. And both have to hold their state not "in broad strokes" but explicitly enough that the next scene can be built on it.</p>
+<p>Why does this matter? Because without it you cannot build genuinely convincing interactive novels, narrative games, character simulators or AI agents for long tasks. If a model cannot hold the thread over distance, all its acting talent quickly loses its value.</p>
+</section>
+
+<section>
+<h2>What EvolvingWorld actually is</h2>
+<p>The architecture has two connected parts.</p>
+<p>🟣 <strong>The character agent.</strong> It handles how characters behave: who wants what, what they say, how they act, how a character's profile changes after events.</p>
+<p>🟠 <strong>The world model.</strong> It tracks the overall state of the world, the locations, the objects that matter, and how one scene gives way to the next.</p>
+<p>The key move here is an <strong>open schema</strong>. The authors do not force every book into a fixed list of fields like "goal," "emotion," "relationships." A detective story needs one set of dimensions, a Victorian orphan another, a gothic novel a third. The system works out the relevant dimensions for each particular world itself.</p>
+<p>This looks like a detail, but it is a real shift. Fixed fields are convenient for a table and transfer badly between very different books. Here the world of Pride and Prejudice does not have to be forced into the same slots as the world of Twenty Thousand Leagues Under the Sea.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-23/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The overall EvolvingWorld pipeline: from building data out of books to simulating scenes and scoring long trajectories.</p></div></figure>
+<p>Another strong detail is what the authors call the <strong>latent tracker</strong>. It is an internal buffer that collects weak signals of change. A character doubts a friend once — not enough to rewrite the relationship. But if such signals keep coming, the tracker accumulates them, and at some point the character's profile can be updated.</p>
+<p>That is very human logic. A personality rarely turns on a single event. More often change ripens gradually. This is precisely what the authors are trying to build in.</p>
+</section>
+<section>
+<h2>How the simulation runs</h2>
+<p>The system is split into seven tasks that run one after another inside every scene.</p>
+<p>🟠 <strong>Pick who is in the scene.</strong> Who should appear at all right now?</p>
+<p>🟣 <strong>Pick the location and the dramatic setup.</strong> Where does the scene take place and what is the situation in it?</p>
+<p>🟠 <strong>Update character motivation.</strong> What does each of them walk into this scene carrying, right now?</p>
+<p>🟣 <strong>Pick who speaks or acts next.</strong> Not in turn order, but by the logic of the moment.</p>
+<p>🟠 <strong>Generate the line, the thought or the action.</strong></p>
+<p>🟣 <strong>Update the world after the move.</strong> If a window in the room got broken or the political situation shifted, that has to be recorded.</p>
+<p>🟠 <strong>Update character state after the scene.</strong> What has become part of the stable profile, and what stays a weak signal in the latent tracker for now.</p>
+<p>The breakdown matters in its own right. Many papers test only whether a model can talk like a character. The approach here is different: <strong>long simulation is not one task but a pipeline of linked decisions</strong>. And if one part breaks — world updating, say — everything downstream in the story sags with it.</p>
+</section>
+
+<section>
+<h2>Where the data came from</h2>
+<p>For the benchmark the researchers took <strong>57 books</strong> with chronological narration. That matters: when a story runs in order, later scenes can be used as an anchor to work out which changes in the current scene were genuinely significant.</p>
+<p>The scale is respectable:</p>
+<p>🟣 <strong>9,763 scenes</strong></p>
+<p>🟠 <strong>132,800 interactions</strong></p>
+<p>🟣 <strong>3,311 unique characters</strong></p>
+<p>🟠 <strong>1,888 locations</strong></p>
+<p>🟣 <strong>138,596 training examples</strong></p>
+<p>On top of that, the authors assembled 222 test snapshots of world state from which a model has to carry the story forward.</p>
+<p>The corpus spans several genres: adventure, drama, gothic, literary classics, a little science fiction. It is not contemporary popular fiction and not game worlds, but for an academic benchmark the coverage is already decent.</p>
+<p>It also helps that the data is built not merely as dialogue-and-response but as material for all seven tasks. A model can be trained not just to speak, but to plan scenes, choose who acts, and update the world and the profiles.</p>
+</section>
+<section>
+<h2>How it gets evaluated</h2>
+<p>The most interesting part of the work is the evaluation. The authors did not stop at local checks on individual lines. They score the <strong>trajectory</strong>: how the system behaves over distance.</p>
+<p>There are two broad groups of metrics:</p>
+<p>🟠 <strong>Characters.</strong> How consistent a character stays, whether he holds his speech style, acts on his motivation, notices his surroundings, develops smoothly.</p>
+<p>🟣 <strong>The world.</strong> How sensibly scenes are chosen, who takes part in them, how world state is maintained, whether global and local changes are updated in time.</p>
+<p><strong>10 dimensions and 20 metrics</strong> in all. An LLM judge does the scoring, separately for each metric, with its own instruction. The approach is debatable, but for an evaluation this long and this expensive it is close to unavoidable today.</p>
+<p>What matters is that the authors try to catch more than good prose — they also catch <strong>structural discipline</strong>. If a model forgot to update the location after an important event, or the simulation broke off because the output was malformed, that shows up in the score too.</p>
+</section>
+
+<section>
+<h2>What the results showed</h2>
+<p>The main finding is clear enough: <strong>training on EvolvingWorld helps models hold a long story together noticeably better</strong> than training on role-play dialogue alone.</p>
+<p>This is clearest in open models. Versions fine-tuned on EvolvingWorld beat their own base variants and role-play baselines such as CoSER and Crab almost everywhere. Which makes sense: train only on imitating a character and the model never learns to live in a world that changes.</p>
+<p>The interesting question is where exactly the gain comes from:</p>
+<p>🟣 <strong>Smoother character evolution.</strong> Fewer abrupt, unmotivated jumps in the profile.</p>
+<p>🟠 <strong>Better grounding in the setting.</strong> Characters react to the world around them more often instead of talking into the void.</p>
+<p>🟣 <strong>Better long-range coherence between scenes.</strong> The next scene reads as a continuation of the last one more often, rather than as a random new episode.</p>
+<p>On the world-model side the task is still visibly harder than on the character side. That is another important observation in the paper. Large models are already decent at continuing a narrative, but <strong>keeping structured world state explicitly and carefully</strong> is still difficult for them. There is apparently just not much of that skill in pretraining.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-23/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">EvolvingWorld against BookWorld as simulation length grows: the new framework holds smooth profile development and scene coherence better.</p></div></figure>
+<p>There is also a direct comparison with the nearest predecessor, <strong>BookWorld</strong>. On the overall metrics EvolvingWorld is consistently ahead, especially where characters have to be updated and coherence held over distance. In essence, the new system wins precisely because it is not confined to a couple of predefined fields and tracks the world more deeply.</p>
+<p>The ablations are another good sign. Remove the latent tracker and profile updating gets worse. Swap the open schema for a fixed one and the result degrades too. So these are working components, not decoration.</p>
+</section>
+<section>
+<h2>Where the approach runs out</h2>
+<p>The authors do not hide the limitations.</p>
+<p>🟠 <strong>One world for everybody.</strong> The system keeps an "objective" world state, but not separate versions of the world inside different characters' heads. In literature that is often critical: people get things wrong, forget, and see the same thing differently.</p>
+<p>🟣 <strong>The context window still binds.</strong> The world model tracks only the entities that matter, not everything in sight. Full detail runs into the length of the context window.</p>
+<p>🟠 <strong>The corpus is public-domain work.</strong> Mostly classics, in other words, rather than contemporary novels, games and user-made universes.</p>
+<p>None of that cancels the main point: the work identifies with real precision <strong>exactly which brick was missing</strong> in interactive fiction systems.</p>
+</section>
+
+<section>
+<h2>What this changes in practice</h2>
+<p>EvolvingWorld matters as more than a benchmark. It sets a more grown-up framing of the problem for AI simulation.</p>
+<p>Put simply, the industry used to ask: "Can an LLM play a character?" This work asks something else: <strong>"Can a system sustain an evolving world over time, in which characters and setting change in step with each other?"</strong></p>
+<p>That is a question at the level of:</p>
+<p>🟣 interactive books and narrative games;</p>
+<p>🟠 AI agents for long-running scenarios;</p>
+<p>🟣 social simulators and multi-agent worlds;</p>
+<p>🟠 video and animation generation from a sequence of scenes.</p>
+<p>The authors demonstrate that last case as well: structured scenes can be handed off to video generation. For now it is a gesture at a direction rather than a result, but the direction is clear enough — from text to long, controllable stories.</p>
+</section>
+<section>
+<h2>Takeaways</h2>
+<p>EvolvingWorld is an attempt to move role-play AI systems out of "answers beautifully" mode and into <strong>develops consistently</strong> mode.</p>
+<p>The paper's central claim: <strong>good dialogue is not enough for long simulation</strong>. You need explicit character state, explicit world state, a mechanism for accumulating weak signals, scene planning as a step of its own, and evaluation over a whole trajectory rather than a single line.</p>
+<p>The results show the approach really does work: characters behave more stably, and scenes drift apart less as the story runs longer. The gain is most visible in open models after training on the new data.</p>
+<p>Genuinely living literary worlds are still a long way off. But after this work it is far clearer <strong>which direction such systems should be built in</strong>. Not simply teaching an LLM to speak in a character's voice, but making it remember, change and live inside a world that has a memory of its own.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

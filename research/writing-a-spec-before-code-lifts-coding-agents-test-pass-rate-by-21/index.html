@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Writing a spec before code lifts coding agents' test pass rate by 21%</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Writing a spec before code lifts coding agents' test pass rate by 21%" />
+    <meta property="og:description" content="Understand first, then write" />
+    <meta name="description" content="ИИ неплохо чинит и дописывает чужой код, но когда нужно написать программу с нуля, он вдруг начинает теряться.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/writing-a-spec-before-code-lifts-coding-agents-test-pass-rate-by-21/" />
+    <link rel="canonical" href="https://dataist.ai/research/writing-a-spec-before-code-lifts-coding-agents-test-pass-rate-by-21/">
+    <meta property="og:image" content="https://dataist.ai/2026-07-31/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-07-31/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Writing a spec before code lifts coding agents' test pass rate by 21%",
+  "url": "https://dataist.ai/research/writing-a-spec-before-code-lifts-coding-agents-test-pass-rate-by-21/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/writing-a-spec-before-code-lifts-coding-agents-test-pass-rate-by-21/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Understand first, then write",
+  "image": "https://dataist.ai/2026-07-31/cover.jpg",
+  "datePublished": "2026-07-31",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "SpecFirst: Behavioral Specification Elicitation as a First-Class Step in Agent-Based Program Synthesis from Scratch",
+    "identifier": "arXiv:2607.27167",
+    "url": "https://arxiv.org/abs/2607.27167"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2607.27167"
+}</script>
+    <meta property="article:published_time" content="2026-07-31T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-07-31</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Writing a spec before code lifts coding agents' test pass rate by 21%</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-07-31/cover.jpg"
+                         alt="Writing a spec before code lifts coding agents' test pass rate by 21%"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Understand first, then write</h2>
+<p>AI agents are already decent at fixing code, filling in functions and finding their way around someone else's repository. Ask them to build a program from scratch and the picture changes sharply. Especially when there are no sources at all — just a README and a working binary you can run as a black box. On tasks like these, even the strongest models available today fail more often than not.</p>
+<p>The authors of SpecFirst propose something straightforward: before writing any code, work out what the program is actually supposed to do. Not superficially, not on the fly, but in a separate phase. Behavior specification first, implementation second.</p>
+<p>And that changes the result considerably more than you would expect from such a simple step.</p>
+</section>
+<section>
+<h2>What goes wrong with ordinary agents</h2>
+<p>Today's standard coding-agent pipeline works like this: it reads the documentation, runs the binary, tries something, immediately starts writing code, checks something again, writes more, fixes again. All of it interleaved.</p>
+<p>On paper this looks reasonable. In practice it breaks in several places at once.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 The agent starts writing code too early and never gets around to exploring the program's behavior properly.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Over a long session it loses important details that it established itself at the very beginning.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 An early misreading of the task carries through the whole project and infects every decision that follows.</span></div>
+<p>The authors demonstrate this on the ProgramBench benchmark. The task there is unforgiving: reconstruct a program from scratch given only a text description and an executable with no sources. Hidden tests then check how closely the new implementation reproduces the original's behavior.</p>
+<p>The result is sobering: even very strong models fully solve less than 1% of the tasks. So this is not a case of models needing "a little more intelligence". The problem is the way they work.</p>
+</section>
+<section>
+<h2>What SpecFirst proposes</h2>
+<p>The SpecFirst idea is simple: split one big task into two separate ones.</p>
+<p>First a dedicated specification agent goes to work. Its only goal is to understand the program's behavior. It reads the documentation, runs the binary in different ways, invokes commands with different flags, checks errors, edge cases, output format. It writes up what it finds in a structured `SPEC.md` file.</p>
+<p>Then the coding agent takes over. It gets the documentation, the binary and a finished behavior specification. Only then does it start writing the implementation.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-31/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The SpecFirst scheme: a separate specification agent sits on top of the ordinary pipeline and gathers the requirements for the program's behavior first.</p>
+</div></figure>
+<p>In the ordinary mode the agent has to explore the system and build a copy of it at the same time. SpecFirst pulls those roles apart. One agent is responsible for understanding, the other for code.</p>
+<p>Why this helps:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 The specification becomes an external anchor. Important details do not dissolve into a long context.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Ambiguities in the documentation can be resolved before implementation starts.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 The coding agent guesses less and spends more of its time implementing behavior that has already been pinned down.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 If something was understood correctly early on, it stays in `SPEC.md` and is not lost 50 turns later.</span></div>
+</section>
+<section>
+<h2>How the agent builds the specification</h2>
+<p>The authors did not stop at the general idea of "let the agent poke at the binary for a while". They spell out exactly how it does that.</p>
+<p>The specification agent works through an ordinary shell. It runs the program with different arguments, feeds input through standard input, reads `stdout`, `stderr` and the exit code. For interactive programs it uses a virtual terminal.</p>
+<p>The probing patterns are what matter here. The agent does not jab at commands at random — it aims at the areas documentation almost always describes badly.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Boundary checks: empty input, overly long strings, special characters, limit values.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Error checks: invalid arguments, conflicting flags, missing required parameters.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Flag combination checks: what happens when options are used together.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Output format details: field order, separators, spacing, line breaks.</span></div>
+<p>What comes out is not a raw transcript of the session but a compact structured document with six sections: overview, flags, input, output format, errors, edge cases.</p>
+<p>That matters, because the next agent does not need a pile of observations — it needs a working manual for how the program behaves.</p>
+<p>The authors explicitly forbid shortcuts. The agent may not look for sources online, download the package from a registry, run decompilers or analyze the binary from the inside in any way. Black box only: run it, watch it, write down the conclusions. Otherwise the task loses its point.</p>
+</section>
+<section>
+<h2>How it was tested</h2>
+<p>The evaluation covers all 200 ProgramBench tasks. These are real command-line programs from open source projects: from Go and Rust utilities to larger tools like SQLite, FFmpeg and the PHP interpreter.</p>
+<p>The comparison is fair: the same base agent, the same models, the same conditions. Only one thing changes — whether there is a separate specification phase before the code gets written.</p>
+<p>Four models were tested:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Qwen3.5-397B-A17B</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Qwen3.6-35B-A3B</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 GPT-5.5-high</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 GPT-5.4-mini</span></div>
+<p>The headline metric is the share of hidden tests the reconstructed program passes. That is a sensible choice: an exact match with the original is rare here, so partial progress needs to be visible too.</p>
+</section>
+<section>
+<h2>What came out of it</h2>
+<p>SpecFirst comes out ahead on all four models. The gain in the average share of tests passed ranged from 6.9% to 21.3%.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2 flex justify-between items-center"><span class="font-mono font-bold text-sm">🟠 Qwen3.5-397B</span><span class="font-mono text-sm"><span class="opacity-50">33,66%</span> → <span class="text-cyber-orange font-bold">40,84%</span></span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2 flex justify-between items-center"><span class="font-mono font-bold text-sm">🟠 Qwen3.6-35B</span><span class="font-mono text-sm"><span class="opacity-50">27,51%</span> → <span class="text-cyber-orange font-bold">31,40%</span></span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2 flex justify-between items-center"><span class="font-mono font-bold text-sm">🟠 GPT-5.5-high</span><span class="font-mono text-sm"><span class="opacity-50">59,02%</span> → <span class="text-cyber-orange font-bold">65,14%</span></span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2 flex justify-between items-center"><span class="font-mono font-bold text-sm">🟠 GPT-5.4-mini</span><span class="font-mono text-sm"><span class="opacity-50">39,09%</span> → <span class="text-cyber-orange font-bold">41,78%</span></span></div>
+<p>With GPT-5.5-high the picture is interesting beyond the average score. SpecFirst markedly raises the share of near-perfect solutions:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 tasks scoring at least 90% went from 5.5% to 16.5%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 tasks scoring at least 95% went from 1.5% to 6.5%</span></div>
+<p>So the approach does not merely nudge the average up. It more often carries a solution to the point where the program reproduces nearly all of the original's behavior.</p>
+</section>
+<section>
+<h2>Why it works</h2>
+<p>The authors show that this is not about "an extra step" but about a change in how the agent behaves while it works.</p>
+<p>First, SpecFirst really does explore the program more widely. To measure this they tracked exploration coverage: what share of the lines in the original program the agent touched at all through its calls to the binary. The agent obviously never sees the sources, but the researchers instrumented the reference programs and watched which parts of the code were actually executed during probing.</p>
+<p>SpecFirst wins here too: final exploration coverage is 9.4–18.5% higher depending on the model.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Qwen3.5-397B, total coverage: 59.8% against 51.9%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 Qwen3.6-35B: 58.3% against 49.2%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 GPT-5.5-high: 60.3% against 55.1%</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 GPT-5.4-mini: 58.6% against 52.1%</span></div>
+<p>Where that gain comes from matters too. It is the specification agent that produces it. The coding agent then explores less, because it already has something to lean on.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-31/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Size of the reconstructed codebase over the course of a session: with a specification up front, the agent starts writing code earlier and stays in the implementation phase longer.</p>
+</div></figure>
+<p>Second, the rhythm of the work changes. When the agent has `SPEC.md`, it starts writing code earlier and keeps at it longer, without constantly dropping back into reconnaissance mode. Put crudely, an ordinary agent thrashes between "let me check one more thing" and "time to actually write code". SpecFirst removes that thrashing.</p>
+<p>The authors measured this through the growth in codebase size over a session. With a specification up front the growth curve rises earlier and the final implementation comes out larger. Final codebases were 7–29% bigger depending on the model. That looks less like pointless bloat and more like a fuller implementation of the features.</p>
+</section>
+<section>
+<h2>An example where the ordinary approach gets lost</h2>
+<p>The paper has a telling case involving the `gomplate` utility. It is a command-line templating tool with a pile of namespaces, functions, flags and behavior variants. The README describes the general idea but cannot list every detail: signatures, errors, format quirks, flag compatibility.</p>
+<p>On tasks like this an ordinary agent often latches onto the examples in the documentation and goes no further. It might explore `env` and `data` while barely touching the other namespaces. Or it sees an important piece of information once and then simply forgets about it dozens of turns later.</p>
+<p>SpecFirst in the same situation first builds a map of the behavior and records it in `SPEC.md`: which functions exist, how the flags work, which combinations are forbidden, which errors get printed and where. After that the coding agent is handed a working specification rather than a vague description.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-07-31/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">In four examples with GPT-5.5 you can see that without a separate specification the agent explores for longer and moves to implementation later.</p>
+</div></figure>
+</section>
+<section>
+<h2>Where the problems remain</h2>
+<p>For all the improvement, the task is still far from solved. The authors went through 50 failures by hand and found several distinct error types.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 The specification missed something entirely.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 The specification described the behavior incorrectly.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 The specification found the behavior but described it too vaguely.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 The implementation could not execute even a correct specification precisely.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟣 Some of the failures trace to the execution environment rather than to the agent.</span></div>
+<p>The most common case is the final step breaking on implementation anyway. Knowing how a program behaves is not enough — that knowledge still has to be carried into code carefully and in full.</p>
+<p>That is a clear pointer to where the work goes next. A single specification phase is not enough to close the task. What is missing is more reliable machinery for checking an implementation against its specification, for self-checking and for self-correction.</p>
+</section>
+<section>
+<h2>What it costs</h2>
+<p>The improvement has to be paid for. SpecFirst is almost always more expensive than the ordinary mode, because it adds another agent and another inference phase.</p>
+<p>On average, cost per task rose by 48% to 130% depending on the model. For GPT-5.5-high the difference is especially pronounced: a lot of the money goes into the specification phase.</p>
+<p>But there is a nuance. The baseline agent was not running into the turn limit. It almost always finished on its own, ahead of time. So the problem was not a shortage of budget as such. Simply giving an ordinary agent more steps is not the same thing as giving it a separate phase for understanding the task.</p>
+</section>
+<section>
+<h2>Why this matters</h2>
+<p>In programming from scratch this is close to obvious: requirements first, then code. With AI agents we somehow spent a long time doing it the other way round, hoping the model would keep everything in its head through a long session.</p>
+<p>SpecFirst points at a more general principle. When a task is long, ambiguous and requires exploring an environment, it pays to move the understanding of that task into a separate artifact. Not hold everything in context, but produce an external document you can lean on afterwards.</p>
+<p>That could be useful well beyond reconstructing programs from a binary.</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 For working with APIs where the documentation is incomplete and much has to be established experimentally.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 For migrating legacy systems, where the behavior lives in a running service rather than in the sources.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 For testing and integration, where you have to understand the system's contract first.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">🟠 For complex multi-agent pipelines, where one agent gathers the requirements and another implements them.</span></div>
+</section>
+<section>
+<h2>Takeaway</h2>
+<p>If you want an AI agent to write a program from scratch, handing it a README and terminal access is not enough. It needs a separate phase in which it first establishes what exactly the program is supposed to do and writes that down explicitly.</p>
+<p>SpecFirst shows that this decomposition delivers a consistent win: broader exploration coverage, an earlier start on implementation, a larger and fuller codebase, a higher share of tests passed. And the effect holds across different models and across tasks of different difficulty.</p>
+<p>On long coding tasks an AI agent needs more than code — it needs memory in the form of a specification. Without one it gets tangled in its own steps. With one it has an anchor to build the implementation from.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.27167" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Coding agents skip looking at the app when the task gets long</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/andre-kuzminykh/dataist/refs/heads/main/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Coding agents skip looking at the app when the task gets long" />
+    <meta property="og:description" content="When the app is the spec" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/coding-agents-skip-looking-at-the-app-when-the-task-gets-long/" />
+    <meta property="og:image" content="https://dataist.ai/2026-09-18/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-09-18">
+
+    <meta name="description" content="Можно ли научить ИИ чинить и достраивать сайт, если ему не дали описание, а показали только, как всё должно работать?
+
+Исследователи предлагают проверять такие модели не по списку задач, а по живому примеру: есть готовое приложение, и по его работе ИИ должен понять, какую функцию надо восстановить в сломанной версии. Для этого команда собрала набор задач, где поведение программы разбито на отдельные куски — от простых действий до целых цепочек, — чтобы видеть, где ИИ справляется, а где теряет нить и начинает ошибаться.
+
+В обзоре разберём, как устроена такая проверка, почему восстановить поведение по примеру куда сложнее обычных указаний и что она показывает о реальных возможностях ИИ-агентов в разработке." />
+    <link rel="canonical" href="https://dataist.ai/research/coding-agents-skip-looking-at-the-app-when-the-task-gets-long/" />
+
+    <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Coding agents skip looking at the app when the task gets long",
+  "description": "When the app is the spec",
+  "image": "https://dataist.ai/2026-09-18/cover.jpg",
+  "url": "https://dataist.ai/research/coding-agents-skip-looking-at-the-app-when-the-task-gets-long/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/coding-agents-skip-looking-at-the-app-when-the-task-gets-long/",
+    "inLanguage": "en"
+  },
+  "datePublished": "2026-09-18",
+  "inLanguage": "en",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "ProgramDistill: From Interactive Web Apps to Verifiable Reference-Guided SWE Tasks",
+    "identifier": "arXiv:2609.18805",
+    "url": "https://arxiv.org/abs/2609.18805"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2609.18805",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  }
+}</script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-09-18/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-09-18</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Coding agents skip looking at the app when the task gets long</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-09-18/cover.jpg"
+                         alt="Coding agents skip looking at the app when the task gets long"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When the app is the spec</h2>
+<p>A <strong>coding agent</strong> is usually evaluated the simple way: hand it a task, a bug report or a test suite, then check whether it fixed the code. A new paper, <strong>ProgramDistill</strong>, proposes a setup much closer to real work. You have a working reference app. You also have a broken or incomplete version of it. The agent never sees the reference's source. It has to walk the interface itself, work out how everything is supposed to behave, and restore that behavior in the editable app.</p>
+<p>This is a test of <strong>the ability to extract a spec from a live system</strong>. For web development that framing is natural. It is how people often work: open an old version of the product, a competitor's service, a prototype or an internal demo, then reproduce the behavior you need in code.</p>
+<p>The authors turn the idea into a full <strong>benchmark for coding agents</strong> — and they build it almost entirely automatically, not by hand.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-18/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The ProgramDistill idea: the agent studies a working reference app, edits the code of the current app, then checks whether the required behavior is back.</p>
+</div></figure>
+</section>
+<section>
+<h2>What ProgramDistill is</h2>
+<p><strong>ProgramDistill</strong> is a benchmark where the task is posed not through a written description but through watching a running application. The paper works with interactive web apps: kanban boards, email, résumé builders, CRMs, calendars, finance tools and other services.</p>
+<p>The setup is simple:</p>
+<p>🟠 There is a <strong>reference app</strong> that works correctly.</p>
+<p>🟠 There is a <strong>current app</strong> with part of the functionality removed.</p>
+<p>🟠 A <strong>coding agent</strong> observes the reference's behavior through a browser.</p>
+<p>🟠 It then edits the current app's code.</p>
+<p>🟠 After that, the system automatically checks whether the required behavior is back.</p>
+<p>The interesting part is elsewhere. The authors do not treat an app as one big "restore everything" task. They break it into <strong>chains of dependent actions</strong>. For example: log in → create a board → create a card → open the card details → edit a comment. Each action depends on the ones before it, so difficulty becomes a dial: from a small local fix to a long multi-step restoration.</p>
+</section>
+<section>
+<h2>How one app became thousands of tasks</h2>
+<p>The paper's main technical contribution is an automated <strong>mine–craft–patch</strong> pipeline. It is essentially a task factory built out of live web apps.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-18/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The mine–craft–patch pipeline: the system first finds reproducible actions, then hides their implementation in the code, then asks the agent to restore the behavior from the reference.</p>
+</div></figure>
+<p>It runs in three steps.</p>
+</section>
+<section>
+<h2>Step 1. Find reproducible behavior</h2>
+<p>First, separate <strong>AI agents</strong> explore the app through a browser, looking for meaningful user actions: create an object, edit a record, open a form, drag a card, import a file and so on. When an action succeeds, the system records a <strong>trace</strong>: the sequence of browser steps and the observable results expected from them.</p>
+<p>The key point is that this behavior is then <strong>replayed automatically</strong>. If a trace cannot be reliably reproduced from a clean state, it does not make it into the benchmark. Fragile, flaky and hard-to-verify scenarios get cut.</p>
+<p>Across 26 apps, that yielded:</p>
+<p>🟣 <strong>1,975 verified behaviors</strong></p>
+<p>🟣 <strong>2,862 atomic tasks</strong> restoring a single piece of logic</p>
+<p>🟣 <strong>1,201 cumulative tasks</strong> that require bringing back several dependent features at once</p>
+<p>🟣 <strong>4,063 tasks</strong> in total</p>
+<p><strong>The scale, briefly:</strong></p>
+<p>🟠 Tasks come from <strong>the running app itself</strong></p>
+<p>🟠 Only <strong>reproducible scenarios</strong> are kept</p>
+<p>🟠 The benchmark holds both <strong>local fixes</strong> and <strong>long dependency chains</strong></p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-18/fig_5.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">How the benchmark grew: from the mined behaviors the system assembled more than four thousand tasks of varying depth and type.</p>
+</div></figure>
+</section>
+<section>
+<h2>Step 2. Break the feature properly</h2>
+<p>Once the behaviors exist, the system has to turn them into real repair tasks. It does that by deleting the implementation of a specific feature from the source.</p>
+<p>But there are many ways to delete something. You can honestly cut out the core logic. Or you can cheat: flip a flag, add an early return, hide a button, leave nearly all the code in place. The authors go out of their way to prevent these shallow breaks.</p>
+<p>They use two kinds of masking:</p>
+<p>🟠 <strong>Logic only</strong> — the interface stays, but the internals stop working.</p>
+<p>🟠 <strong>Logic and interface</strong> — both the logic and the UI elements the feature drives are removed.</p>
+<p>The system then verifies that:</p>
+<p>🟠 the app still starts;</p>
+<p>🟠 earlier steps in the chain still work;</p>
+<p>🟠 the target feature is genuinely broken;</p>
+<p>🟠 the "gold patch" puts everything back and restores the behavior.</p>
+<p>That makes for a clean setup. The agent does not have to fix everything around it. It gets a <strong>controlled break</strong> and has to restore exactly what was removed.</p>
+</section>
+<section>
+<h2>Step 3. Hand the task to the agent</h2>
+<p>Now the test itself. The agent gets:</p>
+<p>🟣 a repository with the functionality removed;</p>
+<p>🟣 a short description of the feature;</p>
+<p>🟣 browser access to compare the current app with the reference;</p>
+<p>🟣 tools to read, search and edit code.</p>
+<p>What it does not get is the important part: the reference's source, the ready-made patch and the verification traces.</p>
+<p>Scoring is by behavior replay. If the recorded chain of actions runs after the patch the way it runs on the reference, the task is solved. If the agent restored only part of a long chain, that can be scored separately.</p>
+</section>
+<section>
+<h2>What the experiments showed</h2>
+<p>The authors ran nine <strong>frontier models</strong> on ProgramDistill, among them GPT-6 Astra, Claude Opus 5, GPT-5.6 Sol, Gemini, Grok and others.</p>
+<p>The headline result: <strong>models handle local fixes markedly better than long dependent restorations</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-18/fig_7.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Agent quality drops as restoration depth grows: individual features are easier to fix than long chains of dependent behavior.</p>
+</div></figure>
+<p>For partial restoration of an app:</p>
+<p>🟠 <strong>GPT-6 Astra</strong> solved <strong>84.3%</strong> on average</p>
+<p>🟠 <strong>Claude Opus 5</strong> — <strong>68,7%</strong></p>
+<p>🟠 <strong>GPT-5.6 Sol</strong> — <strong>60,7%</strong></p>
+<p>But look past the average to chain depth and the picture gets worse fast. On depth-1 tasks, where a single piece of behavior has to come back, the best models are almost flawless. At depth 8 it is already hard:</p>
+<p>🟣 <strong>GPT-6 Astra</strong> falls from <strong>100%</strong> to <strong>64%</strong></p>
+<p>🟣 <strong>Claude Opus 5</strong> — from <strong>96%</strong> to <strong>32%</strong></p>
+<p>🟣 <strong>GPT-5.6 Sol</strong> — from <strong>92%</strong> to <strong>32%</strong></p>
+<p><strong>The results, briefly:</strong></p>
+<p>🟠 On short tasks the best models are close to <strong>100%</strong></p>
+<p>🟠 On long chains quality collapses</p>
+<p>🟠 The problem is <strong>composing several fixes without breaking dependencies</strong></p>
+<p>Another important detail: tasks that require restoring both the interface and the logic are noticeably harder than logic-only ones. Even for the leader, the gap between the two modes is wide.</p>
+</section>
+<section>
+<h2>Why agents fail on long tasks</h2>
+<p>The more interesting part of the paper examines not just scores but the agents' own behavior.</p>
+<p>The authors looked at how the workload changes as tasks get harder. As restoration depth grows:</p>
+<p>🟠 the amount of code that has to come back grows roughly <strong>9.3×</strong></p>
+<p>🟠 the number of target browser actions grows roughly <strong>10.7×</strong></p>
+<p>But the effort agents spend <strong>on each individual feature being restored</strong> goes down. Observation sags hardest:</p>
+<p>🟣 observation steps on the reference per target fall about <strong>75%</strong></p>
+<p>🟣 checks of the agent's own app per target also fall about <strong>75%</strong></p>
+<p>🟣 code edits per target fall less, but still noticeably</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-18/fig_10.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">As task depth grows, the amount of work grows faster than the agent's effort per feature; observing the reference and self-checking fall off most sharply.</p>
+</div></figure>
+<p>Put plainly: the longer the task, the more the agent starts <strong>economizing on understanding and verifying behavior</strong>. It looks at the reference less, re-checks its own result less, and then leaves part of the needed code unrestored.</p>
+<p>The numbers show it clearly:</p>
+<p>🟠 There is <strong>9–11× more work</strong></p>
+<p>🟠 Observation and self-checking <strong>per target</strong> drop about <strong>75%</strong></p>
+<p>🟠 The agent <strong>misses required details of the behavior</strong> more often</p>
+<p>On a short task you can study the interface carefully and run the scenario several times. On a long one the agent slides sooner into a "close enough, I'll just fill it in" mode. That is exactly where the errors pile up.</p>
+<p>The differences in strategy between models are interesting too. GPT-6 Astra turned out to be the most observant: it looked at the reference and at the current app more often than the rest, while making fewer code edits. Better results here come not only from code generation but from <strong>how the agent splits its effort between observing, editing and checking</strong>.</p>
+</section>
+<section>
+<h2>Rebuilding the whole app</h2>
+<p>The authors also tested a harsher setup: not a partial fix to an existing app but <strong>full reconstruction</strong> from a minimal template. Here you essentially have to build the product again from scratch, with only the working reference app to look at.</p>
+<p>The results are markedly worse:</p>
+<p>🟠 <strong>GPT-6 Astra</strong>: <strong>58.98%</strong> on atomic behaviors and <strong>49.15%</strong> on full cumulative scenarios</p>
+<p>🟠 <strong>Claude Opus 5</strong>: <strong>42.03%</strong> and <strong>28.81%</strong></p>
+<p>🟠 <strong>GPT-5.6 Sol</strong>: <strong>33.39%</strong> and <strong>21.07%</strong></p>
+<p>Even the best models, in other words, are far from reliably reconstructing a real interactive product.</p>
+<p>Why does this happen? The authors went through almost a thousand failures and found something simple: most often the agent <strong>never saw the behavior in the reference at all</strong>. That is the largest error category — <strong>59.2%</strong> of all failures. The rest are cases where the behavior was noticed but not implemented, implemented in the wrong form, or implemented with the wrong state.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-18/fig_12.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The main cause of failure in full reconstruction is that the agent simply did not notice the behavior in the reference; the remaining errors come from wrong implementations and weak self-checking.</p>
+</div></figure>
+<p><strong>Failures, briefly:</strong></p>
+<p>🟠 The main cause of error is that the agent <strong>under-explores the reference</strong></p>
+<p>🟠 That is <strong>59.2%</strong> of all failures</p>
+<p>🟠 The problem often starts <strong>before any code is written</strong></p>
+<p>This breaks the popular intuition that what holds today's agents back is only the code. The bottleneck often appears earlier: <strong>the agent did not explore the system enough</strong>.</p>
+</section>
+<section>
+<h2>Why it matters</h2>
+<p>ProgramDistill shows that current <strong>coding agents</strong> do reasonably well on isolated fixes and worse wherever they have to derive the spec themselves, hold a long chain of state, and check the result carefully.</p>
+<p>For the industry this matters for several reasons.</p>
+<p>🟣 <strong>Benchmarks move closer to real development.</strong> In practice you are rarely handed a perfect task description; you are handed a working product, a mockup or an old version.</p>
+<p>🟣 <strong>Compositional difficulty becomes measurable.</strong> Not just "fixed the bug" but "held eight dependent steps in a row".</p>
+<p>🟣 <strong>A new axis for comparing models appears:</strong> how they observe, how they check themselves and how they allocate attention.</p>
+<p>🟣 <strong>A benchmark like this suits fine-tuning.</strong> You can turn it into a curriculum, from simple fixes to long scenarios, including through <strong>reinforcement learning</strong>.</p>
+<p>And one more idea that matters: the working app here is not merely the object under test. It becomes a <strong>source of specs, tasks and checks</strong>. That is a practical idea for future <strong>data pipelines</strong> around coding agents.</p>
+</section>
+<section>
+<h2>The takeaway</h2>
+<p><strong>ProgramDistill</strong> is an attempt to test <strong>coding agents</strong> in a more lifelike mode: when the required behavior is not written down anywhere but hidden inside a working interface. Instead of a text task the agent gets a live reference, and the question is whether it can understand the functionality and reproduce it in code.</p>
+<p><strong>The main finding:</strong> the longer and more dependent the scenario, the faster quality falls. The best models still hold up on short fixes but start slipping badly at depth 6–8. The cause is not only the code. Agents often observe too little, verify their own solution too little, and miss important details of the behavior.</p>
+<p>If you want to build useful agents for web development, the ability to write code is not enough. Three more things are needed: <strong>exploring the reference, holding long dependencies and verifying the result strictly</strong>. ProgramDistill measures exactly that trio.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2609.18805" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Rewriting the search plan mid-query gives PAI-2 an 18% lift</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Rewriting the search plan mid-query gives PAI-2 an 18% lift" />
+    <meta property="og:description" content="Review · 2026-05-15
+                
+
+                
+                
+                    Rewriting the search plan mid-query gives PAI-2 an 18% lift" />
+    <meta name="description" content="У больших языковых моделей есть странная суперсила: они умеют говорить так уверенно, что порой кажется — они точно знают.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/rewriting-the-search-plan-mid-query-gives-pai-2-an-18-lift/" />
+    <link rel="canonical" href="https://dataist.ai/research/rewriting-the-search-plan-mid-query-gives-pai-2-an-18-lift/">
+    <meta property="og:image" content="https://dataist.ai/2026-05-15/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-05-15/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-p strong {
+            @apply font-semibold text-black dark:text-white;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .apple-img {
+            @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white;
+        }
+
+        /* Карточки-списки */
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 mb-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Rewriting the search plan mid-query gives PAI-2 an 18% lift",
+  "url": "https://dataist.ai/research/rewriting-the-search-plan-mid-query-gives-pai-2-an-18-lift/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/rewriting-the-search-plan-mid-query-gives-pai-2-an-18-lift/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Review · 2026-05-15\n                \n\n                \n                \n                    Rewriting the search plan mid-query gives PAI-2 an 18% lift",
+  "image": "https://dataist.ai/2026-05-15/cover.png",
+  "datePublished": "2026-05-15",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "PersonalAI 2.0: Enhancing knowledge graph traversal/retrieval with planning mechanism for Personalized LLM Agents",
+    "identifier": "arXiv:2605.13481",
+    "url": "https://arxiv.org/abs/2605.13481"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2605.13481"
+}</script>
+    <meta property="article:published_time" content="2026-05-15T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in"><!-- Category tag -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-05-15</span>
+                </div>
+
+                <!-- Headline -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Rewriting the search plan mid-query gives PAI-2 an 18% lift</h1>
+
+                <!-- Main cover -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-05-15/cover.png"
+                         alt="Cover: Rewriting the search plan mid-query gives PAI-2 an 18% lift"
+                         class="w-full h-auto object-cover">
+                </div></header>
+
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">Large language models have an odd superpower: they can speak so confidently that it sometimes seems they actually know. The trouble is that confidence and knowledge are not the same thing.</p>
+
+                <h2 class="article-h2 fade-in">When memory alone is not enough: teaching an LLM to look for facts in a graph instead of a text</h2>
+                <p class="article-p fade-in">Large language models have an odd superpower: they can speak so confidently that it sometimes seems they <strong>actually know</strong>. The trouble is that confidence and knowledge are not the same thing. That gap opens widest where a question takes several reasoning steps, fact-checking and careful handling of context. And that is exactly where most retrieval-augmented generation systems break: the model answers beautifully, but not always to the point.</p>
+                <p class="article-p fade-in">The authors of the paper on <strong>PersonalAI 2.0</strong>, or PAI-2, offer a fairly practical response to this. They take an LLM, attach external memory in the form of a knowledge graph and — the important part — make the system <strong>build a search plan instead of simply pulling the nearest chunks</strong>, revise that plan as it goes, and walk the graph iteratively. What you get is not "retrieve a piece of text, generate an answer" but a small investigation: what exactly needs to be established, which entities matter, where to go next, whether there is enough evidence yet or the plan should be rewritten.</p>
+                <p class="article-p fade-in">This matters not because it promises some magical universal memory for AI, but because it shows that the step after ordinary RAG probably runs in the direction of <strong>structured memory and controlled retrieval</strong>.</p>
+
+                <h2 class="article-h2 fade-in">What the authors actually propose</h2>
+                <p class="article-p fade-in">At the center of the paper is the PAI-2 architecture, a question-answering system that searches a <strong>memory graph</strong>. The graph holds knowledge extracted from documents: entities, statements, relations and episodic records. An LLM works on top of that graph, not as a know-it-all but as a dispatcher for the search.</p>
+                <p class="article-p fade-in">The core idea is simple: a hard question is rarely worth answering with a single query. Instead, PAI-2 breaks the task into stages:</p>
+                <p class="article-p fade-in">1. cleans up and sharpens the question where needed;</p>
+                <p class="article-p fade-in">2. determines whether it is really several independent sub-questions;</p>
+                <p class="article-p fade-in">3. builds an initial search plan;</p>
+                <p class="article-p fade-in">4. extracts named entities from the current step;</p>
+                <p class="article-p fade-in">5. matches them to nodes in the graph;</p>
+                <p class="article-p fade-in">6. generates auxiliary probe queries;</p>
+                <p class="article-p fade-in">7. traverses the graph outward from those anchor points;</p>
+                <p class="article-p fade-in">8. filters for the relevant triples;</p>
+                <p class="article-p fade-in">9. summarizes what it has found;</p>
+                <p class="article-p fade-in">10. checks whether that is enough to answer;</p>
+                <p class="article-p fade-in">11. and if not, <strong>refines the plan</strong> and keeps going.</p>
+                <p class="article-p fade-in">So the system does not just pull out "the most similar thing." It runs the search piece by piece, with a checkpoint in between: are we even heading the right way?</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-15/fig_0.jpg" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">The PAI-2 pipeline: from the user's question through staged retrieval over the memory graph to the final answer.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">That is the main difference from most GraphRAG variants, where retrieval tends to stay fairly static. In PAI-2 it is <strong>adaptive</strong>. If halfway along the route it turns out the original plan was too vague or missed an important entity, the system can rewrite it.</p>
+
+                <h2 class="article-h2 fade-in">Why this matters at all</h2>
+                <p class="article-p fade-in">Ordinary retrieval-augmented generation has a fundamental weakness: it works well when the answer sits right next to the query, in one or two chunks of text. The moment you have to connect several documents, reconstruct a chain of entities or pin down an intermediate fact, quality starts to sag. You get hallucinations, fragmentary answers, or a confident "no data available" when the data is in fact sitting in the store.</p>
+                <p class="article-p fade-in">A knowledge graph is convenient as external memory in exactly this sense: it stores the links between objects explicitly. But a graph alone is not enough either. Search the nodes without a strategy and the system either drowns in noise or walks straight past the route it needed.</p>
+                <p class="article-p fade-in">What makes PAI-2 interesting is that it combines two worlds:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">structured memory</strong> in the form of a graph;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">the <strong class="font-semibold text-black dark:text-white">flexibility of an LLM</strong> to steer the search and summarize.</span>
+                </div>
+
+                <p class="article-p fade-in">For personal assistants, enterprise agents, search over internal knowledge bases and generally any application where a factual error is expensive, this is a very down-to-earth and useful idea.</p>
+
+                <h2 class="article-h2 fade-in">How the search works: not one query but a series of guesses</h2>
+                <p class="article-p fade-in">Methodologically the paper reads like engineering work with a great deal of practical detail. The authors clearly were not trying to invent "a new theory of intelligence" — they are building a system that can be broken into legible modules and tested piece by piece.</p>
+                <p class="article-p fade-in">The mechanics of the <strong>auxiliary queries</strong> are especially curious. Once entities have been pulled out of a plan step and matched to graph nodes, the system writes several sharper phrasings of the question, each resting on its own combination of the nodes it found. That helps it probe different parts of the graph even when what it needs to know about an object is not stored in one place but scattered across several subgraphs.</p>
+                <p class="article-p fade-in">The triples it retrieves are then not simply handed to the model as a list. Answers are generated for each auxiliary query first, and only then aggregated into a single piece of knowledge for the current plan step. After that the LLM decides: answer now, or keep searching.</p>
+                <p class="article-p fade-in">One detail worth noting: the authors show separately that the <strong>plan refinement mechanism</strong> is not decoration but a genuinely working component. Switch it off and quality drops noticeably. The logic is clear enough — plenty of questions cannot be answered correctly from the first rough route. You need the ability to change course mid-way.</p>
+
+                <h2 class="article-h2 fade-in">What the experiments showed</h2>
+                <p class="article-p fade-in">PAI-2 was tested on six well-known question-answering datasets: Natural Questions, TriviaQA, HotpotQA, 2WikiMultihopQA, MuSiQue and DiaASQ. The opponents were LightRAG, RAPTOR, HippoRAG 2 and the system's own previous version, PAI-1.</p>
+                <p class="article-p fade-in">The headline metric is a score from an LLM judge. That is a fairly standard approach by now in tasks where plain string matching says little about whether an answer is right. The authors separately checked how reliable that scoring is against human annotation and got a high correlation, so the evaluation method here looks conscientious enough.</p>
+                <p class="article-p fade-in">In short, the results look like this:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">PAI-2 shows <strong class="font-semibold text-black dark:text-white">an average gain of about 4%</strong> on the LLM judge across four of the six benchmarks compared with the main alternatives;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">against PAI-1, the new system is markedly better on context relevance, factual consistency and final answer quality;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">using graph traversal algorithms instead of flat retrieval yields on average <strong class="font-semibold text-black dark:text-white">about 6% more</strong>;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">switching on the plan refinement mechanism has an even stronger effect — <strong class="font-semibold text-black dark:text-white">about 18% more</strong>.</span>
+                </div>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-15/fig_19.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Score distribution on MINE-1: PAI-2 preserves facts noticeably better than the alternatives when it builds the memory graph.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Across benchmarks the picture is not quite even. The system looks best on TriviaQA, 2WikiMultihopQA and MuSiQue — precisely where multi-hop retrieval matters most. On Natural Questions, by contrast, PAI-2 trails HippoRAG 2 by a visible margin. The authors are honest about the likely reasons: questions there are often poorly normalized, written in lowercase, and the expected answer type is not always obvious. For a system that likes explicit entities and tidy planning, that is an uncomfortable regime.</p>
+
+                <h2 class="article-h2 fade-in">The strongest ablation: planning really does work</h2>
+                <p class="article-p fade-in">The most convincing part of the paper is probably not the final table of numbers but the ablation on plan refinement. The authors take a question about the directors of two films to show why a static plan is not enough.</p>
+                <p class="article-p fade-in">The system initially produces steps along the lines of "who directed the first film," "who directed the second film," "what country is the first film's director from," "what country is the second film's director from." The problem is that the last two steps are too vague: without substituting the actual names, the search easily misses.</p>
+                <p class="article-p fade-in">With plan refinement switched on, the system substitutes the intermediate facts it has already found: instead of an abstract "director of the second film" there is a specific person. And only then does the graph hand back what was needed.</p>
+                <p class="article-p fade-in">This sounds almost banal, but small things like this are often where the difference lies between "an architecture on a slide" and a system that actually works. Planning here is not a pretty word but a mechanism for <strong>sharpening the query as knowledge accumulates</strong>.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-15/fig_8.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">An example of the template used to generate the base search plan — the starting point for multi-step traversal of the graph.</figcaption>
+                </figure>
+
+                <h2 class="article-h2 fade-in">The other thing that matters: the quality of the memory itself</h2>
+                <p class="article-p fade-in">Systems like this have two levels of quality. The first is how well the agent searches. The second is how sound the memory it walks through actually is. If the graph is built badly, no amount of clever retrieval will save it.</p>
+                <p class="article-p fade-in">The authors evaluate their graph construction pipeline separately on the MINE-1 benchmark, which measures how much of the factual information in the source text survives into the graph. And here PAI-2 does very well: <strong>89% information retention</strong>, noticeably higher than Wikontic and KGGen in the comparison they report.</p>
+                <p class="article-p fade-in">This may matter just as much as the question-answering scores. External memory for an LLM dies in two ways: when it is hard to search, and when things are written into it badly. Judging by the paper, PAI-2 is trying to close both problems at once.</p>
+
+                <h2 class="article-h2 fade-in">Limitations the authors do not keep quiet about</h2>
+                <p class="article-p fade-in">Part of what makes the work strong is that the authors do not pretend they have solved everything.</p>
+                <p class="article-p fade-in">First, the system is slow. By their own measurements PAI-2 is roughly twice as slow as PAI-1: about 1.5 minutes per question on average. Tolerable for research, already a challenge for production use. The bottlenecks are predictable — LLM inference, vector search and graph traversal.</p>
+                <p class="article-p fade-in">Second, in its current form the graph suffers from duplicates at the level of meaning. If the same thought is phrased two different ways, several near-identical subgraphs can appear. Hence the need for several auxiliary queries per step.</p>
+                <p class="article-p fade-in">Third, ambiguous entities, time and statement types remain a weak spot. The authors themselves suggest where to go next: label facts, opinions and predictions better, model time intervals explicitly, fix a vocabulary of predicates, and add semantic deduplication.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-15/fig_18.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">The LLM-judge template used to score answers, which served as the primary quality metric.</figcaption>
+                </figure>
+
+                <h2 class="article-h2 fade-in">The takeaway</h2>
+                <p class="article-p fade-in">PAI-2 is not another paper in the "we bolted a graph onto an LLM" genre. Its central claim is subtler: <strong>a reliable answer takes more than having memory — you have to be able to think your way through it along a route</strong>. Break the question apart, build a plan, pin down the entities, launch several search trajectories, check whether the facts gathered so far are sufficient, and rewrite the strategy when they are not.</p>
+                <p class="article-p fade-in">Which is why the paper is interesting not only to people building GraphRAG systems but to anyone working with agents, enterprise search and external memory for LLMs. It shows that the next level of quality comes not from "an even bigger model" but from organizing retrieval more rigorously.</p>
+                <p class="article-p fade-in">The main conclusion is this: <strong>structured memory without planning is too dumb, and an LLM without external memory is too sure of itself</strong>. PAI-2 tries to join the best of both worlds — and, judging by the results, does it rather convincingly.</p>
+
+                <!-- Источник -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2605.13481" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://github.com/Alab-NII/2wikimultihop" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                </div>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI paper breakdowns
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

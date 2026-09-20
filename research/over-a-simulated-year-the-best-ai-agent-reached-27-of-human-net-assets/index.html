@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Over a simulated year, the best AI agent reached 27% of human net assets</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Over a simulated year, the best AI agent reached 27% of human net assets" />
+    <meta property="og:description" content="When solving the task is not enough" />
+    <meta name="description" content="Может ли ИИ не просто сделать разовую задачу, а целый год вести дела как настоящий продавец?">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/over-a-simulated-year-the-best-ai-agent-reached-27-of-human-net-assets/" />
+    <link rel="canonical" href="https://dataist.ai/research/over-a-simulated-year-the-best-ai-agent-reached-27-of-human-net-assets/">
+    <meta property="og:image" content="https://dataist.ai/2026-08-07/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-07/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Over a simulated year, the best AI agent reached 27% of human net assets",
+  "url": "https://dataist.ai/research/over-a-simulated-year-the-best-ai-agent-reached-27-of-human-net-assets/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/over-a-simulated-year-the-best-ai-agent-reached-27-of-human-net-assets/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "When solving the task is not enough",
+  "image": "https://dataist.ai/2026-08-07/cover.jpg",
+  "datePublished": "2026-08-07",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "MerchantBench: Benchmarking LLM Agents for Long-Term Coherence in E-Commerce Operations",
+    "identifier": "arXiv:2607.28956",
+    "url": "https://arxiv.org/abs/2607.28956"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2607.28956"
+}</script>
+    <meta property="article:published_time" content="2026-08-07T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-08-07</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Over a simulated year, the best AI agent reached 27% of human net assets</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-07/cover.jpg"
+                         alt="Over a simulated year, the best AI agent reached 27% of human net assets"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When solving the task is not enough</h2>
+<p>Almost every popular benchmark for AI agents tests a short distance. Click a button. Call a tool. Fill in a form. Arrive at the right answer. But plenty of real tasks work differently: you make a decision today, the money leaves the account immediately, and the mistake surfaces a week later. By then it has spoiled more than one order — it has spoiled the business.</p>
+<p>That is the problem MerchantBench goes after — a new benchmark for whether LLM agents can hold a course over a long distance. Keep a coherent strategy running for months. The authors call it Long-Term Coherence. In plain terms: the agent has to remember what it is trying to achieve, connect late consequences to old decisions, and not dissolve into a chaotic string of reactions.</p>
+<p>The testing ground is an online store, seen from the seller's side. Mundane on the face of it. But it is a good choice. It has everything AI agents usually start tripping over: limited cash, delayed feedback, seasonal demand, penalties, a store rating, and a constant need to change course.</p>
+</section>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-07/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Order-level dynamics: the money leaves the account immediately, while the bad consequences show up later and hit the store's rating.</p></div></figure><section>
+<h2>What MerchantBench is</h2>
+<p>MerchantBench is a 365-day store simulator. Inside are nearly 99,000 real product records and more than 36,000 suppliers, with data tied to the Chinese wholesale marketplace 1688. The agent runs a store where it can keep up to 50 active listings, change prices, add and drop items, and watch its balance, its orders and events on the supplier side.</p>
+<p>The point is to put an AI agent in an environment where decisions are chained to one another.</p>
+<p>Here is how it works:</p>
+<p>🟠 The agent picks products and lists them in the store.</p>
+<p>🟠 When an order comes in, the purchase from the supplier happens at once, and the money leaves the balance right away.</p>
+<p>🟠 Then the order's long life cycle begins: shipping, delivery, returns, cancellations, complaints, bad reviews.</p>
+<p>🟠 Some problems are visible fast. A supplier raises its price, say, or drops out of the catalog.</p>
+<p>🟠 Some problems only surface late. Returns, refunds where the goods never come back, bad reviews, delays and penalties.</p>
+<p>🟠 Those late events move the store's rating, and the rating drives future demand.</p>
+<p>So a mistake on a single product can later drag down sales across the whole store.</p>
+</section>
+
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-07/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The overall MerchantBench design: the agent runs a store through four decision components, in an environment with suppliers, a storefront and a 365-day order simulation.</p></div></figure><section>
+<h2>Why it matters</h2>
+<p>There is a lot of talk now about AI agents that will work autonomously inside digital systems. But short benchmarks tend to hide the main question: what happens if you don't switch one of these agents off after 15 minutes?</p>
+<p>A real pipeline almost always has a long tail of consequences. Especially in business, operations, logistics, procurement, support, finance. You make a decision that looks perfectly reasonable, and then you:</p>
+<p>🟣 discover the agent has pulled all the cash out of circulation;</p>
+<p>🟣 realize it isn't noticing penalties that pile up slowly;</p>
+<p>🟣 find it still selling a bad product even though the returns have already started;</p>
+<p>🟣 watch it stop doing anything at all and settle into passive observation.</p>
+<p>This is exactly what MerchantBench tests. Whether an agent can live with the consequences of its own actions.</p>
+</section>
+<section>
+<h2>What the environment is built on</h2>
+<p>The authors did not settle for a toy economy. They took real year-long demand trajectories for 98,843 products across 10 categories: clothing, home goods, office supplies, sports, toys, electronics and so on. Every product comes with 365 days of demand history. On top of that, real supplier signals and daily market summaries.</p>
+<p>That buys two things.</p>
+<p>First: demand moves with the season. Fans sell in summer, other categories in winter, demand jumps around holidays. An agent that finds a few winners once and then clings to them loses.</p>
+<p>Second: risk is not uniform. Products and suppliers carry different odds of trouble. In one place returns are more frequent. In another the supplier tends to ship late. Elsewhere the product can be pulled from sale. The agent never sees any of this directly. It sees only the consequences, and has to work backwards from them.</p>
+<p>This is no longer a one-off search for the best product. It is a continuous reallocation of attention, money and shelf space.</p>
+</section>
+
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-07/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Real demand patterns and calibrated risk profiles for 98,843 products in the environment's data.</p></div></figure><section>
+<h2>How the models were tested</h2>
+<p>The authors ran 8 models in two agent frameworks: ReAct and Hermes. That came to 48 runs, each lasting 365 simulated days.</p>
+<p>The model list is familiar: GPT-5.6 Sol, Claude Opus 4.8, Qwen3.7-Max, Qwen3.7-Plus, GLM-5.2, DeepSeek-V4-Pro, DeepSeek-V4-Flash and Kimi K2.6. For comparison they added humans and a simple rule-based system.</p>
+<p>Everyone starts from the same position:</p>
+<p>🟠 2,000 yuan for purchasing;</p>
+<p>🟠 1,000 yuan in deposit;</p>
+<p>🟠 a maximum of 50 active product listings;</p>
+<p>🟠 26 tools for working with the store, orders, balance, catalog and suppliers.</p>
+<p>The metric isn't about a right answer either. What counts is final net assets. Plus GMV, margin, order count, penalties, store rating and activity over the course of the year.</p>
+<p>And this is where it gets interesting.</p>
+</section>
+<section>
+<h2>The headline result: humans are far ahead</h2>
+<p>The best AI agent finished a long way behind the humans. The strongest LLM configuration reached only 27.3% of the humans' average final net assets.</p>
+<p>That is an enormous gap. Especially given that the people in the experiment were not experienced e-commerce sellers to begin with.</p>
+<p>In the results table, humans average 217.61 thousand yuan in final net assets. The best model configuration, Qwen3.7-Max in Hermes, comes in at 59.46 thousand. GPT-5.6 Sol in Hermes, 52.93 thousand. Most of the rest are lower still.</p>
+<p>So the models are not trailing slightly. They lose by a multiple.</p>
+</section>
+
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-07/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Distributions of final net assets by configuration across three repeated runs.</p></div></figure><section>
+<h2>Why the agents fail</h2>
+<p>The authors break the failures down not as a vague "the model is still weak" but as two specific failure modes.</p>
+<p>The first is a loss of operational coherence. Over time the agent simply becomes less active. It enters decision windows less often. It makes fewer tool calls. It changes its assortment and its prices less. It watches its orders less.</p>
+<p>The second is a loss of strategic coherence. The agent stays active, but it stops moving toward higher net assets and drifts sideways instead. It fixates on one local rule, reacts late to bad signals, or draws outright wrong conclusions from the experience it has built up.</p>
+<p>The long horizon breaks AI agents not with one big mistake but with an accumulation of small ones.</p>
+<p>For example:</p>
+<p>🟣 the agent increasingly only checks for supplier failures and all but stops looking for new products;</p>
+<p>🟣 the agent decides early that the store is beyond saving and nearly stops acting;</p>
+<p>🟣 the agent notices the returns but doesn't pull the problem product;</p>
+<p>🟣 the agent shrinks the assortment to a handful of items and chokes off its own growth;</p>
+<p>🟣 the agent loses track of time and behaves as if the episode were nearly over when months are still left.</p>
+<p>Humans behave differently. They more often keep the full management loop running: tracking demand, dropping risky products, finding replacements, adjusting to the season. Not because they know the perfect strategy, but because they hold on to the chain of cause and effect better.</p>
+</section>
+<section>
+<h2>Hermes versus ReAct</h2>
+<p>On average, Hermes helped noticeably. Across the eight models it produced 53.3% more final net assets, 71.5% more GMV and 71.2% more orders than ReAct.</p>
+<p>That stands to reason. Hermes gives the model extra machinery: memory, built-in planning, the ability to write and run code, the ability to save skills. Over a long distance, that helps.</p>
+<p>But an important detail: it doesn't help everyone equally. Kimi K2.6, for one, did slightly worse in Hermes than in ReAct. Qwen3.7-Max, on the other hand, improved sharply.</p>
+<p>Which leads to a simple thought: a good agent framework does not automatically repair a weak long-term strategy. It hands over tools. But if the model connects late consequences to old decisions poorly, the extra capabilities don't save it.</p>
+</section>
+
+<section>
+<h2>What the models' strategies look like</h2>
+<p>The breakdown of how individual models behaved is worth a look on its own.</p>
+<p>GPT-5.6 Sol and Kimi K2.6, in some runs, managed to tie bad outcomes to a specific product and swap it out. That already resembles a deliberate response. Qwen3.7-Plus sometimes kept a risky product around to "watch it a bit longer", and DeepSeek-V4-Pro would at times never revisit a listing at all after the returns came in.</p>
+<p>Humans went further. When a popular product turned out to be a problem, they didn't just remove it — they searched for a similar one by keyword to hold on to the demand. A subtle difference, but an important one. Cutting off the source of penalties isn't enough. You have to replace it with something that keeps the revenue coming.</p>
+<p>Another detail is how they handled the store rating. Bad outcomes on individual orders hit the store's overall score, and that score drags down future demand. Some models grasped this. GPT-5.6 Sol, for instance, tried to raise the flow of normal orders on proven products to rebuild the rating. Qwen3.7-Max went at it harder, changing prices across the board after an early drop to three stars.</p>
+<p>So the beginnings of a long-range strategy are there in the models. Holding it for a full year is what they can't do.</p>
+</section>
+<section>
+<h2>What this changes for evaluating AI agents</h2>
+<p>MerchantBench shows something unwelcome but useful: over a long horizon, being smart in the moment isn't enough for an agent. It has to be able to:</p>
+<p>🟠 hold a goal for months, not just within a single action window;</p>
+<p>🟠 remember old decisions and connect them to new consequences;</p>
+<p>🟠 manage cash when the profits and the losses arrive at different times;</p>
+<p>🟠 shift the assortment along with seasonal demand;</p>
+<p>🟠 not go quiet halfway through a long episode;</p>
+<p>🟠 correct its policy from accumulated data rather than from one vivid event.</p>
+<p>For the industry this matters for a very simple reason. If you want to put AI agents into procurement, support, operations, trading or administration, short demos and short benchmarks will tell you very little. The real problem starts after dozens and hundreds of steps.</p>
+</section>
+<section>
+<h2>The takeaway</h2>
+<p>MerchantBench measures something that stayed in the shadows for a long time: whether an AI agent can avoid falling apart in a task whose consequences stretch across months. So far the answer is mostly no.</p>
+<p>LLM agents can act, call tools and sometimes even adapt. But over a long distance they often taper off, get tangled in accumulated signals, change strategy too late, and tie local decisions far too weakly to the outcome for the system as a whole.</p>
+<p>Humans win here on steadier control of the loop: spot the problem, tie it to a product, remove the risk, find a replacement, keep the revenue running.</p>
+<p>Seen more broadly, the next stage for AI agents is not only better models and more tools. It takes machinery that holds a long-range goal, keeps a working memory of consequences, and helps the agent stay in control of its own decision pipeline. MerchantBench makes the point bluntly: the long horizon is a separate capability, and right now most agents have it only weakly.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.28956" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://github.com/KhanCold/merchantbench" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

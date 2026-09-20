@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Self-improving agents stall unless the environment changes too</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Self-improving agents stall unless the environment changes too" />
+    <meta property="og:description" content="When self-improvement is not enough" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/self-improving-agents-stall-unless-the-environment-changes-too/" />
+    <meta property="og:image" content="https://dataist.ai/2026-08-14/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-08-14">
+
+    <meta name="description" content="Что если ИИ-агенты смогут расти не по готовому плану, а менять друг друга и сам мир вокруг себя?
+
+Исследователи разбирают подход, где развиваются не по одному агенту, а сразу вся система: одни участники подстраиваются друг под друга, среда тоже меняется в ответ, а потом может меняться даже сам способ такого развития. Это уже не история про набор фиксированных задач, где человек заранее всё задал, а про живой процесс, в котором новые правила, цели и трудности появляются по ходу дела.
+
+В обзоре разберём, как устроено такое совместное развитие агентов и среды, какие у него этапы и почему без этого трудно ждать от ИИ по-настоящему самостоятельного роста." />
+    <link rel="canonical" href="https://dataist.ai/research/self-improving-agents-stall-unless-the-environment-changes-too/" />
+
+    <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Self-improving agents stall unless the environment changes too",
+  "description": "When self-improvement is not enough",
+  "image": "https://dataist.ai/2026-08-14/cover.jpg",
+  "url": "https://dataist.ai/research/self-improving-agents-stall-unless-the-environment-changes-too/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/self-improving-agents-stall-unless-the-environment-changes-too/",
+    "inLanguage": "en"
+  },
+  "datePublished": "2026-08-14",
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Co-Evolution in Agentic Systems: Toward Self-Directed Evolution Beyond Human Design",
+    "identifier": "arXiv:2608.10299",
+    "url": "https://arxiv.org/abs/2608.10299"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2608.10299"
+}</script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-14/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-08-14</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Self-improving agents stall unless the environment changes too</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-14/cover.jpg"
+                         alt="Self-improving agents stall unless the environment changes too"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When self-improvement is not enough</h2>
+<p>AI agents have an old problem: they are usually trained to get better inside a world that barely moves. The tasks are fixed. The evaluation is fixed. The opponent, if there is one at all, is fixed too. An agent can grow inside that setup, but it hits a ceiling fast.</p>
+<p>The authors argue for a wider frame: <strong>real long-run progress starts where it is not one agent that changes but several parts of the system at once</strong>. An agent adapts to another agent. The environment adapts to the agent. And then, in the limit, even the improvement mechanism itself begins to change.</p>
+<p>That is what co-evolution in agentic systems means. Not just interaction. Not just a multi-agent setup. It is a situation where several parts of the system keep changing the conditions the others live under.</p>
+<p>Everyone now wants AI agents that keep improving after deployment: on the web, in coding, in robotics, in tool use. But if nothing around the agent changes, its self-improvement quickly becomes local. It learns to take the familiar turns. It does not learn anything new.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-14/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">A single agent that only improves itself runs into fixed constraints; under co-evolution, the constraints start moving too.</p>
+</div></figure>
+</section>
+<section>
+<h2>What the authors count as co-evolution</h2>
+<p>The boundary matters here. Two agents exchanging messages is not yet co-evolution. An agent acting in an environment and getting a response back is not enough either. Co-evolution begins when:</p>
+<p>🟠 at least two parts of the system change</p>
+<p>🟣 those changes persist instead of vanishing after a single run</p>
+<p>🟠 each part puts pressure on the other and shapes how it develops next</p>
+<p>It works like evolution in nature. The predator gets faster, the prey gets better at running. The prey hides better, the predator gets better at searching. When only one side changes, the process slows down fast.</p>
+<p>The authors split the field into three levels. That is the backbone of the paper.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-14/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The three stages of co-evolution: from agents adapting to each other, to agents and environments adapting to each other, to the evolutionary mechanism itself changing.</p>
+</div></figure>
+</section>
+<section>
+<h2>Three stages of co-evolution</h2>
+<p>The first stage is <strong>agent–agent</strong>. The environment is still broadly fixed, but the agents change in response to each other. That can be attack and defense, cooperation, or a reshuffling of roles inside a team.</p>
+<p>The second stage is <strong>agent–environment</strong>. Now it is not only the agents that change but the tasks, the feedback, the rules of the world, the tools, the scenarios. The agent gets better, and the environment raises the bar or rebuilds itself to expose new weak spots.</p>
+<p>The third stage is <strong>meta-co-evolution</strong>. Here the mechanism of change is what changes. The system starts revisiting what exactly to improve, when to do it, how to do it, and how to measure progress at all.</p>
+<p>It is a move from the simple toward the more autonomous:</p>
+<p>🟠 first the participants change</p>
+<p>🟣 then the participants and the conditions change</p>
+<p>🟠 then the rules of improvement itself change as well</p>
+<p>Much of the talk about "self-improving agents" is still stuck on the first step. The agent spins inside a pipeline a human laid out in advance. The next frontier is letting what the agent runs into change as well, not just the agent.</p>
+</section>
+<section>
+<h2>Co-evolution between agents</h2>
+<p>The clearest case is competition: one agent attacks, the other defends. The distant ancestor here is adversarial training, where a generator and a discriminator improve each other. In the current wave of work this shows up in LLM safety: one agent searches for ways around the guardrails, the other learns to block them.</p>
+<p>These setups have moved well past "generate a harmful prompt." There are multi-turn games where the attacking agent probes for vulnerabilities over a series of steps. There are schemes where the defense trains against a whole population of attackers rather than a single attack type. There are even systems that add a third participant to the attacker and the defender: a judge.</p>
+<p>The idea is simple: <strong>if your opponent gets smarter as you do, you are less likely to overfit to yesterday's threats</strong>.</p>
+<p>But co-evolution between agents is not only conflict. There is cooperation too. Several agents work on one task and change as they work together. One plans better, another checks better, a third writes better code, a fourth summarizes better. When one of them improves, the rest have to adjust as well: their pace, their role, how the work is divided.</p>
+<p>This produces an interesting shift. Researchers are starting to improve not only individual agents but the <strong>organization</strong> between them: who owns what, how communication is structured, when roles should change, when to split the team and when to reassemble it.</p>
+<p>The first stage in short:</p>
+<p>🟣 competition creates pressure and raises difficulty</p>
+<p>🟣 cooperation helps on long tasks where one agent runs out of room</p>
+<p>🟣 reshuffling roles makes the system more flexible than a fixed team</p>
+</section>
+<section>
+<h2>Co-evolution between agent and environment</h2>
+<p>This is where it gets interesting. The authors show that an agent can be held back not only by a weak opponent but by a poor environment. When the tasks, the evaluation and the action space barely change, progress stalls again.</p>
+<p>So the environment is made adaptive too. And environment is read broadly in the paper. It can be:</p>
+<p>🟠 the set of tasks</p>
+<p>🟠 the way feedback is given</p>
+<p>🟠 the world the agent acts in</p>
+</section>
+<section>
+<h2>The environment as a task generator</h2>
+<p>One family of methods does not create new tasks from scratch; it picks smartly what to give the agent next. If the agent already clears the easy scenarios, it sees more of what it still gets wrong. This is a curriculum that adapts to the student.</p>
+<p>Another family goes further and generates new tasks. A tool-use agent fails some scenario, and the system turns that failure into a new training example. For coding and interface tasks this is especially useful: you do not have to assemble the whole training set by hand, part of it comes out of real failures.</p>
+<p>In agentic systems the scarce resource is often not the model but good training trajectories. Co-evolving with the tasks builds those trajectories on the fly.</p>
+</section>
+<section>
+<h2>The environment as a judge</h2>
+<p>The second branch is feedback that changes. Not just the task, but how the system decides an answer is good.</p>
+<p>In the simple version there is a reward model trained on preferences: which trajectories are better and which are worse. But when the agent changes, the old reward model goes stale fast. So the judge has to be updated too.</p>
+<p>Hence the work where the agent and the judge are trained together, or where the system swaps out the verification module once the old one starts letting errors through. Coding agents make this concrete: the agent writes code, the tests catch bugs, and then the tests themselves are trained further to find subtler failures.</p>
+<p>The question is <strong>whether evaluation shapes what gets learned next, or turns into the bottleneck</strong>.</p>
+</section>
+<section>
+<h2>The environment as a world</h2>
+<p>The third branch is the executable world itself changing. That can be a game level, a robotics simulation, a web environment, a computer interface, or a world model.</p>
+<p>The idea is the same: once the agent has learned to live in the current world, generate a world where the old skills are no longer enough. That is the line of work building new levels, 3D scenes, tool combinations, interaction rules, and synthetic websites for web agents.</p>
+<p>The world-model line stands apart. Instead of expensive real rollouts, the agent learns alongside a model of the environment that predicts the consequences of actions. The agent gets better, the world model sees more data and gets better too. The world model gets better, and the agent can plan more precisely and try more options.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-14/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The landscape of co-evolution research: most of the work so far sits on the agent–agent and agent–environment pairings, while the meta level is only taking shape.</p>
+</div></figure>
+<p>The second stage in short:</p>
+<p>🟣 tasks stop being a static set</p>
+<p>🟣 feedback has to be updated as well</p>
+<p>🟣 the world model can become part of the co-evolution rather than just the backdrop</p>
+</section>
+<section>
+<h2>What the results across the field show</h2>
+<p>This is not an experimental paper about one new model. It is a survey that pulls together dozens of papers and tries to see the whole picture. What matters here is the attempt to look at the effects of co-evolution across different lines of work.</p>
+<p>The authors show that in first- and second-stage work, co-evolution usually beats holding the other side static. When the opponent, the judge, the tasks or the environment keep changing, the agent tends to improve more steadily. With one important caveat: <strong>the gains are not unbounded</strong>. On many of the curves you can see the plateau.</p>
+<p>Which leads to the third stage.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-14/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Aggregated results from across the literature: co-evolution usually helps, but over time the gains slow down and flatten out.</p>
+</div></figure>
+</section>
+<section>
+<h2>Meta-co-evolution</h2>
+<p>If you want a system that keeps improving indefinitely, changing the agents and the environment is not enough. At some point the method of improvement has to change too.</p>
+<p>The authors propose thinking of the evolutionary mechanism as a set of decisions:</p>
+<p>🟠 what to improve</p>
+<p>🟠 when to run the improvement</p>
+<p>🟠 how to generate new variants</p>
+<p>🟠 where to do it — in which environment and domain</p>
+<p>🟠 how to evaluate the result</p>
+<p>Today those decisions are mostly hard-coded by people. We fix the pipeline in advance: this is how tasks get generated, this is how reward gets computed, this is how the agent gets updated. Meta-co-evolution begins where that layer stops being fixed.</p>
+<p>There is not much work here yet, and the authors say so plainly. There are precursors where a system rewrites its own prompts, its memory, or its scheme for self-modification. But that is not always co-evolution in the strict sense. The strict sense needs a lower level that already has several mutually changing parts, and the meta level has to change that joint process specifically.</p>
+<p>This is where the paper connects to the broader idea of open-ended development: a system does not simply reach a goal that was clear in advance, it keeps opening up new directions to improve in.</p>
+</section>
+<section>
+<h2>Why this matters in practice</h2>
+<p>For engineers building AI agents there are three direct takeaways.</p>
+<p>🟣 Train an agent on a fixed set of tasks and you will almost certainly land on a local maximum</p>
+<p>🟣 If your judge never updates, the agent will start fitting itself to an outdated check</p>
+<p>🟣 If the roles in a multi-agent system are set once and for all, you give up part of the growth available to you</p>
+<p>There is a flip side. Co-evolution makes control harder. An agent can overfit to one particular partner. It can learn to exploit the weaknesses of the judge. It can collapse into uniformity, with every participant in the system converging on a narrow set of strategies. It can develop communication patterns a human can no longer follow.</p>
+<p>So the authors treat evaluation and safety as a separate matter. Old benchmarks mostly measure the final skill: solved the task or not. For co-evolution that is not enough. You need to check:</p>
+<p>🟠 whether all the changing parts of the system are improving</p>
+<p>🟠 whether the results transfer to new partners and new environments</p>
+<p>🟠 whether a hidden way around the evaluation has appeared</p>
+<p>🟠 whether the diversity of strategies has collapsed</p>
+</section>
+<section>
+<h2>The takeaway</h2>
+<p>Co-evolution is the step after the self-improving agent. An agent that changes only itself almost always lives inside someone else's fixed frame. Long-run progress starts where the other parts of the system change too: opponents, allies, tasks, judges, worlds, and in the limit the improvement mechanism itself.</p>
+<p>One simple thing follows from that. The future of agentic systems depends not only on stronger LLMs but on <strong>whether we can build environments, partners and pipelines that change along with the agent</strong>. And on whether we keep control while doing it.</p>
+<p>The near practical frontier looks like this: fewer static training setups, more adaptive ecosystems. The far frontier is systems that decide for themselves how to keep improving.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2608.10299" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

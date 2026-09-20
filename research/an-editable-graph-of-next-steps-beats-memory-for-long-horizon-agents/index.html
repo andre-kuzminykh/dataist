@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>An editable graph of next steps beats memory for long-horizon agents</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="An editable graph of next steps beats memory for long-horizon agents" />
+    <meta property="og:description" content="When an agent's memory isn't enough" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/an-editable-graph-of-next-steps-beats-memory-for-long-horizon-agents/" />
+    <meta property="og:image" content="https://dataist.ai/2026-09-10/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-09-10">
+
+    <meta name="description" content="ИИ-агенты часто ошибаются не потому, что «не знают», а потому что по дороге к цели теряют нить действий.
+
+Исследователи предлагают простую идею: вынести порядок шагов в отдельную схему, где видно, что делать сначала, что потом и при каких условиях. Такая схема помогает ИИ-агенту в каждый момент сверяться с ближайшим нужным шагом, не зацикливаться и не дергать инструменты невпопад. А если агент всё же ошибается, система сравнивает неудачные и удачные попытки и правит эту схему так, чтобы в следующий раз путь был лучше.
+
+В обзоре разберём, как граф действий превращает промахи ИИ-агента в полезные подсказки и почему такой подход помогает дольше держать цель в сложных задачах." />
+    <link rel="canonical" href="https://dataist.ai/research/an-editable-graph-of-next-steps-beats-memory-for-long-horizon-agents/" />
+
+    <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "An editable graph of next steps beats memory for long-horizon agents",
+  "description": "When an agent's memory isn't enough",
+  "image": "https://dataist.ai/2026-09-10/cover.jpg",
+  "url": "https://dataist.ai/research/an-editable-graph-of-next-steps-beats-memory-for-long-horizon-agents/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/an-editable-graph-of-next-steps-beats-memory-for-long-horizon-agents/",
+    "inLanguage": "en"
+  },
+  "datePublished": "2026-09-10",
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Procedural Graphs: Self-Evolving Execution Structures for LLM Agents",
+    "identifier": "arXiv:2609.09153",
+    "url": "https://arxiv.org/abs/2609.09153"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2609.09153"
+}</script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-09-10/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-09-10</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">An editable graph of next steps beats memory for long-horizon agents</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-09-10/cover.jpg"
+                         alt="An editable graph of next steps beats memory for long-horizon agents"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When an agent's memory isn't enough</h2>
+<p>AI agents have a recurring problem. While the task is short, everything looks fine. The model reads the history, picks the next step, calls a tool, moves on. But once the horizon gets long, things start to break: the agent confuses the order of actions, repeats useless steps, forgets what it has already tried, and does too late what it should have done early.</p>
+<p>A new paper from Google, Georgia Tech and Peking University offers a practical idea for this: <strong>don't keep the procedure in the text of the history alone, but move it out into a separate graph of actions</strong>. The authors call it a <strong>Procedural Graph</strong>; from here on we'll just say <strong>procedural graph</strong>.</p>
+<p>The point is simple. A knowledge graph answers the question "what is this?". A <strong>procedural graph</strong> answers the question <strong>"what do I do next?"</strong>. For AI agents that distinction is a useful one.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-10/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The paper's idea in one picture: a knowledge graph stores facts, a procedural graph stores sequences of actions.</p>
+</div></figure>
+<p>If you build AI agents with tools, long scenarios and multi-step logic, this matters. In systems like these the model doesn't only get the content of the answer wrong. It often gets <strong>the order of actions</strong> wrong. And that is a problem of procedural organization.</p>
+</section>
+<section>
+<h2>What a procedural graph is</h2>
+<p>The authors propose storing procedural knowledge as triples. But where a knowledge graph holds something like "Paris — capital of — France", here the triple is different: <strong>"procedure — relation — next procedure"</strong>.</p>
+<p>The nodes of the graph are actions, states or reasoning steps. The edges are the transitions allowed between them. And every transition carries text fields:</p>
+<p>🟠 <strong>condition</strong> — when this transition applies</p>
+<p>🟠 <strong>prompt</strong> — what exactly to do</p>
+<p>🟠 <strong>mistakes</strong> — what not to do</p>
+<p>In the financial simulator, for instance, the transition from a cash-flow forecast to a funding request can carry a rule like this: if the cash buffer is about to run out, file the application early, because the money won't arrive immediately; don't file a second application while the first is still being processed.</p>
+<p>The central claim of the paper: <strong>procedural knowledge lives outside the model's weights</strong>. You can inspect it, edit it, check it, extend it, even correct it from execution logs. Without fine-tuning the model.</p>
+</section>
+<section>
+<h2>How it works at inference time</h2>
+<p>While it is solving a task, the agent never receives the whole graph. That would be too noisy and too expensive. Instead the system does three things:</p>
+<p>🟣 <strong>locates where the agent currently is in the graph</strong></p>
+<p>🟣 <strong>pulls out the local neighborhood of that node</strong></p>
+<p>🟣 <strong>asks a separate LLM to turn that slice of the graph into a short situational prompt</strong></p>
+<p>The agent is not handed a fixed route. It is given <strong>local guidance for the next step</strong>. The authors don't build a rigid state machine that forbids every deviation. They leave the model its freedom to reason and add structural scaffolding around it.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-10/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The overall scheme: the graph suggests the next step at inference time, then updates itself from execution logs.</p>
+</div></figure>
+<p>In practice it looks like this. If the agent has just called a search tool, the system matches that call to a node in the graph, takes the nearest 2 steps ahead and writes a prompt along the lines of: first check the retrieved passages, then identify the bridging concept, don't submit an answer without verifying it.</p>
+<p>Why is a local subgraph better than the full one? Because the full graph carries far too much that is irrelevant. The authors checked this in a separate ablation. <strong>Generating the prompt locally came out ahead both on quality and on token cost</strong>, compared with generating from the whole graph at once.</p>
+<p>The mechanics in short:</p>
+<p>🟠 <strong>The graph doesn't do the agent's reasoning for it</strong></p>
+<p>🟠 <strong>The graph sets out the allowed transitions and the typical mistakes</strong></p>
+<p>🟠 <strong>The prompt is tied to the agent's current progress</strong></p>
+<p>🟠 <strong>If the step can't be matched to the graph, the system can fall back on the whole graph</strong></p>
+</section>
+<section>
+<h2>The main difference from memory and text rules</h2>
+<p>Plenty of agents already use memory today. They store past trajectories, short summaries, rules in plain text, sometimes whole pipelines. But nearly all of these methods leave one problem in place: the model still has to <strong>reconstruct the structure of the procedure itself</strong> out of text.</p>
+<p>The <strong>procedural graph</strong> makes it explicit.</p>
+<p>Instead of a list of memories or a set of rules, the system knows:</p>
+<p>🟣 <strong>which steps usually follow which</strong></p>
+<p>🟣 <strong>which transitions are allowed</strong></p>
+<p>🟣 <strong>under what conditions a transition applies</strong></p>
+<p>🟣 <strong>which mistakes are typical at this particular point</strong></p>
+<p>That is especially useful where the point isn't just calling the right tool, but calling it <strong>at the right moment</strong>.</p>
+</section>
+<section>
+<h2>A graph that corrects itself</h2>
+<p>The most interesting part of the paper is <strong>the graph's self-evolution</strong>. After a batch of tasks the system takes the successful and the failed trajectories, compares them and asks an LLM editor to propose changes to the graph.</p>
+<p>It can:</p>
+<p>🟠 <strong>add a missing node</strong></p>
+<p>🟠 <strong>add a new transition</strong></p>
+<p>🟠 <strong>delete a transition that often leads to a dead end</strong></p>
+<p>🟠 <strong>rewrite a transition's attributes: condition, prompt, mistakes</strong></p>
+<p>But there is a safety catch here. A change isn't accepted automatically. The new graph is run through a separate validation. If quality hasn't dropped, the edit is kept. If it has, the graph is rolled back.</p>
+<p>The system also keeps a memory of rejected edits, so it doesn't propose the same failed changes over and over.</p>
+<p>In AI agents there is a lot of talk about "self-improvement" and not much machinery that keeps a system from wrecking itself. Here that machinery exists: <strong>the editor proposes, validation decides</strong>.</p>
+</section>
+<section>
+<h2>What the experiments showed</h2>
+<p>The authors tested the approach on seven benchmarks. They cover multi-hop question answering, multi-turn dialogue, function calling, robotics tasks and a financial simulator that runs for 132 months.</p>
+<p>The headline result is this: <strong>the procedural graph consistently beats memory-based methods</strong>.</p>
+<p>In the main summary table the method took first or joint first place in 21 of 24 model-and-benchmark combinations. Measured against the best baseline in each case, that comes to 19 wins, 2 ties and 3 losses.</p>
+<p><strong>The results in short:</strong></p>
+<p>🟣 <strong>21 of 24 model-and-benchmark combinations — first or joint first place</strong></p>
+<p>🟣 <strong>19 wins, 2 ties, 3 losses against the best baseline</strong></p>
+<p>🟣 <strong>The effect is clearest on tasks where the order of actions matters</strong></p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-10/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The graph's self-evolution across rounds: the agent's lifespan and the capital it raises both climb as the procedures get corrected.</p>
+</div></figure>
+<p>The largest gains were these:</p>
+<p>🟣 on BFCL v3 with Gemini 3.5 Flash: <strong>67% versus 58%</strong></p>
+<p>🟣 on GDPval with Gemini 3.1 Pro: <strong>78.78 versus 71.37</strong></p>
+<p>🟣 on τ-bench with Gemini 3.1 Pro: <strong>80% versus 73.04%</strong></p>
+<p>The margin isn't large everywhere. On HotpotQA it hovers within roughly a percentage point. But the overall picture is clear: <strong>where sequencing and holding to a procedure matter, the graph helps most</strong>.</p>
+<p>The results in short:</p>
+<p>🟠 <strong>The method performs best on tasks with a long procedure</strong></p>
+<p>🟠 <strong>Ordinary text memory doesn't deliver an effect this consistent</strong></p>
+<p>🟠 <strong>The same approach works across different LLMs: Claude, Gemini, Grok</strong></p>
+<p>🟠 <strong>The effect depends on the type of task: in factual retrieval it is more modest</strong></p>
+</section>
+<section>
+<h2>The most revealing experiment: an agent as CFO</h2>
+<p>The authors test agents separately in EnterpriseArena, a simulator in which the agent plays the role of chief financial officer. It has to manage the company's liquidity for 132 months, survive three macroeconomic crises and avoid going bankrupt. Money from capital raises arrives with a delay of 1 to 6 months. Which makes the key to survival <strong>asking for money early</strong>.</p>
+<p>This is where the <strong>procedural graph</strong> fits best. The task hangs on a long chain of decisions spread over time.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-10/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Over a long horizon the procedural graph helps agents hold on to cash longer and reach the end of the simulation more often.</p>
+</div></figure>
+<p>Survival results:</p>
+<p>🟣 Claude Sonnet 4.6: <strong>58% survived with the graph versus 44% without it</strong></p>
+<p>🟣 Gemini 3.1 Pro: <strong>34% versus 6%</strong></p>
+<p>🟣 Grok 4.1 Fast: <strong>40% versus 26%</strong></p>
+<p>🟣 Gemini 3.5 Flash: nobody made it to the finish, but average lifespan rose from <strong>33.58 to 40.62 months</strong></p>
+<p><strong>Survival in short:</strong></p>
+<p>🟠 <strong>Over a long horizon the graph improves the odds of reaching the end of the simulation</strong></p>
+<p>🟠 <strong>The widest gap here is Gemini 3.1 Pro: 34% versus 6%</strong></p>
+<p>🟠 <strong>Even when nobody finishes, the agent's average lifespan goes up</strong></p>
+<p>What changes in the agent's behavior? Not simply the number of tool calls. What changes is <strong>the timing of decisions</strong>.</p>
+<p>Without the graph the agent can recheck its balance and the market endlessly and still start raising capital too late. With the graph it keeps to the right sequence more often:</p>
+<p>🟠 check the cash</p>
+<p>🟠 run the forecast</p>
+<p>🟠 look at the market</p>
+<p>🟠 request funding ahead of time</p>
+<p>🟠 wait for it to arrive without breaking the environment's rules</p>
+<p>In one example the agent without the prompt files a second funding application while the first is still unprocessed, and is refused. The agent with the <strong>procedural graph</strong> remembers that constraint and calmly waits out the lag on capital delivery.</p>
+<p>Mistakes exactly like these are what sink long scenarios. The cause here is <strong>procedural sloppiness</strong>.</p>
+</section>
+<section>
+<h2>Can the graph be built from scratch</h2>
+<p>Yes, and that is another result. The authors compared five ways of building the graph: by hand, with a one-shot update, with staged evolution, and from scratch, out of a `Start → End` skeleton.</p>
+<p>Something unexpected turned up. <strong>A graph grown from scratch and then improved on trajectories can be better than a hand-built expert graph</strong>.</p>
+<p>On HotpotQA the best mode was exactly that: start from the skeleton, then evolve. On MultiChallenge the best result came from an expert start plus evolution, but building from scratch was very close behind.</p>
+<p>The story of the bad expert graph is more interesting still. On MultiChallenge the hand-built graph initially made quality worse: success fell from 87.5% to 58.93%. A one-shot static update made it worse again — 53.57%. But <strong>iterative evolution with validation pushed the result up to 92.86%</strong>.</p>
+<p>In other words, the system can not only grow a procedure but also <strong>repair bad human drafts</strong>.</p>
+</section>
+<section>
+<h2>The price: tokens and complexity</h2>
+<p>Structure has to be paid for. A prompt from the graph means an extra model call and extra tokens. The authors are honest about showing this.</p>
+<p>A local <strong>procedural graph</strong> often cuts the number of agent steps, but total token spend can still go up. On GDPval and ALFWorld, for instance, the step count fell while overall token use stayed higher than in the baseline without the graph.</p>
+<p>There is a saving of another kind, though. In the financial simulator, after several rounds of evolution the number of tool calls dropped from 17.23 to roughly 3.1 per month. The agent, in other words, became far more deliberate.</p>
+<p>The practical conclusion: <strong>a procedural graph trades tokens for reliability and structure in behavior</strong>.</p>
+</section>
+<section>
+<h2>The takeaway</h2>
+<p>The <strong>procedural graph</strong> is an attempt to give an AI agent explicit procedural knowledge: what to do, in what order and under what conditions. Not as a long history, not as a scattering of text rules, but as an editable graph of transitions.</p>
+<p>A few things are worth taking from the paper:</p>
+<p>🟠 <strong>Long agent tasks run into procedure, not only into the quality of reasoning</strong></p>
+<p>🟠 <strong>A local structural prompt works better than the full graph or plain memory</strong></p>
+<p>🟠 <strong>Procedural knowledge can be improved without fine-tuning the model, through execution logs and validation</strong></p>
+<p>🟠 <strong>A graph assembled from scratch can catch up with and pass a hand-built expert scheme</strong></p>
+<p>🟠 <strong>In tasks with delays, constraints and a strict order of actions this approach is especially useful</strong></p>
+<p>If you build AI agents for real pipelines, there is an applied idea here. It isn't enough for models to remember the past. They need <strong>scaffolding that keeps the procedure separate and suggests the next step from the current state</strong>. That is exactly the point at which many agent systems fail today.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2609.09153" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

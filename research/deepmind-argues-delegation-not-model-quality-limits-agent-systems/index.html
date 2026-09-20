@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>DeepMind argues delegation, not model quality, limits agent systems</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="DeepMind argues delegation, not model quality, limits agent systems" />
+    <meta property="og:description" content="Analysis · 2026-05-11
+                
+
+                
+                
+                    DeepMind argues delegation, not model quality, limits agent systems" />
+    <meta name="description" content="Сегодняшние агенты на базе LLM уже умеют не только отвечать на вопросы, но и выполнять цепочки действий: открыть инструмент, вызвать API, написать код, проверить…">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/deepmind-argues-delegation-not-model-quality-limits-agent-systems/" />
+    <link rel="canonical" href="https://dataist.ai/research/deepmind-argues-delegation-not-model-quality-limits-agent-systems/">
+    <meta property="og:image" content="https://dataist.ai/2026-05-11/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-05-11/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-p strong {
+            @apply font-semibold text-black dark:text-white;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .apple-img {
+            @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white;
+        }
+
+        /* Карточки-списки */
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 mb-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "DeepMind argues delegation, not model quality, limits agent systems",
+  "url": "https://dataist.ai/research/deepmind-argues-delegation-not-model-quality-limits-agent-systems/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/deepmind-argues-delegation-not-model-quality-limits-agent-systems/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Analysis · 2026-05-11\n                \n\n                \n                \n                    DeepMind argues delegation, not model quality, limits agent systems",
+  "image": "https://dataist.ai/2026-05-11/cover.png",
+  "datePublished": "2026-05-11",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Intelligent AI Delegation",
+    "identifier": "arXiv:2602.11865",
+    "url": "https://arxiv.org/abs/2602.11865"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2602.11865"
+}</script>
+    <meta property="article:published_time" content="2026-05-11T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in"><!-- Category tag -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Analysis · 2026-05-11</span>
+                </div>
+
+                <!-- Headline -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">DeepMind argues delegation, not model quality, limits agent systems</h1>
+
+                <!-- Cover image -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-05-11/cover.png"
+                         alt="Cover: DeepMind argues delegation, not model quality, limits agent systems"
+                         class="w-full h-auto object-cover">
+                </div></header>
+
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">Today's LLM-based agents no longer just answer questions — they run chains of actions: open a tool, call an API, write code, check the result, send an email. The next step suggests itself: if a task is too big for one agent, why not split it up and hand the pieces to other agents — and sometimes to people?</p>
+
+                <h2 class="article-h2 fade-in">When AI stops being one assistant and becomes a manager</h2>
+                <p class="article-p fade-in">On paper it looks clean. In practice an awkward question comes up: <strong>who is accountable when something goes wrong?</strong> Who decides which worker gets which job? How is the result checked? When should the process be halted, and when should the task be re-delegated in a hurry? And above all: how do you keep the whole thing from becoming a brittle tangle of automation that nobody is really controlling?</p>
+                <p class="article-p fade-in">That is the problem a paper by Google DeepMind researchers on <strong>intelligent delegation</strong> takes aim at. It is not another recipe for making agents faster but an attempt to describe something more fundamental: what a world has to look like in which agents hand tasks to each other and to people at scale, without falling apart under errors, conflicts, mistrust and opacity.</p>
+
+                <h2 class="article-h2 fade-in">What this is really about: delegation is more than splitting a task</h2>
+                <p class="article-p fade-in">The paper's central claim is simple but consequential: <strong>delegation is not the same thing as task decomposition</strong>. Saying "you do part A, you do part B" is not enough. Real delegation means handing over authority, accountability, the bounds of acceptable behavior, reporting rules and mechanisms of trust.</p>
+                <p class="article-p fade-in">That matters especially in agentic systems, where several kinds of participant interact:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">a human assigns a task to an agent;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">an agent assigns a task to another agent;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">an agent assigns work to a human;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">and out of that come long chains several levels deep.</span>
+                </div>
+
+                <p class="article-p fade-in">The authors show that existing approaches mostly rest on simple heuristics: split the task, hand the pieces to specialized subagents, collect the answers. That works in demos and tidy scenarios. But the moment the environment shifts, one worker falls behind, a tool goes offline, or a task turns out not to be fully verifiable, the whole structure starts to wobble.</p>
+                <p class="article-p fade-in">In that sense the paper matters to more than the teams building agent platforms. It matters to the industry as a whole, because it puts the question bluntly: <strong>if agents really do become infrastructure for the digital economy, then delegation has to be as serious an engineering object as security, networking or the database</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Why this matters now</h2>
+                <p class="article-p fade-in">Interest in agents took off very fast; the design culture for complex agentic systems has lagged noticeably behind. The outlines of what is coming are already visible: orchestrators, teams of specialized agents, automated workflows, hybrid human-plus-AI setups. But most of these systems still rest on fragile assumptions:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">the worker is always available;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">the task is stated clearly enough;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">the result can be judged without argument;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">subagents do not abuse their access;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">monitoring is unnecessary, or nearly so.</span>
+                </div>
+
+                <p class="article-p fade-in">What the authors are effectively saying is that <strong>this optimism ends the moment agents leave the sandbox</strong>. In the real world tasks can be expensive, long-running, ambiguous, full of sensitive data and irreversible in their effects. An agent that botches a draft email is an annoyance. An agent that botches something in a clinical loop, in finance or in infrastructure management is a different conversation entirely.</p>
+                <p class="article-p fade-in">The paper is also worth reading for looking past the human-agent pair to the network that is coming, where agents deal with each other at scale, almost like market participants. Hence the discussion of reputation, contracts, proof of completion, access rights and the resilience of the system as a whole.</p>
+
+                <h2 class="article-h2 fade-in">What the proposed framework rests on</h2>
+                <p class="article-p fade-in">The authors put forward a framework for intelligent delegation built around five load-bearing principles:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">dynamic assessment</strong> — you need a running read on who is currently able to do the task, with what resources and at what risk;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">adaptive execution</strong> — a plan cannot be treated as fixed; it has to be revised as the work goes;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">structural transparency</strong> — it has to be visible what was done, by whom and why;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">scalable coordination</strong> — delegation has to work not only in a small team but across a large network of agents;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">systemic resilience</strong> — protection against cascading failures, abuse and the diffusion of accountability has to be designed in.</span>
+                </div>
+
+                <p class="article-p fade-in">This is not a finished protocol or a concrete implementation. It is closer to an <strong>architectural blueprint</strong> for the agent ecosystems to come.</p>
+
+                <h2 class="article-h2 fade-in">What task decomposition should look like</h2>
+                <p class="article-p fade-in">One of the most interesting passages is the one on decomposition. The authors stress that good decomposition does not just chop a goal into pieces — it does so in a way that makes every piece genuinely assignable, checkable and, if it comes to that, reassignable to someone else.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-11/fig_0.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">A diagram of how a task is broken into subtasks and distributed among workers.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">This is where a strong idea appears: <strong>contract first, delegation second</strong>. If the result of a subtask cannot be checked cleanly, the task has to be broken down further. Otherwise the system walks itself into a position where all that is left is taking someone's word for it — which scales badly and survives errors badly.</p>
+                <p class="article-p fade-in">The approach makes particular sense for technical work. Code can be checked with tests, formal transformations with verification, computation with cryptographic proofs. In more subjective cases — research, design, strategy — it gets harder. Which means either humans in the loop, or more expensive oversight, or a different structure for the task itself.</p>
+                <p class="article-p fade-in">The authors also point out that decomposition has to account for cost, latency, resource requirements, data access and even the irreversibility of an action. Wiping a database and sketching a draft deck are both formally "tasks," but they cannot be delegated the same way.</p>
+
+                <h2 class="article-h2 fade-in">Choosing the worker is almost an economics problem</h2>
+                <p class="article-p fade-in">Once a task is decomposed, the question of assignment arrives. Here the paper goes well past the familiar logic of "one agent for search, one for code, one for checking." The authors propose treating task allocation as <strong>multi-objective optimization</strong>: quality, cost, time, reliability, privacy and verifiability all weighed at once.</p>
+                <p class="article-p fade-in">Put differently, the best worker is not necessarily the strongest, the cheapest or the fastest. The best one is whichever strikes the right balance for the task at hand.</p>
+                <p class="article-p fade-in">This part is especially interesting against the backdrop of the agent markets to come. The researchers discuss outright a scenario in which tasks are posted to decentralized nodes and agents and people bid to take them on. Then come negotiation, verification of competence, agreement on terms, commitments put on record.</p>
+                <p class="article-p fade-in">The picture may sound futuristic, but the logic behind it is airtight. With enough agents in play, centralized manual routing stops working. Which means market-like mechanisms will be needed: finding a worker, comparing offers, judging reputation, guarding against fraud.</p>
+
+                <h2 class="article-h2 fade-in">The paper's strongest section: adaptive coordination</h2>
+                <p class="article-p fade-in">The most practically useful section is probably the one on adaptive coordination. The authors start from a very grown-up premise: <strong>no execution plan survives contact with reality unchanged</strong>.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-11/fig_1.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">The adaptive coordination loop: the system watches signals from its environment and rebuilds the delegation structure when it has to.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">Triggers for revisiting a delegation can be external or internal. External: requirements changed, an outside service disappeared, compute got more expensive, a higher-priority task showed up. Internal: the worker slowed down, is burning too many resources, failed a check on an intermediate result, stopped responding.</p>
+                <p class="article-p fade-in">In response the system should not merely raise an error but run a loop of diagnosis and re-optimization. Sometimes adjusting the parameters is enough. Sometimes the worker has to be swapped out. Sometimes the decomposition has to be rebuilt from scratch.</p>
+                <p class="article-p fade-in">This sounds like common sense, yet most agentic systems today have nothing like that level of dynamism. Usually there is either a rigid script or a crude retry. The authors instead describe delegation as <strong>continuous management in a changing environment</strong>.</p>
+                <p class="article-p fade-in">And that is probably one of the key reasons the paper matters: it moves the conversation about agents from "automate a chain of steps" to "build a governable operating system for distributed work."</p>
+
+                <h2 class="article-h2 fade-in">Monitoring, trust and reputation: nothing flies without them</h2>
+                <p class="article-p fade-in">A separate large section goes to monitoring. The authors distinguish watching the outcome from watching the process, direct from indirect monitoring, black box from white box, full transparency from cryptographically protected schemes.</p>
+                <p class="article-p fade-in">This is not classification for its own sake. Behind it sits an uncomfortable reality: <strong>if we cannot see how an agent actually did the task, we have a hard time telling whether an error was accidental, systemic or deliberate</strong>. And without that there is neither calibrated trust nor accountability.</p>
+                <p class="article-p fade-in">That is where monitoring joins up with reputation. Reputation in the paper means not likes and stars but a verifiable record of past actions. And the authors rightly separate public reputation from private trust: an agent can be reliable in general and still be the wrong choice for one particular high-risk scenario.</p>
+                <p class="article-p fade-in">This is a sober view. Around agentic systems you often hear the idea of giving a good agent more autonomy. The paper sharpens it: <strong>the level of autonomy should depend on context, on demonstrable capabilities and on the worker's current state</strong>, not on a general aura of competence.</p>
+
+                <h2 class="article-h2 fade-in">Security and access rights are the foundation, not an add-on</h2>
+                <p class="article-p fade-in">Another strong section deals with access rights and security. Delegation almost always means handing over capabilities: access to data, to tools, to payments, to actions in the outside world. Here the authors apply the principle of least privilege consistently.</p>
+                <p class="article-p fade-in">When an agent re-delegates a task, it should not automatically pass its full set of rights down the chain. On the contrary, privileges should be <strong>attenuated</strong> at every new level. Otherwise the compromise of one distant node turns into a systemic catastrophe.</p>
+                <p class="article-p fade-in">The authors go through the threats in detail: malicious workers, malicious task-givers, goal substitution, data poisoning, sabotage of verification, attacks on reputation, collusion, mass creation of fake identities, protocol vulnerabilities. The list is useful on its own: it shows how naive it is to talk about "autonomous agents" without a proper threat model.</p>
+                <p class="article-p fade-in">The point about <strong>cognitive monoculture</strong> is especially sharp. If most of the agent economy is built on one type of base model and the same safety recipes, a single flaw or vulnerability can spread like an avalanche. That is a timely reminder for an industry currently leaning toward uniformity rather than diversity.</p>
+
+                <h2 class="article-h2 fade-in">What is most valuable here, and what is still only a program</h2>
+                <p class="article-p fade-in">The work's main strength is the breadth and maturity of how it frames the question. This is not a paper with a pretty metric and a benchmark win. Which is exactly why it is interesting. The authors look at agentic systems honestly, as sociotechnical infrastructure, where what counts is not only the quality of the model's answer but accountability, institutional rules, verifiability and resilience.</p>
+                <p class="article-p fade-in">Its weak spot is just as plain: <strong>this is first of all a conceptual framework, not a working engineering system</strong>. There are plenty of principles, taxonomies and architectural ideas here, and very few concrete implementations or empirical results. Part of the audience will read that as a shortcoming.</p>
+                <p class="article-p fade-in">Seen more broadly, though, work like this is often where the next stage starts. What the agentic-systems industry is short of right now is not another demo video but a vocabulary for discussing the actual mechanics of delegation.</p>
+
+                <h2 class="article-h2 fade-in">The bottom line</h2>
+                <p class="article-p fade-in">The Google DeepMind paper proposes looking at agentic systems not as a set of clever LLM calls but as <strong>a future system of distributed work</strong>, where tasks are broken up, handed off, re-checked, reassigned and closed out with accountability everyone can see.</p>
+                <p class="article-p fade-in">The main conclusion can be put this way: <strong>scaling agents is limited not only by the quality of models but by the quality of delegation</strong>. If we want agents to take on complex, long-running, risky processes, we need mechanisms for trust, monitoring, verification, privilege limitation and adaptive control. Without them the whole "agent economy" risks staying an impressive but fragile toy.</p>
+                <p class="article-p fade-in">In that sense the work matters not because it settles anything but because it asks the right questions at the right moment. And such questions may be worth more today than another local gain on yet another benchmark.</p>
+
+                <!-- Источник -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2602.11865" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Read the full paper on arXiv</span></a>
+                </div>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI paper breakdowns
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

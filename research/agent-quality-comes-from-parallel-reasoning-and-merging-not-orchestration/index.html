@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Agent quality comes from parallel reasoning and merging, not orchestration</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Agent quality comes from parallel reasoning and merging, not orchestration" />
+    <meta property="og:description" content="Review · 2026-05-08
+                
+
+                
+                
+                    Agent quality comes from parallel reasoning and merging, not orchestration" />
+    <meta name="description" content="Вокруг современных агентных систем для LLM сложился почти культ инженерной сложности.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/agent-quality-comes-from-parallel-reasoning-and-merging-not-orchestration/" />
+    <link rel="canonical" href="https://dataist.ai/research/agent-quality-comes-from-parallel-reasoning-and-merging-not-orchestration/">
+    <meta property="og:image" content="https://dataist.ai/2026-05-08/cover.png" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-05-08/cover.png" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи */
+        .article-p {
+            @apply font-sans text-lg md:text-[21px] leading-relaxed mb-6 md:mb-8 text-black/85 dark:text-white/85;
+        }
+        .article-p strong {
+            @apply font-semibold text-black dark:text-white;
+        }
+        .article-h2 {
+            @apply font-sans font-bold text-2xl md:text-3xl lg:text-4xl mt-16 mb-8 tracking-tight text-black dark:text-white;
+        }
+        .apple-img {
+            @apply w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden my-12 bg-white;
+        }
+
+        /* Карточки-списки */
+        .list-card {
+            @apply flex items-start gap-4 p-5 md:p-6 mb-3 rounded-2xl bg-black/[0.03] dark:bg-white/[0.04] border border-black/5 dark:border-white/10;
+        }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Agent quality comes from parallel reasoning and merging, not orchestration",
+  "url": "https://dataist.ai/research/agent-quality-comes-from-parallel-reasoning-and-merging-not-orchestration/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/agent-quality-comes-from-parallel-reasoning-and-merging-not-orchestration/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Review · 2026-05-08\n                \n\n                \n                \n                    Agent quality comes from parallel reasoning and merging, not orchestration",
+  "image": "https://dataist.ai/2026-05-08/cover.png",
+  "datePublished": "2026-05-08",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "HeavySkill: Heavy Thinking as the Inner Skill in Agentic Harness",
+    "identifier": "arXiv:2605.02396",
+    "url": "https://arxiv.org/abs/2605.02396"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2605.02396"
+}</script>
+    <meta property="article:published_time" content="2026-05-08T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px]">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in"><!-- Category tag -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-05-08</span>
+                </div>
+
+                <!-- Headline -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Agent quality comes from parallel reasoning and merging, not orchestration</h1>
+
+                <!-- Cover image -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-05-08/cover.png"
+                         alt="Cover: Agent quality comes from parallel reasoning and merging, not orchestration"
+                         class="w-full h-auto object-cover">
+                </div></header>
+
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">A near-cult of engineering complexity has grown up around modern LLM agent systems. Orchestrators, sub-agents, memory, skill libraries, tool calls — it all looks impressive, and it leaves the important question unanswered: <strong>what actually produces the gain in quality?</strong></p>
+
+                <h2 class="article-h2 fade-in">When thinking longer stops being enough</h2>
+                <p class="article-p fade-in">The authors of <strong>HeavySkill: Heavy Thinking as the Inner Skill in Agentic Harness</strong> take an unexpectedly sober view. The real secret may not be a clever scaffold of components but a simpler internal capability of the model: first generate several independent lines of reasoning, then merge them into a final answer with some judgement. The researchers call this <strong>heavy thinking</strong>, and they show that this pattern sits behind many successful agentic schemes.</p>
+                <p class="article-p fade-in">This is more than a neat turn of phrase. The paper matters because it moves the conversation about the magic of agents onto much more practical ground: which inference-time compute actually pays for itself, how to scale it, and whether this mode can be turned into a portable skill rather than a brittle layer of code and prompts.</p>
+
+                <h2 class="article-h2 fade-in">What HeavySkill is and how it works</h2>
+                <p class="article-p fade-in">The core idea is simple and strong. The authors reduce a complicated agent loop to two steps:</p>
+                <p class="article-p fade-in">1. <strong>Parallel reasoning</strong> — the model generates several independent solution trajectories for the same task.</p>
+                <p class="article-p fade-in">2. <strong>Sequential deliberation</strong> — then another model, or the same one, reads through those trajectories, compares them, discards the weak ones and synthesizes the final answer.</p>
+                <p class="article-p fade-in">In other words, instead of a single attempt you get a small newsroom of thoughts: several writers file their versions, and an editor assembles the final text.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-08/fig_0.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">The overall shape of heavy thinking: parallel reasoning trajectories, then a merge into the final answer.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">What matters here is that the authors do not reduce all of this to plain voting. A simple majority is a crude heuristic: if three weak trajectories repeat the same mistake, voting locks the mistake in. In HeavySkill the second stage is meant to count no votes but to <strong>weigh the arguments</strong>. The paper says so directly: at the merge step, strong models can act as implicit verifiers — they notice where the trajectories differ and pick the most convincing answer rather than the most popular one.</p>
+                <p class="article-p fade-in">Another engineering-relevant piece is the <strong>memory cache</strong>. Full reasoning trajectories are too long, so they are serialized and partly truncated to fit the context window. The model at the second step then receives a compact case file holding several versions of the solution.</p>
+                <p class="article-p fade-in">A separate contribution is turning the whole process into a <strong>readable skill</strong> for agentic systems. Rather than an external program hard-wiring the calls, the model itself can be handed a text instruction: when to switch on heavy thinking, how to launch the parallel thinkers, how to merge their results and in what format to return the answer. That is a meaningful shift: the authors ask us to see heavy thinking not as an infrastructure trick but as an <strong>internal skill of the model</strong>.</p>
+
+                <h2 class="article-h2 fade-in">How they tested it</h2>
+                <p class="article-p fade-in">The experimental section is large. The researchers run the approach on several kinds of task:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">STEM problems with verifiable answers — AIME25, BeyondAIME, HMMT25-Feb, GPQA-Diamond;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">general-purpose tasks — LiveCodeBench, Arena-Hard, IFEval, IMO Answer Bench;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed">tool-use scenarios, including ones with a Python interpreter.</span>
+                </div>
+
+                <p class="article-p fade-in">They compare several metrics. The baselines:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">Mean@K</strong> — the average quality of the K parallel trajectories;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">Pass@K</strong> — whether at least one of the K trajectories is correct;</span>
+                </div>
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">Vote@K</strong> — the result of voting over the most frequent answers.</span>
+                </div>
+
+                <p class="article-p fade-in">And the metrics specific to HeavySkill:</p>
+
+                <div class="list-card fade-in">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">Heavy-Mean@4</strong> — the average quality of the answers after the merge stage;</span>
+                </div>
+                <div class="list-card fade-in mb-8">
+                    <i data-lucide="check" class="w-5 h-5 mt-1 shrink-0 text-black dark:text-white"></i>
+                    <span class="text-black/85 dark:text-white/85 text-base md:text-lg leading-relaxed"><strong class="font-semibold text-black dark:text-white">Heavy-Pass@4</strong> — the probability that at least one output of the merge stage is correct.</span>
+                </div>
+
+                <p class="article-p fade-in">The comparison is set up carefully. The authors do not simply say they ran a lot of samples and things got better. They are trying to work out <strong>how well the second stage extracts the hidden value sitting in a pile of raw attempts</strong>.</p>
+
+                <h2 class="article-h2 fade-in">The main result: merging beats picking the best answer</h2>
+                <p class="article-p fade-in">On the STEM benchmarks HeavySkill is convincing. The authors show a stable ordering: heavy thinking usually beats the trajectory average, beats voting, and often comes close to the ceiling set by Pass@K. Which means that if the right solution flickered anywhere in the parallel attempts, a good merge stage can often pull it out.</p>
+                <p class="article-p fade-in">What is especially interesting is that with strong models the final result sometimes runs almost flush against the Pass@K ceiling. Put plainly: <strong>if the model can solve the task correctly even occasionally, heavy thinking makes it do so noticeably more consistently</strong>.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-08/fig_1.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">How often heavy thinking succeeds, broken down by the initial probability of a correct parallel trajectory.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">One of the most substantive parts of the paper asks whether sequential deliberation can repair weak parallel reasoning. The authors group tasks by how often a correct trajectory appears in the first phase at all. It turns out that even where the initial success rate is below 50%, the second phase often rescues the task. Not always. But a noticeable share of cases gets fixed purely by comparing the attempts and deriving the answer again.</p>
+                <p class="article-p fade-in">This matters more than it looks. If HeavySkill merely picked the best of the finished trajectories, it would be an expensive version of voting. But the data hints that the second phase sometimes <strong>assembles the correct solution out of fragments of different attempts</strong> — that is, it genuinely reasons rather than only ranks.</p>
+
+                <h2 class="article-h2 fade-in">Why the second-stage model matters more than it seems</h2>
+                <p class="article-p fade-in">Another strong result comes from swapping models at the merge stage. The authors hold the parallel-reasoning model fixed as a weak one and vary the editor model at the second step.</p>
+                <p class="article-p fade-in">The finding is telling: <strong>the quality of the final answer depends heavily on the model doing the merge</strong>. And that model does not have to be an olympiad math champion. A large, instruction-following model that is unremarkable at solving hard problems on its own can still work well as an aggregator of trajectories.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-08/fig_2.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">Final quality with the same first stage but different models at the sequential deliberation step.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">It is a subtle observation with a lot of practical value. It means the architecture can be split: one model is good at generating varied attempts, another at analyzing and merging them. For the industry that opens up a space of price-quality trade-offs. There is no need to put an equally expensive model on both steps.</p>
+
+                <h2 class="article-h2 fade-in">Iterations help, but not for free</h2>
+                <p class="article-p fade-in">The authors also try repeated sequential deliberation: after the first merge, the model takes its own intermediate conclusion, adds it to the memory cache and makes another pass, then another.</p>
+                <p class="article-p fade-in">Intuitively this is like a person rewriting a solution several times, trying to improve it on each pass. And indeed, on the average-quality metric the extra iterations usually help.</p>
+                <p class="article-p fade-in">There is a catch: the potential ceiling drops at the same time. The researchers put this down to noise and bias accumulating in memory. Each new iteration leans not only on the original trajectories but on the already synthesized intermediate conclusions. If a skew crept into those, it can start reinforcing itself.</p>
+
+                <figure class="fade-in my-12">
+                    <div class="apple-img my-0">
+                        <img src="https://dataist.ai/2026-05-08/fig_3.png" alt="" class="w-full h-auto">
+                    </div>
+                    <figcaption class="font-mono text-sm text-apple-textMutedLight dark:text-apple-textMutedDark mt-4 text-center leading-relaxed max-w-2xl mx-auto">The effect of the iteration count: more cycles help average quality but can lower the upper bound on what is reachable.</figcaption>
+                </figure>
+
+                <p class="article-p fade-in">This is one of the paper's most honest moments. The authors do not sell HeavySkill as a universal button marked add compute, get a perfect answer. They show a real trade-off: <strong>more depth does not always mean a better final solution space</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Where the approach helps, and where it doesn't</h2>
+                <p class="article-p fade-in">On tasks with a clear correctness criterion — math, code, formal instructions — HeavySkill performs best. That follows: when you can judge objectively which trajectory is better, the merge stage has something solid to stand on.</p>
+                <p class="article-p fade-in">On tasks like Arena-Hard, where much of the score rides on preference, style and how human the answer feels, the gains are more modest. There you cannot simply declare one trajectory right and another wrong, so the payoff from analytical merging shrinks.</p>
+                <p class="article-p fade-in">That is an important practical conclusion. <strong>Heavy thinking is not a general-purpose amplifier for any piece of text</strong>. It works best where there is structure, constraints and verifiability. For agents that write code, solve problems, follow formats and work with tools, that is good news.</p>
+                <p class="article-p fade-in">The tool-use results are strong too: when the parallel trajectories can call Python and get feedback, the merge stage knows how to use those signals and beats ordinary voting. For agentic systems this is arguably one of the paper's most practically important pieces.</p>
+
+                <h2 class="article-h2 fade-in">Reinforcement learning: the next step, with caveats</h2>
+                <p class="article-p fade-in">The authors go further and ask: if heavy thinking is a skill, can it be strengthened deliberately through reinforcement learning? Preliminary experiments say yes. The gain is clearest on Heavy-Mean@4 — roughly 10% in the early phase of training.</p>
+                <p class="article-p fade-in">Stability is another matter. With more parallel trajectories, training starts to collapse, probably because of over-long contexts and sequence-length limits. On this front the paper opens a direction rather than offering a finished recipe.</p>
+                <p class="article-p fade-in">And that is probably the right way to frame the question. If today's agent scaffolds look too brittle and too dependent on hand-written orchestration, the idea of baking heavy thinking into the model's parameters through reinforcement learning is appealing. <strong>Instead of an external conductor running the ensemble, the model learns to play in time by itself</strong>.</p>
+
+                <h2 class="article-h2 fade-in">Why this paper matters</h2>
+                <p class="article-p fade-in">HeavySkill's strength is not only in the numbers. The paper helps rethink a whole class of current systems. Instead of arguing endlessly about which orchestrator is more fashionable and which agent has the prettier call graph, the authors propose isolating a basic computational primitive: <strong>several independent attempts plus a smart merge</strong>.</p>
+                <p class="article-p fade-in">That is useful on three levels at once.</p>
+                <p class="article-p fade-in">First, scientifically: it becomes clearer which mechanism actually drives quality up.</p>
+                <p class="article-p fade-in">Second, in engineering terms: you can design simpler, more portable systems that are not tied to one particular framework.</p>
+                <p class="article-p fade-in">Third, at the product level: there is a realistic way to buy quality with extra inference-time compute, without retraining the whole model.</p>
+
+                <h2 class="article-h2 fade-in">The takeaway</h2>
+                <p class="article-p fade-in">HeavySkill is one of those papers that promise no magic and instead strip the excess magic off systems we already have. Its central claim sounds almost modest: the success of agentic LLMs may rest not on elaborate orchestration in itself but on a well-scaling skill of heavy thinking — parallel reasoning followed by a considered merge.</p>
+                <p class="article-p fade-in">That is exactly why the work deserves attention. It suggests the future of agentic systems may lie not in ever more tangled control loops but in <strong>a more deeply internalized ability to compare, criticize and synthesize the model's own attempts</strong>.</p>
+                <p class="article-p fade-in">It is not a silver bullet yet: the approach works better on verifiable tasks, suffers with long contexts and demands a careful choice of model for the second stage. But as a research frame and an engineering principle, HeavySkill is a strong move. In short, the paper asks us to see agency not as a layer bolted on top but as a form of organized internal thinking. And that is a far more fundamental idea than yet another orchestrator.</p>
+
+                <!-- Источник -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2605.02396" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://github.com/wjn1996/HeavySkill" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span></a>
+                </div>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI paper breakdowns
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

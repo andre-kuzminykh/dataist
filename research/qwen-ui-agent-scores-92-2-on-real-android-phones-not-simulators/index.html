@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Qwen-UI-Agent scores 92.2% on real Android phones, not simulators</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Qwen-UI-Agent scores 92.2% on real Android phones, not simulators" />
+    <meta property="og:description" content="Qwen-UI-Agent: an AI agent that uses your phone and your computer" />
+    <meta name="description" content="Один ИИ-агент, который одинаково уверенно действует в телефоне, браузере и на компьютере, уже выглядит не как трюк, а как будущий цифровой помощник.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/qwen-ui-agent-scores-92-2-on-real-android-phones-not-simulators/" />
+    <link rel="canonical" href="https://dataist.ai/research/qwen-ui-agent-scores-92-2-on-real-android-phones-not-simulators/">
+    <meta property="og:image" content="https://dataist.ai/2026-08-04/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-04/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Qwen-UI-Agent scores 92.2% on real Android phones, not simulators",
+  "url": "https://dataist.ai/research/qwen-ui-agent-scores-92-2-on-real-android-phones-not-simulators/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/qwen-ui-agent-scores-92-2-on-real-android-phones-not-simulators/",
+    "inLanguage": "en"
+  },
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist AI",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "description": "Qwen-UI-Agent: an AI agent that uses your phone and your computer",
+  "image": "https://dataist.ai/2026-08-04/cover.jpg",
+  "datePublished": "2026-08-04",
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Qwen-UI-Agent Technical Report: Toward Next-Generation Real-World Centric Foundation GUI Agents",
+    "identifier": "arXiv:2607.28227",
+    "url": "https://arxiv.org/abs/2607.28227"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2607.28227"
+}</script>
+    <meta property="article:published_time" content="2026-08-04T12:00:00+00:00">
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-08-04</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Qwen-UI-Agent scores 92.2% on real Android phones, not simulators</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-04/cover.jpg"
+                         alt="Qwen-UI-Agent scores 92.2% on real Android phones, not simulators"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Qwen-UI-Agent: an AI agent that uses your phone and your computer</h2>
+<p>Everyone wants a general-purpose AI agent. The kind you can hand a problem to and say "sort it out." It opens the apps itself, finds the right buttons, compares the options, fixes a file on your computer, and when a flight-cancellation notice lands, it comes back with a plan ready to go.</p>
+<p>The trouble is that almost all such demos look good on polished test suites and noticeably worse in live apps. On a real phone everything gets in the way: pop-ups, logged-out sessions, captchas, strange layouts, a slow network, unexpected confirmation screens. On a computer the problem is different: clicks alone are not enough. Sometimes part of the job is faster and more reliable through the command line.</p>
+<p>That is exactly the problem Alibaba's team takes on in a long technical report on <strong>Qwen-UI-Agent</strong>. It is an agent for graphical interfaces that works across several environments at once: on the phone, on the computer, in the browser, and in a web-search mode. If you want a useful AI agent, teaching a model to press buttons is not enough. You have to build the whole system — the environment, the data, the training, the evaluation, and the product layer on top.</p>
+</section>
+<section>
+<h2>What they built</h2>
+<p>Qwen-UI-Agent is not just one more model that can click around a screen. It is a whole stack.</p>
+<p>🟠 The agent works with mobile apps, desktop programs, the browser, and external search services.</p>
+<p>🟠 It can do more than tap and type in an interface: it also runs commands in the command line and calls APIs.</p>
+<p>🟠 It can emit more than one action per step — a batch of actions, when there is no need to wait for a new screen between them.</p>
+<p>🟠 It was trained not only on short scenarios but on long trajectories — more than 100 steps.</p>
+<p>🟠 On top of the agent sits a separate layer that lets tasks be launched by notifications and carried between phone and computer.</p>
+<p>The usual agent demo has the same weakness: it looks like a collection of separate tricks. Here the authors are trying to assemble those tricks into a working operating system for an agent.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-04/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+</section>
+<section>
+<h2>Why the focus on real devices</h2>
+<p>The gap between simulation and reality is wide for mobile agents.</p>
+<p>In a sandbox everything is convenient. The app can be reset to its initial state. The data you need is already in place. No sudden captcha. No ads. No flaky network. But the user does not live in a sandbox.</p>
+<p>So the authors built a farm of more than 100 physical phones and more than 150 apps. This is not a pile of gadgets on a desk. There is a controller tracking which phone is healthy, which account is logged in where, what network is available, where the environment broke, and where the agent itself got it wrong.</p>
+<p>The system can tell a model error from an environment error. If an app froze or the network dropped, that should not be recorded as a miss by the agent. To make that call they analyze the full execution trajectory separately.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-04/fig_6.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>Out of the same effort came a new benchmark, <strong>MobileWorld-Real</strong> — 409 tasks across 104 apps on live Android devices. It is one of the paper's contributions. It shows how hard ordinary mobile life is for an AI agent. And that is where Qwen-UI-Agent scored <strong>92.2%</strong> task success. For comparison, the closed models come in lower: Gemini 3.1 Pro at 86.2%, GPT-5.6 Sol at 85.4%, Claude Opus 4.8 at 84.7%.</p>
+<p>This is the test of whether a skill carries over from the lab to a real screen.</p>
+</section>
+<section>
+<h2>How the agent acts: interface, command line, batched actions</h2>
+<p>Qwen-UI-Agent has a single action space. It can:</p>
+<p>🟣 click, swipe, type, open apps, and press system buttons;</p>
+<p>🟣 run commands in the command line;</p>
+<p>🟣 call APIs;</p>
+<p>🟣 ask the user when it needs confirmation or is missing information;</p>
+<p>🟣 close out the task with a result.</p>
+<p>On paper this looks obvious. Instead of a mouse-and-eyes-only logic, there are several ways to act. And some tasks are slow and pointless to do through the interface.</p>
+<p>An example from the paper: to find the right photo among many similar ones, the agent does not open each one in turn. It can assemble a contact sheet of thumbnails with a single command line call, look it over quickly, and only then pick the one it wants through the interface. The command line becomes the fast hands; the graphical interface becomes the eyes that check the work.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-04/fig_8.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>That buys two things at once.</p>
+<p>🟠 Tasks finish faster, because part of the drudgery moves to the command line.</p>
+<p>🟠 The agent covers more kinds of task, from visual navigation to file and data work.</p>
+<p>One more detail: <strong>batched actions</strong>. When the agent sees that it can run several predictable steps back to back, it does not spend a separate model step on every click. Open the page search, type the query, press Enter. Or push through a long stretch of form filling until it hits a point that calls for thinking again.</p>
+<p>On OSWorld-v2, the hard desktop benchmark, that produced a visible saving in steps. Qwen-UI-Agent averages 135.8 steps per task. That is fewer than a range of open models, which spend 170–320.</p>
+</section>
+<section>
+<h2>How it was trained</h2>
+<p>The architecture here is interesting, but the main contribution is still the data pipeline and the training.</p>
+<p>First the authors collect data for supervised fine-tuning: trajectories where the agent solves tasks step by step. But they do not rely on hand labeling alone. They have an automated loop for improving the data — a flywheel of sorts.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-04/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>The scheme runs roughly like this:</p>
+<p>🟣 strong models help invent new tasks;</p>
+<p>🟣 agents set up environment states for those tasks;</p>
+<p>🟣 then other agents or verifier models analyze where the current version fails;</p>
+<p>🟣 after that the system generates a new batch of data aimed exactly at the weak spots;</p>
+<p>🟣 the next training iteration uses that data.</p>
+<p>On top of ordinary supervised fine-tuning come two layers of reinforcement learning.</p>
+<p>The first layer fixes common local errors. The authors list six recurring patterns: the agent confuses similar buttons, gets sorting wrong, fails to collect every element it needs, declares success too early, loops on a single action, and makes poor use of rare but important actions such as a long press or a question to the user.</p>
+<p>They assembled dedicated data for this and trained the policy to penalize those errors. The result: fewer loops and fewer false completions.</p>
+<p>The second layer is long trajectories. Here the agent is taught to carry a task through to the end rather than perform individual steps elegantly. That uses reinforcement learning on the final outcome of the task. The environment runs in roughly 10,000 parallel instances to speed up experience collection.</p>
+<p>The key effect of this training: the agent starts to <strong>verify</strong> more often that the task actually got done. Not "I think I created the file, so we're fine," but "let me open the file again and see whether the chart is really in there." It is a change in behavior that looks close to human.</p>
+</section>
+<section>
+<h2>What the numbers say</h2>
+<p>On results, this is fairly convincing. Qwen-UI-Agent turned out to be not a narrow mobile agent but a system that holds up across several modes at once.</p>
+<p>On mobile tasks:</p>
+<p>🟠 82.1% on MobileWorld</p>
+<p>🟠 92.2% on MobileWorld-Real</p>
+<p>🟠 97.5% on AndroidDaily</p>
+<p>On desktop tasks:</p>
+<p>🟠 79.5% on OSWorld-Verified</p>
+<p>🟠 40.0% on the partial-progress metric on OSWorld-v2</p>
+<p>On browser tasks:</p>
+<p>🟠 73.6% on WebArena</p>
+<p>On grounding to interface elements:</p>
+<p>🟠 81.5% on ScreenSpot-Pro in zoom-in mode</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-04/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>What is telling is not any single record but the spread. Models are usually good at either mobile tasks, or the browser, or desktop scenarios. Here you can see that the authors were building a base agent for the digital environment as a whole.</p>
+</section>
+<section>
+<h2>The most interesting part: proactivity and work across devices</h2>
+<p>On top of the model the authors added a separate layer that turns a set of actions into an assistant.</p>
+<p>An example from the paper: a flight-cancellation notification arrives on the phone. Instead of waiting for the user to say something, the system links that event to the trip, to meetings in the calendar, and to personal preferences. Then it looks for alternative flights and trains, checks which ones you can still make, and prepares an option. Actions with consequences — rebooking, for instance — it asks you to confirm.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-04/fig_10.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+</div></figure>
+<p>This already looks like the product logic of an assistant. It has notions of an event, a task in progress, memory about the user, and task state.</p>
+<p>The same idea works for tasks that span devices. The agent can find something on the phone, continue processing it on the computer, send the result, and then hand the final choice back to the mobile app. The context survives the trip.</p>
+<p>For a user that matters more than another 2% on a benchmark. Most of real digital life is smeared across apps and devices. An agent that cannot carry state between them hits a ceiling on usefulness fast.</p>
+</section>
+<section>
+<h2>Where the limits still are</h2>
+<p>The authors are candid about the limitations themselves.</p>
+<p>🟣 On real devices, success is scored not by a strict programmatic verifier but by an automatic judge working from the trajectory. It is accurate, but not perfect.</p>
+<p>🟣 Full automation of the agent's improvement does not work yet. People still watch the pipeline and step in.</p>
+<p>🟣 Real devices are hard to scale. They are expensive, unstable, and need constant maintenance.</p>
+<p>🟣 Even with batched actions, latency remains a problem. Long tasks still take a long time.</p>
+<p>There is a lot of talk around AI agents about generality and much less about operational reality. Here you can see where the system runs into infrastructure rather than into the quality of the model.</p>
+</section>
+<section>
+<h2>The takeaway</h2>
+<p>If you want to understand where interface agents are heading, the thing to watch is not only how the model finds a button in a screenshot. It is the whole system.</p>
+<p>Qwen-UI-Agent shows three things.</p>
+<p>🟠 Real devices matter more than good-looking simulations if you want to get an agent to actual use.</p>
+<p>🟠 A hybrid of graphical interface, command line, and API works better than betting on one way of acting.</p>
+<p>🟠 Long tasks require more than reasoning: checking the result, recovering from errors, remembering state, and a good data pipeline.</p>
+<p>In that direction, AI agents move closer to a genuinely useful digital assistant. To a system that can see a job through, step after step, on real screens.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2607.28227" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Coding agents solve just 41% of tasks in a new refactoring benchmark</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Coding agents solve just 41% of tasks in a new refactoring benchmark" />
+    <meta property="og:description" content="When the old benchmarks get too easy" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/coding-agents-solve-just-41-of-tasks-in-a-new-refactoring-benchmark/" />
+    <meta property="og:image" content="https://dataist.ai/2026-08-12/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-08-12">
+
+    <meta name="description" content="ИИ-агенты уже умеют писать код, но на по-настоящему сложных задачах всё ещё часто спотыкаются.
+
+Исследователи предлагают новый способ проверять такие системы: не на коротких починках, а на больших переделках кода, где нужно аккуратно менять сразу много частей и ничего не ломать. Команда специально отобрала реальные задачи, переписала их описания ясным языком и вручную проверила проверки, чтобы те не отсеивали верные ответы и не требовали того, чего не было в условии.
+
+В этом обзоре разбираем, почему старые способы оценки ИИ для кода дают слишком красивую картину и что показывает новая проверка о реальных возможностях таких агентов." />
+    <link rel="canonical" href="https://dataist.ai/research/coding-agents-solve-just-41-of-tasks-in-a-new-refactoring-benchmark/" />
+
+    <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Coding agents solve just 41% of tasks in a new refactoring benchmark",
+  "description": "When the old benchmarks get too easy",
+  "image": "https://dataist.ai/2026-08-12/cover.jpg",
+  "url": "https://dataist.ai/research/coding-agents-solve-just-41-of-tasks-in-a-new-refactoring-benchmark/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/coding-agents-solve-just-41-of-tasks-in-a-new-refactoring-benchmark/",
+    "inLanguage": "en"
+  },
+  "datePublished": "2026-08-12",
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "SWE-Bench ProMax: Benchmarking Agents on Large-Scale Multilingual Code Refactoring",
+    "identifier": "arXiv:2608.09802",
+    "url": "https://arxiv.org/abs/2608.09802"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2608.09802"
+}</script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-12/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-08-12</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Coding agents solve just 41% of tasks in a new refactoring benchmark</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-12/cover.jpg"
+                         alt="Coding agents solve just 41% of tasks in a new refactoring benchmark"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When the old benchmarks get too easy</h2>
+<p>Benchmarks for coding agents follow a familiar arc. First they push the field forward. Then models catch up fast, scores climb, and the metric stops telling systems apart honestly. At the SWE-bench level you can already see it: frontier models pass those tasks more and more often, and some of the unsolved examples turn out to be broken by bad tests.</p>
+<p>Against that backdrop, the authors of SWE-Bench ProMax propose a different way to measure progress. Instead of the usual bug fixes, large refactors in real repositories. Changes where the job is not to invent one patch in one file, but to thread new logic carefully through a project without breaking anything along the way.</p>
+<p>And the picture shifts sharply. The best score on the new benchmark is only <strong>41.2%</strong>. For today's agents that is no longer comfortable territory.</p>
+<p>🟠 SWE-Bench ProMax tests long refactors, not local fixes</p>
+<p>🟠 best score — <strong>41.2%</strong></p>
+<p>🟠 on the older benchmarks frontier systems had already climbed far higher</p>
+</section>
+<section>
+<h2>What SWE-Bench ProMax is</h2>
+<p>SWE-Bench ProMax is a benchmark of <strong>170 refactoring tasks</strong> taken from real GitHub commits. It covers <strong>7 languages</strong>: Python, Java, TypeScript, Go, C, C++ and Rust. Inside are not toy examples but changes from live projects, where edits have to be coordinated across several places at once.</p>
+<p>The average task here is noticeably bigger than usual:</p>
+<p>🟠 on average <strong>11.4 source files</strong> have to change</p>
+<p>🟠 the average edit is <strong>261.6 lines of code</strong></p>
+<p>🟠 counting tests, that comes to <strong>15.9 files</strong> per task</p>
+<p>🟠 almost a third of the tasks require edits in more than <strong>10 files</strong></p>
+<p>🟠 almost a third of the tasks change more than <strong>200 lines</strong></p>
+<p>This matters because refactoring in real development rarely stays inside one file. You change an interface, move types, rename fields, pull shared logic out — and behind that come the call sites, the tests, the configs, the documentation, the build glue. An agent needs more than local care; it needs long-range planning.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-12/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The selection and manual-curation pipeline: from tens of thousands of commits down to 170 vetted examples.</p>
+</div></figure>
+</section>
+<section>
+<h2>Why the old numbers are hard to trust</h2>
+<p>The authors start with an uncomfortable fact. The trouble with the old benchmarks is not only that they have become too easy. It is also the quality of the grading.</p>
+<p>Two distortions showed up often in earlier task sets:</p>
+<p>🟣 tests too narrow, rejecting a correct solution when it is not built the way the author expected</p>
+<p>🟣 tests too broad, demanding behavior the task statement never described</p>
+<p>If you compare agents on tasks like that, the metric starts picking up noise. A model can fail not because it cannot program but because the tests check things the task never asked for. Or the reverse: pass by accident, having guessed the expected shape of the solution.</p>
+<p>There is one more problem: data contamination. If the gold patch already appeared in the training data, high scores stop meaning real engineering ability. The model may simply be reproducing a familiar chunk.</p>
+<p>SWE-Bench ProMax was built as an answer to both at once: the saturation of the old benchmarks and the doubts about how they grade.</p>
+<p>🟠 the problem with the old sets is not just that they are easy, it is noisy grading</p>
+<p>🟠 narrow tests can throw out correct solutions</p>
+<p>🟠 broad tests can demand more than the task states</p>
+<p>🟠 data leakage distorts the results</p>
+</section>
+<section>
+<h2>How the tasks were assembled</h2>
+<p>The most interesting part here is not only the tasks themselves but the data pipeline.</p>
+<p>The authors started from nearly <strong>29,782 candidates</strong> and kept only <strong>170</strong>. The attrition is enormous. It says a lot about how hard it is to build a benchmark where the task is difficult, the environment reproducible, and the tests honest.</p>
+<p>The pipeline had three stages.</p>
+<p>🟠 First, the GitHub API was used to find suitable repositories: at least 500 stars, an open license, and one of the seven target languages as the project's primary language.</p>
+<p>🟠 Then they pulled commits from after January 2025 whose message contains the word <em>refactor</em> but not <em>bug fix</em>, and which touched both test files and ordinary ones.</p>
+<p>🟠 Next they built an isolated environment in Docker, rolled the repository back to its state before the refactor, applied the gold patch and checked that the thing actually runs and passes its tests.</p>
+<p>The automated part did not end there. After it came manual work by experts.</p>
+<p>The authors rewrote the task descriptions from scratch. Not patching up the commit message, but turning it into a clear specification: what has to change, where the transformation is expected, which properties of the behavior must be preserved. In parallel they read through the tests by hand and threw out checks that were too narrow or too broad.</p>
+<p>The description has to be precise enough that a correct solution is unambiguous, and the tests have to check exactly that.</p>
+</section>
+<section>
+<h2>Why refactoring makes a good stress test</h2>
+<p>A bug fix can often be closed out locally. Find the source of the error, fix the condition, run the tests. Refactoring works differently. It almost always requires holding the structure of the project in your head.</p>
+<p>If you change an API interface, one module is not enough. You have to walk every call site. If you move types or extract a shared layer, you cannot forget the build, the imports, the templates, the adapters, sometimes even the code generators. And through all of it the external behavior has to stay the same.</p>
+<p>The paper has an example from NASA's F’Prime in C++: a single refactor touched <strong>244 files</strong>. That is no longer a "write this function" task. It is a "do not lose the project along the way" task.</p>
+<p>Cases like that are much better at showing where coding agents still hit a ceiling.</p>
+</section>
+<section>
+<h2>What happened when the models were run</h2>
+<p>The authors ran <strong>6 models</strong> across two agent frameworks: the lightweight mini-swe-agent and the richer OpenHands. The budget was the same in every case: up to 300 steps and up to $10 per task.</p>
+<p>The headline result is blunt: <strong>nobody looks confident</strong>.</p>
+<p>🟣 GPT-5.2 — <strong>41,2%</strong></p>
+<p>🟣 Claude Sonnet 4.6 — <strong>38,8%</strong></p>
+<p>🟣 GLM-5 — <strong>36,5%</strong></p>
+<p>🟣 Qwen3.5 — <strong>36,5%</strong></p>
+<p>🟣 Kimi-K2.5 — <strong>32,9%</strong></p>
+<p>🟣 Gemini-3-Pro — <strong>19.4%</strong> in OpenHands</p>
+<p>For context: on the older SWE-bench Verified, frontier agents were already clearing 75%. Here the difference is nearly twofold.</p>
+<p>The new benchmark really does measure what the old sets had all but stopped distinguishing: the ability to carry a long, many-part task through to the end.</p>
+<p>🟠 best score — <strong>41.2%</strong></p>
+<p>🟠 on SWE-bench Verified the scores were already above <strong>75%</strong></p>
+<p>🟠 long refactors stay hard for almost every model</p>
+</section>
+<section>
+<h2>Open models have nearly caught up with closed ones</h2>
+<p>Another interesting part is the economics.</p>
+<p>GLM-5 posted <strong>36.5%</strong> at an average cost of <strong>$0.24</strong> per task. For comparison, Claude Sonnet 4.6 reached <strong>38.8%</strong> but cost <strong>$4.77</strong> on average. GPT-5.2 — <strong>41.2%</strong> at <strong>$3.60</strong>.</p>
+<p>There is a difference in quality, but it is nowhere near proportional to the price.</p>
+<p>In short:</p>
+<p>🟠 the best score does not mean the best value for the money</p>
+<p>🟠 open models have already pulled close to closed ones on hard tasks</p>
+<p>🟠 an expensive agent easily burns steps on useless loops without getting closer to a solution</p>
+<p>For teams building their own coding agents, that is a practical conclusion. If you are automating internal development, what matters is not only the share of tasks solved but the cost of a single attempt.</p>
+</section>
+<section>
+<h2>The agent framework matters almost as much as the model</h2>
+<p>There is another layer to this. The same model brain behaves very differently in different agent frameworks.</p>
+<p>Almost every model gained noticeably when moving from mini-swe-agent to OpenHands. GPT-5.2, for instance, went from <strong>21.8%</strong> to <strong>41.2%</strong>. Close to a doubling.</p>
+<p>The conclusion is simple: on big tasks the outcome depends not only on the model but on the tools you hand it. Comfortable file editing, command execution, working with the environment, the shape of the look-think-edit loop — all of it feeds straight into the result.</p>
+<p>Put differently, comparing bare models apart from their agent scaffolding is no longer very useful. On long tasks the agent framework is part of the system, not an accessory bolted on the outside.</p>
+<p>🟠 GPT-5.2: <strong>21.8% → 41.2%</strong> on a change of framework</p>
+<p>🟠 quality depends on the agent's tools, not the model alone</p>
+<p>🟠 the agent framework has to be counted as part of the system</p>
+</section>
+<section>
+<h2>Where exactly agents fail</h2>
+<p>The authors looked at the agents' trajectories and found a recurring pattern: when a task is not solved, the agent usually changes <strong>too few files</strong> compared with what the gold patch required.</p>
+<p>The problem is not that the agent missed the point entirely. Often it finds the central spot and starts the right refactor, but never carries it out to every dependent piece of the project.</p>
+<p>It looks like this:</p>
+<p>🟣 the core logic is changed correctly</p>
+<p>🟣 some call sites or peripheral modules are left on the old version</p>
+<p>🟣 the tests keep failing because the project is now inconsistent</p>
+<p>🟣 the agent spends further steps reading, patching in part and reverting, but never widens its coverage</p>
+<p>That is why the authors name the main failure mode <strong>incomplete refactoring</strong>.</p>
+<p>This lines up well with practice. The task is unpleasant for a human too: you change an interface in one place, then the old call sites surface, then the test fixtures, then a config, then the documentation, then some rare execution path. You have to keep the map of changes in your head. Agents visibly struggle with that so far.</p>
+</section>
+<section>
+<h2>The languages do not behave the way you would expect</h2>
+<p>The benchmark is multilingual, and that matters too. Evaluations of coding agents are usually tied far too tightly to Python. Here you can see how models behave in different ecosystems.</p>
+<p>The picture came out uneven:</p>
+<p>🟠 GPT-5.2 is best of all on Python and C</p>
+<p>🟠 Claude Sonnet 4.6 leads on TypeScript and Rust</p>
+<p>🟠 GLM-5 beats the rest on Java</p>
+<p>🟠 Qwen3.5 posts the best score on C++</p>
+<p>🟠 Kimi-K2.5 looks stronger on Go</p>
+<p>Curiously, TypeScript and Rust did not turn out to be equally hard for everyone. Some models handle them well, others fall apart on them. So it is not only the intrinsic difficulty of the language, but also the data and the code patterns the model learned from.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-12/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Co-occurrence matrix of task types: refactoring often travels together with API changes and bug fixes.</p>
+</div></figure>
+</section>
+<section>
+<h2>Refactoring is almost never clean</h2>
+<p>One more point: the tasks in SWE-Bench ProMax rarely reduce to refactoring in the narrow sense.</p>
+<p>By the authors' own labeling, many of the examples include several of these at once:</p>
+<p>🟣 a change to the API interface</p>
+<p>🟣 tidying up the structure of the code</p>
+<p>🟣 a bug fix</p>
+<p>🟣 adding a new feature</p>
+<p>🟣 updating tests or documentation</p>
+<p>That looks a lot like real development. In practice you rarely see a commit where the author renamed a field and did nothing else. As soon as you touch the architecture, old defects tend to surface, or neighboring parts of the system have to be brought along.</p>
+<p>For an agent that means one unpleasant thing: mechanically repeating a pattern file by file is not enough. You have to understand where the refactor drags semantic changes along behind it.</p>
+</section>
+<section>
+<h2>Why this matters for the whole field</h2>
+<p>If you want to measure the progress of coding agents honestly, short tasks are no longer enough. They are still useful, but they do not answer the main question: can an agent finish work at the scale of a project.</p>
+<p>SWE-Bench ProMax shows three things at once.</p>
+<p>🟠 today's agents are much better at local edits than at long-range coordination across a codebase</p>
+<p>🟠 a benchmark's quality depends not only on its size but on the manual review of its descriptions and tests</p>
+<p>🟠 open models can already compete with closed ones where the gap used to look wider</p>
+<p>And, probably the most practical point: the bottleneck right now is not abstract reasoning in general, but the ability to hold a plan of changes across many files and see it through without it decaying into partial patches.</p>
+</section>
+<section>
+<h2>The bottom line</h2>
+<p>SWE-Bench ProMax moves the evaluation of coding agents closer to real engineering work. Instead of convenient one- or two-file tasks, it has many-part refactors where you have to change interfaces, keep dependencies in sync and preserve the behavior of the project.</p>
+<p>The results sober up expectations quickly: even the best models solve about two fifths of the tasks. The core problem is not that the agent fails to find the idea behind the edit, but that it does not propagate that idea to all the code that needs it. Hence the frequent failures: the central part is done, the periphery forgotten.</p>
+<p>The next step for coding agents takes more than stronger models. It takes better agent frameworks, more reliable handling of repository context, memory of the changes already made, and mechanics that keep coverage from slipping. Otherwise, on large refactors the agent will keep running into the same limit again and again: it understood what to do, but never carried it all the way through.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2608.09802" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                    <a href="https://huggingface.co/datasets/swe-bench-promax/SWE-Bench-ProMax" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><span class="text-xl leading-none">🤗</span>
+                        <span class="font-sans text-sm md:text-base font-medium">Dataset / model on Hugging Face</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

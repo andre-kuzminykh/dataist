@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Evolving the scaffolding around a frozen model adds 17 points</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="Evolving the scaffolding around a frozen model adds 17 points" />
+    <meta property="og:description" content="The model is frozen, the agent still improves" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/evolving-the-scaffolding-around-a-frozen-model-adds-17-points/" />
+    <meta property="og:image" content="https://dataist.ai/2026-08-18/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-08-18">
+
+    <meta name="description" content="Оказывается, чтобы ИИ-агент стал заметно сильнее, не всегда нужно менять саму модель — иногда достаточно по-умному перестроить то, как она работает.
+
+Исследователи предлагают улучшать не внутренности модели, а её «обвязку»: инструкции, набор действий, полезные приёмы и порядок шагов. Вместо одной линии проб и ошибок команда держит сразу много вариантов, сохраняет удачные находки, смешивает сильные решения между собой и отбрасывает те, что помогают в одном месте, но ломают работу в другом. В итоге ИИ-агент учится решать новые задачи стабильнее и переносит этот навык дальше, без подгонки под один конкретный тест.
+
+В этом обзоре разбираем, как устроен такой отбор вариантов, почему он помогает ИИ-агенту расти без смены модели и за счёт чего улучшения не рассыпаются при переходе к другим задачам." />
+    <link rel="canonical" href="https://dataist.ai/research/evolving-the-scaffolding-around-a-frozen-model-adds-17-points/" />
+
+    <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Evolving the scaffolding around a frozen model adds 17 points",
+  "description": "The model is frozen, the agent still improves",
+  "image": "https://dataist.ai/2026-08-18/cover.jpg",
+  "url": "https://dataist.ai/research/evolving-the-scaffolding-around-a-frozen-model-adds-17-points/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/evolving-the-scaffolding-around-a-frozen-model-adds-17-points/",
+    "inLanguage": "en"
+  },
+  "datePublished": "2026-08-18",
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "DarwinX: Evolving Agent Harnesses Through Natural Selection",
+    "identifier": "arXiv:2608.07545",
+    "url": "https://arxiv.org/abs/2608.07545"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2608.07545"
+}</script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-08-18/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-08-18</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">Evolving the scaffolding around a frozen model adds 17 points</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-08-18/cover.jpg"
+                         alt="Evolving the scaffolding around a frozen model adds 17 points"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>The model is frozen, the agent still improves</h2>
+<p>AI agents come with an awkward truth: quality doesn't depend on the model alone. The scaffolding often decides everything — the system prompt, the tools, memory, the rules for choosing the next step, the checks before answering. The same LLM can behave like a careful engineer or like a chaotic intern purely because of how the pipeline is assembled around it.</p>
+<p>The DarwinX work proposes treating this as evolution. The model is not fine-tuned and not replaced. Only the scaffolding changes. And not along a single line of "try an edit, keep the best one", but through a population of variants, selection, preservation of useful branches and, later, merging them.</p>
+<p>The industry has a bias right now: nearly all attention goes into model weights. DarwinX points at something more mundane. If you already have a strong LLM, a large reserve of quality may sit not in a new model but in how the agent is built around it.</p>
+</section>
+<section>
+<h2>What DarwinX is</h2>
+<p>The idea is simple: the agent improves not by training the model, but by selecting among versions of its scaffolding.</p>
+<p>The authors define scaffolding as everything external to the model:</p>
+<p>🟠 system prompts and instructions</p>
+<p>🟣 the toolset</p>
+<p>🟠 skills and accumulated notes</p>
+<p>🟣 control logic: when to call a tool, when to re-check, when to keep searching for a solution</p>
+<p>Self-improving agents usually follow a single line. They change their procedure, measure the result and keep the last successful edit. That approach has two old problems.</p>
+<p>🟠 It is hostage to early decisions: go the wrong way at the start and the whole branch can stay stuck</p>
+<p>🟣 A local win on one group of tasks can quietly damage results on another</p>
+<p>DarwinX handles this through "natural selection" over scaffolding versions. Many variants are produced. Each is run on tasks. The survivors are the ones that learned to solve something new without breaking what was already mastered.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-18/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The DarwinX scheme: the agent's scaffolding evolves while the model stays frozen, and useful branches are archived and can be merged.</p>
+</div></figure>
+<p>The key move is refusing to pick a single winner too early. Even a version that is worse on average may solve one rare class of tasks. DarwinX doesn't throw such branches away. It files them in an archive and later tries to merge complementary improvements.</p>
+<p>Simplified, the logic runs like this:</p>
+<p>🟠 make a small edit to the scaffolding</p>
+<p>🟣 check whether it got better on part of the task set</p>
+<p>🟠 make sure the old skills didn't degrade too far</p>
+<p>🟣 save the successful branch to the archive</p>
+<p>🟠 later cross several branches if they are useful on different tasks</p>
+<p>This no longer looks like "we tweaked the prompt". It looks like an engineering pipeline for finding a stable agent configuration.</p>
+</section>
+<section>
+<h2>How selection works</h2>
+<p>The most interesting part of the work is the rule that grants a new version the right to live on.</p>
+<p>The authors introduce a "preserve and extend" contract. The new scaffolding has to:</p>
+<p>🟠 solve at least something new</p>
+<p>🟣 not lose too much of what the parent variant could do</p>
+<p>DarwinX rewards the accumulation of skills rather than chaotic jumps. If a version fixed one task but broke three old ones, that's a bad mutation. If it added a new capability with almost no regression, it is kept.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-18/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The selection loop in DarwinX: the "preserve and extend" rule, an archive of alternative branches, and shared memory across generations.</p>
+</div></figure>
+<p>One more detail: the system separates fast search from strict confirmation. A variant can first be waved through on a noisier signal so evolution doesn't stall. But before it starts influencing later generations, it gets re-checked more thoroughly.</p>
+<p>This exists because of a problem common to every agentic benchmark: they are noisy. The same agent can pass a task by chance once and fail it the next time. Trust single lucky runs and evolution quickly starts fitting the noise.</p>
+<p>DarwinX damps that in two ways:</p>
+<p>🟠 solutions are scored by the benchmark's own verifier rather than against "golden" answers</p>
+<p>🟣 candidates are re-measured before they are promoted to new ancestors</p>
+<p>Shared memory across generations is separately useful. The system collects the typical causes of failure: a long setup, a tool error, a wrong answer format, weak checking of the result. Those recurring themes then shape the next edits. DarwinX tries to teach the agent not to patch a single task but to grow a general skill for similar failures.</p>
+</section>
+<section>
+<h2>Where the edits come from</h2>
+<p>DarwinX doesn't change model weights. So every improvement has to be extracted from an analysis of the agent's behavior. There are three kinds of signal for that.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-18/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">DarwinX stores and uses shared memory of what worked, what broke and which error types keep recurring.</p>
+</div></figure>
+<p>The first comes from failures. When the agent fails a task, the system analyzes the trajectory and tries to work out what was missing: a check on the artifact, a better setup, a different sequence of actions.</p>
+<p>The second comes from a stronger solver. When the system has no successful attempt of its own, it can take someone else's successful trajectory and convert it into a scaffolding change. This isn't copying the answer, it's extracting the approach.</p>
+<p>The third comes from its own contrasts. When the agent has both successful and failed runs on the same task, you can compare them and find what exactly makes success reproducible.</p>
+<p>Compressed, the methodology looks like this:</p>
+<p>🟠 failures turn into a diagnosis</p>
+<p>🟣 someone else's successful runs turn into demonstrations</p>
+<p>🟠 the gap between its own wins and losses turns into a rule</p>
+<p>🟣 all of it is written down as a scaffolding change, not as fine-tuning</p>
+<p>That constraint matters. The authors want to prove one thing: a frozen model is not yet a fixed agent.</p>
+</section>
+<section>
+<h2>What the benchmarks show</h2>
+<p>The authors test DarwinX not on one benchmark but across four regimes, in which the evolution signal and the final evaluation drift further and further apart. That makes it easier to see whether the system learned a general way of working better or simply fitted itself to one task set.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-18/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Results across four benchmarks: the same idea improves the agent without changing model weights, and it transfers between tasks.</p>
+</div></figure>
+<p>The headline numbers:</p>
+<p>🟠 Terminal-Bench 2.1: up from 75.5% to 83.2% on GPT-5.5, a gain of 7.7 points</p>
+<p>🟣 On a stronger base the result reaches 84.7%</p>
+<p>🟠 TerminalWorld on held-out tasks: 68.3%, above the base version and above several off-the-shelf agents</p>
+<p>🟣 WebArena-Infinity: up from 43.5% to 93.0% on real web tasks after evolving only on synthetic ones</p>
+<p>🟠 Transfer from Terminal-Bench 2.1 to SWE-bench Verified with no changes to the scaffolding: 84.2%</p>
+<p>The numbers in brief:</p>
+<p>🟠 The average gain across the four regimes is about 17 points</p>
+<p>🟣 The improvements come without changing the model</p>
+<p>🟠 There is transfer between tasks</p>
+<p>🟣 The gain shows up in the terminal and in the browser alike</p>
+<p>The most striking result is WebArena-Infinity. There the agent trained not on the benchmark's real tasks but on synthetic intents. DarwinX never saw the final tests and even used a different signal during selection. Even so, it reached 93% clean pass@1 on the real tasks after an audit.</p>
+<p>That matters because web agents often cheat: they touch hidden state, reach into the page's internal technical details, use things an ordinary user has no access to. The authors inspected the trajectories separately and showed that the number of invalid solutions dropped sharply after evolution — from 293 to 17. The agent didn't just pass more tasks, it passed more of them the right way.</p>
+<p>A short summary of the results:</p>
+<p>🟠 The improvements come without changing the model</p>
+<p>🟣 There are gains in the terminal and in the browser</p>
+<p>🟠 There is transfer to another benchmark</p>
+<p>🟣 The web agent became more careful, not merely more aggressive</p>
+</section>
+<section>
+<h2>What actually evolves</h2>
+<p>One motif recurs through the paper: DarwinX often grows in the agent a habit of first stating the task's contract and only then checking the result before finalizing it.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-08-18/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Shared memory and the selection loop push DarwinX toward accumulating procedural skills rather than one-off patches.</p>
+</div></figure>
+<p>On Terminal-Bench the improvements are clearest where the problem is procedural rather than a matter of knowledge:</p>
+<p>🟠 machine learning and scientific computing tasks</p>
+<p>🟣 tasks involving data and databases</p>
+<p>🟠 long environment setup</p>
+<p>🟣 multi-step work with tools</p>
+<p>🟠 checking output files and formats</p>
+<p>DarwinX doesn't make the model smarter. It makes the agent more disciplined. The agent checks more often what actually counts as the right answer, compares the outcome against the task contract, runs extra validation, and doesn't finish too early.</p>
+<p>The same pattern shows up in browser tasks. Instead of routing around the interface through dubious shortcuts, the evolved agent more often:</p>
+<p>🟠 states the success condition</p>
+<p>🟣 acts through the operations the application actually offers</p>
+<p>🟠 checks both the visible state and the saved result</p>
+<p>🟣 confirms that the change really stuck</p>
+<p>This reads as a set of procedural skills, not as fitting to particular answers.</p>
+</section>
+<section>
+<h2>Why this matters for the industry</h2>
+<p>DarwinX shows that evaluation compute can be converted into continuous improvement of an agent, even when you never touch the model at all.</p>
+<p>Companies today often work like this: take a new LLM, put minimal scaffolding on top, then go compare results. This work shows that approach leaves a lot of quality on the table.</p>
+<p>If you build AI agents, four practical conclusions follow from the paper:</p>
+<p>🟠 Scaffolding is an optimization layer in its own right, not a technical detail</p>
+<p>🟣 One best agent is worse than an archive of different useful variants</p>
+<p>🟠 You need checks that old capabilities survive, or edits will quietly break cases that already worked</p>
+<p>🟣 Evolving against the task's verifier can beat hand-picking the "right" edits</p>
+<p>One more conclusion concerns noise in agent evaluation. If you want to improve an agent automatically, you can't believe single successes. You need repeated runs, careful selection and protection against lucky wins. DarwinX is built precisely around that.</p>
+</section>
+<section>
+<h2>Limitations</h2>
+<p>The work doesn't close every question.</p>
+<p>First, what's tested here is the whole system. The archive, parent selection, branch merging, the different edit signals — all of it works together. So it's hard to say which piece delivers the bulk of the gain.</p>
+<p>Second, transfer isn't equally large everywhere. On SWE-bench there is a gain, but a far more modest one than on the original tasks.</p>
+<p>Third, some regimes rest on small samples. TerminalWorld, for instance, has only 41 held-out tasks, and a single success moves the final percentage noticeably.</p>
+<p>But these limitations don't change the main observation: an agent can be improved through its scaffolding, and it works in more than one sandbox.</p>
+</section>
+<section>
+<h2>Takeaway</h2>
+<p>DarwinX proposes treating an AI agent as an object of selection, not only of training. The model stays the same. The scaffolding changes. If a new version solves more tasks and barely damages the old skills, it survives. If different branches are good at different tasks, they can be merged.</p>
+<p>A practical idea follows from that: a fixed LLM is not yet a fixed agent. Agent behavior can be accumulated, verified and carried between tasks without fine-tuning the model.</p>
+<p>The most visible improvements come from discipline: stating the task contract better, working with tools more carefully, checking the result more often before the final answer. For agentic systems that may matter more than the next jump in model size.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2608.07545" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>

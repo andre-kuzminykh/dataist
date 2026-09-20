@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>An AI agent built a playable shooter over 70 autonomous iterations</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Dataistа" />
+    <meta property="og:title" content="An AI agent built a playable shooter over 70 autonomous iterations" />
+    <meta property="og:description" content="When one pass isn't enough" />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/an-ai-agent-built-a-playable-shooter-over-70-autonomous-iterations/" />
+    <meta property="og:image" content="https://dataist.ai/2026-09-11/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="article:published_time" content="2026-09-11">
+
+    <meta name="description" content="Кажется, мы всё ближе к моменту, когда ИИ-агент сможет сам собрать не просто кусок кода, а целую рабочую игру.
+
+Авторы предлагают способ, при котором ИИ не делает всё за один заход, а идёт по кругу: сначала думает, что нужно сделать, потом пишет код, потом сам себя проверяет и исправляет. Команда устроила этот процесс так, чтобы ИИ не только чинил ошибки, но и шаг за шагом добавлял новые возможности, собирая проект маленькими понятными частями вместо хаотичной переделки всего сразу.
+
+В этом обзоре разбираем, как устроен такой подход к самостоятельной разработке, почему он помогает ИИ доводить проект до играбельного состояния и как в итоге за несколько дней получился полноценный шутер." />
+    <link rel="canonical" href="https://dataist.ai/research/an-ai-agent-built-a-playable-shooter-over-70-autonomous-iterations/" />
+
+    <script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "An AI agent built a playable shooter over 70 autonomous iterations",
+  "description": "When one pass isn't enough",
+  "image": "https://dataist.ai/2026-09-11/cover.jpg",
+  "url": "https://dataist.ai/research/an-ai-agent-built-a-playable-shooter-over-70-autonomous-iterations/",
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://dataist.ai/research/an-ai-agent-built-a-playable-shooter-over-70-autonomous-iterations/",
+    "inLanguage": "en"
+  },
+  "datePublished": "2026-09-11",
+  "inLanguage": "en",
+  "author": {
+    "@type": "Person",
+    "name": "@dataist_ai"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Dataist",
+    "logo": {
+      "@type": "ImageObject",
+      "url": "https://dataist.ai/AIT_logo.png"
+    }
+  },
+  "citation": {
+    "@type": "ScholarlyArticle",
+    "name": "Harness-of-Harness: Multi-Day Autonomous Software Development with Continual Improvement",
+    "identifier": "arXiv:2609.01481",
+    "url": "https://arxiv.org/abs/2609.01481"
+  },
+  "isBasedOn": "https://arxiv.org/abs/2609.01481"
+}</script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/2026-09-11/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        apple: {
+                            light: '#F5F5F7',
+                            dark: '#000000',
+                            grayLight: '#E5E5EA',
+                            grayDark: '#1C1C1E',
+                            textMutedLight: '#86868B',
+                            textMutedDark: '#8E8E93',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['-apple-system', 'BlinkMacSystemFont', '"Inter"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    boxShadow: {
+                        'apple': '0 4px 24px rgba(0, 0, 0, 0.04)',
+                        'apple-dark': '0 4px 24px rgba(255, 255, 255, 0.04)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .glass-header {
+                @apply bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-b border-black/5 dark:border-white/10;
+            }
+            .glass-panel {
+                @apply bg-white dark:bg-[#1C1C1E] border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark;
+            }
+        }
+
+        body {
+            @apply bg-apple-light dark:bg-apple-dark text-black dark:text-white transition-colors duration-300;
+        }
+
+        ::selection {
+            @apply bg-black text-white dark:bg-white dark:text-black;
+        }
+
+        /* Типографика статьи (контент собирается билдером в .article-content) */
+        .article-content p {
+            font-family: 'Inter', sans-serif;
+            font-size: 1.125rem; line-height: 1.75; margin-bottom: 1.5rem;
+            color: rgba(0,0,0,0.85);
+        }
+        .dark .article-content p { color: rgba(255,255,255,0.85); }
+        @media (min-width: 768px) {
+            .article-content p { font-size: 1.3125rem; line-height: 1.8; margin-bottom: 2rem; }
+        }
+        .article-content strong { font-weight: 600; color: #000; }
+        .dark .article-content strong { color: #fff; }
+        .article-content em { font-style: italic; }
+        .article-content h2 {
+            font-family: 'Inter', sans-serif; font-weight: 700;
+            font-size: 1.5rem; line-height: 1.15; letter-spacing: -0.02em;
+            margin-top: 4rem; margin-bottom: 2rem; color: #000;
+        }
+        .dark .article-content h2 { color: #fff; }
+        @media (min-width: 768px) { .article-content h2 { font-size: 1.875rem; } }
+        @media (min-width: 1024px) { .article-content h2 { font-size: 2.25rem; } }
+        .article-content section { max-width: 48rem; margin-left: auto; margin-right: auto; width: 100%; }
+
+        /* Иллюстрации (билдер кладёт img+подпись внутрь .arxiv-chart) → apple-img */
+        .article-content figure { margin: 3rem auto; max-width: 48rem; }
+        .article-content .arxiv-chart, .apple-img {
+            width: 100%; border-radius: 1.5rem; overflow: hidden; background: #fff;
+            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 24px rgba(0,0,0,0.04);
+            display: block; padding: 0;
+        }
+        .dark .article-content .arxiv-chart, .dark .apple-img {
+            border-color: rgba(255,255,255,0.1); box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .article-content figure img { width: 100%; height: auto; display: block; object-fit: cover; }
+        .article-content figure p {
+            font-family: 'Space Mono', monospace; font-size: 0.875rem; color: #86868B;
+            margin: 1rem auto 0; text-align: center; line-height: 1.6; max-width: 42rem;
+        }
+        .dark .article-content figure p { color: #8E8E93; }
+
+        /* Карточки-списки */
+        .article-content .tech-card {
+            display: flex; gap: 1rem; align-items: flex-start;
+            padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; border-radius: 1rem;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.05);
+        }
+        .dark .article-content .tech-card { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.1); }
+
+        /* Лид / вступление (подзаголовок) */
+        .article-lead {
+            font-family: 'Inter', sans-serif; font-weight: 500;
+            font-size: 1.25rem; line-height: 1.6; margin: 0.5rem 0 3rem;
+            padding-left: 1.25rem; border-left: 2px solid #000; color: #86868B;
+        }
+        .dark .article-lead { border-color: #fff; color: #8E8E93; }
+        @media (min-width: 768px) { .article-lead { font-size: 1.5rem; padding-left: 2rem; } }
+
+        /* Анимации скролла */
+        .fade-in {
+            opacity: 0; transform: translateY(20px);
+            transition: opacity 0.8s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+            will-change: opacity, transform;
+        }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+    
+/* BR408: лента соседних разборов.
+
+           Устройство скопировано с блока, свёрстанного руками: карточка без
+           подложки и без рамки — только обложка со своей рамкой, дата и
+           заголовок. Рамка вокруг всей карточки тут пробовалась и оказалась
+           лишней: ряд подсвеченных градиентом прямоугольников спорит с
+           обложками, ради которых блок и существует.
+
+           overscroll-behavior — строка, без которой лента опасна: страницы
+           читают в Telegram, и без неё дотянутый до края жест уходит дальше,
+           окну приложения, а статья закрывается вместо листания.
+
+           Верхний отступ ленты в 4px — не украшение: на наведении карточка
+           поднимается ровно на столько, и без запаса её срезал бы overflow
+           самой ленты. */
+        .rel-rail {
+            display: flex; gap: 16px; overflow-x: auto; scroll-behavior: smooth;
+            scroll-snap-type: x proximity; padding: 4px 2px 12px;
+            overscroll-behavior-x: contain;
+            scrollbar-width: none; -ms-overflow-style: none;
+        }
+        .rel-rail::-webkit-scrollbar { display: none; }
+        .rel-rail > a {
+            flex: 0 0 auto; width: 208px; scroll-snap-align: start;
+            text-decoration: none; display: block;
+            transition: transform .25s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        @media (min-width: 640px) { .rel-rail > a { width: 244px; } }
+        /* Подъём, а не увеличение. Увеличение карточки на нажатии выглядит
+           так, будто она упирается в край ленты и обрезается: палец на
+           телефоне считается наведением, и карточка «распухала» прямо под
+           пальцем. */
+        .rel-rail > a:hover { transform: translateY(-4px); }
+        /* display: block обязателен. Подложка — <span> (внутри ссылки так
+           надёжнее), а на строчном элементе не работают ни width: 100%, ни
+           aspect-ratio: обложка растягивалась во всю высоту карточки, и
+           дата с заголовком уезжали за экран. */
+        .rel-thumb {
+            display: block;
+            position: relative; width: 100%; aspect-ratio: 16 / 10;
+            overflow: hidden; border-radius: 18px;
+            background: rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.10);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+        }
+        .dark .rel-thumb {
+            background: rgba(255,255,255,0.045); border-color: rgba(255,255,255,0.14);
+            box-shadow: 0 4px 24px rgba(255,255,255,0.04);
+        }
+        .rel-thumb img {
+            width: 100%; height: 100%; object-fit: cover; display: block;
+            transition: transform .5s cubic-bezier(0.2,0.8,0.2,1);
+        }
+        .rel-rail > a:hover .rel-thumb img { transform: scale(1.05); }
+        .rel-rail time {
+            display: block; margin: 12px 0 5px; font-family: 'Space Mono', monospace;
+            font-size: 0.625rem; letter-spacing: 0.08em; color: #86868B;
+        }
+        .dark .rel-rail time { color: #8E8E93; }
+        .rel-title {
+            display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;
+            overflow: hidden; font-size: 0.875rem; font-weight: 600; line-height: 1.4;
+            letter-spacing: -0.01em; color: #000;
+        }
+        .dark .rel-title { color: #fff; }
+
+        /* Шторка по краю — цветом фона страницы, поэтому карточки
+           растворяются, а не уезжают под серый прямоугольник. Числами, а не
+           через color-mix(): в старых вебвью функции нет, и браузер
+           отбрасывает всю строку градиента целиком. */
+        .rel-fade {
+            position: absolute; top: 0; bottom: 12px; width: 96px;
+            pointer-events: none; opacity: 0; z-index: 2;
+            transition: opacity .35s ease;
+        }
+        /* Ровно 0, а не -2px как в блоке, свёрстанном руками: там лента
+           живёт внутри колонки и пара пикселей прячется в её отступе. Здесь
+           лента доходит до края экрана, и вылет шторки за край — это
+           горизонтальная прокрутка всей страницы: замер показал ровно 2px. */
+        .rel-fade-l {
+            left: 0;
+            background: linear-gradient(90deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .rel-fade-r {
+            right: 0;
+            background: linear-gradient(270deg, #F5F5F7 12%,
+                        rgba(245,245,247,0.55) 58%, rgba(245,245,247,0));
+        }
+        .dark .rel-fade-l {
+            background: linear-gradient(90deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+        .dark .rel-fade-r {
+            background: linear-gradient(270deg, #000 12%,
+                        rgba(0,0,0,0.55) 58%, rgba(0,0,0,0));
+        }
+
+        /* Стрелки. Появляются только с той стороны, куда есть что листать:
+           стрелка в никуда обманывает. Скрыты не по ширине экрана, а по
+           отсутствию мыши — на телефоне ленту тянут пальцем, и кнопка там
+           только отнимает место у карточки.
+
+           visibility, а не одна opacity: невидимая кнопка с opacity: 0
+           остаётся в порядке обхода табом, и клавиатура упирается в неё
+           дважды на каждой статье. */
+        .rel-arrow {
+            position: absolute; top: calc(50% - 34px); translate: 0 -50%;
+            z-index: 3; width: 42px; height: 42px; border-radius: 50%;
+            display: grid; place-items: center; cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.10); background: #fff; color: #000;
+            box-shadow: 0 8px 26px rgba(0,0,0,0.14);
+            opacity: 0; visibility: hidden; pointer-events: none;
+            transition: opacity .35s ease, transform .25s ease;
+        }
+        .dark .rel-arrow {
+            border-color: rgba(255,255,255,0.14); background: #1C1C1E; color: #fff;
+        }
+        .rel-arrow:hover { transform: scale(1.08); }
+        .rel-arrow-l { left: 6px; }
+        .rel-arrow-r { right: 6px; }
+        .rel-wrap[data-left="1"] .rel-fade-l,
+        .rel-wrap[data-right="1"] .rel-fade-r { opacity: 1; }
+        .rel-wrap[data-left="1"] .rel-arrow-l,
+        .rel-wrap[data-right="1"] .rel-arrow-r {
+            opacity: 1; visibility: visible; pointer-events: auto;
+        }
+        @media (hover: none) { .rel-arrow { display: none; } }
+        @media (prefers-reduced-motion: reduce) {
+            .rel-fade, .rel-arrow, .rel-rail > a, .rel-thumb img { transition: none; }
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] block">
+                    DATAIST
+                </div>
+            </a>
+        </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-09-11</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">An AI agent built a playable shooter over 70 autonomous iterations</h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/2026-09-11/cover.jpg"
+                         alt="An AI agent built a playable shooter over 70 autonomous iterations"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>When one pass isn't enough</h2>
+<p>One of the main problems with coding agents has been obvious to anyone who has tried handing them something bigger than a 50-line function. On a short task everything looks brisk. On a long one the agent tangles itself in its own steps, fixes one thing and breaks another, loses sight of the original requirements, and declares the work finished far too early.</p>
+<p>The authors of <strong>Harness-of-Harness</strong> propose a new <strong>harness for long-horizon autonomous development</strong>. The idea is simple: don't expect one agent run to assemble a whole product, make it work in cycles instead — <strong>plan, write, verify, move on</strong>.</p>
+<p>If you want an AI agent not just to add code but to build a program from scratch with no human nearby, it needs more than access to a terminal and an editor. It needs a process that holds the project in memory and keeps it from degrading from one iteration to the next.</p>
+<p>The conversation about autonomous development moved past tidy demos long ago. The question is no longer whether an LLM can write a chunk of code. The question is <strong>whether it can carry a project for weeks without losing the thread</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-11/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Two modes of development: an agent under constant human supervision, and fully autonomous development from top-level requirements.</p>
+</div></figure>
+</section>
+<section>
+<h2>What Harness-of-Harness is</h2>
+<p>The term in the title sounds heavy at first. The meaning behind it is clear enough.</p>
+<p>Today's coding agents already come with a <strong>harness</strong> of their own: access to files, a terminal, build commands, sometimes tests and the repository. The authors don't rewrite that harness. They build a <strong>harness over the harness</strong> — an outer layer that organizes the agent's work over a long stretch.</p>
+<p>Instead of one big run, the system repeats a cycle built from three roles:</p>
+<p>🟠 <strong>The project planner</strong> decides what to do in the next iteration, working from the requirements and the results of earlier checks</p>
+<p>🟠 <strong>The developer</strong> makes changes to the project and runs local tests along the way</p>
+<p>🟠 <strong>The tester</strong> independently checks what came out and records what actually works and what doesn't</p>
+<p>The key part here isn't the roles themselves. Schemes like this have been tried before. What matters more is that between cycles the system carries forward not only the code but the <strong>state of knowledge about the project</strong>.</p>
+<p>The authors separate two things:</p>
+<p>🟣 <strong>The project artifact</strong> — the current code, assets, configs, everything already built</p>
+<p>🟣 <strong>Execution evidence</strong> — what has been checked, which errors turned up, what broke, what needs to be kept for the next iteration</p>
+<p>That is the central idea of the paper: <strong>an agent has to remember not only what it wrote but what has already been verified</strong>. Without that, every new attempt is close to guessing the state of the project from the code alone.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-11/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The Harness-of-Harness scheme: planner, developer and tester work around a growing project, and the system preserves both the code and the verified evidence between iterations.</p>
+</div></figure>
+</section>
+<section>
+<h2>Why an ordinary agent fails at long tasks</h2>
+<p>The authors describe the problem of long autonomous development quite precisely.</p>
+<p>As the project grows, the agent starts failing in familiar ways:</p>
+<p>🟠 <strong>Early decisions get lost</strong>: why the architecture is built this way and not another, which constraints were already accepted</p>
+<p>🟠 <strong>Local fixes cause regressions</strong>: the menu gets fixed and saving breaks, a mechanic gets added and input is ruined</p>
+<p>🟠 <strong>A "look, fix, look again" loop sets in</strong> with no visible progress in the product</p>
+<p>🟠 <strong>Gaps get dressed up as completion</strong>: the code is there, coherent behavior isn't</p>
+<p>Put simply, an agent has trouble holding a long project history in its head. The context window is finite. The conversation history runs out. And code by itself is a poor place to keep the explanation of <strong>what a check has confirmed and what only looks like it works</strong>.</p>
+<p>So the authors don't bet on memory as a separate module. They store documents, reports and the history of iterations, and let the agent <strong>retrieve what it needs by index</strong> rather than drag the whole project into every prompt.</p>
+<p>This is an engineering answer. Not "let the model hold it all," but "let the system keep the important parts outside the model, carefully."</p>
+</section>
+<section>
+<h2>How the work cycle is built</h2>
+<p>Every HoH iteration is capped in scope. The planner isn't allowed to say "build the whole game." It picks a <strong>small but complete increment</strong>.</p>
+<p>For example:</p>
+<p>🟣 fix one specific build blocker and add a basic results screen</p>
+<p>🟣 preserve the input handling that already works and finish the collision mechanic</p>
+<p>🟣 don't rewrite half the project, close one observable scenario</p>
+<p>That solves two problems at once. First, the change surface is smaller, so the source of a break is easier to find. Second, the result is easier to check.</p>
+<p>One more move: <strong>testing sits both inside development and after it</strong>.</p>
+<p>The developer runs local checks while the code is changing, to catch its own mistakes fast. But the final call on whether the system works belongs to a separate tester, working on a frozen version of the project. That tester can't quietly write code on the developer's behalf. It can only check and record facts.</p>
+<p>This removes a common failure of <strong>multi-agent</strong> setups, where the agent writes the code and then immediately talks itself into believing it's done.</p>
+</section>
+<section>
+<h2>What the benchmarks showed</h2>
+<p>The authors ran HoH on three different task sets:</p>
+<p>🟠 <strong>GameCraft-Bench</strong> — building playable games in Godot from a text description</p>
+<p>🟠 <strong>FrontierSWE</strong> — hard tasks in building and optimizing software systems</p>
+<p>🟠 <strong>ProgramBench</strong> — reconstructing a program from scratch given an executable and documentation</p>
+<p>Three harness-and-model pairings were tested:</p>
+<p>🟣 Codex with GPT-5.5</p>
+<p>🟣 OpenCode with DeepSeek-V4-Pro</p>
+<p>🟣 Pi with MiniMax-M3</p>
+<p>In every case HoH was compared against a baseline where the same agent simply makes one ordinary pass with no outer cycle.</p>
+<p><strong>The iterative scheme gives a large gain almost everywhere</strong>.</p>
+<p>The numbers, briefly:</p>
+<p>🟠 On GameCraft-Bench the average final score rose by <strong>16.6–22.1 points</strong> depending on the pairing</p>
+<p>🟠 On FrontierSWE the gain in dominance came to <strong>19–29 percentage points</strong></p>
+<p>🟠 On ProgramBench the improvement reached <strong>16.85 points</strong> on the share of hidden tests passed</p>
+<p>🟠 The authors put the average relative gain across all experiments at <strong>52.25%</strong>, with a maximum of <strong>82.86%</strong> after three iterations</p>
+<p><strong>The results in short:</strong></p>
+<p>🟣 HoH improves the result on all three benchmarks</p>
+<p>🟣 The gain shows up across different models, not only in the strongest pairing</p>
+<p>🟣 What produces the win is the organization of the cycle, not one extra pass</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-11/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Baseline against HoH after three iterations on four measures of game quality: mechanics, content depth, visual functionality and presentation.</p>
+</div></figure>
+<p>It's also clear that the gain isn't confined to the strongest pairing. Even weaker baseline agents improve noticeably once they're given the right work cycle.</p>
+<p>That's a practical conclusion. Progress here comes not only from "get a better model" but from <strong>organizing the process properly</strong>.</p>
+</section>
+<section>
+<h2>Improvement builds from iteration to iteration</h2>
+<p>One of the most useful parts of the paper is the check on whether this is just an artifact of the first two extra attempts. The authors look separately at how quality changes as the number of cycles grows.</p>
+<p>On the game benchmark, scores for all three pairings rose from HoH@1 to HoH@3. On FrontierSWE the Codex + GPT-5.5 pairing was run out to ten cycles. Dominance there climbed from <strong>27.33% in the baseline</strong> to <strong>72.67% at the tenth iteration</strong>, and the best checkpoint, at cycle nine, hit <strong>76%</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-11/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">On FrontierSWE quality rises as the number of cycles grows: HoH keeps improving the result well past three iterations.</p>
+</div></figure>
+<p>So this isn't a case of "the agent got another shot." The system really does accumulate useful state between passes.</p>
+<p>The authors checked another question too: maybe the whole effect is that HoH simply burns more tokens? To find out, they compared HoH against a mode where the baseline agent is just told to "keep developing" for one more pass, and then another.</p>
+<p>The result is telling. At an equal number of passes HoH is still ahead. More than that, <strong>HoH after two cycles beats the baseline after three</strong>, and it spends fewer tokens doing it.</p>
+<p><strong>What follows from this:</strong></p>
+<p>🟠 This doesn't come down to brute force</p>
+<p>🟠 Extra tokens on their own don't explain the gain</p>
+<p>🟠 What works is the structure of the cycle: plan, implementation, independent verification, evidence carried forward</p>
+</section>
+<section>
+<h2>What actually helps</h2>
+<p>The authors also ran an ablation, pulling out the key pieces of the scheme one at a time.</p>
+<p>If you:</p>
+<p>🟣 <strong>don't update the plan</strong> between iterations, quality drops noticeably</p>
+<p>🟣 <strong>don't pass the verification results</strong> into the next cycle, it drops as well</p>
+<p>🟣 <strong>don't continue from the previous state of the project</strong> and start nearly from scratch each time, quality drops and token spend rises</p>
+<p>Which gives a simple conclusion: HoH doesn't work because "three agents beat one" on its own. It works because three mechanisms run end to end:</p>
+<p>🟠 <strong>a plan that gets updated</strong></p>
+<p>🟠 <strong>feedback from verification</strong></p>
+<p>🟠 <strong>continuity of the project artifact</strong></p>
+<p>Remove any one of those supports and the system gets worse at holding a long task together.</p>
+</section>
+<section>
+<h2>A shooter built over many days</h2>
+<p>The most striking part of the paper isn't the benchmarks but a long case study in autonomously developing a first-person shooter. The system was handed only a product requirements document and then ran the project on its own for more than <strong>70 iterations</strong>.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/2026-09-11/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Across dozens of iterations HoH assembled a playable first-person shooter: story, combat, weapons, enemies, interface, menus, animation and sound.</p>
+</div></figure>
+<p>The finished project included:</p>
+<p>🟠 a coherent storyline</p>
+<p>🟠 combat mechanics</p>
+<p>🟠 weapons and enemy interaction</p>
+<p>🟠 player navigation</p>
+<p>🟠 interface and menus</p>
+<p>🟠 animation, visual presentation and sound</p>
+<p>What matters isn't only that a game appeared at all. The dynamics are more interesting. Over 70 cycles the system opened 81 tasks, closed 65, and later had to reopen 17 of them because of regressions. That looks a lot like ordinary life on a software project. The product grows, bugs surface, some fixes break later, and then get fixed again.</p>
+<p>This is where it becomes especially clear why <strong>version history</strong> and <strong>verification evidence</strong> are needed. Without them, long autonomous development turns into chaos fast, with the agent no longer able to tell what was working last week or why it stopped working now.</p>
+<p><strong>The case study in brief:</strong></p>
+<p>🟣 More than 70 iterations with no human running the project</p>
+<p>🟣 81 tasks opened, 65 closed, 17 reopened</p>
+<p>🟣 Regressions show up even in a successful long cycle</p>
+<p>🟣 Project history and verification results matter as much as the code itself</p>
+</section>
+<section>
+<h2>What this changes</h2>
+<p><strong>Autonomous development is a process problem, not only a model problem</strong>.</p>
+<p>If you're building a coding agent, good tool access and a large LLM aren't enough. You also need:</p>
+<p>🟣 <strong>short verifiable steps instead of one giant run</strong></p>
+<p>🟣 <strong>a split of roles between planning, implementation and verification</strong></p>
+<p>🟣 <strong>project history preserved as both code and evidence</strong></p>
+<p>🟣 <strong>independent verification that can't quietly fix the result itself</strong></p>
+<p>Which points to something broader. The talk around LLMs keeps circling <strong>world models</strong>, <strong>reasoning</strong>, agency. But in programming work the deciding factor is often more mundane: <strong>whether the system can organize its own work over a long stretch</strong>.</p>
+</section>
+<section>
+<h2>Takeaway</h2>
+<p>Harness-of-Harness shows that progress in autonomous development can come without a new model and without fine-tuning. It's enough to do what ordinary engineering settled on long ago: break the work into a <strong>multi-step cycle</strong>, keep a record of decisions, separate writing code from checking it, and carry forward not just files but the knowledge of what has already been confirmed.</p>
+<p>For the industry that means something simple. The next step up for coding agents probably won't come from more powerful LLMs alone. It will come from a <strong>better harness</strong>, where the agent improvises blind less and works more like a disciplined team, even one assembled around a single model.</p>
+</section>
+
+                <!-- Source: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2609.01481" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white"><i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span></a>
+                </div>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI papers in plain words
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read the new AI papers and retell what matters in plain language — no hype, no filler. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New breakdowns every day
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">On Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
