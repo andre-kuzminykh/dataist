@@ -185,6 +185,23 @@
       .cta-row b{font-size:20px;line-height:28px}
       .cta-btn{font-size:16px;line-height:24px}
     }
+    /* The edges of the "Read next" rail, to the section's canon. A card
+       is not chopped off at the edge: a gradient in the page's own
+       background colour lies over it. An arrow is shown only on the
+       side there is something to scroll towards — otherwise the left
+       one just sits on top of the first card. Both are switched by the
+       data-left / data-right attributes that the script sets. */
+    .rail-fade{position:absolute;top:0;bottom:14px;width:96px;pointer-events:none;opacity:0;z-index:2;transition:opacity .35s ease}
+    .rail-fade.left{left:0;background:linear-gradient(90deg,var(--bg) 12%,color-mix(in srgb,var(--bg) 55%,transparent) 58%,transparent)}
+    .rail-fade.right{right:0;background:linear-gradient(270deg,var(--bg) 12%,color-mix(in srgb,var(--bg) 55%,transparent) 58%,transparent)}
+    .rail-wrap[data-left="1"] .rail-fade.left,.rail-wrap[data-right="1"] .rail-fade.right{opacity:1}
+    .rail-btn{opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,transform .2s ease}
+    .rail-wrap[data-left="1"] .rail-btn.left,.rail-wrap[data-right="1"] .rail-btn.right{opacity:1;visibility:visible;pointer-events:auto}
+    .rail-btn:hover{transform:scale(1.08)}
+    @media(hover:none){.rail-btn{display:none}}
+    /* Подписи колонок в схеме были h4 сразу после h1 — по структуре
+       документа это разрыв уровней. Вид прежний, тег обычный. */
+    .compare .side-title{margin:0 0 12px;font-size:18px;font-weight:700;line-height:1.3}
   </style>
 </head>
 <body>
@@ -231,9 +248,7 @@
         </a>
         <p class="lead">Large language models taught agents to reason, write code and build plans. But today we also make them take hundreds of small decisions: which tool to call, whether there is enough data, whether to keep going, whether an action is dangerous. Jev proposes moving decisions like these into a separate layer that is fast and cheap.</p>
         <div class="cover">
-          <!-- REPLACE cover.jpg WITH YOUR OWN COVER, 1672×941 -->
           <img src="https://dataist.ai/technology/jev-ai-agents/cover.jpg" alt="Jev and the architecture of AI agents" width="1672" height="941" onerror="this.classList.add('is-missing')">
-          <div class="cover-fallback"><strong>Drop in cover.jpg</strong><span>Recommended size: 1672 × 941</span></div>
         </div>
       </header>
 
@@ -244,9 +259,9 @@
           <div class="ig fade-in">
             <div class="ig-title"><strong>Two layers of intelligence</strong></div>
             <div class="compare">
-              <div class="side"><h4>Large language model</h4><ul><li>builds a plan</li><li>reasons</li><li>writes text and code</li><li>handles an ambiguous task</li></ul></div>
+              <div class="side"><div class="side-title">Large language model</div><ul><li>builds a plan</li><li>reasons</li><li>writes text and code</li><li>handles an ambiguous task</li></ul></div>
               <div class="vs">+</div>
-              <div class="side"><h4>Decision model</h4><ul><li>picks an action</li><li>scores risk</li><li>routes a request</li><li>decides «continue / stop»</li></ul></div>
+              <div class="side"><div class="side-title">Decision model</div><ul><li>picks an action</li><li>scores risk</li><li>routes a request</li><li>decides «continue / stop»</li></ul></div>
             </div>
           </div>
 
@@ -543,7 +558,9 @@
 
       <section class="readmore" aria-labelledby="more-title">
         <div class="readmore-head"><h2 id="more-title">Read next</h2><span>Technology</span></div>
-        <div class="rail-wrap" id="latest-wrap">
+        <div class="rail-wrap" id="latest-wrap" data-left="0" data-right="1">
+          <span class="rail-fade left" aria-hidden="true"></span>
+          <span class="rail-fade right" aria-hidden="true"></span>
           <button class="rail-btn left" id="latest-prev" aria-label="Previous"><i data-lucide="chevron-left"></i></button>
           <div class="rail" id="latest-rail" role="list" tabindex="0">
             <a class="rel-card" href="https://dataist.ai/technology/en/how-ai-agents-are-starting-to-train-robots-on-their-own/" role="listitem"><span class="rel-thumb"><img src="https://dataist.ai/technology/agentic_robots/cover.jpg" alt="" loading="lazy"></span><span class="rel-body"><time>Aug 17, 2026</time><span class="rel-title">How AI agents are starting to train robots on their own</span></span></a>
@@ -606,13 +623,16 @@
       var rail=document.getElementById('latest-rail'), prev=document.getElementById('latest-prev'), next=document.getElementById('latest-next');
       function move(dir){if(!rail)return;rail.scrollBy({left:dir*Math.max(240,rail.clientWidth*.82),behavior:'smooth'})}
       if(prev)prev.addEventListener('click',function(){move(-1)});if(next)next.addEventListener('click',function(){move(1)});
+      var wrap=document.getElementById('latest-wrap');
+      function edges(){if(!rail||!wrap)return;var x=rail.scrollLeft,max=rail.scrollWidth-rail.clientWidth;wrap.setAttribute('data-left',x>8?'1':'0');wrap.setAttribute('data-right',(max-x)>8?'1':'0')}
+      if(rail){rail.addEventListener('scroll',edges,{passive:true});window.addEventListener('resize',edges);edges()}
       if(rail)rail.addEventListener('keydown',function(e){if(e.key==='ArrowRight'){e.preventDefault();move(1)}if(e.key==='ArrowLeft'){e.preventDefault();move(-1)}});
 
       function fmtDate(iso){var m=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso||''));return m?m[3]+'.'+m[2]+'.'+m[1]:''}
       function pathOf(u){try{return new URL(u,location.href).pathname}catch(e){return''}}
       function buildCard(item){var a=document.createElement('a');a.className='rel-card';a.href=item.url;a.setAttribute('role','listitem');var th=document.createElement('span');th.className='rel-thumb';if(item.cover){var im=document.createElement('img');im.src=item.cover;im.alt='';im.loading='lazy';im.addEventListener('error',function(){im.remove()});th.appendChild(im)}a.appendChild(th);var body=document.createElement('span');body.className='rel-body';var t=document.createElement('time');t.dateTime=item.published_at||item.date||'';t.textContent=fmtDate(t.dateTime);var title=document.createElement('span');title.className='rel-title';title.textContent=item.title||'';body.append(t,title);a.appendChild(body);return a}
       var feeds=['/technology/index.json','https://dataist.ai/technology/index.json'];
-      function loadFeed(i){if(!rail||i>=feeds.length)return;fetch(feeds[i],{cache:'no-cache'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(list){if(!Array.isArray(list)||!list.length)throw new Error('empty');var current='/technology/jev-ai-agents/';var rows=list.filter(function(x){return x&&x.url&&x.title&&pathOf(x.url)!==current}).sort(function(a,b){return String(b.published_at||b.date||'').localeCompare(String(a.published_at||a.date||''))});if(rows.length){rail.replaceChildren.apply(rail,rows.slice(0,16).map(buildCard))}}).catch(function(){loadFeed(i+1)})}
+      function loadFeed(i){if(!rail||i>=feeds.length)return;fetch(feeds[i],{cache:'no-cache'}).then(function(r){if(!r.ok)throw new Error(r.status);return r.json()}).then(function(list){if(!Array.isArray(list)||!list.length)throw new Error('empty');var current='/technology/jev-ai-agents/';var rows=list.filter(function(x){return x&&x.url&&x.title&&pathOf(x.url)!==current}).sort(function(a,b){return String(b.published_at||b.date||'').localeCompare(String(a.published_at||a.date||''))});if(rows.length){rail.replaceChildren.apply(rail,rows.slice(0,16).map(buildCard));edges()}}).catch(function(){loadFeed(i+1)})}
       loadFeed(0);
     })();
   </script>
