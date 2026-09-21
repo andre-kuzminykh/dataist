@@ -1,0 +1,52 @@
+## Why retrosynthesis remains difficult
+
+Drug and materials research can generate vast numbers of candidate molecules. The bottleneck is often more basic: finding a practical laboratory route to make them.
+
+Retrosynthetic analysis works backward from a target molecule, breaking it into simpler precursors. Each bond disconnection is a possible move, but the search space is far larger than in chess or Go, and a move that looks plausible may not be chemically available.
+
+Existing systems commonly struggle to:
+
+- find rare reactions that are strategically important;
+- generalize beyond the data distribution used for training;
+- produce routes that match chemists’ expectations.
+
+That limits the scale at which automated synthesis planning can support molecular research.
+
+[FIGURE:0]
+
+## Two models, one ranking system
+
+RetroChimera is built around two complementary predictors rather than a single universal approach.
+
+- <strong>R-SMILES 2</strong> is a Transformer model that directly generates precursor molecules from a target. Because it learns reaction patterns from the data without a fixed template library, it can handle reactions that substantially change a molecule. Its freedom also means it can produce chemically nonexistent options.
+- <strong>NeuralLoc</strong> is a graph neural network. It represents both molecules and reaction templates as graphs, then selects a template and identifies where to apply it. That makes its output more constrained and generally more reliable, but also limits it when the relevant reaction is absent from its template library.
+
+[INFO:compare] R-SMILES 2 :: free generation | NeuralLoc :: reaction templates
+
+[FIGURE:1]
+
+The models do not simply duplicate one another. R-SMILES 2 is particularly effective for reactions with major structural changes, while NeuralLoc performs better on less frequent reactions and those involving more local changes.
+
+RetroChimera combines their ranked predictions with a trainable ensemble strategy. Each model assigns votes according to a candidate’s position in its ranking. When both models suggest the same reaction, their votes are combined. The system learns how much to trust each model at different ranking positions, allowing it to use their different strengths. Across reaction classes, it roughly reaches the level of whichever submodel performs better.
+
+## What the evaluation shows
+
+The reported results cover both common and rare reaction classes. In blind tests, chemists preferred RetroChimera’s proposed bond disconnections in complex molecules over:
+
+- the predictions of its individual submodels;
+- more established approaches;
+- reactions from the test set itself.
+
+[FIGURE:2]
+
+That result matters because retrosynthesis systems are not judged only by whether they can produce an answer. They must produce routes that experts consider plausible enough to pursue. RetroChimera’s advantage, as presented here, comes less from one model mastering every reaction than from making disagreement between two imperfect models useful.
+
+I think that is the more interesting design choice. The paper’s practical claim is not that free generation or reaction templates have won; it is that their blind spots can be ranked against each other.
+
+## Open access, unresolved constraints
+
+The model is published on GitHub under the MIT license and is available through Microsoft Foundry. Instructions for using the checkpoint are provided in the GitHub repository. The developers are asking the chemistry community to test it on different target molecules and expose where it succeeds or fails.
+
+What I’d want to know is how often those preferred predictions translate into routes that can actually be executed in the lab. The reported evaluations establish that chemists like RetroChimera’s choices, and that the system can cover rare reaction types. They do not, in the supplied results, establish how much laboratory work is saved per successful route.
+
+That distinction will shape the model’s value in closed-loop systems that plan, perform and check synthesis. Open weights make those systems easier to build, but practical synthesis still decides whether better ranking becomes faster discovery.
