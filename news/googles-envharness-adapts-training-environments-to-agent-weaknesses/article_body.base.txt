@@ -1,0 +1,110 @@
+## Static environments stop teaching
+
+An agent learns through interaction with an environment: a code repository with tests, a website, or an isolated copy of an enterprise application. The environment provides the task, stores its state, responds to actions and decides whether the result is correct.
+
+Building that machinery is expensive, especially when correctness depends on a reliable evaluator. But once built, most environments remain fixed. They do not react to the agent’s mistakes or to the skills it has already acquired.
+
+An agent that repeatedly edits code without running tests will not, by itself, encounter more situations that force it to learn that habit. Once it masters the original tasks, the simulator also becomes less useful as a source of new training experience. Zifeng Wang, a Google researcher and co-author of the study, told VentureBeat that genuinely difficult cases become rarer in a fixed space, forcing teams to search through exponentially more variants to find meaningful edge cases.
+
+AI-generated environments offer one answer, but introduce their own problems:
+
+- GenEnv uses a large language model as a simulator to generate transitions, observations and success signals near the agent’s capability boundary.
+- Agent-World programmatically synthesizes executable tools, databases and tasks.
+- Generated environments still need validation, and language-model simulators can produce incorrect transitions or gradually change the meaning of feedback.
+- Environments assembled from scratch can contain logical errors.
+- If generation still follows a fixed distribution, it merely replaces one static collection with another.
+
+EnvHarness takes a different route. It keeps the environment and its evaluator, but changes how the agent experiences them.
+
+## Making the environment programmable
+
+The researchers describe EnvHarness as the counterpart to an agent harness: a software layer that normally surrounds a language model with tools, memory, context management and execution loops.
+
+`Adapted environment = static environment + EnvHarness`
+
+The agent continues using the same interface. EnvHarness sits between the agent and the environment and modifies the training process without modifying the simulator itself.
+
+- <strong>Stage</strong> changes the initial state. In one ALFWorld task, the agent must put a clean mug on a table. Normally, the mug is visible; Stage can place it inside a closed cabinet, requiring the agent to search before completing the task. It can also perform an early part of the task in advance and shift training toward a later step.
+- <strong>Contract</strong> changes the interaction. It can filter actions, alter responses or control what the agent sees. In the same task, it can remove details from a room description or block short navigation routes, forcing the agent to gather information over several steps.
+- <strong>Chain</strong> combines tasks. After placing the mug, the agent might have to heat a potato and put it on a kitchen countertop. Success now requires preserving multiple goals across a longer trajectory.
+
+The framework also includes EnvRigger, which decides how to modify an environment based on the agent’s weaknesses. Its loop is:
+
+1. Run the agent several times and inspect successful and failed trajectories.
+2. Find recurring error patterns.
+3. Create EnvHarness components intended to expose or correct those errors.
+4. Run new trajectories and check whether the result is useful and solvable.
+
+For a coding agent that submits a fix without running tests, EnvRigger can create a plug-in that intercepts the premature submission and returns a warning. The agent must run the test suite first.
+
+The repository and its human-written unit tests remain unchanged. Contract modifies the conditions around the task, while the original tests still determine whether the fix is correct. That distinction matters: the framework adds pressure to practice a behavior without weakening the evaluator.
+
+EnvRigger also validates its own changes. In the study’s experiments, the baseline cycle starts with five runs of the original task and five runs using the proposed modification. If the modified version becomes unsolvable, too easy or uninformative, EnvRigger can revise it and run additional checks, for up to five writing and validation iterations.
+
+## The results improve as the agent changes
+
+The researchers tested EnvHarness on five benchmarks:
+
+- ALFWorld
+- WebArena
+- SWE-bench Verified
+- OfficeQA
+- SpreadsheetBench
+
+They extracted reusable skills from trajectories generated in the environments. Skills learned with EnvHarness outperformed skills from unchanged environments on all five benchmarks.
+
+On SWE-bench Verified, training with EnvHarness both improved accuracy and reduced the average trajectory from 55.01 to 49.61 steps. EnvHarness also outperformed systems designed specifically to generate training environments: it beat SWE-smith by 2.46 percentage points while using 5.11 fewer steps per episode, and scored an average of 5.7 points higher than GenEnv on ALFWorld.
+
+The larger advantage appeared over repeated adaptation cycles. Each new EnvHarness batch was created using the agent’s state after training on earlier batches.
+
+Early rounds in the coding environment found basic problems such as running tests and editing files. Later rounds surfaced different weaknesses:
+
+- broken test-running tools;
+- resource limits;
+- choosing the correct Python interpreter.
+
+In a larger SWE-bench Verified experiment, the baseline agent started at 47.67% and reached 54.79% after training on 300 EnvHarness environments. The same number of original environments reached 52.13%, while SWE-smith-generated environments reached 50.37%.
+
+[INFO:compare] Baseline agent :: 47.67% | EnvHarness, 300 environments :: 54.79% | Original environments :: 52.13% | SWE-smith :: 50.37%
+
+The gap is not simply that EnvHarness generates more variety. Its environments continue changing in response to the agent’s latest capabilities. The original and generated environments began to converge earlier, while EnvHarness kept producing tasks aimed at newly exposed weaknesses.
+
+The same mechanism worked outside coding. In WebArena, the researchers targeted an agent that answered without scrolling and therefore missed information below the visible page. EnvHarness created a Contract that blocked access to data until the agent scrolled, producing trajectories that trained it to inspect the full page before responding.
+
+## The cost is integration and compute
+
+EnvHarness does not train an agent on its own. It creates experience that another learning system must consume.
+
+In the main experiments, a ReasoningBank-style data pipeline turned trajectories into reusable skills. In an enterprise deployment, EnvHarness would similarly need to work with skill or memory extraction, fine-tuning, reinforcement learning or another mechanism that changes the agent in response to experience.
+
+That makes it complementary to frameworks that modify the agent harness, including Self-Harness, HarnessX and DarwinX. Those systems improve rules, workflows, skills and other components on the agent side; EnvHarness changes the conditions in which the agent learns.
+
+Wang’s point is that agent-side optimization cannot happen in isolation. Planning, reflection and decision-making are shaped through interaction with the outside world. Dynamic environmental constraints can force an improved harness to confront behavior it would otherwise avoid or solve through fragile shortcuts.
+
+The researchers did not test EnvHarness together with self-improving-agent frameworks. In principle, the two approaches could form a feedback loop:
+
+[INFO:steps] EnvHarness finds weakness | Agent-side system improves harness | EnvHarness creates new tasks
+
+My read is that this is the more important architectural idea than the benchmark spread. EnvHarness treats the training environment as part of the learning system rather than as a passive test fixture. But that also makes the environment a new engineering surface that companies must operate and validate.
+
+The first cost is integration. A team must write a Bridge that exposes its environment through the common `ActionableEnv` interface. The paper includes Bridges for several environment types, including Docker-based SWE-bench environments, OfficeQA and SpreadsheetBench.
+
+For containerized development workflows, the integration can sit outside the environment itself. Enterprise continuous integration and delivery pipelines typically run environments inside isolated Docker or Kubernetes containers, while EnvHarness can connect above the existing test runner as a lightweight external plug-in.
+
+If the environment already supports the required reset and step-by-step interaction scheme, the container image, codebase and internal unit tests can remain unchanged. EnvHarness intercepts commands at the interface level.
+
+The second cost is compute. EnvRigger needs multiple agent runs to diagnose a weakness, create a modification and verify that the task remains solvable. Wang characterizes the trade-off as computational rather than architectural.
+
+Fast state restoration also limits where the framework belongs. It fits digital sandboxes where runs are inexpensive and state can be reset quickly:
+
+- coding environments;
+- tool-use simulations;
+- browser automation test systems.
+
+It should not run its diagnostic loop directly against systems with irreversible consequences or expensive recovery, such as production databases, real customer accounts or physical robots. Those settings require a safe simulator, a test environment or a restorable copy.
+
+Google Research has published the EnvHarness code, experiment configurations and reinforcement-learning implementation on GitHub under the permissive Apache 2.0 license.
+
+I think the framework’s practical promise is narrower and more credible than a replacement for human-designed environments. Its value is in extracting more training signal from a smaller set of high-quality environments with reliable evaluators. As the models controlling EnvRigger improve, the researchers expect the cost of designing and validating modifications to fall because stronger environment-design agents should need fewer iterations.
+
+That leaves a useful tension: the best environments remain human-built reference points, while the layer around them becomes adaptive. The future training stack may depend less on endlessly generating new worlds than on making existing ones react intelligently to the agents inside them.
