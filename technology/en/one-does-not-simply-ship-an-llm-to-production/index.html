@@ -1,0 +1,1211 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>One Does Not Simply Ship an LLM to Production</title>
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Dataist / Technology" />
+    <meta property="og:title" content="One Does Not Simply Ship an LLM to Production: how to manage AI systems in a company" />
+    <meta property="og:description" content="From DataOps to AIOps: what production-ready AI systems are actually made of, and why the model alone delivers no business value." />
+    <meta name="description" content="From DataOps to AIOps: what production-ready AI systems are actually made of, and why the model alone delivers no business value.">
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/technology/en/one-does-not-simply-ship-an-llm-to-production/" />
+    <link rel="canonical" href="https://dataist.ai/technology/en/one-does-not-simply-ship-an-llm-to-production/">
+    <link rel="alternate" hreflang="ru" href="https://dataist.ai/technology/LLM-prod/">
+    <link rel="alternate" hreflang="en" href="https://dataist.ai/technology/en/one-does-not-simply-ship-an-llm-to-production/">
+    <meta property="og:image" content="https://dataist.ai/technology/___ChatGPT%20Image%20Apr%205%2C%202026%2C%2012_17_47%20AM.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="One Does Not Simply Ship an LLM to Production: how to manage AI systems in a company" />
+    <meta name="twitter:description" content="From DataOps to AIOps: what production-ready AI systems are actually made of, and why the model alone delivers no business value." />
+    <meta name="twitter:image" content="https://dataist.ai/technology/___ChatGPT%20Image%20Apr%205%2C%202026%2C%2012_17_47%20AM.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="/static/css/tailwind.css">
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@1.31.0"></script>
+
+
+    <style>.glass-header{border-bottom-width:1px;border-color:rgba(0,0,0,.05);background-color:hsla(0,0%,100%,.7);--tw-backdrop-blur:blur(40px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.glass-header:is(.dark *){border-color:hsla(0,0%,100%,.1);background-color:rgba(0,0,0,.7)}.glass-panel{border-width:1px;border-color:rgba(0,0,0,.05);--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px rgba(0,0,0,.06);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.glass-panel:is(.dark *){border-color:hsla(0,0%,100%,.1);--tw-bg-opacity:1;background-color:rgb(28 28 30/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px hsla(0,0%,100%,.04);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);--tw-shadow-color:#000;--tw-shadow:var(--tw-shadow-colored)}.list-card{display:flex;align-items:flex-start;gap:1rem;border-radius:1rem;border-width:1px;border-color:rgba(0,0,0,.05);--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));padding:1.25rem;--tw-shadow:0 4px 24px rgba(0,0,0,.06);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.15s}.list-card:is(.dark *){border-color:hsla(0,0%,100%,.1);--tw-bg-opacity:1;background-color:rgb(28 28 30/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px hsla(0,0%,100%,.04);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);--tw-shadow-color:#000;--tw-shadow:var(--tw-shadow-colored)}@media (min-width:768px){.list-card{padding:1.5rem}}body{--tw-bg-opacity:1;background-color:rgb(245 245 247/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1));transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.3s}body:is(.dark *){--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::-moz-selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}:is(.dark *)::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}:is(.dark *)::selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.article-p{margin-bottom:1.5rem;font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif;font-size:1.125rem;line-height:1.75rem;line-height:1.625;color:rgba(0,0,0,.85)}.article-p:is(.dark *){color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-p{margin-bottom:2rem;font-size:21px}}.article-h2{margin-top:4rem;margin-bottom:2rem;font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif;font-size:1.5rem;line-height:2rem;font-weight:700;letter-spacing:-.025em;--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.article-h2:is(.dark *){--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}@media (min-width:768px){.article-h2{font-size:1.875rem;line-height:2.25rem}}@media (min-width:1024px){.article-h2{font-size:2.25rem;line-height:2.5rem}}.reason-num{margin-right:.75rem;font-family:Space Mono,monospace;font-size:1.25rem;line-height:1.75rem;--tw-text-opacity:1;color:rgb(134 134 139/var(--tw-text-opacity,1))}.reason-num:is(.dark *){--tw-text-opacity:1;color:rgb(142 142 147/var(--tw-text-opacity,1))}@media (min-width:768px){.reason-num{font-size:1.5rem;line-height:2rem}}.apple-img{margin-top:3rem;margin-bottom:3rem;width:100%;overflow:hidden;border-radius:1rem;border-width:1px;border-color:rgba(0,0,0,.05);--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px rgba(0,0,0,.06);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.apple-img:is(.dark *){border-color:hsla(0,0%,100%,.1);--tw-shadow:0 4px 24px hsla(0,0%,100%,.04);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);--tw-shadow-color:#000;--tw-shadow:var(--tw-shadow-colored)}@media (min-width:768px){.apple-img{border-radius:1.5rem}}.rel-wrap{position:relative}.rel-rail{display:flex;gap:16px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x proximity;padding:4px 2px 12px;overscroll-behavior-x:contain;scrollbar-width:none;-ms-overflow-style:none}.rel-rail::-webkit-scrollbar{display:none}.rel-rail>a{flex:0 0 auto;width:208px;scroll-snap-align:start;text-decoration:none;display:block;transition:transform .25s cubic-bezier(.2,.8,.2,1)}@media (min-width:640px){.rel-rail>a{width:244px}}.rel-rail>a:hover{transform:translateY(-4px)}.rel-thumb{display:block;position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:18px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.1);box-shadow:0 4px 24px rgba(0,0,0,.05)}.dark .rel-thumb{background:hsla(0,0%,100%,.045);border-color:hsla(0,0%,100%,.14);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.rel-thumb img{width:100%;height:100%;-o-object-fit:cover;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}.rel-rail>a:hover .rel-thumb img{transform:scale(1.05)}.rel-rail time{display:block;margin:12px 0 5px;font-family:Space Mono,monospace;font-size:.625rem;letter-spacing:.08em;color:#86868b}.dark .rel-rail time{color:#8e8e93}.rel-title{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.875rem;font-weight:600;line-height:1.4;letter-spacing:-.01em;color:#000}.dark .rel-title{color:#fff}.rel-fade{position:absolute;top:0;bottom:12px;width:96px;pointer-events:none;opacity:0;z-index:2;transition:opacity .35s ease}.rel-fade-l{left:0;background:linear-gradient(90deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.rel-fade-r{right:0;background:linear-gradient(270deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.dark .rel-fade-l{background:linear-gradient(90deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.dark .rel-fade-r{background:linear-gradient(270deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.rel-arrow{position:absolute;top:calc(50% - 34px);translate:0 -50%;z-index:3;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid rgba(0,0,0,.1);background:#fff;color:#000;box-shadow:0 8px 26px rgba(0,0,0,.14);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,transform .25s ease}.dark .rel-arrow{border-color:hsla(0,0%,100%,.14);background:#1c1c1e;color:#fff}.rel-arrow:hover{transform:scale(1.08)}.rel-arrow-l{left:6px}.rel-arrow-r{right:6px}.rel-wrap[data-left="1"] .rel-fade-l,.rel-wrap[data-right="1"] .rel-fade-r{opacity:1}.rel-wrap[data-left="1"] .rel-arrow-l,.rel-wrap[data-right="1"] .rel-arrow-r{opacity:1;visibility:visible;pointer-events:auto}@media (hover:none){.rel-arrow{display:none}}@media (prefers-reduced-motion:reduce){.rel-arrow,.rel-fade,.rel-rail>a,.rel-thumb img{transition:none}}</style>
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "One Does Not Simply Ship an LLM to Production: how to manage AI systems in a company",
+    "url": "https://dataist.ai/technology/en/one-does-not-simply-ship-an-llm-to-production/",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://dataist.ai/technology/en/one-does-not-simply-ship-an-llm-to-production/"
+    },
+    "inLanguage": "en",
+    "author": {
+      "@type": "Person",
+      "name": "@andre_dataist"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Dataist AI",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://dataist.ai/AIT_logo.png"
+      }
+    },
+    "description": "From DataOps to AIOps: what production-ready AI systems are actually made of, and why the model alone delivers no business value.",
+    "image": "https://dataist.ai/technology/___ChatGPT%20Image%20Apr%205%2C%202026%2C%2012_17_47%20AM.jpg",
+    "datePublished": "2026-04-05"
+  }
+</script>
+    <style>
+        /* --- ряд рубрик в шапке -----------------------------------------
+           Палитра витрин. На странице статьи её не было вовсе: переменные
+           живут в styles.css приложения, которого страница не подключает.
+           Из-за этого и переключатель языка рисовал неактивный язык тем же
+           цветом, что активный — значение var(--text-muted) не определено,
+           объявление отбрасывается, цвет наследуется. */
+        :root {
+            --bg-color: #F5F5F7;
+            --text-main: #1d1d1f;
+            --text-muted: #86868B;
+            --chip-border: rgba(0, 0, 0, 0.08);
+        }
+        .dark {
+            --bg-color: #000000;
+            --text-main: #f5f5f7;
+            --text-muted: #8E8E93;
+            /* 0.19, а не 0.10: на чистом чёрном десятая доля даёт
+               rgb(25,25,25) — ряд читается не кнопками, а россыпью слов. */
+            --chip-border: rgba(255, 255, 255, 0.19);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Края растворяет МАСКА самого ряда, а не градиент поверх него:
+           накладной прямоугольник пришлось бы красить фоном страницы, и на
+           границе тем он выглядел бы грязным мазком.
+
+           Правый край растворён сразу, ещё до пересчёта скриптом: рубрики
+           в шапку обычно не помещаются, и до первого замера честнее
+           показать растворение, чем сухой обрез. Не понадобится — скрипт
+           обнулит. */
+        #category-scroll {
+            --fade-l: 0px;
+            --fade-r: 56px;
+            -webkit-mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+            mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+        }
+
+        /* Заливки у рубрики нет, всю форму держит рамка — значит и рамка
+           задаётся здесь, а не только утилитой Tailwind. */
+        .category-btn {
+            transition: all 0.25s ease;
+            background: transparent;
+            border: 1px solid var(--chip-border);
+        }
+        .category-btn.active,
+        .category-btn.active:hover {
+            background: var(--text-main);
+            color: var(--bg-color);
+            border-color: var(--text-main);
+        }
+
+        /* Выбор рубрики на телефоне — на <details>, то есть без единой
+           строки JavaScript: раскрытие списка не должно зависеть от того,
+           доехала ли чужая библиотека. */
+        #cat-menu > summary { list-style: none; cursor: pointer; }
+        #cat-menu > summary::-webkit-details-marker { display: none; }
+        #cat-menu > summary::marker { content: ""; }
+        #cat-menu[open] > summary .cat-caret { transform: rotate(180deg); }
+        .cat-caret { transition: transform 0.2s ease; }
+        /* Подпись на кнопке телефона не должна раздувать шапку, и её ширина не
+           должна зависеть от длины названия рубрики. У «Исследований» кнопка
+           выходила на 135 пикселей против 106 у «Новостей», и правый край
+           «Telegram» уезжал за экран на 390. Замер поймал; на широком экране
+           этого не видно вовсе.
+
+           3.5rem, а не 4.5: с четырьмя с половиной не хватало ровно четырёх
+           пикселей. Теперь длина названия на ширину шапки не влияет никак. */
+        #cat-menu > summary > span {
+            max-width: 3.5rem; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        #cat-menu .cat-item {
+            display: flex; align-items: center; gap: 0.625rem;
+            padding: 0.625rem 0.75rem; border-radius: 0.75rem;
+            font-family: "Space Mono", monospace; font-size: 11px;
+            font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+            color: var(--text-muted); text-decoration: none;
+        }
+        #cat-menu .cat-item.active {
+            background: var(--text-main); color: var(--bg-color);
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Header -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4 shrink-0">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">
+                    Dataist
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+                    <div id="category-scroll" class="hidden sm:block flex-1 min-w-0 overflow-x-auto no-scrollbar">
+                <nav aria-label="Sections" class="flex flex-nowrap items-center gap-2 w-max mx-auto">
+                    <a href="/?cat=all" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="all" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i><span>All</span></a>
+                    <a href="/?cat=research" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="research" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i><span>Research</span></a>
+                    <a href="/?cat=tech" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="tech" aria-current="page" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white active"><i data-lucide="cpu" class="w-3.5 h-3.5 shrink-0"></i><span>Tech</span></a>
+                    <a href="/?cat=news" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="news" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="newspaper" class="w-3.5 h-3.5 shrink-0"></i><span>News</span></a>
+                </nav>
+            </div>
+<div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <details id="cat-menu" class="sm:hidden relative">
+                <summary class="category-btn inline-flex items-center gap-1.5 px-3 py-2 rounded-full font-mono text-[10px] font-bold tracking-tight uppercase text-black dark:text-white" aria-label="Choose a section">
+                    <i data-lucide="cpu" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span>Tech</span>
+                    <i data-lucide="chevron-down" class="cat-caret w-3.5 h-3.5 shrink-0"></i>
+                </summary>
+                <div class="absolute right-0 top-full mt-2 w-56 p-2 rounded-2xl glass-panel flex flex-col gap-0.5 z-50">
+                    <a href="/?cat=all" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="cat-item"><i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i><span>All</span></a>
+                    <a href="/?cat=research" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="cat-item"><i data-lucide="microscope" class="w-4 h-4 shrink-0"></i><span>Research</span></a>
+                    <a href="/?cat=tech" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" aria-current="page" class="cat-item active"><i data-lucide="cpu" class="w-4 h-4 shrink-0"></i><span>Tech</span></a>
+                    <a href="/?cat=news" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="cat-item"><i data-lucide="newspaper" class="w-4 h-4 shrink-0"></i><span>News</span></a>
+                </div>
+            </details>
+            <nav id="lang-switch" aria-label="Language" class="flex items-center gap-1.5 md:gap-2 font-mono text-[11px] md:text-sm font-bold uppercase tracking-widest select-none"><a href="https://dataist.ai/technology/LLM-prod/" hreflang="ru" lang="ru" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="text-[var(--text-muted)] hover:text-black dark:hover:text-white transition-colors no-underline">RU</a><span aria-hidden="true" class="text-[var(--text-muted)] opacity-40">|</span><span aria-current="true" class="text-black dark:text-white">EN</span></nav>
+                    <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://x.com/andre_dataist" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">X</span>
+            </a>
+        </div>
+    </header>
+    <script>
+        /* Растворение краёв ряда рубрик.
+
+           Отдельным блоком намеренно: в общем блоке внизу страницы первой
+           строкой идёт обращение к библиотеке иконок с unpkg.com, и если
+           она не ответила, весь тот блок не исполняется. Ряду рубрик до
+           этого дела быть не должно. */
+        (function () {
+            var el = document.getElementById('category-scroll');
+            if (!el) return;
+            var row = el.firstElementChild;
+            var RAMP = 48, MAX = 56;          // те же числа, что на витрине
+            var placed = false;
+
+            function update() {
+                var max = el.scrollWidth - el.clientWidth;
+                var w = function (v) {
+                    return max <= 8 ? 0
+                        : Math.round(Math.min(1, Math.max(0, v) / RAMP) * MAX);
+                };
+                el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+
+                if (!placed && max > 8) {
+                    placed = true;
+                    var active = el.querySelector('.category-btn.active');
+                    if (active) {
+                        /* Ровно настолько, чтобы текущая рубрика влезла, и
+                           ни пикселем больше: центрирование утаскивало ряд
+                           до упора и прятало «Все» за краем насовсем.
+                           Запас 64 шире растворения (56), иначе рубрика
+                           встаёт под маску и читается наполовину. */
+                        var pad = 64;
+                        var l = active.offsetLeft - pad;
+                        var r = active.offsetLeft + active.offsetWidth + pad;
+                        if (r > el.scrollLeft + el.clientWidth) el.scrollLeft = r - el.clientWidth;
+                        else if (l < el.scrollLeft) el.scrollLeft = Math.max(0, l);
+                        max = el.scrollWidth - el.clientWidth;
+                        el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                        el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+                    }
+                }
+            }
+
+            el.addEventListener('scroll', update, { passive: true });
+            window.addEventListener('resize', update);
+
+            /* Главное. Ряд меняет ширину ПОСЛЕ первого замера: `<i
+               data-lucide>` превращается в svg, когда догрузится библиотека
+               иконок, и рубрики раздаются. Разовый замер этого не ловит —
+               край резался насухо. Наблюдатель ловит любое изменение
+               размера, чем бы оно ни было вызвано. */
+            if (window.ResizeObserver && row) new ResizeObserver(update).observe(row);
+            window.addEventListener('load', update);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+
+            update();
+        })();
+
+        /* Меню рубрик на телефоне закрывается нажатием мимо него.
+           Раскрытие держится на <details> и работает без скрипта; это лишь
+           удобство — не сработает, меню закроется повторным нажатием. */
+        (function () {
+            var menu = document.getElementById('cat-menu');
+            if (!menu) return;
+            document.addEventListener('click', function (e) {
+                if (menu.open && !menu.contains(e.target)) menu.open = false;
+            });
+        })();
+    </script>
+
+
+    <!-- Main article container -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ARTICLE COVER -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+
+                <!-- Category tag -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="cpu" class="w-3.5 h-3.5"></i>
+                    <span>Technology</span>
+                </div>
+
+                <!-- Headline -->
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.5rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    One Does Not Simply Ship<br>an LLM to Production
+                </h1>
+
+                <!-- Subheadline -->
+                <p class="text-xl md:text-2xl lg:text-3xl text-apple-textMutedLight dark:text-apple-textMutedDark font-medium tracking-tight mt-6 max-w-3xl mx-auto">
+                    how to manage AI systems in a company
+                </p>
+
+                <!-- Main cover image -->
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8">
+                    <img src="https://dataist.ai/technology/___ChatGPT%20Image%20Apr%205%2C%202026%2C%2012_17_47%20AM.jpg"
+                         alt="Managing AI systems"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- ARTICLE CONTENT -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Lede / Intro -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">
+                    From DataOps to AIOps: what production-ready AI systems are actually made of, and why the model alone delivers no business value.
+                </p>
+
+                <p class="article-p fade-in">
+                    These days nobody is surprised by AI agents that do things on their own. In demos it all looks gorgeous, but in production most of those agents don't work. So how do we turn them into something that's ready for production? Let's figure it out.
+                </p>
+
+                <!-- Section 1 -->
+                <h2 class="article-h2 fade-in">Let's not confuse an LLM with an LLM-based system</h2>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/1_.png" alt="LLM vs system" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    A business doesn't need a model as such. A business needs a system that delivers a predictable, controllable, safe and economically justified result inside a real process.
+                </p>
+                <p class="article-p fade-in">
+                    That's why the winner isn't the company with the smartest model, but the company with the most manageable AI system. Systems like that have to be designed, measured, controlled and scaled up step by step.
+                </p>
+                <p class="article-p fade-in">
+                    When companies start adopting AI, they often think it's enough to pick a model, plug in an interface, give it access to the data — and the company will magically become AI-First (it won't).
+                </p>
+                <p class="article-p fade-in">
+                    In production the model is the intelligence core. But the end result is produced by the system around it: context management, integrations with various services, complex orchestration, mechanisms for handing a task off to a human, and the economic effects on top of that.
+                </p>
+                <p class="article-p fade-in">
+                    So deploying an LLM is not yet the same as deploying an AI system that delivers business value.
+                </p>
+
+                <!-- Section 2 -->
+                <h2 class="article-h2 fade-in">Why the gap between demos and production is so wide</h2>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/2_.png" alt="Demo vs production" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    In a demo everything is usually sterile: a clear request, good context, and no conflicting rules.
+                </p>
+                <p class="article-p fade-in">
+                    In production it's the other way around: noisy data, chaotic wording, outdated documents — and a mistake can cost money, cost reputation, or turn into a serious incident.
+                </p>
+                <p class="article-p fade-in">
+                    That's the moment it turns out that what breaks in production is not so much the model as the whole system around it: the wrong document made it into the context, or a tool didn't fire. So what elements does a production-ready AI system in a company actually consist of?
+                </p>
+
+                <!-- Section 3 -->
+                <h2 class="article-h2 fade-in">Where value is actually created</h2>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/3_.png" alt="AI value" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    For a business, value only appears when AI improves business metrics: it closes support cases faster, shortens the development cycle, and raises the quality of decisions.
+                </p>
+                <p class="article-p fade-in">
+                    If the system produced an output that an employee still has to check for tens of minutes and rewrite by hand, there may be no value in such a system at all. Sometimes AI in a process like that only adds one more layer of work.
+                </p>
+                <p class="article-p fade-in">
+                    So we need to understand which metric we are improving. AI mostly makes sense in three cases: when it makes the work faster, cheaper, or better.
+                </p>
+
+                <!-- Section 4 -->
+                <h2 class="article-h2 fade-in">We should start with the use case, not with the model</h2>
+
+                <p class="article-p fade-in">
+                    Most failed AI projects start the same way. First the team discusses how it is going to fine-tune yet another model and bolt RAG onto it. And only afterwards does it work out where to put all of this.
+                </p>
+                <p class="article-p fade-in">
+                    That's the wrong logic. The right path starts with the process. What task is a person or a team actually solving? Where exactly in the process do time, money, quality or speed leak away? Where do you need AI, and where will plain automation do? And how should the human role change after the rollout?
+                </p>
+                <p class="article-p fade-in">
+                    First we formalize the process as an AS-IS diagram. Then we identify the automation points, then we design the TO-BE process with a new role for the human and for AI agents. And only after that do we pick the technology for the specific task.
+                </p>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/5_.png" alt="Use case" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Not every task needs an LLM. If everything is defined by hard rules, that's deterministic logic. If the task is about prediction over large volumes of data, we use classical ML. And if we're working with language and meaning, that's where we bring in an LLM. A mature architecture is almost always hybrid: hard rules, calls to ML models for specific tasks, and an LLM to interpret meaning.
+                </p>
+
+                <!-- Section 5 -->
+                <h2 class="article-h2 fade-in">Four roles for AI in a product</h2>
+
+                <p class="article-p fade-in">
+                    One reason so many AI projects fail is the attempt to design every use case the same way. But AI has at least four different roles.
+                </p>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 my-10">
+                    <div class="list-card fade-in">
+                        <i data-lucide="check" class="w-5 h-5 md:w-6 md:h-6 text-black dark:text-white shrink-0 mt-1"></i>
+                        <span class="font-sans text-base md:text-lg leading-relaxed text-black/85 dark:text-white/85">
+                            <strong>Feature.</strong> This is local automation: summarizing an article, classifying a document or autocompleting text. It's the simplest level, and often the one that pays off best.
+                        </span>
+                    </div>
+                    <div class="list-card fade-in">
+                        <i data-lucide="check" class="w-5 h-5 md:w-6 md:h-6 text-black dark:text-white shrink-0 mt-1"></i>
+                        <span class="font-sans text-base md:text-lg leading-relaxed text-black/85 dark:text-white/85">
+                            <strong>Assistant.</strong> The system answers a request and helps find relevant information. It doesn't act on its own, it works at the human's initiative.
+                        </span>
+                    </div>
+                    <div class="list-card fade-in">
+                        <i data-lucide="check" class="w-5 h-5 md:w-6 md:h-6 text-black dark:text-white shrink-0 mt-1"></i>
+                        <span class="font-sans text-base md:text-lg leading-relaxed text-black/85 dark:text-white/85">
+                            <strong>Copilot.</strong> The AI suggests the next steps, prepares drafts, proposes solutions and helps the human move through the process faster.
+                        </span>
+                    </div>
+                    <div class="list-card fade-in">
+                        <i data-lucide="check" class="w-5 h-5 md:w-6 md:h-6 text-black dark:text-white shrink-0 mt-1"></i>
+                        <span class="font-sans text-base md:text-lg leading-relaxed text-black/85 dark:text-white/85">
+                            <strong>Bounded agent.</strong> The system launches a chain of actions on its own, within set boundaries: it calls tools and passes the result further down the process.
+                        </span>
+                    </div>
+                </div>
+
+                <p class="article-p fade-in">
+                    These are four different classes of product. They have different requirements for UX, control, risk, metrics and architecture. And the higher the autonomy, the greater the responsibility.
+                </p>
+                <p class="article-p fade-in">
+                    At the agent level it is no longer enough for the system to simply generate good answers. You need constraints, confirmations and rollback mechanisms.
+                </p>
+
+                <!-- Section 6 -->
+                <h2 class="article-h2 fade-in">The real problem is context</h2>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/8_.png" alt="The context problem" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Companies often think the model is the main constraint, but in practice even small models can deliver tangible value. The real issue is context being used badly.
+                </p>
+                <p class="article-p fade-in">
+                    Even a powerful LLM will get things wrong if you hand it bad context. And the worst part is that it will be wrong convincingly.
+                </p>
+                <p class="article-p fade-in">
+                    Context inside a company is not just a knowledge base. It is the user's task, the state of the process, the applicable rules and constraints, the history of actions, the available tools and institutional memory: cases, exceptions, templates and accumulated decisions.
+                </p>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/9_.png" alt="Context engineering" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    That is why context engineering today is already a discipline of its own.
+                </p>
+
+                <!-- Section 7 -->
+                <h2 class="article-h2 fade-in">You can't raise autonomy faster than control</h2>
+
+                <p class="article-p fade-in">
+                    This is one of the main laws of agent architecture.
+                </p>
+                <p class="article-p fade-in">
+                    As long as AI works as a feature, an assistant or a copilot, the risk is limited. It helps, but the human still makes the final call.
+                </p>
+                <p class="article-p fade-in">
+                    The moment the system starts acting on its own, the cost of a mistake changes too. What comes out can be a bad decision, and that carries legal, financial and reputational risks for the company.
+                </p>
+                <p class="article-p fade-in font-bold text-black dark:text-white">
+                    That's why autonomy should only grow together with control.
+                </p>
+                <p class="article-p fade-in">
+                    The more an agent can do, the greater its degree of freedom. But we shouldn't be building free-roaming agents: our agents are there to help the business, which means we need more constraints, not fewer.
+                </p>
+                <p class="article-p fade-in">
+                    If autonomy grows faster than oversight, sooner or later you are guaranteed to run into an incident.
+                </p>
+
+                <div class="glass-panel rounded-2xl p-5 md:p-6 my-8 fade-in">
+                    <div class="flex gap-4">
+                        <i data-lucide="alert-triangle" class="w-6 h-6 text-black dark:text-white shrink-0 mt-1"></i>
+                        <p class="font-sans text-base md:text-lg leading-relaxed text-black/85 dark:text-white/85 m-0">
+                            That is how one of our agents refactored code that did not need refactoring, after which the business logic no longer worked the way it should. We caught the incident and fixed it, and the agent got <s class="opacity-50">a slap on the wrist</s> a stricter access policy for the repository.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Section 8 -->
+                <h2 class="article-h2 fade-in">Without evals there is no quality management</h2>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/10_.png" alt="Quality management (evals)" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    LLM systems are dangerous because they can quietly degrade.
+                </p>
+                <p class="article-p fade-in">
+                    From the outside everything may look fine: the system responds, the interface is alive, users are getting answers. But inside, quality has already dropped.
+                </p>
+                <p class="article-p fade-in">
+                    You change a prompt and break a neighboring use case. You update an API and the agent gets worse at working with tools. You rebuild the index in the vector database and now RAG retrieves irrelevant information. And none of this has to be visible to you if there is no evaluation system — evals.
+                </p>
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 my-8">
+                    Evals are a quality management tool.
+                </p>
+                <p class="article-p fade-in">
+                    You need two approaches. The first is offline: golden datasets, reference and edge use cases. The second is online: real requests, sampled reviews, tool-call failures and system degradation already in production.
+                </p>
+
+                <!-- Section 9 -->
+                <h2 class="article-h2 fade-in">DataOps — preparing the context</h2>
+
+                <p class="article-p fade-in">
+                    When people talk about LLMs in production, the attention usually goes to the model, and data is treated as something secondary. In practice, though, nothing good ever comes of it without good DataOps.
+                </p>
+                <p class="article-p fade-in">
+                    A system runs on specific context, and that context has to be sourced from somewhere, updated, cleaned and kept in working order. Obviously we won't walk through the entire DataOps cycle here: it is far broader and also covers governance, labeling, data warehouse architecture and much more. But if we are talking about the foundation for LLM systems, there are several mandatory layers.
+                </p>
+
+                <!-- DataOps Subsections as Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6 my-10">
+                    <div class="list-card fade-in">
+                        <i data-lucide="check" class="w-5 h-5 md:w-6 md:h-6 text-black dark:text-white shrink-0 mt-1"></i>
+                        <span class="font-sans text-base md:text-lg leading-relaxed text-black/85 dark:text-white/85">
+                            <strong>Data sources.</strong> CRM, email, internal documents, knowledge bases — all of it has to be synchronized. Without access to context there is no point in talking about an AI system at all.
+                        </span>
+                    </div>
+                    <div class="list-card fade-in">
+                        <i data-lucide="check" class="w-5 h-5 md:w-6 md:h-6 text-black dark:text-white shrink-0 mt-1"></i>
+                        <span class="font-sans text-base md:text-lg leading-relaxed text-black/85 dark:text-white/85">
+                            <strong>Cleaning and normalization.</strong> Real corporate data is notorious for its duplicates, junk and mismatched formats. If you simply "feed" all of it into a vector database, you will not get a smart system.
+                        </span>
+                    </div>
+                    <div class="list-card fade-in">
+                        <i data-lucide="check" class="w-5 h-5 md:w-6 md:h-6 text-black dark:text-white shrink-0 mt-1"></i>
+                        <span class="font-sans text-base md:text-lg leading-relaxed text-black/85 dark:text-white/85">
+                            <strong>Embeddings and indexes.</strong> This is already a question of how data turns into a mechanism for retrieval and for feeding context. Indexes have to be rebuilt, and search quality has to be checked constantly.
+                        </span>
+                    </div>
+                    <div class="list-card fade-in">
+                        <i data-lucide="check" class="w-5 h-5 md:w-6 md:h-6 text-black dark:text-white shrink-0 mt-1"></i>
+                        <span class="font-sans text-base md:text-lg leading-relaxed text-black/85 dark:text-white/85">
+                            <strong>Freshness and availability.</strong> Loading the data once is not enough: the context has to be kept up to date. If the system is running on yesterday's information, today it will make the wrong decisions.
+                        </span>
+                    </div>
+                    <div class="list-card fade-in">
+                        <i data-lucide="check" class="w-5 h-5 md:w-6 md:h-6 text-black dark:text-white shrink-0 mt-1"></i>
+                        <span class="font-sans text-base md:text-lg leading-relaxed text-black/85 dark:text-white/85">
+                            <strong>Data quality.</strong> A very simple principle applies here: garbage in — garbage out. If a system gets bad data on the way in, there will be no quality result on the way out.
+                        </span>
+                    </div>
+                    <div class="list-card fade-in">
+                        <i data-lucide="check" class="w-5 h-5 md:w-6 md:h-6 text-black dark:text-white shrink-0 mt-1"></i>
+                        <span class="font-sans text-base md:text-lg leading-relaxed text-black/85 dark:text-white/85">
+                            <strong>Security and control.</strong> Context has to be not only complete and up to date, but also properly bounded. An AI system should not get access to everything at once; access has to be limited according to the role-based access model.
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Section 10 -->
+                <h2 class="article-h2 fade-in">MLOps — the model lifecycle</h2>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/12_.png" alt="MLOps" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    If DataOps is responsible for data and context, MLOps is about the model lifecycle itself. Again, not in full in this article, but in the context of LLMs.
+                </p>
+                <p class="article-p fade-in">
+                    There is training the model or fine-tuning it on new data, adapting the model to a domain or to a specific task. There is version control: which weights are in use, which configuration is in production right now, what exactly changed between releases. There is deployment and, of course, monitoring: how the model behaves after a release and whether quality has dropped on the key scenarios because of data drift.
+                </p>
+                <p class="article-p fade-in">
+                    In classical ML, MLOps is the center of the whole system. But today even a perfect model is no guarantee that the entire AI system works well. That said, MLOps stays critical wherever you have your own fine-tuned models built for your tasks.
+                </p>
+                <p class="article-p fade-in">
+                    In LLM systems the model, too, has to exist with versioning, tests, a clear update cycle and change control.
+                </p>
+
+                <!-- Section 11 -->
+                <h2 class="article-h2 fade-in">AIOps — managing the entire AI system in production</h2>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/13_.png" alt="AIOps" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    AIOps, on the other hand, is the next level of maturity. It is managing the entire AI system in production.
+                </p>
+                <p class="article-p fade-in">
+                    Why do we need a separate term? Because we have to control not just the model, but also quality through evals, the cost of running the system, latency, tools, orchestration, context, RAG, security, agent behavior, fallbacks and everything that happens around inference, including how the system works with users.
+                </p>
+                <p class="article-p fade-in">
+                    In other words, AIOps is about managing the system’s behavior, not only its compute core.
+                </p>
+                <p class="article-p fade-in">
+                    For example, the model may be stable, but retrieval has degraded — and quality is already falling. Or the cost went up not because the model got more expensive, but because the context got longer and the orchestrator started making extra calls. And on top of that, users complain that the chatbot is useless. None of this is only about MLOps anymore.
+                </p>
+                <p class="article-p fade-in">
+                    So in AIOps several things matter: quality, cost, latency, tool reliability, context quality, security and observability.
+                </p>
+                <p class="article-p fade-in font-bold text-black dark:text-white">
+                    In a mature company, AI in production is an operational environment where you need to see and control the whole process of solving a task: from the input and the context through to the action, the result, the cost and the risk.
+                </p>
+
+                <!-- Section 12 -->
+                <h2 class="article-h2 fade-in">Releasing an LLM system is a controlled experiment</h2>
+
+                <p class="article-p fade-in">
+                    Shipping an LLM to production like an ordinary product feature is a bad idea.
+                </p>
+                <p class="article-p fade-in">
+                    Even a well-tested system runs into things in the real environment that were not in the tests: strange phrasings, new types of cases, unexpected chains of actions and the human factor.
+                </p>
+                <p class="article-p fade-in">
+                    That is why launching such a system has to happen in stages. First — shadow testing on real data with no impact on the user. Then — internal use by the team on itself. Next you can simulate the behavior of a real user. After that — a launch for a small share of real users. Then — gradually widening the reach. And only at the very end — full rollout for everyone.
+                </p>
+                <p class="article-p fade-in">
+                    But something else matters even more: a release has to have rollback criteria defined in advance. If some metric drops, tool-call failures become more frequent or quality falls, the release has to be halted automatically.
+                </p>
+
+                <!-- Section 13 (Table) -->
+                <h2 class="article-h2 fade-in">How to measure AI’s work properly</h2>
+
+                <p class="article-p fade-in">
+                    The business needs to measure completed work.
+                </p>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/6_.png" alt="Measuring AI" class="w-full h-auto">
+                </div>
+
+                <!-- Metrics table -->
+                <div class="overflow-x-auto fade-in my-10 rounded-2xl glass-panel">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-black/10 dark:border-white/10 text-black dark:text-white">
+                                <th class="p-4 font-bold w-1/3">Metric</th>
+                                <th class="p-4 font-bold">What it shows</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-black/5 dark:divide-white/10 text-black/70 dark:text-white/70 font-sans">
+                            <tr>
+                                <td class="p-4 font-semibold text-black dark:text-white">Success Rate</td>
+                                <td class="p-4">The share of tasks actually resolved</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-black dark:text-white">Deflection Rate</td>
+                                <td class="p-4">How much work the system took off a human</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-black dark:text-white">Handoff Rate</td>
+                                <td class="p-4">How often a handoff to a human was needed</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-black dark:text-white">Correction Rate</td>
+                                <td class="p-4">How often the result had to be corrected</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-black dark:text-white">Time Saved</td>
+                                <td class="p-4">How much time was actually saved</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-black dark:text-white">Adoption</td>
+                                <td class="p-4">Whether the system is actually used</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-black dark:text-white">Task Completion Time</td>
+                                <td class="p-4">How long the path from input to result takes</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-black dark:text-white">Cost per Resolved Task</td>
+                                <td class="p-4">What one usefully completed task costs</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <p class="article-p fade-in">
+                    But even that is not enough. AI metrics have to climb higher — to the business level: time to market for products, margin or the cost of operations.
+                </p>
+
+                <!-- Section 14 -->
+                <h2 class="article-h2 fade-in">AI economics: count units, not tokens</h2>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/14_.png" alt="AI economics" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    It is naive to assume that AI economics equals the API bill.
+                </p>
+                <p class="article-p fade-in">
+                    The real cost includes not just tokens, but the work of the entire system: preparing and storing data, RAG, request orchestration, tool calls and escalations to a human.
+                </p>
+                <p class="article-p fade-in">
+                    So the question that actually matters is how much a usefully completed task costs. In a mature company, AI economics is calculated per unit of work or per unit of output.
+                </p>
+
+                <!-- Section 15 -->
+                <h2 class="article-h2 fade-in">UX in AI is trust design</h2>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/15_.png" alt="UX and trust design" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    In ordinary products, UX usually means ease of use. In AI systems, UX is also about managing trust.
+                </p>
+                <p class="article-p fade-in">
+                    The problem is that a model can sound confident even when it is wrong. People naturally tend to mistake a confident tone for competence. Hence the two extremes: blind trust or outright rejection.
+                </p>
+                <p class="article-p fade-in font-bold text-black dark:text-white">
+                    Good AI UX calibrates trust.
+                </p>
+                <p class="article-p fade-in">
+                    The user should understand what the answer is based on, which data was used, which rules were applied, where the system is confident and where there is uncertainty.
+                </p>
+                <p class="article-p fade-in">
+                    What you need to show is not the "model's thinking", but the basis for the decision: fact-checking, what exactly was decided, which documents that decision was made on and which constraints were in force.
+                </p>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/16_.png" alt="Trust interface" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Escalation should also be part of the UX, not a sign that the system is doing a bad job. A good system knows when to stop and hand a human an already assembled, structured case.
+                </p>
+
+                <!-- KYC example block -->
+                <div class="glass-panel rounded-2xl p-5 md:p-6 my-8 fade-in">
+                    <div class="flex gap-4">
+                        <i data-lucide="info" class="w-6 h-6 text-black dark:text-white shrink-0 mt-1"></i>
+                        <p class="font-sans text-base md:text-lg leading-relaxed text-black/85 dark:text-white/85 m-0">
+                            For example, in KYC (Know Your Customer, the customer verification procedure) lower-risk clients get their bank accounts opened automatically, while high-risk ones are sent for human confirmation with a dossier already collected from across the internet.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/17_.png" alt="Escalation as part of UX" class="w-full h-auto">
+                </div>
+
+                <!-- Section 16 -->
+                <h2 class="article-h2 fade-in">Governance has to be executable</h2>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/18_.png" alt="Executable governance" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    Many companies make the same mistake: they write policies and regulations and assume that governance is now in place.
+                </p>
+                <p class="article-p fade-in">
+                    But it isn't. Governance that cannot be enforced technically is useless: it works at the level of good intentions, but it never works in reality.
+                </p>
+                <p class="article-p fade-in">
+                    If an agent must not move money, that has to be impossible at the level of permissions. If personal data must not be sent to the model, that has to be cut off at the level of guardrails. And if incidents have to be investigated, then every step has to be logged.
+                </p>
+                <p class="article-p fade-in font-bold text-black dark:text-white">
+                    Real governance is policy enforced by code.
+                </p>
+                <p class="article-p fade-in">
+                    And the more an agent can do, the more this principle matters. Every new skill an agent gains is not only more value, but also more potential risk.
+                </p>
+
+                <!-- Section 17 -->
+                <h2 class="article-h2 fade-in">Security starts with limiting the damage</h2>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/19_.png" alt="AI system security" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    As soon as a system gets access to documents, external services, APIs and data, a very practical operational risk appears. You get prompt injections through documents and external sources, context leakage or tool errors.
+                </p>
+                <p class="article-p fade-in">
+                    So the basic security principle for agentic systems is this: give agents least-privilege access. Only the data they need and only the tools they need, for a defined period of time. Everything else is closed by default.
+                </p>
+                <p class="article-p fade-in">
+                    Security has to be built so that even when something goes wrong, the damage stays limited and controllable.
+                </p>
+
+                <!-- Section 18 -->
+                <h2 class="article-h2 fade-in">What companies can actually do with AI today</h2>
+
+                <p class="article-p fade-in">
+                    Most companies will not win on the strength of their own large model: they don't have the resources to train one. For them, the core intellectual asset sits in context, orchestration, process logic, integrations, evals, governance and applied economics.
+                </p>
+                <p class="article-p fade-in font-bold text-black dark:text-white">
+                    That is where long-term advantage is created.
+                </p>
+                <p class="article-p fade-in">
+                    Not in access to the model itself, but in the ability to embed it into the company so that it works better, cheaper, more reliably and more scalably than it does for everyone else.
+                </p>
+
+                <!-- Section 19 -->
+                <h2 class="article-h2 fade-in">AI transformation is a change of operating model</h2>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/20_.png" alt="Changing the operating model" class="w-full h-auto">
+                </div>
+
+                <p class="article-p fade-in">
+                    The main mistake companies make is to add AI to an old process: to bolt new intelligence on top of old logic, with people who aren't ready for change and no mature infrastructure in place.
+                </p>
+                <p class="article-p fade-in">
+                    A real AI transformation starts with questions: if an AI system can now do part of the cognitive and operational work, how should the process itself, the role of the human and the structure of accountability in the company change? How do we scale the company without growing headcount, leaving people only the "human" work and handing everything else to AI?
+                </p>
+                <p class="article-p fade-in">
+                    In the AI-First paradigm, a person stops being the one who does the work. Their role shifts one level up: the human is now a system operator or a manager of AI agents.
+                </p>
+                <p class="article-p fade-in">
+                    It isn't only the speed that changes, but the very substance of the work. People don't like uncertainty and are afraid AI will replace them. What actually changes, though, is the way they work, which is why reskilling has to start early, right after the TO-BE process has been designed.
+                </p>
+                <p class="article-p fade-in">
+                    First the company's org structure changes to fit the new roles. Then the head of each function runs team meetings on AI adoption, where every employee shows their progress: what was done, what worked, what didn't and what conclusions were drawn. Best practices, working cases and finished agents are then taken company-wide as demo sessions and internal webinars.
+                </p>
+                <p class="article-p fade-in">
+                    In parallel, a separate series of training webinars is launched on how to build agents: from framing the task and designing the agent's role to testing, rollout and measuring the effect. Every practice developed along the way is captured in the corporate learning platform and becomes part of the onboarding standard, so that every new employee understands the company's new ways of working from day one.
+                </p>
+
+                <!-- Section 20 -->
+                <h2 class="article-h2 fade-in">We need to build a scalable AI platform</h2>
+
+                <p class="article-p fade-in">
+                    Trying to roll out AI everywhere at once usually ends the same way: local experiments, one-off demos and pilots, a different stack every time, no reusable patterns and no shared context, not enough control over multi-agent systems and no overall economics.
+                </p>
+                <p class="article-p fade-in">
+                    The right path looks like this:
+                </p>
+
+                <div class="apple-img fade-in">
+                    <img src="https://dataist.ai/technology/21_.png" alt="A scalable AI platform" class="w-full h-auto">
+                </div>
+
+                <div class="space-y-6 fade-in mb-8">
+                    <div class="flex flex-col md:flex-row gap-4 md:items-start border-l-2 border-black dark:border-white pl-4 md:pl-6">
+                        <h4 class="font-sans font-bold text-lg text-black dark:text-white w-48 shrink-0">Pilots first</h4>
+                        <p class="text-black/70 dark:text-white/70 text-base md:text-lg m-0">One, two, three use cases where the pain is acute, the process is mature and well understood, and the effect can be measured quickly.</p>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-4 md:items-start border-l-2 border-black dark:border-white pl-4 md:pl-6">
+                        <h4 class="font-sans font-bold text-lg text-black dark:text-white w-48 shrink-0">Then the platform</h4>
+                        <p class="text-black/70 dark:text-white/70 text-base md:text-lg m-0">A single context layer, secure integrations, evals, governance, monitoring, quality and cost control.</p>
+                    </div>
+                    <div class="flex flex-col md:flex-row gap-4 md:items-start border-l-2 border-black dark:border-white pl-4 md:pl-6">
+                        <h4 class="font-sans font-bold text-lg text-black dark:text-white w-48 shrink-0">And only then — scaling</h4>
+                        <p class="text-black/70 dark:text-white/70 text-base md:text-lg m-0">Expansion across products and teams.</p>
+                    </div>
+                </div>
+
+                <p class="article-p fade-in font-bold text-xl md:text-2xl text-center text-black dark:text-white">
+                    Value first. Then the platform. Then scale.
+                </p>
+
+                <!-- Section 21 -->
+                <h2 class="article-h2 fade-in">Why AI projects fail</h2>
+
+                <p class="article-p fade-in">
+                    <a href="https://fortune.com/2025/08/18/mit-report-95-percent-generative-ai-pilots-at-companies-failing-cfo/" target="_blank" rel="noopener" class="font-bold underline decoration-black/30 dark:decoration-white/30 underline-offset-4 hover:decoration-black dark:hover:decoration-white transition-colors">95% of AI projects fail</a> not because of the technology, but for very down-to-earth reasons.
+                </p>
+                <p class="article-p fade-in">
+                    They were built for a demo, not for production. They had no outcome owner. They had no evals. The context turned out to be bad. Integration into the process was weak, or the economics didn't add up. Autonomy outran control, and governance stayed in a PDF. And on top of that, nobody ever decided how exactly to measure success.
+                </p>
+                <p class="article-p fade-in">
+                    But almost all of these reasons are predictable. Which means they can be managed.
+                </p>
+
+                <!-- Section 22 (CONCLUSIONS) -->
+                <div class="glass-panel rounded-[2rem] md:rounded-[3rem] p-8 md:p-12 lg:p-14 my-12 fade-in">
+                    <h2 class="article-h2 fade-in mt-0 mb-8 text-center uppercase">Conclusions</h2>
+
+                    <p class="article-p font-medium text-black dark:text-white">
+                        An LLM system in a company is not just a model.
+                    </p>
+                    <p class="article-p text-black/85 dark:text-white/85">
+                        It is a framework made of use cases, context, architecture, integrations, evals, monitoring, governance, economics and change management.
+                    </p>
+                    <p class="article-p text-black/85 dark:text-white/85">
+                        If even one of them is a weak link, then, according to the theory of constraints, the resilience of the whole system is determined by its weakest element.
+                    </p>
+                    <p class="article-p text-black/85 dark:text-white/85">
+                        An LLM on its own does not change a business. A business is changed only by an AI system that is built into processes, bounded by rules, measured with metrics and managed as part of the business model.
+                    </p>
+                    <p class="article-p mt-6 text-xl md:text-2xl leading-relaxed text-center font-bold text-black dark:text-white mb-0">
+                        That is why companies today should spend less time thinking about which model to choose and focus instead on building an AI system that can be trusted with real work.
+                    </p>
+                </div>
+
+                                <!-- ======================================================
+                     The "Read next" feed. Before it, the section page had
+                     exactly two internal links — to the home page and to
+                     itself — and not a single one to a neighboring piece. A
+                     crawler that finished the article had to go back to the
+                     index to reach the next one; the reader had nowhere to go.
+
+                     The markup holds twelve cards: first the neighbors in the
+                     section, then the recent paper breakdowns. The crawler
+                     sees them on its first pass, and so do readers without JS
+                     and Instant View. The script below extends the feed to the
+                     full list of breakdowns — that part is for the reader only.
+                     ====================================================== -->
+                <section class="mt-16 md:mt-20 mb-16 md:mb-24 fade-in" aria-labelledby="rel-heading">
+                    <div class="flex items-end justify-between gap-5 mb-6 md:mb-8">
+                        <h2 id="rel-heading"
+                            class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight m-0">
+                            Related reading
+                        </h2>
+                        <a href="https://dataist.ai/category/tech"
+                           class="shrink-0 inline-flex items-center gap-1.5 no-underline whitespace-nowrap text-[0.8125rem] font-semibold text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors">
+                            All technology
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                    <!-- Отрицательные поля — чтобы лента доходила до края
+                         экрана и обрез последней карточки читался как
+                         «листай», а не как ошибка вёрстки. Ровно 16
+                         пикселей: столько же колонка отступает от края на
+                         телефоне (px-4 у main), и на пиксель больше — это
+                         уже горизонтальная прокрутка всей страницы.
+                         scroll-padding обязателен, иначе прилипание съедает
+                         отступ и первая карточка липнет к краю. -->
+                    <div class="rel-wrap -mx-4 md:mx-0" data-left="0" data-right="1">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l" aria-label="Previous articles">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r" aria-label="Next articles">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0" tabindex="0" role="list">
+                            <a href="https://dataist.ai/technology/en/a-new-era-of-sport-how-ai-is-changing-the-limits-of-human-performance/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/technology/human_ai_sports/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-09-02">Sep 2, 2026</time>
+                                <span class="rel-title">A New Era of Sport: How AI Is Changing the Limits of Human Performance</span>
+                            </a>
+                            <a href="https://dataist.ai/technology/en/how-ai-agents-are-starting-to-train-robots-on-their-own/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/technology/agentic_robots/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-17">Aug 17, 2026</time>
+                                <span class="rel-title">How AI agents are starting to train robots on their own</span>
+                            </a>
+                            <a href="https://dataist.ai/technology/en/ai-product-discovery-how-to-automate-product-idea-generation/" role="listitem">
+                                <span class="rel-thumb"><img src="https://i.ibb.co/F42BpYnG/Chat-GPT-Image-Jul-18-2026-11-06-09-AM.png" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-07-17">Jul 17, 2026</time>
+                                <span class="rel-title">AI Product Discovery: How to Automate Product Idea Generation</span>
+                            </a>
+                        </div>
+                    </div>
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка
+                                // мигает в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+                            function step(dir) {
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            rail.addEventListener('keydown', function (e) {
+                                if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+                                if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+                            });
+                            sync();
+
+                            function ru(iso) {
+                                var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+                                return m ? m[3] + '.' + m[2] + '.' + m[1] : '';
+                            }
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них
+                            // в страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                a.setAttribute('role', 'listitem');
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую
+                                    // подложку, а не значок сломанной
+                                    // картинки посреди ленты.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = ru(item.date); }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            // Лента не устаревает вместе со страницей: список
+                            // раздела берётся из его же индекса. Раздел
+                            // маленький, поэтому в разметке лежит он весь —
+                            // запрос только подхватывает новые статьи.
+                            var SOURCES = ['/technology/index.json',
+                                           'https://dataist.ai/technology/index.json'];
+                            function path(href) {
+                                try { return new URL(href, location.href).pathname; }
+                                catch (e) { return ''; }
+                            }
+                            function load(i) {
+                                if (i >= SOURCES.length) return;
+                                fetch(SOURCES[i], { cache: 'no-cache' })
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) throw 0;
+                                        var rows = list.filter(function (x) {
+                                            return x && x.url && x.title && path(x.url) !== location.pathname;
+                                        }).sort(function (a, b) {
+                                            return String(b.published_at || b.date || '')
+                                                .localeCompare(String(a.published_at || a.date || ''));
+                                        });
+                                        if (!rows.length) throw 0;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+                                        rail.scrollLeft = 0;
+                                        sync();
+                                    })
+                                    .catch(function () { load(i + 1); });
+                            }
+                            load(0);
+                        })();
+                    </script>
+                <nav data-hub-nav aria-label="Topics and references"
+                     class="mt-8 md:mt-10 font-sans text-sm text-black/50 dark:text-white/50">
+                    Topics: <a href="https://dataist.ai/topic/business" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">AI in business</a> · <a href="https://dataist.ai/papers" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Covered papers</a> · <a href="https://dataist.ai/glossary" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Glossary</a>
+                </nav>
+                </section>
+
+                <!-- Premium CTA card -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in group">
+
+                    <!-- Декоративные элементы -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="zap" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                Follow Dataist
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                I write about how AI systems are built on the inside and how to get them all the way to production. Subscribe so you don't miss what comes next.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA (Кнопка) -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Technology, thoughts and AI in practice<br>— on X.
+                            </p>
+
+                            <a href="https://x.com/andre_dataist" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">Follow on X</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Progress bar at the bottom (black and white) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Initialization and scripts -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            // Перерисовка иконок при смене темы, если требуется
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.05
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
