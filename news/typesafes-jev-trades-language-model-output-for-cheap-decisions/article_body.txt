@@ -1,0 +1,87 @@
+## What shipped
+
+Jev takes unstructured input and returns a constrained decision. Its three supported modes are:
+
+- <strong>Choice</strong> — selects an answer from predefined options.
+- <strong>Score</strong> — evaluates information against a numerical scale or rubric.
+- <strong>Noul</strong> — TypeSafe’s name for estimating the probability that a claim is true.
+
+Several questions can be evaluated in parallel from the same input. TypeSafe calls Jev a “System One” model, referring to Daniel Kahneman’s distinction between fast intuitive thinking and slower deliberation. The company says it uses a new architecture and a reinforcement-learning method called Reinforcement Learning for Calibrated Decisions, or RLCD, intended to represent uncertainty more accurately in probabilistic judgments.
+
+The practical difference is easiest to see in customer support. A customer says a subscription was charged twice and asks for a refund. The application may only need to route the message to one of three destinations:
+
+- billing;
+- technical support;
+- sales.
+
+A conventional language model reads the complaint, chooses a department and generates an explanation or another text-based result. Jev receives the message and the allowed categories, then returns the selected category with probabilities.
+
+[INFO:compare] Conventional language model :: explains decision in text | Jev :: returns structured choice
+
+The result is easier for existing software to consume. Developers do not need to request an explanation, extract the decision from it and discard the rest. For 100,000 messages, that difference is less about conversational quality than about avoiding a repeated generation-and-parsing step.
+
+That is the design bet behind Jev: if an application needs a decision, generating a conversation may be unnecessary overhead.
+
+## The price of a narrower model
+
+TypeSafe lists a response time of 70 to 500 milliseconds and charges 0.042 dollars per million input tokens. Output tokens are free. At that rate, one billion input tokens would cost 42 dollars, excluding other infrastructure and operating expenses.
+
+[INFO:facts] 70–500 ms :: response time | 0.042 dollars :: million input tokens | 42 dollars :: billion input tokens
+
+For comparison, the same input volume would cost approximately:
+
+- 4,000 dollars with Anthropic Claude Opus 5.5 or OpenAI GPT-5.6 Sol;
+- 5,000 dollars with Claude Opus 5;
+- 10,000 dollars with Claude Fable 5.1 or GPT-6 Astra.
+
+Those figures exclude output tokens, which add costs for the other models.
+
+TypeSafe says internal workflow evaluations made Jev about 194 times faster and 445 times cheaper than selected advanced language models. The company acknowledges that this represents the upper end of the expected advantage.
+
+Early outside tests point to a tradeoff rather than a free improvement. Explainx.ai’s independent testing recorded aggregate accuracy of 67.8% for Jev, compared with 74.1% for the best model in TypeSafe’s comparison. An engineer at Vercel, Pranit Sharma, reported that replacing a conventional language model with Jev for command-safety classification produced responses 5–18 times faster and improved accuracy in his test.
+
+At Bryo AI, CTO Nikhil Mudholkar tested Jev on business-email classification. Gemini was slightly more accurate in that experiment, but cost approximately 10–20 times more than Jev.
+
+My read is that the headline price advantage matters only when “good enough” is genuinely good enough. A cheaper classifier can make economic sense for routing low-priority customer requests. The same error margin becomes harder to accept when the output approves a financial transaction or a destructive software command.
+
+## Where the claims get tested
+
+LangChain used Jev to evaluate AI-agent behavior rather than replace an agent’s main model. In an experiment on September 20, LangChain compared Jev with three conventional language models using five saved responses from a weather agent. Each evaluator repeatedly analyzed the same responses to compare accuracy, consistency, speed and cost.
+
+Jev matched a human reviewer’s binary judgments in all 500 repeated decisions. Its average time was 0.44 seconds, and each evaluation cost 0.00035 dollars. Its continuous quality scores fluctuated substantially less than those of the competing models in that test.
+
+The experiment covered one agent and a limited set of tasks. Stable decisions are not necessarily correct ones.
+
+That distinction also weakens TypeSafe’s claim that Jev cannot hallucinate. The model cannot return an answer outside its predefined structure: if the application offers five categories, Jev cannot invent a sixth. But it can still select the wrong category or assign a high probability to a wrong answer. The guarantee concerns the shape of the output, not the truth of the decision.
+
+A VentureBeat investigation on September 21 described an experiment involving a potentially destructive computer command. Jev initially assigned a 0.76 probability to blocking the command. After an engineer added a fabricated authorization message to the input, the probability fell to 0.48.
+
+The experiment covered one command and cannot establish how often similar attacks succeed. It does establish the more important boundary: harmful information entering the application can influence Jev’s judgment. A security system that approves an unauthorized command does not become reliable merely because it reaches its decision in 70 milliseconds.
+
+According to TechCrunch, TypeSafe struggled with API demand for a period after launch. For companies making thousands of automated decisions per hour, early tests suggest Jev could reduce the cost of routine AI work without requiring a software rebuild. Dependence on an external model for those decisions creates a separate operational risk.
+
+## The real bet is composition
+
+Structured output predates Jev. In August 2024, OpenAI introduced Structured Outputs, which lets developers require responses to conform to predefined JSON schemas. Jev approaches the same need through a different model design: typed decisions and parallel evaluation take priority over text generation.
+
+The model is also not a general replacement for a language model. Jev:
+
+- will not write a response to a customer;
+- will not create a new category when the existing options do not fit;
+- will not independently execute a complex business process.
+
+Developers still have to provide relevant information, define available actions and build systems that interpret the result.
+
+Diogo Almeida described the goal as a function call with advanced intelligence: an unstructured state goes in, and typed probabilistic decisions come out. In a conversation with TechCrunch, he described the industry’s conversational AI as having “lightning in a bottle” but lacking practical utility for software automation.
+
+That frustration explains TypeSafe’s positioning. Many enterprise workflows do not need one model that writes, reasons and talks at every stage. They need a set of narrower decisions, with a more capable language model brought in only when the cheaper component cannot resolve the case.
+
+Developers could use Jev to:
+
+- evaluate actions proposed by an agent;
+- decide when a more powerful language model is needed;
+- check completed tasks before an automated process continues.
+
+This is more interesting than simply swapping an expensive model for a cheaper one. It suggests assigning different forms of machine intelligence to different parts of a workflow. But the architecture only works if the system knows when its own narrow judgment is unsafe.
+
+The missing number in the launch is the cost of a wrong decision. TypeSafe has shown attractive latency and pricing, while independent tests show a measurable accuracy gap and a security experiment shows that input manipulation can change the result. Jev may become a durable component of corporate software, but its value will be determined less by the 445-times cost claim than by whether production systems can contain the errors that make the claim possible.
