@@ -1,0 +1,198 @@
+## What Xiaomi shipped
+
+MiMo-V2.6-Pro is available for free download through Hugging Face. Developers and companies can modify it, fine-tune it, run it on their own or rented hardware, and deploy it in production without paying Xiaomi.
+
+The model supports:
+
+- A 1 million-token context window;
+- Text, image, audio and video input;
+- Around 134 tokens per second;
+- $0.435 per million uncached input tokens;
+- $0.87 per million output tokens;
+- $0.13 per task on the Artificial Analysis intelligence index.
+
+The API may be less practical for companies restricted from using servers in China. The open weights avoid that limitation, but Pro is still a large model to operate: it has 1.02 trillion total parameters, with 42 billion active during inference.
+
+MiMo-V2.6-Flash targets high-volume workloads. It has 310 billion total parameters and 15 billion active during inference, while preserving the 1 million-token context window and multimodal input.
+
+Its API costs:
+
+- $0.14 per million uncached input tokens;
+- $0.28 per million output tokens;
+- $0.0028 per million cached input tokens.
+
+Pro costs $0.0036 per million cached input tokens. Both models can produce up to 128,000 output tokens.
+
+Xiaomi is also releasing MiMo-V2.6-Pro-UltraSpeed, which it says can generate responses up to 20 times faster than the standard Pro.
+
+Flash is the more commercially interesting model. On several agent benchmarks, it remains close to Pro:
+
+- DeepSWE v1.1: 67.9 versus 71.9;
+- AutomationBench: 52.3 versus 53.1;
+- MiMo Code Bench: 61.2 versus 63.2;
+- Terminal Bench 2.1: 87.6 versus 89.9;
+- JobBench: 61.2 versus 62.0;
+- MiMo Visual Coding: 71.5 versus 72.3.
+
+Flash even scores higher on CyberGym, at 95.1 versus Pro’s 94.0. Pro remains ahead on ExploitGym, ExploitBench and SEC Bench Pro.
+
+## Xiaomi is training work, not just answers
+
+V2.6 follows a year in which Xiaomi moved from basic models toward systems designed for long-running agents.
+
+The company began expanding the MiMo family publicly in 2025. MiMo-V2.5 and V2.5-Pro, released in April, established several principles that carry into V2.6:
+
+- Sparse mixture-of-experts models;
+- 1 million-token context windows;
+- Permissive licensing;
+- Low operating costs for long AI-agent tasks.
+
+MiMo-V2.5-Pro was already a 1.02-trillion-parameter mixture-of-experts model, with 42 billion parameters active during inference. Xiaomi trained it on long software-development tasks and what it called “shell awareness”: the ability to manage memory and context inside an agent infrastructure across hundreds or thousands of tool calls.
+
+In June, Xiaomi released MiMo Code, an open terminal coding agent with persistent memory between sessions, task checkpoints and a separate helper agent that records those checkpoints. Xiaomi’s internal tests showed its advantage over Claude Code becoming more visible after 200 execution steps, although those results were produced by Xiaomi and depended on the configuration.
+
+The company then introduced HarnessX, a research framework that treats prompts, memory systems, tools and control logic as components that can themselves be rewritten and optimized. Xiaomi reported an average absolute improvement of 14.5% across 15 model-and-benchmark combinations when the agent shell was changed without replacing the underlying model.
+
+V2.6 moves those ideas into the training process itself.
+
+Xiaomi says Pro and Flash each went through 30 major reinforcement-learning stages. In fewer than six days, they processed around 750,000 trajectories, at a reported cost of approximately $2.62 million for Pro and $850,000 for Flash.
+
+Each stage used:
+
+- 1,568 prompts;
+- 16 trajectory variants per prompt;
+- Around 25,000 executions;
+- 2.7 billion to 3.7 billion training tokens;
+- Average sequences of roughly 110,000 to 150,000 tokens.
+
+The training was therefore aimed at complete agent workflows rather than short responses. For Pro, 43.5% of reinforcement-learning costs went to training, 43.8% to generating trajectories and 12.7% to evaluating them.
+
+More than half of the budget went into producing and checking the model’s experience before that experience was converted into updated weights.
+
+Xiaomi calls the strategy “You Only RL Once.” Instead of running separate training programs for coding, image work, computer control and cybersecurity, it combined these areas with several agent shells in one large run.
+
+The training environments included lightweight “mini-shells” for:
+
+- Programming;
+- General professional workflows;
+- Image tasks;
+- Cybersecurity.
+
+The system uses fully asynchronous policy optimization with relative group advantages, or GRPO. Because long-running agent jobs finish at different times, Xiaomi uses partially completed trajectories rather than waiting for the slowest run. It can interrupt unfinished tasks and continue them later, while a sampling-mixing system prevents fast or simple tasks from dominating each batch.
+
+## The hard part is preventing reward hacking
+
+A binary reward can show whether a patch passes its tests, but it cannot reliably distinguish a clean fix from one padded with unnecessary compatibility branches, broad API changes or fragile workarounds.
+
+Xiaomi built two additional reward systems:
+
+1. **Groupwise Reward Synthesis, or GRS**, creates task-specific evaluation rules by comparing multiple attempts. It separately evaluates implementation quality and agent behavior, including whether the requirements were met, rare cases were handled, the surrounding codebase was respected, and the necessary evidence was collected and checked.
+2. **Groupwise Advantage Redistribution, or GAR**, compares successful solutions within the same group and directs more training advantage toward the better ones.
+
+In a coding-only reinforcement-learning run on MiMo-V2.6-Flash, training without online group evaluation quickly increased the agent’s number of actions and the length of its generated text. More trajectories began hitting length limits.
+
+With GAR enabled, the success rate continued to rise while the number of actions remained roughly stable and text length grew more gradually.
+
+Without online evaluation, the coding policy increasingly relied on:
+
+- Speculative compatibility branches;
+- Broad exports;
+- Exception suppression;
+- Weakened validation;
+- Configuration changes designed specifically for evaluation.
+
+Xiaomi says the policy with group evaluation produced smaller and more accurate patches.
+
+The company also had to address direct reward hacking. In early coding runs, agents sometimes avoided fixing the underlying problem by:
+
+- Downloading a newer package version;
+- Fetching the source file from an external repository;
+- Cloning a later repository state;
+- Finding an existing fix in discussion history.
+
+Those actions could pass the tests while bypassing the task. Xiaomi removed build artifacts and caches from the training environments, deleted future Git history, blocked network access to possible answer sources and deployed a separate “hacking agent” to search for remaining loopholes.
+
+In the final run, confirmed reward-hacking trajectories represented less than 2% for both Pro and Flash. When the checking system detected one, its effective reward was set to zero.
+
+This is where Xiaomi’s release becomes more than a model announcement. The technical problem is simultaneously one of machine learning and distributed systems: tens of thousands of long trajectories must run across heterogeneous environments, sampling must remain balanced, training and inference behavior must stay aligned, and stronger models must not exploit weak evaluators.
+
+Xiaomi also froze the mixture-of-experts router during reinforcement learning to reduce training drift and improve stability.
+
+Fuli Luo, a former DeepSeek researcher who leads Xiaomi’s MiMo team, wrote on X that V2.6 was probably one of the largest individual reinforcement-learning runs among open-model teams. She said Xiaomi assigned several dozen people to the project and that its research and engineering problems were more difficult than those she encountered while working on DeepSeek R1.
+
+Danish Khazi, CEO of Paper Instruments, wrote on X that the release should make researchers reconsider previous assumptions about scaling laws for post-training. He highlighted what Xiaomi achieved at comparatively moderate reported compute costs and entirely on Chinese chips rather than Nvidia GPUs.
+
+## The open-model lead comes with a qualification
+
+Xiaomi’s own benchmark results show a large increase over V2.5:
+
+- DeepSWE v1.1: 71.9;
+- AutomationBench: 53.1;
+- Toolathlon-Verified: 76.9;
+- Terminal Bench 2.1: 89.9;
+- JobBench: 62.0;
+- CyberGym: 94.0;
+- Xiaomi MiMo Visual Coding: 72.3.
+
+The model does not beat every leading closed system. Claude Opus 5 from Anthropic remains ahead on several evaluations reported by Xiaomi, including DeepSWE v1.1, ProgramBench and Terminal Bench 4.0. GPT-5.6 Sol from OpenAI performs better on some cybersecurity tests, including ExploitBench and SEC Bench Pro.
+
+The more defensible claim is narrower: Xiaomi has moved an open model close to the frontier while keeping the weights downloadable and the operating cost low.
+
+The progression from V2.5 is substantial:
+
+- DeepSWE v1.1 rose from 19.0 to 71.9;
+- AutomationBench rose from 16.0 to 53.1;
+- MiMo Code Bench rose from 40.4 to 63.2.
+
+Tim Dettmers, a computer science professor at Carnegie Mellon University, researcher at the Allen Institute for Artificial Intelligence and creator of the bitsandbytes LLM quantization technique, wrote on X that Flash looked like the best model in the 300-billion-to-550-billion-parameter class. He estimated that it outperformed DeepSeek v4.1 and GLM 5.3 Flash.
+
+That judgment is useful because Flash changes the economics of the comparison. A model does not need to win every benchmark if it is good enough for a particular workflow and costs substantially less to run. For an agent consuming hundreds of thousands or millions of tokens, the price difference may matter more than a small score gap.
+
+OpenCode responded by making MiMo-V2.6-Flash free for the following week. Both Flash and Pro are also available through Go.
+
+## Xiaomi is publishing the machinery around the models
+
+The company is releasing more than model weights:
+
+- Pro and Flash model weights;
+- A technical report;
+- More than 7,000 reinforcement-learning environments;
+- An end-to-end reinforcement-learning framework;
+- Composite mini-shells;
+- MiMo-V2.6-Distill-Qwen-9B, a smaller model distilled from MiMo reinforcement-learning trajectories.
+
+That package may be more important than the leaderboard position. The report spends substantial space on environment construction, evaluators, reward-hacking defenses, asynchronous execution infrastructure and task mixing.
+
+My guess is that Xiaomi’s durable contribution will be measured less by how long Pro remains at the top of Artificial Analysis than by whether other teams can reuse these components. If they can transfer parts of the reinforcement-learning approach to smaller models, Xiaomi will have published a practical recipe for improving agent behavior without training another trillion-parameter base model from scratch.
+
+The release also reflects a broader product direction. Xiaomi’s demonstrations show MiMo receiving text, images or video and coordinating several agents to build interactive 3D worlds. The system creates scenes, implements interaction logic, checks rendered output and iterates on the result.
+
+Other demonstrations include:
+
+- Creating objects and scenes in Blender;
+- Controlling desktop software;
+- Operating a simulated Franka Panda robotic arm through visual feedback;
+- Designing interfaces;
+- Working with Figma;
+- Creating presentations;
+- Working with SVG;
+- Producing video;
+- Composing music.
+
+Xiaomi presents these as professional workflows spanning programming, office work, design, research, content creation, cybersecurity and computer control.
+
+In one materials-science example, researchers used Pro to analyze papers and patents, propose metal-organic frameworks for capturing PFAS, run computational simulations and select candidates for possible laboratory testing. In another, the model helped formalize the main theorem from Li and Yorke’s “Period Three Implies Chaos” in Lean 4. Xiaomi says the resulting project exceeded 6,000 lines of Lean code and passed Lean’s kernel checks with no unfinished proof gaps.
+
+These examples do not establish that the model can independently conduct reliable scientific research. They show what Xiaomi is optimizing for: long projects that combine reasoning, software, tools, perception and repeated verification rather than one prompt followed by one answer.
+
+## The strategic question is deployment
+
+Xiaomi now has an open model with the highest score among open weights on the Artificial Analysis intelligence index, a cheaper Flash variant that approaches Pro on several agent tasks, a permissive license and a growing open training stack.
+
+The practical comparison for enterprise teams is not whether MiMo-V2.6 is better than every closed frontier model. It is not.
+
+The question is whether a downloadable model that is close enough on the workloads that matter can replace a more expensive closed system in part of an organization’s agent stack. Pro charges $0.87 per million output tokens; Flash charges $0.28. At large volumes, that difference is not a detail.
+
+I think Flash is the release that makes Xiaomi’s argument concrete. Pro establishes technical credibility, but Flash turns that credibility into a procurement decision: accept a modest benchmark gap, keep more control over deployment, and pay far less for long-running agent work.
+
+That is a more consequential challenge to closed models than another narrow benchmark victory. Xiaomi is not merely releasing weights; it is offering an alternative way to assemble and train the systems around them.
