@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EvoOntology: Why is it difficult for AI agents to work with different</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Why is it difficult for AI agents to work with different types of data?" />
+    <meta property="og:description" content="AI agents can sound fluent yet still struggle to find their way through a jumble of tables, files, and databases.
+
+The authors propose EvoOntology, a layer that gives an agent a living map of what data exists, what it means, and which tools can help it use that data. Instead of relying on fixed instructions or forcing the agent to inspect every source from scratch, the system builds and continually improves this map as the agent works, adapting it to different tasks and ways of reasoning. This helps turn scattered, hard-to-navigate information into something an AI agent can actually explore and use.
+
+In this review we look at how EvoOntology is built, how it learns to refine its own understanding of data, and why this approach may make AI agents more capable across mixed data sources." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi/" /><meta property="og:image" content="https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/cover_card.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />    <meta property="article:published_time" content="2026-09-22" />
+
+    <meta name="description" content="AI agents can sound fluent yet still struggle to find their way through a jumble of tables, files, and databases. The authors propose EvoOntology, a layer that gives an agent a living map of what data exists, what it means, and which tools can help…" />
+    <link rel="canonical" href="https://dataist.ai/research/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi/" />    <link rel="alternate" hreflang="ru" href="https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/">
+    <link rel="alternate" hreflang="en" href="https://dataist.ai/research/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi/">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Why is it difficult for AI agents to work with different types of data?",
+      "description": "AI agents can sound fluent yet still struggle to find their way through a jumble of tables, files, and databases.\n\nThe authors propose EvoOntology, a layer that gives an agent a living map of what data exists, what it means, and which tools can help it use that data. Instead of relying on fixed instructions or forcing the agent to inspect every source from scratch, the system builds and continually improves this map as the agent works, adapting it to different tasks and ways of reasoning. This helps turn scattered, hard-to-navigate information into something an AI agent can actually explore and use.\n\nIn this review we look at how EvoOntology is built, how it learns to refine its own understanding of data, and why this approach may make AI agents more capable across mixed data sources.",
+      "image": "https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/cover_card.jpg",
+      "url": "https://dataist.ai/research/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/research/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi/"
+      },
+      "datePublished": "2026-09-22",
+      "inLanguage": "en",
+      "citation": {
+        "@type": "ScholarlyArticle",        "name": "EvoOntology: A Self-Evolving Ontology Layer for Data Agents",        "identifier": "arXiv:2609.15779",
+        "url": "https://arxiv.org/abs/2609.15779"
+      },
+      "isBasedOn": "https://arxiv.org/abs/2609.15779",      "author": {"@type": "Person", "name": "@dataist_ai"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Why is it difficult for AI agents to work with different types of data?" />
+    <meta name="twitter:description" content="AI agents can sound fluent yet still struggle to find their way through a jumble of tables, files, and databases.
+
+The authors propose EvoOntology, a layer that gives an agent a living map of what data exists, what it means, and which tools can help it use that data. Instead of relying on fixed instructions or forcing the agent to inspect every source from scratch, the system builds and continually improves this map as the agent works, adapting it to different tasks and ways of reasoning. This helps turn scattered, hard-to-navigate information into something an AI agent can actually explore and use.
+
+In this review we look at how EvoOntology is built, how it learns to refine its own understanding of data, and why this approach may make AI agents more capable across mixed data sources." />
+    <meta name="twitter:image" content="https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/cover_card.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script><link rel="stylesheet" href="/static/css/tailwind.css">
+    <style>
+.glass-header{border-bottom-width:1px;border-color:rgba(0,0,0,.05);background-color:hsla(0,0%,100%,.7);--tw-backdrop-blur:blur(40px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.glass-header:is(.dark *){border-color:hsla(0,0%,100%,.1);background-color:rgba(0,0,0,.7)}.glass-panel{border-width:1px;border-color:rgba(0,0,0,.05);--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px rgba(0,0,0,.06);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.glass-panel:is(.dark *){border-color:hsla(0,0%,100%,.1);--tw-bg-opacity:1;background-color:rgb(28 28 30/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px hsla(0,0%,100%,.04);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);--tw-shadow-color:#000;--tw-shadow:var(--tw-shadow-colored)}body{--tw-bg-opacity:1;background-color:rgb(245 245 247/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1));transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.3s}body:is(.dark *){--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::-moz-selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}:is(.dark *)::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}:is(.dark *)::selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.article-content p{font-family:Inter,sans-serif;font-size:1.125rem;line-height:1.75;margin-bottom:1.5rem;color:rgba(0,0,0,.85)}.dark .article-content p{color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-content p{font-size:1.3125rem;line-height:1.8;margin-bottom:2rem}}.article-content strong{font-weight:600;color:#000}.dark .article-content strong{color:#fff}.article-content em{font-style:italic}.article-content h2{font-family:Inter,sans-serif;font-weight:700;font-size:1.5rem;line-height:1.15;letter-spacing:-.02em;margin-top:4rem;margin-bottom:2rem;color:#000}.dark .article-content h2{color:#fff}@media (min-width:768px){.article-content h2{font-size:1.875rem}}@media (min-width:1024px){.article-content h2{font-size:2.25rem}}.article-content section{max-width:48rem;margin-left:auto;margin-right:auto;width:100%}.article-content figure{margin:3rem auto;max-width:48rem}.apple-img,.article-content .arxiv-chart{width:100%;border-radius:1.5rem;overflow:hidden;background:#fff;border:1px solid rgba(0,0,0,.05);box-shadow:0 4px 24px rgba(0,0,0,.04);display:block;padding:0}.dark .apple-img,.dark .article-content .arxiv-chart{border-color:hsla(0,0%,100%,.1);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.article-content figure img{width:100%;height:auto;display:block;-o-object-fit:cover;object-fit:cover}.article-content figure p{font-family:Space Mono,monospace;font-size:.875rem;color:#86868b;margin:1rem auto 0;text-align:center;line-height:1.6;max-width:42rem}.dark .article-content figure p{color:#8e8e93}.article-content .tech-card{display:flex;gap:1rem;align-items:flex-start;padding:1.25rem 1.5rem;margin-bottom:.75rem;border-radius:1rem;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.05)}.dark .article-content .tech-card{background:hsla(0,0%,100%,.04);border-color:hsla(0,0%,100%,.1)}.article-lead{font-family:Inter,sans-serif;font-weight:500;font-size:1.25rem;line-height:1.6;margin:.5rem 0 3rem;padding-left:1.25rem;border-left:2px solid #000;color:#86868b}.dark .article-lead{border-color:#fff;color:#8e8e93}@media (min-width:768px){.article-lead{font-size:1.5rem;padding-left:2rem}}.rel-rail{display:flex;gap:16px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x proximity;padding:4px 2px 12px;overscroll-behavior-x:contain;scrollbar-width:none;-ms-overflow-style:none}.rel-rail::-webkit-scrollbar{display:none}.rel-rail>a{flex:0 0 auto;width:208px;scroll-snap-align:start;text-decoration:none;display:block;transition:transform .25s cubic-bezier(.2,.8,.2,1)}@media (min-width:640px){.rel-rail>a{width:244px}}.rel-rail>a:hover{transform:translateY(-4px)}.rel-thumb{display:block;position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:18px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.1);box-shadow:0 4px 24px rgba(0,0,0,.05)}.dark .rel-thumb{background:hsla(0,0%,100%,.045);border-color:hsla(0,0%,100%,.14);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.rel-thumb img{width:100%;height:100%;-o-object-fit:cover;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}.rel-rail>a:hover .rel-thumb img{transform:scale(1.05)}.rel-rail time{display:block;margin:12px 0 5px;font-family:Space Mono,monospace;font-size:.625rem;letter-spacing:.08em;color:#86868b}.dark .rel-rail time{color:#8e8e93}.rel-title{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.875rem;font-weight:600;line-height:1.4;letter-spacing:-.01em;color:#000}.dark .rel-title{color:#fff}.rel-fade{position:absolute;top:0;bottom:12px;width:96px;pointer-events:none;opacity:0;z-index:2;transition:opacity .35s ease}.rel-fade-l{left:0;background:linear-gradient(90deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.rel-fade-r{right:0;background:linear-gradient(270deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.dark .rel-fade-l{background:linear-gradient(90deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.dark .rel-fade-r{background:linear-gradient(270deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.rel-arrow{position:absolute;top:calc(50% - 34px);translate:0 -50%;z-index:3;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid rgba(0,0,0,.1);background:#fff;color:#000;box-shadow:0 8px 26px rgba(0,0,0,.14);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,transform .25s ease}.dark .rel-arrow{border-color:hsla(0,0%,100%,.14);background:#1c1c1e;color:#fff}.rel-arrow:hover{transform:scale(1.08)}.rel-arrow-l{left:6px}.rel-arrow-r{right:6px}.rel-wrap[data-left="1"] .rel-fade-l,.rel-wrap[data-right="1"] .rel-fade-r{opacity:1}.rel-wrap[data-left="1"] .rel-arrow-l,.rel-wrap[data-right="1"] .rel-arrow-r{opacity:1;visibility:visible;pointer-events:auto}@media (hover:none){.rel-arrow{display:none}}@media (prefers-reduced-motion:reduce){.rel-arrow,.rel-fade,.rel-rail>a,.rel-thumb img{transition:none}}
+    </style><style>
+        /* --- ряд рубрик в шапке -----------------------------------------
+           Палитра витрин. На странице статьи её не было вовсе: переменные
+           живут в styles.css приложения, которого страница не подключает.
+           Из-за этого и переключатель языка рисовал неактивный язык тем же
+           цветом, что активный — значение var(--text-muted) не определено,
+           объявление отбрасывается, цвет наследуется. */
+        :root {
+            --bg-color: #F5F5F7;
+            --text-main: #1d1d1f;
+            --text-muted: #86868B;
+            --chip-border: rgba(0, 0, 0, 0.08);
+        }
+        .dark {
+            --bg-color: #000000;
+            --text-main: #f5f5f7;
+            --text-muted: #8E8E93;
+            /* 0.19, а не 0.10: на чистом чёрном десятая доля даёт
+               rgb(25,25,25) — ряд читается не кнопками, а россыпью слов. */
+            --chip-border: rgba(255, 255, 255, 0.19);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Края растворяет МАСКА самого ряда, а не градиент поверх него:
+           накладной прямоугольник пришлось бы красить фоном страницы, и на
+           границе тем он выглядел бы грязным мазком.
+
+           Правый край растворён сразу, ещё до пересчёта скриптом: рубрики
+           в шапку обычно не помещаются, и до первого замера честнее
+           показать растворение, чем сухой обрез. Не понадобится — скрипт
+           обнулит. */
+        #category-scroll {
+            --fade-l: 0px;
+            --fade-r: 56px;
+            -webkit-mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+            mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+        }
+
+        /* Заливки у рубрики нет, всю форму держит рамка — значит и рамка
+           задаётся здесь, а не только утилитой Tailwind. */
+        .category-btn {
+            transition: all 0.25s ease;
+            background: transparent;
+            border: 1px solid var(--chip-border);
+        }
+        .category-btn.active,
+        .category-btn.active:hover {
+            background: var(--text-main);
+            color: var(--bg-color);
+            border-color: var(--text-main);
+        }
+
+        /* Выбор рубрики на телефоне — на <details>, то есть без единой
+           строки JavaScript: раскрытие списка не должно зависеть от того,
+           доехала ли чужая библиотека. */
+        #cat-menu > summary { list-style: none; cursor: pointer; }
+        #cat-menu > summary::-webkit-details-marker { display: none; }
+        #cat-menu > summary::marker { content: ""; }
+        #cat-menu[open] > summary .cat-caret { transform: rotate(180deg); }
+        .cat-caret { transition: transform 0.2s ease; }
+        /* Подпись на кнопке телефона не должна раздувать шапку, и её ширина не
+           должна зависеть от длины названия рубрики. У «Исследований» кнопка
+           выходила на 135 пикселей против 106 у «Новостей», и правый край
+           «Telegram» уезжал за экран на 390. Замер поймал; на широком экране
+           этого не видно вовсе.
+
+           3.5rem, а не 4.5: с четырьмя с половиной не хватало ровно четырёх
+           пикселей. Теперь длина названия на ширину шапки не влияет никак. */
+        #cat-menu > summary > span {
+            max-width: 3.5rem; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        #cat-menu .cat-item {
+            display: flex; align-items: center; gap: 0.625rem;
+            padding: 0.625rem 0.75rem; border-radius: 0.75rem;
+            font-family: "Space Mono", monospace; font-size: 11px;
+            font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+            color: var(--text-muted); text-decoration: none;
+        }
+        #cat-menu .cat-item.active {
+            background: var(--text-main); color: var(--bg-color);
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4 shrink-0">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">
+                    Dataist
+                </div>
+            </a>
+        </div>            <div id="category-scroll" class="hidden sm:block flex-1 min-w-0 overflow-x-auto no-scrollbar">
+                <nav aria-label="Sections" class="flex flex-nowrap items-center gap-2 w-max mx-auto">
+                    <a href="/?cat=all" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="all" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i><span>All</span></a>
+                    <a href="/?cat=research" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="research" aria-current="page" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white active"><i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i><span>Research</span></a>
+                    <a href="/?cat=news" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="news" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="newspaper" class="w-3.5 h-3.5 shrink-0"></i><span>News</span></a>
+                </nav>
+            </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0"><details id="cat-menu" class="sm:hidden relative">
+                <summary class="category-btn inline-flex items-center gap-1.5 px-3 py-2 rounded-full font-mono text-[10px] font-bold tracking-tight uppercase text-black dark:text-white" aria-label="Choose a section">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span>Research</span>
+                    <i data-lucide="chevron-down" class="cat-caret w-3.5 h-3.5 shrink-0"></i>
+                </summary>
+                <div class="absolute right-0 top-full mt-2 w-56 p-2 rounded-2xl glass-panel flex flex-col gap-0.5 z-50">
+                    <a href="/?cat=all" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="cat-item"><i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i><span>All</span></a>
+                    <a href="/?cat=research" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" aria-current="page" class="cat-item active"><i data-lucide="microscope" class="w-4 h-4 shrink-0"></i><span>Research</span></a>
+                    <a href="/?cat=news" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="cat-item"><i data-lucide="newspaper" class="w-4 h-4 shrink-0"></i><span>News</span></a>
+                </div>
+            </details>            <nav id="lang-switch" aria-label="Language" class="flex items-center gap-1.5 md:gap-2 font-mono text-[11px] md:text-sm font-bold uppercase tracking-widest select-none"><a href="/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/" hreflang="ru" lang="ru" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="text-apple-textMutedLight dark:text-apple-textMutedDark hover:text-black dark:hover:text-white transition-colors no-underline">RU</a><span aria-hidden="true" class="text-apple-textMutedLight dark:text-apple-textMutedDark opacity-40">|</span><span aria-current="true" class="text-black dark:text-white">EN</span></nav>            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://x.com/andre_dataist" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">X</span>
+            </a>
+        </div>
+    </header>
+
+    <script>
+        /* Растворение краёв ряда рубрик.
+
+           Отдельным блоком намеренно: в общем блоке внизу страницы первой
+           строкой идёт обращение к библиотеке иконок с unpkg.com, и если
+           она не ответила, весь тот блок не исполняется. Ряду рубрик до
+           этого дела быть не должно. */
+        (function () {
+            var el = document.getElementById('category-scroll');
+            if (!el) return;
+            var row = el.firstElementChild;
+            var RAMP = 48, MAX = 56;          // те же числа, что на витрине
+            var placed = false;
+
+            function update() {
+                var max = el.scrollWidth - el.clientWidth;
+                var w = function (v) {
+                    return max <= 8 ? 0
+                        : Math.round(Math.min(1, Math.max(0, v) / RAMP) * MAX);
+                };
+                el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+
+                if (!placed && max > 8) {
+                    placed = true;
+                    var active = el.querySelector('.category-btn.active');
+                    if (active) {
+                        /* Ровно настолько, чтобы текущая рубрика влезла, и
+                           ни пикселем больше: центрирование утаскивало ряд
+                           до упора и прятало «Все» за краем насовсем.
+                           Запас 64 шире растворения (56), иначе рубрика
+                           встаёт под маску и читается наполовину. */
+                        var pad = 64;
+                        /* BR440: смещение считается ОТ САМОГО РЯДА, а не
+                           через `offsetLeft`. Тот меряет от ближайшего
+                           позиционированного предка, а это `<header>` — он
+                           `fixed`. Разница ровно на отступ ряда внутри шапки
+                           (около 230 пикселей), и ряд уезжал на неё дальше,
+                           чем нужно: активная рубрика оказывалась за левым
+                           краем. Замерено: на 768 её видно −23 пикселя из
+                           137, на 640 — восемь, и те под растворением.
+                           На новостях этого не видно, потому что там активна
+                           ПОСЛЕДНЯЯ рубрика и перелёт упирается в край. */
+                        var box = el.getBoundingClientRect();
+                        var ab = active.getBoundingClientRect();
+                        var from = ab.left - box.left + el.scrollLeft;
+                        var l = from - pad;
+                        var r = from + ab.width + pad;
+                        if (r > el.scrollLeft + el.clientWidth) el.scrollLeft = r - el.clientWidth;
+                        else if (l < el.scrollLeft) el.scrollLeft = Math.max(0, l);
+                        /* Узкий экран: рубрика с обоими запасами уже не
+                           помещается (123 + 64 + 64 больше 216 при 640), и
+                           подгонка по правому краю загоняет левый под маску.
+                           Читают слева направо — значит слева и освобождаем.
+                           Замерено: было 46 при маске 56, стало 56. */
+                        if (from - el.scrollLeft < MAX) el.scrollLeft = Math.max(0, from - MAX);
+                        max = el.scrollWidth - el.clientWidth;
+                        el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                        el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+                    }
+                }
+            }
+
+            el.addEventListener('scroll', update, { passive: true });
+            window.addEventListener('resize', update);
+
+            /* Главное. Ряд меняет ширину ПОСЛЕ первого замера: `<i
+               data-lucide>` превращается в svg, когда догрузится библиотека
+               иконок, и рубрики раздаются. Разовый замер этого не ловит —
+               край резался насухо. Наблюдатель ловит любое изменение
+               размера, чем бы оно ни было вызвано. */
+            if (window.ResizeObserver && row) new ResizeObserver(update).observe(row);
+            window.addEventListener('load', update);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+
+            update();
+        })();
+
+        /* Меню рубрик на телефоне закрывается нажатием мимо него.
+           Раскрытие держится на <details> и работает без скрипта; это лишь
+           удобство — не сработает, меню закроется повторным нажатием. */
+        (function () {
+            var menu = document.getElementById('cat-menu');
+            if (!menu) return;
+            document.addEventListener('click', function (e) {
+                if (menu.open && !menu.contains(e.target)) menu.open = false;
+            });
+        })();
+    </script>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-09-22</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Why is it difficult for AI agents to work with different types of data?
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/cover.jpg"
+                         alt="Cover: Why is it difficult for AI agents to work with different types of data?"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>An AI Agent Needs More Than Access to Data</h2>
+<p>An AI agent can query a database, read a table, and open a file. But that doesn’t mean it understands the data.</p>
+<p>In a real company, the information an agent needs is scattered across databases, spreadsheets, documents, and reports. One system may call a field `status`, another may label it “state,” while a third explains its meaning only in an analyst guide. The agent can see column names and file paths, but it doesn’t know how to connect them to the user’s question.</p>
+<p>As a result, it spends time investigating. It searches through tables, writes test queries, misinterprets values, and repeats the same steps for every new task.</p>
+<p>The paper <strong>EvoOntology: A Self-Evolving Ontology Layer for Data Agents</strong> proposes an <strong>intermediate layer</strong> between the agent and the data. This layer explains what entities mean, where they are located, and how to use them. It also grows over time based on previous interactions.</p>
+<p>The idea resembles memory, but it is more structured. Instead of storing entire past conversations, the agent retains verified relationships between concepts, fields, constraints, and data sources.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">A self-evolving ontology layer helps an agent work with heterogeneous data.</p>
+</div></figure>
+</section>
+<section>
+<h2>Why Basic Data Access Isn’t Enough</h2>
+<p>Modern AI agents typically have a set of general-purpose tools: an SQL interface, file-reading capabilities, and code execution. This approach works with a small, well-understood database. But it quickly becomes expensive when the data is heterogeneous.</p>
+<p>Consider the query: “Find the cards banned in the target game format.” To answer it, the agent needs to determine:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">where the cards are stored;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">which table contains legality information;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">what the `status` field means;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">how status relates to the game format;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">which value corresponds to “banned.”</span></div>
+<p>If the agent starts from scratch every time, it has to rediscover the same structure over and over. One option is to provide a database description in the prompt. But a large semantic layer cannot fit into the context window without losses. A long list of facts can also distract the model from the step it needs to take.</p>
+<p>EvoOntology addresses this problem with an <strong>interactive ontology</strong>. The agent does not receive the entire layer at once. Instead, it requests only the concepts and related records it needs.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">EvoOntology architecture: a concept graph, an object schema, and a set of tools for querying information at runtime.</p>
+</div></figure>
+</section>
+<section>
+<h2>What Is EvoOntology?</h2>
+<p>The system has three parts.</p>
+<p>🟠 The <strong>content layer</strong> stores domain concepts, their relationships, and their mappings to real-world data.</p>
+<p>🟠 The <strong>schema layer</strong> describes which objects exist, which fields they can contain, and how they can be related.</p>
+<p>🟠 The <strong>tool layer</strong> gives the agent functions for finding and retrieving the information it needs while carrying out a task.</p>
+<p>All three components are combined in an MCP server. At startup, the agent receives only a brief description of the available capabilities. It can then call two main tools:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">find relevant semantic records based on a query;</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">expand a matching record together with its relationships, constraints, and evidence.</span></div>
+<p>The content layer uses a typed graph with four kinds of objects:</p>
+<p>🟣 <strong>Concepts</strong> — for example, “card,” “legality,” “revenue,” or “customer.”</p>
+<p>🟣 <strong>Bindings</strong> — the specific columns, tables, and join paths where a concept appears.</p>
+<p>🟣 <strong>Constraints</strong> — rules that clarify how a concept should be applied.</p>
+<p>🟣 <strong>Evidence</strong> — the results of test queries and observations of values in data sources.</p>
+<p>The last category is particularly important. The system should not simply guess that the `status` field means “legality status.” It checks the distribution of values and stores the result of that verification.</p>
+</section>
+<section>
+<h2>How the Ontology Is Built</h2>
+<p>The process begins with a builder agent. It studies tasks from a training set and identifies recurring entities, metrics, operations, and filtering conditions. It then sends test queries to the source data.</p>
+<p>If a candidate is confirmed, it is added to the initial ontology along with a binding and supporting evidence. Unverified information is discarded.</p>
+<p>The system then begins to evolve. It uses the work histories of the regular agent, examining where the agent failed, which tools it called, which records it used, and at what step the error occurred.</p>
+<p>Each problem is assigned to one of three levels:</p>
+<p>🟠 <strong>Content</strong> — a concept, binding, constraint, or piece of evidence is missing.</p>
+<p>🟠 <strong>Tools</strong> — the required information exists, but the agent has difficulty finding or retrieving it.</p>
+<p>🟠 <strong>Schema</strong> — the ontology’s structure itself cannot express the required relationship.</p>
+<p>An evolution agent then proposes a local change. For example, it might add a new concept and link it to a specific field. Or it might revise a tool’s description so that the relevant record appears more often in search results.</p>
+<p>The change is not accepted automatically. The new and previous versions are evaluated on the same held-out task set. If the result does not improve by a specified threshold, the update is rejected.</p>
+<p>This protects the system from accumulating arbitrary edits. Instead of rewriting the entire ontology after every error, it tests individual hypotheses.</p>
+</section>
+<section>
+<h2>Results</h2>
+<p>The authors evaluated the method on three benchmarks:</p>
+<p>🟣 <strong>DDR-Bench</strong> tests data exploration across multiple sources and the preparation of a final answer based on the full interaction history.</p>
+<p>🟣 <strong>InsightBench</strong> measures whether an agent can find analytical insights in tables.</p>
+<p>🟣 <strong>BIRD</strong> tests the conversion of natural-language requests into SQL queries.</p>
+<p>The experiments used six language models. For comparison, the authors used a standard agent without an ontology and an agent with a static semantic layer that was inserted into the context in its entirety.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Comparison of a standard agent, the initial ontology, and the evolved EvoOntology across three benchmarks.</p>
+</div></figure>
+<p>The gap was largest on DDR-Bench. On average, the rate of successfully completing the entire trajectory rose from <strong>69.5% to 89.5%</strong>—an average gain of 20 percentage points.</p>
+<p>On BIRD, EvoOntology increased SQL execution accuracy by an average of 7.4 percentage points. Query efficiency improved by another 8.6 points. In other words, the agent not only produced correct queries more often, but also did so with fewer unnecessary actions.</p>
+<p>The gain on InsightBench was modest—1.9 points on average. The authors attribute this to the task format: a short reference answer leaves less room for improvement.</p>
+<p>The main comparison can be summarized as follows:</p>
+<p>🟣 <strong>A static layer does not guarantee improvement.</strong> With some models, it even reduced accuracy. A large block of descriptions competed with other instructions and did not account for the agent’s current step.</p>
+<p>🟣 <strong>An interactive layer works selectively.</strong> The agent receives only the concepts and bindings it needs.</p>
+<p>🟣 <strong>Self-evolution improves on the initial ontology.</strong> On DDR-Bench, the initial version delivered a 12.3-point gain, while subsequent evolution added another 7.7 points.</p>
+</section>
+<section>
+<h2>What Actually Drives the Gains</h2>
+<p>The authors separately evaluated four stages of the cycle: diagnosing the error, identifying the problem level, making a local change, and validating the result.</p>
+<p>The most costly mistake was disabling validation. When the system accepted every edit, performance dropped by 11.2 points. Without problem-level identification, the decline was 6.3 points.</p>
+<p>This shows that repeated editing alone is not enough. The system needs a cause, a targeted change, and validation on the same data.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Performance changes after successive accepted rounds of self-evolution across three benchmarks.</p>
+</div></figure>
+<p>Changes to the tools accounted for the largest share of the improvement—57%. They improved how existing information was presented. Content changes contributed 34%, while schema changes accounted for 9%.</p>
+<p>At the same time, the most important objects within the ontology itself were bindings and evidence. Removing bindings reduced performance on DDR-Bench by 13.4 points. Removing evidence caused an 8.7-point drop.</p>
+<p>That makes sense. Knowing the concept “revenue” is not enough. The agent also needs to know which column contains it, how to join the tables, and why the selected field really does represent revenue.</p>
+<p>The authors also measured cost. The initial ontology increased the number of input tokens per step, but shortened the average trajectory. In the evolved version, the total number of tokens per task fell from 52,600 to 42,000—roughly 20%.</p>
+</section>
+<section>
+<h2>An Example of a Local Fix</h2>
+<p>In the card-legality task, the initial ontology knew about the concepts “card” and “legality.” It also knew which tables contained the corresponding fields.</p>
+<p>But it did not understand how to interpret the `status` values or why status depended on a specific game format.</p>
+<p>The evolution agent added:</p>
+<p>🟠 the concept “legality status code”;</p>
+<p>🟠 a binding to the `legalities.status` field;</p>
+<p>🟠 evidence showing the distribution of values;</p>
+<p>🟠 a constraint: finding banned cards requires considering both the status and the target format.</p>
+<p>The tools and overall schema remained unchanged. The agent received exactly the information it had been missing to construct the correct query.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Local ontology update for the card-legality task: the status, its binding, evidence, and a constraint were added.</p>
+</div></figure>
+</section>
+<section>
+<h2>Limitations of the Approach</h2>
+<p>EvoOntology does not turn every AI agent into a universal analyst. The system still depends on the quality of the source data, the test queries, and the model that proposes the changes.</p>
+<p>Different models evolved different ontology versions even when they started from the same initial state. Transferring an ontology from one model to another reduced performance by 6.6–10.9 points. This suggests that the layer gradually adapts to the working style of a particular model.</p>
+<p>That creates additional maintenance costs. Each model may require its own adaptation cycle. In addition, validating every edit requires held-out tasks and computing resources.</p>
+<p>But the trade-off is understandable: the ontology becomes part of the agent’s supporting infrastructure, rather than a universal reference that works in every situation.</p>
+</section>
+<section>
+<h2>Conclusion</h2>
+<p>EvoOntology offers a practical way to bridge the gap between an AI agent and heterogeneous data. The agent can access concepts at the semantic level while expanding only the records it needs. The system stores not raw conversations, but verified concepts, bindings, constraints, and evidence.</p>
+<p>The results point to three principles that work:</p>
+<p>🟣 <strong>The semantic layer should be available through tools</strong>, rather than placed in the prompt in its entirety.</p>
+<p>🟣 <strong>Changes should be tied to specific agent errors.</strong></p>
+<p>🟣 <strong>Every edit should be accepted only after validation</strong>; otherwise, accumulated updates will degrade the system.</p>
+<p>For data pipelines built around tables, databases, and documents, this means moving from one-off schema discovery to the accumulation of verified knowledge. The agent gradually stops searching blindly and starts using the history of its own tasks as a source of improvement.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2609.15779" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span>
+                    </a>
+                    <a href="https://github.com/ruc-datalab/EvoOntology" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <svg viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5" aria-hidden="true"><path d="M12 .5C5.73.5.5 5.73.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.28-.01-1.02-.02-2-3.2.7-3.88-1.54-3.88-1.54-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.23-1.28-5.23-5.7 0-1.26.45-2.29 1.19-3.1-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.18 1.18a11.1 11.1 0 0 1 2.9-.39c.98 0 1.97.13 2.9.39 2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.84 1.19 3.1 0 4.43-2.69 5.41-5.25 5.69.41.36.78 1.07.78 2.16 0 1.56-.01 2.82-.01 3.2 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.73 18.27.5 12 .5Z"/></svg>
+                        <span class="font-sans text-sm md:text-base font-medium">Code on GitHub</span>
+                    </a>
+                </div>
+
+                <section class="mt-16 md:mt-20 fade-in" aria-labelledby="related-heading">
+                    <h2 id="related-heading"
+                        class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight mb-6 md:mb-8">
+                        Read next
+                    </h2>
+                    
+                    <div class="rel-wrap relative -mx-4 md:mx-0" data-left="0" data-right="1"
+                         data-date="2026-09-22">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l"
+                                aria-label="Previous">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r"
+                                aria-label="Next">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0">
+                            <a href="https://dataist.ai/research/kak-ii-agentam-ekonomit-kontekst-i-izbegat-sboev/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-agentam-ekonomit-kontekst-i-izbegat-sboev_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-21">2026-09-21</time>
+                                <span class="rel-title">How AI Agents Can Save Context and Avoid Failures</span>
+                            </a>
+                            <a href="https://dataist.ai/research/kak-ii-simuliruet-mysli-polzovatelia/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-20">2026-09-20</time>
+                                <span class="rel-title">How AI Simulates a User’s Thoughts</span>
+                            </a>
+                            <a href="https://dataist.ai/research/coding-agents-skip-looking-at-the-app-when-the-task-gets-long/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-18/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-18">2026-09-18</time>
+                                <span class="rel-title">Coding agents skip looking at the app when the task gets long</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ai-covers-six-roles-in-game-development-but-skills-rarely-transfer/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-17/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-17">2026-09-17</time>
+                                <span class="rel-title">AI covers six roles in game development, but skills rarely transfer</span>
+                            </a>
+                            <a href="https://dataist.ai/research/llms-misread-motives-when-the-story-comes-through-a-biased-user/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-16/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-16">2026-09-16</time>
+                                <span class="rel-title">LLMs misread motives when the story comes through a biased user</span>
+                            </a>
+                            <a href="https://dataist.ai/research/given-a-store-for-a-year-the-top-earning-agent-ranked-16th-of-18-on-fraud/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-14/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-14">2026-09-14</time>
+                                <span class="rel-title">Given a store for a year, the top-earning agent ranked 16th of 18 on fraud</span>
+                            </a>
+                            <a href="https://dataist.ai/research/five-levels-of-self-improving-ai-and-why-level-5-barely-exists/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-12/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-12">2026-09-12</time>
+                                <span class="rel-title">Five levels of self-improving AI, and why level 5 barely exists</span>
+                            </a>
+                            <a href="https://dataist.ai/research/an-ai-agent-built-a-playable-shooter-over-70-autonomous-iterations/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-11/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-11">2026-09-11</time>
+                                <span class="rel-title">An AI agent built a playable shooter over 70 autonomous iterations</span>
+                            </a>
+                            <a href="https://dataist.ai/research/an-editable-graph-of-next-steps-beats-memory-for-long-horizon-agents/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-10/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-10">2026-09-10</time>
+                                <span class="rel-title">An editable graph of next steps beats memory for long-horizon agents</span>
+                            </a>
+                            <a href="https://dataist.ai/research/a-library-rebuilt-from-50-design-docs-matches-its-hand-checked-models/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-09/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-09">2026-09-09</time>
+                                <span class="rel-title">A library rebuilt from 50 design docs matches its hand-checked models</span>
+                            </a>
+                            <a href="https://dataist.ai/research/compiling-a-paper-into-a-repo-level-spec-cuts-ais-algorithmic-shortcuts/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-08/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-08">2026-09-08</time>
+                                <span class="rel-title">Compiling a paper into a repo-level spec cuts AI&#39;s algorithmic shortcuts</span>
+                            </a>
+                            <a href="https://dataist.ai/research/imagining-the-poster-first-lets-a-coding-agent-build-it-in-editable-layers/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-07/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-07">2026-09-07</time>
+                                <span class="rel-title">Imagining the poster first lets a coding agent build it in editable layers</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка мигает
+                                // в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+                            function step(dir) {
+                                // Листаем на видимую ширину минус нахлёст,
+                                // чтобы следующая карточка подсказывала, что
+                                // лента продолжается.
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            sync();
+
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них в
+                            // страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую подложку,
+                                    // а не значок сломанной картинки.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = item.date; }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            function same(url) {
+                                try { return new URL(url, location.href).pathname === location.pathname; }
+                                catch (e) { return false; }
+                            }
+
+                            // Лента дотягивается ОДИН раз и только когда
+                            // читатель до неё добрался: 125 КБ фида не должны
+                            // грузиться у того, кто до подвала не дошёл.
+                            var loaded = false;
+                            function fill() {
+                                if (loaded) return;
+                                loaded = true;
+                                fetch('/papers_en.json')
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) return;
+                                        var all = list.filter(function (x) {
+                                            return x && x.url && x.title;
+                                        });
+                                        // Свежие вперёд. Фид приходит уже в
+                                        // этом порядке, но сортировка здесь
+                                        // стоит явно: порядок ленты — правило
+                                        // блока, а не побочный эффект того,
+                                        // как список собрали на сервере.
+                                        all.sort(function (a, b) {
+                                            return String(b.date || '').localeCompare(String(a.date || ''));
+                                        });
+                                        // Где в этом списке стоит сама статья.
+                                        // Считаем ДО того, как её выбросить:
+                                        // её место и есть «здесь», а первым
+                                        // после неё идёт ровно предыдущий
+                                        // разбор.
+                                        var mineAt = -1;
+                                        for (var i = 0; i < all.length; i++) {
+                                            if (same(all[i].url)) { mineAt = i; break; }
+                                        }
+                                        var rows = all.filter(function (x) { return !same(x.url); });
+                                        if (!rows.length) return;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+
+                                        // ЛЕНТА ОТКРЫВАЕТСЯ НА МЕСТЕ ЭТОЙ
+                                        // СТАТЬИ, а не с самого свежего
+                                        // разбора. Влево от стартовой позиции
+                                        // остаётся то, что вышло ПОСЛЕ неё,
+                                        // вправо уходит то, что было ДО.
+                                        //
+                                        // Без этого лента получалась одинаковой
+                                        // на всех страницах сайта: у майской
+                                        // статьи она начиналась бы с сентября,
+                                        // и соседство по времени — то самое,
+                                        // ради чего блок и нужен, — пропадало
+                                        // ровно в тот момент, когда страница
+                                        // становится интерактивной.
+                                        //
+                                        // Позицию берём по месту самой статьи
+                                        // в фиде. Сравнивать по дате нельзя:
+                                        // за один день выходит по два разбора
+                                        // («2026-07-05» и «2026-07-05_1»), и
+                                        // правило «дата меньше моей» проскочит
+                                        // собрата того же дня — лента откроется
+                                        // на разборе через один.
+                                        //
+                                        // Дата остаётся запасным ответом на
+                                        // случай, если статьи в фиде нет
+                                        // вовсе: свежая страница попадает туда
+                                        // не раньше, чем пересоберётся индекс.
+                                        var at = 0;
+                                        if (mineAt >= 0) {
+                                            at = mineAt;
+                                        } else {
+                                            var mine = wrap.dataset.date || '';
+                                            if (mine) {
+                                                for (var k = 0; k < rows.length; k++) {
+                                                    if (String(rows[k].date || '') < mine) { at = k; break; }
+                                                }
+                                            }
+                                        }
+                                        // Самый старый разбор: предыдущего у
+                                        // него нет, поэтому лента встаёт в
+                                        // конец — слева от края всё свежее.
+                                        if (at > rows.length - 1) at = rows.length - 1;
+                                        var target = rail.children[at];
+                                        if (target) {
+                                            // Без плавности: это не жест
+                                            // читателя, а исходное положение.
+                                            rail.scrollLeft = target.offsetLeft - rail.offsetLeft;
+                                        }
+                                        sync();
+                                    })
+                                    .catch(function () { /* остаёмся с разметкой */ });
+                            }
+                            if ('IntersectionObserver' in window) {
+                                var io = new IntersectionObserver(function (es) {
+                                    if (es.some(function (e) { return e.isIntersecting; })) {
+                                        io.disconnect();
+                                        fill();
+                                    }
+                                }, { rootMargin: '400px' });
+                                io.observe(wrap);
+                            } else {
+                                fill();
+                            }
+                        })();
+                    </script>
+                </section>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI reviews in simple way
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read fresh AI papers and retell the essentials in plain human language — no hype, no fluff. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New reviews — every day
+                            </p>
+                            <a href="https://x.com/andre_dataist" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">Follow on X</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        // BR436: ЧУЖАЯ БИБЛИОТЕКА НЕ РЕШАЕТ, УВИДИТ ЛИ ЧИТАТЕЛЬ ТЕКСТ.
+        // `lucide` едет с unpkg.com, а чужой сервер отвечает не всегда. Без
+        // проверки первая же строка бросала исключение — и ВЕСЬ остальной
+        // блок не исполнялся: ни кнопка темы, ни полоса прогресса, ни лента
+        // «Читайте также». Раньше к ним добавлялся и сам текст разбора: он
+        // был спрятан под `opacity: 0` до тех пор, пока наблюдатель не
+        // проставит `visible`, а наблюдатель регистрировался здесь же. Теперь
+        // правил `.fade-in` в стилях нет вовсе, и текст виден всегда — даже
+        // если JavaScript выключен или не дошёл. Иконка не показалась —
+        // досадно; разбор не показался — потеряли читателя.
+        if (window.lucide) lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
