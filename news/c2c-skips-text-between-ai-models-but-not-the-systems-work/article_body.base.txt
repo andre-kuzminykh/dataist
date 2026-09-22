@@ -1,0 +1,65 @@
+## What C2C changes
+
+Multi-model AI systems commonly divide work between models: one may analyze a problem, another may write, and a router may switch between models with different abilities or costs. Their usual interface is text.
+
+That interface creates three costs:
+
+- The first model compresses its high-dimensional internal state into tokens, and the second must reconstruct meaning from that sequence.
+- Text can omit structural details. In a shared HTML-editing task, for example, a Coder model may know exactly where a tag belongs while a Writer model receives only an ambiguous textual instruction.
+- The first model generates its message token by token, then the second processes those additional tokens before producing its own response.
+
+C2C uses the information already created during the first model’s prompt processing: the KV-cache. During the prefill stage, a model turns its input into internal key and value representations and stores them for reuse during generation.
+
+Both models process the same context. One acts as the Sender and the other as the Receiver. A trained cache-merging module converts the Sender’s cache into the Receiver’s representation space, then combines it with the Receiver’s own cache. A learned gateway determines which Receiver layers should accept the extra information.
+
+In routing systems, this gives the Receiver access to the Sender’s information without an intermediate text message. In collaborative systems, C2C adds a second communication channel alongside text.
+
+## The benchmark result
+
+The researchers tested C2C on reasoning and knowledge benchmarks:
+
+- MMLU-Redux
+- OpenBookQA
+- ARC-Challenge
+- C-Eval
+
+Qwen3-0.6B remained the Receiver while three different models acted as Senders. Compared with running the Receiver alone, its average accuracy increased by about 9.6–11.9 percentage points. Compared with text exchange, the gain was about 3.1–5.4 points.
+
+[INFO:facts] 3.1–5.4 pp :: vs text | 9.6–11.9 pp :: vs single model | 3.46x :: speedup configuration | 14.41x :: maximum speedup
+
+The latency advantage depended heavily on the model pair. In three main configurations, C2C was 3.46x, 1.51x and 14.41x faster than text exchange. The 14.41x result came from using Qwen3-4B Base as the Sender. The researchers say that model sometimes ignored instructions about text communication and generated longer-than-expected messages, making the text-based setup especially slow.
+
+In one experiment, the Sender produced an average of 80 communication tokens. Generating them took 1,312 milliseconds, and the resulting message also expanded the input that the Receiver had to process. C2C took about 90 milliseconds to merge the caches and did not need to generate communication tokens.
+
+The method also worked across differences in architecture and specialization. The tests included Gemma–Qwen, Qwen Math–Qwen and Qwen Coder–Qwen pairs. C2C beat text exchange in all five heterogeneous or role-reversed configurations described in the experiment.
+
+These are benchmark results, not tests of production AI-agent workloads. Latency was measured with a batch size of 1 on a single Nvidia A100.
+
+## The engineering boundary
+
+C2C does not require fine-tuning either participating large language model. The researchers freeze the Sender and Receiver and train only the cache-merging module with a standard next-token prediction objective.
+
+The bridge still has to reconcile substantial differences between models:
+
+- Different tokenizers must be aligned.
+- Corresponding transformer layers must be matched.
+- Cache representations with different dimensions must be merged.
+- The bridge itself requires an initial investment in training compute.
+
+The team published C2C code and configurations on GitHub under the Apache 2.0 license, along with pretrained checkpoints for the merging module on Hugging Face.
+
+The larger constraint is access. C2C must read, transform and replace internal KV-cache states, so it needs an inference stack that exposes those internals. That makes it primarily useful to teams running their own inference stack, not applications that connect closed models through APIs.
+
+The quiet part of the result is what happens outside that controlled environment. The tests show that an internal representation can be a better communication channel than text, but they do not establish how the method behaves across long-running agent workflows, changing contexts or production traffic. My read is that C2C is less a drop-in replacement for model APIs than a systems technique for teams that already control the entire path between models.
+
+## A wider move beyond text
+
+C2C belongs to a broader line of work questioning text as the default interface inside multi-model systems.
+
+Nvidia has worked on transferring KV-caches between models. When a system switches models during a long session, the new model normally has to process the accumulated context again and build its own cache. Nvidia researchers instead translate the existing cache into the target model’s format and reported 2.7–25x acceleration for compatible model pairs compared with repeating the prefill.
+
+The mechanisms are different. Nvidia’s method transfers the full KV-cache from the source model to the target. C2C has both models process the context, then merges their caches so the Receiver can use the Sender’s semantic representation.
+
+RecursiveMAS takes another route, replacing text messages with continuous latent representations passed between AI agents. In its experiments, inference was up to 2.4x faster and token use fell by 75.6% compared with a text-based recursive system.
+
+The common idea is straightforward: models may exchange information more efficiently when they do not first have to serialize everything as language. C2C pushes that idea into model orchestration, but its dependence on internal access also draws a boundary around where it can be used. The future of model-to-model communication may be less about eliminating text everywhere than about deciding which systems are allowed to bypass it.
