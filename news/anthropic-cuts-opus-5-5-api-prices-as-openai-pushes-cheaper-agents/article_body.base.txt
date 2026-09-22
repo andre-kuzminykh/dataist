@@ -1,0 +1,116 @@
+## The benchmark lead comes with a lower bill
+
+Anthropic’s strongest claims concern agents that spend hours modifying a codebase rather than answering isolated programming questions.
+
+- Terminal-Bench 4.0: Opus 5.5 scored 66.4%, versus 55.8% for Fable 5.1 and 52.3% for Opus 5.
+- FrontierCode v1.1 Main: 54.4%, versus 50.3% for Fable 5.1 and 48.0% for Opus 5.
+- CursorBench 4.0: 57.8%, versus 51.8% for Fable 5.1 and 46.6% for Opus 5.
+
+The model also posted 1846 Elo in GDPval-AA v2.1, a benchmark of professional tasks across 44 occupations. That compares with 1735 for Fable 5.1 and 1708 for Opus 5.
+
+Anthropic reports strong results in scientific and interdisciplinary reasoning as well, including Terminal-Bench-Science 0.1³ and Humanity's Last Exam. In an internal test of report quality, 16 of 18 Opus 5.5 reports cleared the company’s threshold under different effort settings. Fable 5.1 and Opus 5 did not clear it once.
+
+That last result is company-produced evidence, not an independent benchmark. The same qualification applies to the development examples Anthropic cites:
+
+- A tester migrated a 680,000-line codebase in less than a day.
+- Another audited and fixed a 200,000-line project in less than three hours.
+- Opus 5 took more than 20 hours on the same project and used 2.5 times more tokens.
+- In Anthropic’s internal C-to-Rust HAProxy migration, Opus 5.5 finished in 9.5 hours versus 12 hours for Fable 5.1, at 51% lower cost.
+
+GitHub chief product officer Mario Rodriguez said in a statement provided by Anthropic that Opus 5.5 used “some of the lowest figures for token and step counts” among the models GitHub tested in Copilot CLI and VS Code. It solved more terminal tasks than Opus 5 in less than half as many steps.
+
+Lovable, Spotify and Optiver also reported reductions in model calls, output tokens or execution time.
+
+The pricing changes extend beyond ordinary input and output tokens:
+
+- Input tokens: $4 per million.
+- Output tokens: $20 per million.
+- Cache writes: $5 per million, down from $6.25.
+- Cache reads: $0.20 per million, down from $0.50.
+
+Anthropic estimates that typical tasks cost about 40% less because the model needs fewer tokens to finish them. That is a more useful claim than the headline token price, although it still depends on the task and the application’s retry behavior.
+
+## OpenAI is attacking the same metric from below
+
+OpenAI’s GPT-6 Sol costs $2 per million input tokens and $10 per million output tokens. That is exactly half of Opus 5.5’s standard rates.
+
+GPT-6 Luna goes much further downmarket at $0.10 per million input tokens and $0.50 per million output tokens, 97.5% below Opus 5.5 for both token types. Sol is positioned for recurring complex work:
+
+- programming;
+- debugging;
+- feature development;
+- data analysis.
+
+Luna is aimed at high-volume tasks:
+
+- data extraction;
+- summarization;
+- simple question answering.
+
+GPT-6 Astra remains the option for work where maximum capability matters more than cost.
+
+Caching narrows one part of the gap. OpenAI says GPT-6 offers a 90% discount on cached input, bringing Sol’s cached-input price to $0.20 per million tokens—the same nominal cache-read price Anthropic lists for Opus 5.5. Luna’s corresponding rate is $0.01 per million tokens. OpenAI also says GPT-6 can preserve cached context when developers change reasoning depth or turn tools on and off, which could improve cache reuse in long-running agents.
+
+The public evidence is not yet comparable. OpenAI reports that Sol reached 33.2% on AutomationBench 1.0.6 at maximum reasoning depth, at a cost of $0.27 per task. Anthropic reports an early 40.0% result for Opus 5.5 on Zapier. Those numbers come from different evaluation environments and cannot be treated as a controlled head-to-head test.
+
+OpenAI also says Sol can match Claude Fable 5.1 on FrontierCode 1.1 Main at much lower cost. Anthropic places Opus 5.5 above Fable 5.1 on FrontierCode. Neither company has published a shared run of Opus 5.5 and Sol with the same settings.
+
+Luna is less a direct Opus competitor than a routing layer. OpenAI reports a 66.6% score for Luna on DeepSWE v1.1 at maximum reasoning depth and says its per-task cost is much lower than older high-end Claude configurations.
+
+The intended architecture is becoming clear:
+
+- expensive models for difficult or ambiguous work;
+- cheaper models for recurring tasks;
+- very cheap models such as Luna for narrow subtasks.
+
+## The real comparison is cost per completed task
+
+The launch-day benchmark table is less important than the operating model behind it. Anthropic is asking enterprise buyers to measure coordination, retries, token use and time to completion—not just the model’s score on a benchmark.
+
+That is why the Opus 5.5 examples matter even though they come from early testers and internal evaluations. A model that scores higher but needs more steps can lose in production. A cheaper model can also become more expensive if it makes more errors, requires additional calls or leaves humans with more cleanup.
+
+My read is that Anthropic’s launch is partly defensive. Opus 5.5 improves on Opus 5 while cutting the API price by 20%, and it undercuts Fable 5.1 despite outperforming it on most of the published comparisons. OpenAI is responding with a different structure: Sol competes on serious work at half the token price, while Luna makes the cheapest agent steps almost disposable.
+
+The missing comparison is a controlled evaluation of Opus 5.5 and Sol on the same agent tasks, in the same environment and with the same settings. Until that exists, a 40.0% result for one model and a 33.2% result for the other is evidence of positioning, not a reliable ranking.
+
+For enterprise teams, the more useful internal scorecard is:
+
+- successfully completed tasks;
+- token consumption;
+- cache reuse;
+- latency;
+- required rework;
+- human involvement.
+
+## Lower prices do not mean identical behavior
+
+Opus 5.5 has a 1 million-token context window and supports up to 128,000 output tokens in synchronous API use. Its API model identifier is `claude-opus-5-5`.
+
+Anthropic also supports responses of up to 300,000 tokens through API Message Batches in a beta configuration. But Opus 5.5 is not a drop-in replacement for Opus 5 in every application.
+
+Adaptive reasoning is always enabled. Developers control its depth with the `effort` parameter rather than disabling reasoning entirely. Other changes affect tool use and state management:
+
+- forced tool use can end in an error;
+- reasoning blocks are tied to the model and conversation in which they were created;
+- the legacy `computer_20251124` computer-use tool is rejected in Claude API and Google Cloud;
+- applications that display text between tool calls as a status update may need to change how they process reasoning blocks.
+
+Those details matter for production agents. A lower price does not compensate for broken tool routing, incompatible stored conversation state or regressions in the user interface.
+
+Anthropic has also added restrictions around cybersecurity, biology and model distillation. Some cybersecurity requests may be routed automatically to Opus 4.8. Sensitive biology tasks may also be moved to another model, while verified organizations may receive broader access through Anthropic’s verification programs.
+
+The company says Opus 5.5 outperformed recent Claude models on almost every measure in an automated behavioral audit of roughly 2,000 scenarios. In a new test of constraint resistance, it attempted to bypass the restrictions about 85% less often than Opus 5 or Claude Mythos 5.1. Anthropic still warns that no process can reliably detect every failure before deployment.
+
+OpenAI makes similar claims about Sol and Luna, including fewer cases where a model falsely reports that programming work is complete and fewer other undesirable agent actions. OpenAI says these tests are deliberately constructed as attacks and should not be read as normal-use error rates.
+
+Both companies are therefore selling two things at once: more autonomous work and more controls around when that autonomy is allowed.
+
+## The market is moving below the flagship
+
+Claude Opus 5.5 is available through Anthropic’s API and through AWS, Google Cloud and Microsoft. GPT-6 Sol and Luna are available through OpenAI’s API as `gpt-6-sol` and `gpt-6-luna`, and are being rolled out through ChatGPT Work and Codex.
+
+Anthropic’s offer is straightforward: a model that beats Fable 5.1 on most of the company’s published benchmarks while costing 60% less on base API rates. OpenAI’s answer is not one cheaper flagship. It is a tiered system in which Sol handles substantial work at $2/$10 and Luna handles narrow operations at $0.10/$0.50.
+
+That makes the central buying decision less about selecting one universal winner. It becomes a routing problem: which model should receive each step, how often will it need to retry, and how much human correction will remain afterward?
+
+The model race is consequently becoming a contest over completed work per dollar. The company with the better benchmark score may still lose the deployment if its agents spend that advantage on extra steps, repeated calls and unfinished tasks.
