@@ -747,6 +747,16 @@
                                 catch (e) { return false; }
                             }
 
+                            // Лента — на языке самой страницы: на русском разборе только
+                            // русские, на английском только английские. Фид отдаёт оба языка
+                            // вперемешку. Есть в записи поле lang — верим ему; пока его нет,
+                            // русскую запись узнаём по кириллице в заголовке: на всех 403
+                            // записях фида этот признак совпал с lang самой страницы.
+                            var myLang = (document.documentElement.lang || 'ru').slice(0, 2).toLowerCase();
+                            function langOf(x) {
+                                if (x.lang) return String(x.lang).slice(0, 2).toLowerCase();
+                                return /[а-яёА-ЯЁ]/.test(x.title || '') ? 'ru' : 'en';
+                            }
                             // Лента дотягивается ОДИН раз и только когда
                             // читатель до неё добрался: 125 КБ фида не должны
                             // грузиться у того, кто до подвала не дошёл.
@@ -759,7 +769,7 @@
                                     .then(function (list) {
                                         if (!Array.isArray(list) || !list.length) return;
                                         var all = list.filter(function (x) {
-                                            return x && x.url && x.title;
+                                            return x && x.url && x.title && langOf(x) === myLang;
                                         });
                                         // Свежие вперёд. Фид приходит уже в
                                         // этом порядке, но сортировка здесь
