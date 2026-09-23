@@ -1,0 +1,66 @@
+## What Muse was allowed to do
+
+Meta presented Muse several weeks ago as an assistant that could:
+
+- book appointments, fill out forms and handle support requests;
+- take on tasks without a separate user prompt;
+- make purchases and create images and documents;
+- connect to the user’s apps and services;
+- create missing tools on the fly when a task required a function it did not have.
+
+The app is currently available only for macOS. It can access WhatsApp, email, calendars and social-media accounts, while macOS permissions give it access to protected resources including disk writes, the microphone, the camera, location tracking and calendars.
+
+Users must authorize Muse inside each service. But the more consequential decision was architectural: Muse used cloud speech transcription, which meant Meta could retain user recordings, instead of macOS’s built-in local transcription.
+
+## How the token was exposed
+
+Apple has spent years limiting what installed apps and terminal commands can access on a Mac. Muse effectively weakened those boundaries for its own operation.
+
+Any installed app or running code could change a long list of undocumented Muse settings, regardless of the macOS permissions it had received. Most settings appeared relatively harmless, such as those controlling dark mode. One controlled the server used to decrypt speech.
+
+An attacker could replace Meta’s server with an address under their control. Muse would then send an authentication token to that server, giving the attacker full control of the Muse account and access to the agent’s permissions.
+
+Wardle told Ars that the flaw let an attacker operate Muse rather than build a separate, complex Mac malware program. In his demonstrations, Muse wrote malicious files to disk and took photographs, in many cases without showing the user a warning.
+
+The design choices behind the attack were straightforward:
+
+- cloud-based speech transcription instead of local processing;
+- permission for any app to change every undocumented setting;
+- a server address that could be redirected through those settings;
+- an authentication token that followed the resulting request.
+
+The first two choices may have been made to let apps integrated with Muse control its interface. But allowing arbitrary code to change the destination for confidential speech processing created a much larger security problem.
+
+## A ClickFix attack was enough
+
+Wardle showed several routes to exploitation. In one, an attacker placed a server between Muse and Meta. After the user entered a voice prompt, the intermediary added a malicious instruction, such as a request to send an archive of all WhatsApp messages to the attacker.
+
+The token was then sent automatically with the request, giving the attacker persistent control of the Muse account.
+
+A simpler route used ClickFix, a social-engineering technique that persuades users to infect their own devices. Wardle argued that the usual response to a compromised-device attack — that application security no longer matters after the device is breached — did not fit this case. The takeover could begin with a simple terminal command.
+
+To avoid creating a prompt that an attacker could copy and paste directly, Wardle’s demonstration asked only how such an action could originate from a user without special permissions. Muse incorrectly answered that it was impossible.
+
+Wardle founded the nonprofit Objective-See Foundation, which focuses on macOS security. He also wrote The Art of Mac Malware series and previously worked at NASA and the US National Security Agency. He plans to discuss the vulnerability and other AI-assistant threats at the Objective by the Sea security conference in November.
+
+## The questions Meta left open
+
+Meta published two pieces in two weeks about the security and privacy systems behind an assistant with broad access to user data and device resources. They followed reports that internal tests of Anthropic and Google models had led to breaches of external networks that engineers did not intend to attack. The messaging appeared designed to answer criticism and calls to slow AI development.
+
+Against that backdrop, Muse’s flaw reads less like an isolated implementation mistake and more like a mismatch between the product’s autonomy and its security model. <strong>I think the most important omission is not the fix itself, but Meta’s explanation of why the risky design was chosen.</strong>
+
+Meta did not address the ease of ClickFix attacks, although a journalist specifically asked about that scenario. The company called the vulnerability “not removed,” even though an effective social-engineering route produced the same result. It also did not acknowledge that the flaw undermined protections Apple had developed over many years, or explain why Muse used cloud transcription instead of macOS’s local option.
+
+Amazon added another constraint before the disclosure: roughly 12 hours earlier, it began blocking Muse from making purchases on its site. Users saw a message saying Muse was an unauthorized AI agent that violated Amazon’s terms of use.
+
+Amazon said third-party apps making purchases for customers at other companies should operate openly and respect service providers’ decisions about access. The company compared AI agents with:
+
+- food-delivery apps and restaurants;
+- delivery services and stores;
+- online travel agencies and airlines.
+
+Amazon said agents such as Muse had the same obligations and asked Meta to remove Amazon from the list of available services.
+
+The assistant’s unusually broad access means users cannot treat Meta’s assurances as a substitute for technical safeguards. <strong>What I’d want to know is whether Meta will narrow Muse’s permissions, or merely patch the path that exposed them.</strong> An agent designed to act everywhere is still governed by the weakest boundary it can cross.
+
+This article first appeared in Ars Technica.
