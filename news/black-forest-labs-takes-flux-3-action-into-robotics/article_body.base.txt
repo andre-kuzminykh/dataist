@@ -1,0 +1,103 @@
+## What shipped
+
+BFL says specialized versions of FLUX 3 Action have controlled drones in the real world. One variant also completed the computer game Doom without a single character death, controlling the first-person view and the player’s weapon.
+
+The company describes these as early experiments, not the capabilities of a finished product.
+
+BFL told VentureBeat that it plans to publish:
+
+- model weights;
+- source code;
+- the fine-tuning recipe;
+- benchmarks;
+- reproducible examples;
+- an implementation for the low-cost SO-101 robot using Hugging Face’s LeRobot framework.
+
+Teams will be able to continue training the model on demonstrations collected by their own robots.
+
+BFL first showed FLUX 3 Action in July, when it introduced the FLUX 3 family. At that point, Action was available only to selected research and commercial partners, while the broader open FLUX 3 Dev model was promised for a later release.
+
+The new model predicts the next 32 actions and how the visual scene will change. Its loop is straightforward:
+
+1. It receives recent camera frames, system state and a task description.
+2. It generates the next 32 actions and a prediction of the future scene.
+3. The robot observes the updated environment and repeats the cycle.
+
+The architecture builds on FLUX 3 pretraining across images, video and audio. BFL uses a smaller architecture optimized for deployment, then trains the model to predict future video frames and actions at the same time.
+
+That approach extends BFL’s Self-Flow research, which explored how a generative model could both create data and learn useful representations of its inputs. VentureBeat previously described Self-Flow as an attempt to move away from separate frozen representation models such as CLIP or DINO. BFL later scaled that work into FLUX 3.
+
+The company has already released Self-Flow’s inference code and an ImageNet checkpoint under the Apache 2.0 license. The full training code and video-model checkpoint remain unpublished.
+
+## A strong result with a narrow claim
+
+RoboLab is an NVIDIA-built simulation benchmark for general-purpose robot policies. Its 120 tasks test visual understanding, reasoning about object relationships and procedural skills, with different difficulty levels and wording precision. NVIDIA created it partly to counter saturation in older benchmarks, where improving models become harder to distinguish.
+
+BFL reports that FLUX 3 Action scored 42.92% on RoboLab, 6.1 percentage points ahead of Cosmos 3, the previous best-performing open model on the benchmark. FLUX 3 Action has 7 billion parameters, compared with 16 billion for Cosmos3-Nano-Policy.
+
+[INFO:facts] 42,92% :: результат FLUX 3 Action на RoboLab-120 | 7 млрд :: параметров FLUX 3 Action | 16 млрд :: параметров Cosmos3-Nano-Policy | 1,43 раза :: преимущество в скорости
+
+The immediate leaderboard context is slightly messier. Just before FLUX 3 Action appeared, OASIS WAM held the top overall RoboLab-120 score at 39.0%. FLUX 3 Action still ranked above it.
+
+The speed result is part of BFL’s pitch. The company compares models using a real-time ratio: inference latency divided by the duration of the real-world action produced by the robot. A lower number means the model spends less computing time choosing the next action relative to the movement it controls.
+
+BFL says distilled versions of FLUX 3 Action establish a new Pareto frontier combining RoboLab success and inference speed on server GPUs. It also says the model outperforms π0.5 on the real-time ratio while completing tasks successfully more often.
+
+That distinction matters in deployment. A model can score well on a benchmark and still produce actions too slowly, leading to pauses, jerky movements or delayed reactions. BFL provided its new result before publication; when the result was checked before launch, NVIDIA’s public leaderboard did not yet include FLUX 3 Action.
+
+The comparison is also not a clean contest between identical systems. FLUX 3 Action and Cosmos 3 are world-and-action models that connect predictions about changes in the environment with action generation. Physical Intelligence’s π0.5 and NVIDIA’s GR00T family are vision-language-action models. Ai2 calls MolmoAct 2 an action-reasoning model.
+
+These systems overlap in the manipulation tasks they can perform, but they do not necessarily train or generate actions in the same way. MolmoAct 2, newer NVIDIA GR00T versions and other robotics models are evaluated on different mixtures of real and simulated tasks, so they do not appear beside FLUX 3 Action on RoboLab.
+
+## From FLUX representations to robot control
+
+The robotics release continues a direction BFL has been developing across its model families. Its premise is that extensive training on video can produce useful representations of movement, contact, object behavior and cause-and-effect relationships. Those representations can then be adapted to robot control.
+
+That idea was already visible in FLUX-mimic, a project created with Swiss startup mimic robotics. BFL said the earlier system used representations from the FLUX 3 video backend to control robots during industrial manipulation, and that it was tested in Audi production environments.
+
+FLUX 3 Action turns that connection into a model other robotics teams can adapt themselves.
+
+BFL says the policy shown in its new demonstrations was fine-tuned on roughly 200 teleoperation episodes covering several related object-moving tasks. The company says the objects in the test videos were not included in the training set.
+
+In one demonstration, the robot fails first, then tries again. In the accompanying transcript, the researchers described the behavior as the model initially failing, attempting the task again and performing it better.
+
+That is an interesting demonstration, but it remains a demonstration selected by BFL—not evidence that autonomous error correction generalizes across robots and environments. My read is that its real value is narrower: it shows the kind of behavior BFL hopes to obtain from a pretrained world model without demonstrating every possible failure scenario in advance.
+
+BFL is not alone in pursuing broad pretraining as a way to reduce robot-specific data requirements. Google DeepMind says its closed vision-language-action model Gemini Robotics On-Device 2 can adapt to new robot types with fewer than 200 examples. Access remains limited to trusted testers.
+
+Among open systems, Ai2’s MolmoAct 2 is the closest comparison to BFL’s strategy. Ai2 published:
+
+- model weights;
+- training code;
+- fine-tuning scripts;
+- datasets;
+- evaluation run results;
+- LeRobot integration.
+
+Ai2 reports an average score of 87.1% across five of its own real-robot evaluation tasks using a Franka robot. For π0.5, it reports 45.2%. Those numbers cannot be directly compared with RoboLab percentages because the tasks and evaluation methods differ.
+
+That is the larger weakness in the current field. Robotics still lacks one benchmark that can fairly rank systems across simulation, real hardware, different robot types and different kinds of manipulation. FLUX 3 Action has established a position on RoboLab, but it has not settled the broader contest among world-and-action models, vision-language-action models and action-reasoning models.
+
+## BFL’s open-model bet
+
+FLUX 3 Action arrives as BFL expands beyond image generation. The company was founded by researchers who had worked on latent diffusion and Stable Diffusion technologies. It first became known for the FLUX.1 image-model family, then launched a commercial API with FLUX1.1 Pro and expanded its open-core strategy through the FLUX.2 family, including the smaller [klein] models designed for fast inference and local deployment.
+
+In December 2025, BFL raised $300 million in a Series B round at a post-money valuation of $3.25 billion. Its total funding exceeded $450 million. The company operates in Freiburg and San Francisco.
+
+BFL made FLUX 3 Video generally available through its API in August. Pay-as-you-go pricing starts at $0.06 per second for Draft HD, $0.17 per second for standard HD and $0.29 per second for text-to-video or image-to-video generation in FHD. The company also offers video upscaling through a separate endpoint.
+
+The FLUX 3 Action materials do not announce a separate API, API pricing or a specific commercial license for the weights. At publication, BFL’s public FLUX 3 page still said that Action was distributed through selected research and commercial partners. The company’s documentation primarily presents FLUX 3 as a video-generation API, without a separate FLUX 3 Action endpoint.
+
+For robotics teams, the immediate opportunity is therefore local execution and fine-tuning rather than a managed cloud product.
+
+The surrounding ecosystem includes several different approaches:
+
+- <strong>GR00T N1.7 from NVIDIA</strong> is an open vision-language-action model with 3 billion parameters, released in April. It is aimed primarily at general-purpose humanoid systems and transferring manipulation across robot types. Teams can further train it for particular robots, tasks and environments.
+- <strong>MolmoAct 2 from Ai2</strong> was released in May and is also designed for local adaptation. It integrates directly with LeRobot.
+- <strong>Gemini Robotics On-Device 2 from Google</strong> is a closed system introduced in July. It is designed to run locally on robotics hardware, but Google distributes it only to selected testers and does not publish the weights.
+
+This is where I think the release may matter more than the RoboLab score. BFL is not asking every robotics team to train a large policy from scratch. It is offering a comparatively compact system with broad visual and physical representations, then asking teams to collect demonstrations on their own hardware and adapt the model to sorting, assembly, packaging, navigation and object-moving tasks.
+
+Open weights also give teams options that cloud robotics services do not: they can inspect and modify the model, run inference in their own infrastructure and potentially keep proprietary robot demonstrations and operational data inside their own environment. How commercially permissive that arrangement will be depends on BFL’s final license terms.
+
+The benchmark result shows that the approach can be competitive in simulation. The harder test is whether outside teams can reproduce it on their own robots—and whether 7 billion parameters, open weights and a practical fine-tuning workflow are enough to turn FLUX 3 Action into a useful physical system rather than another impressive score on a narrow leaderboard.
