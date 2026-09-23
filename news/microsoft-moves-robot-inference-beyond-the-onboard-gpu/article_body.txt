@@ -1,0 +1,71 @@
+## Why move compute
+
+Most physical AI systems still run inference on a GPU installed directly on the robot. The robot receives the data and action sequences needed to complete a task; higher-level planning may happen in the cloud, but execution generally remains tied to onboard hardware.
+
+That architecture is convenient, but it makes the robot pay the full cost of every model locally. As physical AI models grow larger and more complex, onboard GPUs:
+
+- consume more energy;
+- reduce battery life;
+- add cost and weight;
+- may not have enough capacity for newer models.
+
+The researchers studied the system-level consequences using mobile manipulation. Their test task was deliberately ordinary: inspect a kitchen for trash, pick it up and throw it away. Completing it requires the robot to:
+
+- plan a route to the kitchen;
+- understand the surroundings and locate trash;
+- drive to the trash;
+- pick it up;
+- return to the bin and discard it.
+
+They evaluated workloads in semantic mapping and planning, navigation, and manipulation across onboard, edge and cloud configurations.
+
+[FIGURE:0]
+
+The study’s central finding is not that every robot should send every computation to the cloud. It is that the robot should not be treated as the only place where inference can happen. Moving workloads to a local or cloud GPU improved the measured system, while freeing the robot from the power and memory demands of a larger onboard accelerator.
+
+## What the tests showed
+
+The performance gap was most visible when the onboard GPU lacked enough resources for the full mobile-manipulation stack. On GPUs with sufficient memory, mapping and planning still ran up to 383% slower than on an A100. That kind of delay is a serious limitation for a robot operating in a changing environment.
+
+Navigation on less capable GPUs detected obstacles 30% less reliably in time. Vision-language-action models did not become dramatically slower when compute was reduced, but their accuracy fell by 50%.
+
+[INFO:facts] 383% :: slower mapping and planning | 30% :: weaker obstacle detection | 50% :: lower VLA accuracy
+
+The same trade-off appeared in the battery tests. Researchers replaced the onboard GPU with a Raspberry Pi-5 board and sent all data to a remote GPU. Larger onboard GPUs, including Jetson Thor, reduced the robot’s battery charge by up to 160%, or several hours, even on larger robots.
+
+[FIGURE:1]
+
+[FIGURE:2]
+
+[FIGURE:3]
+
+This is where the result becomes more than a benchmark comparison. A robot with a lighter onboard computer can run longer, but only if the remote compute path is good enough. The authors identify the resulting trade-offs as performance, latency, network throughput and available GPU resources.
+
+The announcement is quieter about the failure mode that matters most in deployment: what the robot does when that remote path is unavailable or too slow. The study establishes the benefit of moving inference, but it does not describe a fallback policy for the robot when the edge or cloud cannot keep up. For physical systems, that missing detail may matter as much as the peak score.
+
+## Kubernetes as the deployment layer
+
+Microsoft’s answer is a toolchain for moving inference beyond the robot and dividing computation between an edge GPU and the cloud. Kubernetes serves as the common platform for distributing workloads across the robot’s resources, an edge GPU and cloud infrastructure when local capacity is insufficient.
+
+The tools can:
+
+- package robotic workloads into containers automatically;
+- move inference through declarative specifications;
+- distribute physical AI containers using Kubernetes policies;
+- connect robotic simulators, LeRobot and ROS2 for development.
+
+The workflow receives an instruction about which computation to move, creates a separate container for GPU inference and sends the same computation there.
+
+[FIGURE:4]
+
+Microsoft recently released Physical AI Toolchain as an open framework ready for industrial use. It combines Microsoft Azure services with NVIDIA’s physical AI stack and helps robotics developers automate and scale data collection, expansion and evaluation across perception, mobility, imitation learning and reinforcement-learning data pipelines.
+
+The new inference-offloading capability includes examples for the SO-101 and UR10e robots. Demonstrations show Microsoft’s Rho model for bimanual robots running on a Jetson Thor GPU, which controls a Mobile Aloha robot.
+
+[VIDEO:2]
+
+[VIDEO:3]
+
+Researchers said they have already tested the offloading function across many real-world use cases.
+
+I think the important change is architectural rather than product-specific. The robot is becoming an endpoint in a distributed AI system, not the entire system itself. That makes room for larger models and lighter machines, but it also turns network behavior and workload placement into part of the robot’s operating design. The next constraint may therefore sit less in the model than in the infrastructure expected to deliver it.
