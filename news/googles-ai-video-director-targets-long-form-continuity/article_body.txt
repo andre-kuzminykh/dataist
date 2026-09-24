@@ -1,0 +1,143 @@
+[FIGURE:0]
+
+## What Google is building
+
+Diffusion models can already produce realistic clips in seconds. The harder problem is making those clips behave like parts of one story.
+
+Existing pipelines often connect independent modules with separately written prompts. That creates two familiar failure modes:
+
+- <strong>Semantic drift:</strong> a character’s clothes, identity or background changes between shots.
+- <strong>Cascading errors:</strong> an artifact in one clip contaminates later generations.
+- <strong>Content collapse:</strong> the story stops developing in a meaningful way.
+- <strong>Responsibility gaps:</strong> when a problem appears in the final video, it is difficult to identify which prompt caused it.
+
+Google’s answer is an orchestration layer that treats long-form video generation as global optimization and world-state tracking. It coordinates Gemini and Veo, but is not tied to one specific generative model. Google also says generated images, video and audio retain built-in safeguards such as SynthID watermarks. Additional safety classifiers can be applied before release to identify problematic combinations that emerge when individually safe clips are assembled.
+
+The project is organized around four frameworks:
+
+- <strong>Co-Director</strong> — scheduled to appear at COLM 2026.
+- <strong>CANVAS</strong> — scheduled to appear at EMNLP 2026.
+- <strong>A²RD</strong> — an autoregressive architecture for video generation.
+- <strong>VQQA</strong> — a visual question-answering system for video-quality evaluation.
+
+Together, they turn a creative brief into a sequence of actions: generating prompts for multiple models, linking scenes, preserving recurring visual elements and refining outputs through feedback.
+
+The reported tests show better cross-scene consistency and more stable character identities, including videos lasting several minutes. The more important shift, however, is architectural: Google is separating content creation from continuity checking and treating quality as something to optimize during generation rather than inspect only at the end.
+
+[INFO:chips] Co-Director | CANVAS | A²RD | VQQA
+
+## How the pipeline works
+
+The AI video director uses a hierarchical multi-agent system to manage the creative direction of an entire video. Rather than following a fixed chain of prompts, it uses a multi-armed bandit to explore different creative configurations and favor the ones that perform better.
+
+The system combines three dimensions:
+
+1. <strong>Creative Strategy</strong> — the concept and presentation.
+2. <strong>Narrative Mode</strong> — the structure of the story.
+3. <strong>Aesthetic Archetype</strong> — the visual tone and cinematic style.
+
+An Orchestrator Agent selects a configuration, then passes structured prompts to the production hierarchy. A Pre-Production Agent combines the short scene script and visual references into a storyboard. A Production Agent turns that plan into synchronized audiovisual material:
+
+- Keyframe Agent fixes the appearance of characters and scenes.
+- Video Agent adds motion.
+- Audio Agent supplies voiceover and music.
+- A multimodal language-model judge evaluates the assembled video.
+
+The judge returns a component-level reward signal to the multi-armed bandit. The system then adjusts its creative configuration in later generation cycles, balancing exploration of new strategies against reuse of configurations that already work.
+
+[FIGURE:1]
+
+The architecture’s upper layer selects directions in the creative decision space. Its lower layer turns the chosen direction into a storyboard, keyframes, video clips and audio. The judge then feeds its evaluation back into the orchestration loop.
+
+That design reads less like a new video model than like a production manager placed above existing models. I think that is the practical bet here: the bottleneck is no longer only whether a model can render a convincing frame, but whether a system can remember what the frame committed the story to.
+
+## Three specialized systems
+
+### CANVAS preserves the world
+
+A coherent script alone does not guarantee stable characters or locations. CANVAS acts as a continuity-aware visual-storyboarding framework on top of Gemini.
+
+It keeps structured descriptions of characters, locations and object states as the story progresses. The system retrieves visual anchors from persistent memory or creates new ones when necessary. A world-state model helps preserve character identity and spatial layout when the narrative returns to a previously shown place.
+
+Google tested CANVAS on a museum-heist sequence from HardContinuityBench, comparing it with direct generation from Gemini-3.1-Pro and another multi-agent system, AutoStudio.
+
+The comparison focuses on recurring elements such as the thief, exhibition hall and jewel. It also tests both sequential transitions, such as a character changing clothes, and discontinuous ones, where the camera returns to the main hall after visiting another location.
+
+Direct Gemini-3.1-Pro generation can change the object and rearrange the room. AutoStudio can lose the thief’s cap and alter the environment between cuts. CANVAS uses persistent visual memory to retain the characters, spatial geometry and object states across the sequence.
+
+[FIGURE:2]
+
+### A²RD extends the timeline
+
+A²RD generates longer videos segment by segment. Its multimodal video memory tracks the context and dynamics of each fragment, allowing the system to decide how a new segment should relate to what came before.
+
+For every segment, it:
+
+- retrieves relevant context;
+- synthesizes a new segment;
+- refines the result;
+- updates its memory.
+
+The central choice is between two generation modes:
+
+- <strong>Extrapolation</strong> moves the story forward and introduces new events.
+- <strong>Interpolation</strong> reconnects the new segment to known characters and objects.
+
+That combination lets the system develop the plot while restoring the physical structure of the scene when needed. To test it, the researchers created a ten-minute film in which characters and locations had to evolve over long intervals and later return to their initial design.
+
+Ordinary video generators gradually distort the image: characters change and locations are rebuilt. A²RD repeatedly consults its video memory to preserve identities, costume details and environmental geometry from the first frame to the last.
+
+[VIDEO:0]
+
+The ten-minute film demonstrates how A²RD maintains visual consistency while continuing the story across a continuous long-form video.
+
+### VQQA uses language as a correction loop
+
+VQQA targets visual artifacts and high-level composition errors without modifying pixels directly. It generates visual questions tailored to a prompt, asks a vision-language model to critique the output, and uses that text as a semantic gradient for the next prompt.
+
+Its optimization loop is:
+
+1. The model generates a video.
+2. VQQA evaluates it with visual questions.
+3. The prompt is refined from the critique.
+4. The model generates another version.
+
+A global evaluator compares all candidates produced during the cycle against the original unchanged prompt. The system does not automatically keep the latest result, which helps prevent a local fix from damaging the overall context.
+
+This is a black-box prompt optimizer rather than a pixel editor. It can address errors such as incorrect attribute binding or characters switching roles between cuts, but it does so by sending the generator down a different path in latent space.
+
+[VIDEO:1]
+
+VQQA also corrects an attribute-binding error in the prompt: “A cubical balloon floats past a round window, sunlight passes through the glass panels.”
+
+Ordinary generation produces a hard, textureless cube. VQQA retains the cuboid shape while adding the material of an inflated balloon, including pronounced edges, seams and a metallized-film surface. The object moves past the sunlit window.
+
+In another example, a prompt describes “a violinist and a pianist performing a captivating harmonious duet.” Standard generation changes the performers’ instruments after a cut. VQQA keeps the pianist and violinist with their respective instruments throughout the performance.
+
+My guess is that VQQA is the least glamorous part of the announcement and possibly the most useful. A system that can identify and repair a semantic mistake through prompts is easier to place in an existing workflow than a fully autonomous director. The unresolved issue is cost: the approach adds repeated generation, evaluation and selection, and the announcement does not quantify that overhead.
+
+## Benchmarks and results
+
+Google evaluated the work on three specialized benchmarks intended to resemble professional video-production tasks:
+
+1. <strong>GenAD-Bench</strong> uses a human-in-the-loop pipeline combining Gemini 3 Pro with specialized image models. It creates 50 fictional brands, each with four different products, and tests 400 unique scenarios against precise marketing constraints.
+2. <strong>HardContinuityBench</strong> measures spatial and environmental continuity in complex multi-scene storyboards created with GPT-5.2. It includes long gaps between returns to a location, frequent costume and accessory changes, and evolving interactive props.
+3. <strong>LVBench-C</strong> measures long-range dynamics across 120 text scenarios involving changing character states, changing object properties and gradual environmental disclosure. Important visual elements must be absent for at least 10 segments before returning with a story-related change.
+
+[INFO:facts] 50 :: fictional brands | 400 :: unique scenarios | 120 :: text scenarios | 10 :: minimum segments before return
+
+The AI video director reached a maximum quality score of 81.4 on GenAD-Bench and improved story consistency on ViStoryBench.
+
+CANVAS improved continuity when scenes returned to previously shown locations on ST-Bench and HardContinuityBench. A²RD reduced layout drift and improved character and environment consistency on VBench-Long and LVBench-C. VQQA produced an absolute quality improvement on T2V-CompBench, VBench2 and VBench-I2V by using closed-loop prompt optimization.
+
+[FIGURE:3]
+
+The authors direct readers to separate papers for model architecture, training configurations and comparisons with baseline methods.
+
+## The remaining human role
+
+Google presents these frameworks as a foundation for coherent visual storytelling over long time spans, not as a replacement for authors. Future work will explore human-in-the-loop workflows as the multi-agent architectures improve.
+
+The proposed division of labor is clear: the system handles continuity, state tracking and repetitive prompt operations, while a person retains control of the creative direction and story construction.
+
+That distinction matters because the announcement’s strongest evidence concerns consistency, not autonomy. Google has shown a system that can coordinate generation and repair some of its failures. It has not shown that the system can decide whether a story is worth telling. For now, the human remains responsible for that judgment while the machines manage the increasingly expensive work of remembering what happened.
