@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>JEV-as-a-Judge: ИИ-судья сохраняет 99% точности за меньшие деньги</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="ИИ-судья сохраняет 99% точности за меньшие деньги" />
+    <meta property="og:description" content="ИИ может проверять ответы почти так же точно, как сильнейшие модели, но обходиться намного дешевле.
+
+Исследователи предлагают сначала использовать простого судью, который выносит только решение, без длинного объяснения. Он хорошо справляется с обычным сравнением ответов и проверкой фактов по источникам, но чаще ошибается там, где нужно проверить сложный вывод или распознать убедительно написанную неправду. Если передавать более сильной модели только сомнительные случаи, можно сохранить почти всю точность и заметно сократить расходы.
+
+В этом обзоре разбираем, как устроен такой двухэтапный отбор, где простой ИИ-судья ошибается и почему уверенность в собственном решении становится ключом к экономичной проверке ответов." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/" /><meta property="og:image" content="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />    <meta property="og:image:width" content="1400" />
+    <meta property="og:image:height" content="933" />    <meta property="article:published_time" content="2026-09-24" />
+
+    <meta name="description" content="JEV-as-a-Judge: ИИ может проверять ответы почти так же точно, как сильнейшие модели, но обходиться намного дешевле. Исследователи предлагают сначала использовать простого судью, который выносит только решение, без длинного объяснения." />
+    <link rel="canonical" href="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/" />    <link rel="alternate" hreflang="ru" href="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/">
+    <link rel="alternate" hreflang="en" href="https://dataist.ai/research/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi/">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "\u0418\u0418-\u0441\u0443\u0434\u044c\u044f \u0441\u043e\u0445\u0440\u0430\u043d\u044f\u0435\u0442 99% \u0442\u043e\u0447\u043d\u043e\u0441\u0442\u0438 \u0437\u0430 \u043c\u0435\u043d\u044c\u0448\u0438\u0435 \u0434\u0435\u043d\u044c\u0433\u0438",
+      "description": "\u0418\u0418 \u043c\u043e\u0436\u0435\u0442 \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0442\u044c \u043e\u0442\u0432\u0435\u0442\u044b \u043f\u043e\u0447\u0442\u0438 \u0442\u0430\u043a \u0436\u0435 \u0442\u043e\u0447\u043d\u043e, \u043a\u0430\u043a \u0441\u0438\u043b\u044c\u043d\u0435\u0439\u0448\u0438\u0435 \u043c\u043e\u0434\u0435\u043b\u0438, \u043d\u043e \u043e\u0431\u0445\u043e\u0434\u0438\u0442\u044c\u0441\u044f \u043d\u0430\u043c\u043d\u043e\u0433\u043e \u0434\u0435\u0448\u0435\u0432\u043b\u0435.\n\n\u0418\u0441\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u0442\u0435\u043b\u0438 \u043f\u0440\u0435\u0434\u043b\u0430\u0433\u0430\u044e\u0442 \u0441\u043d\u0430\u0447\u0430\u043b\u0430 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u0442\u044c \u043f\u0440\u043e\u0441\u0442\u043e\u0433\u043e \u0441\u0443\u0434\u044c\u044e, \u043a\u043e\u0442\u043e\u0440\u044b\u0439 \u0432\u044b\u043d\u043e\u0441\u0438\u0442 \u0442\u043e\u043b\u044c\u043a\u043e \u0440\u0435\u0448\u0435\u043d\u0438\u0435, \u0431\u0435\u0437 \u0434\u043b\u0438\u043d\u043d\u043e\u0433\u043e \u043e\u0431\u044a\u044f\u0441\u043d\u0435\u043d\u0438\u044f. \u041e\u043d \u0445\u043e\u0440\u043e\u0448\u043e \u0441\u043f\u0440\u0430\u0432\u043b\u044f\u0435\u0442\u0441\u044f \u0441 \u043e\u0431\u044b\u0447\u043d\u044b\u043c \u0441\u0440\u0430\u0432\u043d\u0435\u043d\u0438\u0435\u043c \u043e\u0442\u0432\u0435\u0442\u043e\u0432 \u0438 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u043e\u0439 \u0444\u0430\u043a\u0442\u043e\u0432 \u043f\u043e \u0438\u0441\u0442\u043e\u0447\u043d\u0438\u043a\u0430\u043c, \u043d\u043e \u0447\u0430\u0449\u0435 \u043e\u0448\u0438\u0431\u0430\u0435\u0442\u0441\u044f \u0442\u0430\u043c, \u0433\u0434\u0435 \u043d\u0443\u0436\u043d\u043e \u043f\u0440\u043e\u0432\u0435\u0440\u0438\u0442\u044c \u0441\u043b\u043e\u0436\u043d\u044b\u0439 \u0432\u044b\u0432\u043e\u0434 \u0438\u043b\u0438 \u0440\u0430\u0441\u043f\u043e\u0437\u043d\u0430\u0442\u044c \u0443\u0431\u0435\u0434\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u043d\u0430\u043f\u0438\u0441\u0430\u043d\u043d\u0443\u044e \u043d\u0435\u043f\u0440\u0430\u0432\u0434\u0443. \u0415\u0441\u043b\u0438 \u043f\u0435\u0440\u0435\u0434\u0430\u0432\u0430\u0442\u044c \u0431\u043e\u043b\u0435\u0435 \u0441\u0438\u043b\u044c\u043d\u043e\u0439 \u043c\u043e\u0434\u0435\u043b\u0438 \u0442\u043e\u043b\u044c\u043a\u043e \u0441\u043e\u043c\u043d\u0438\u0442\u0435\u043b\u044c\u043d\u044b\u0435 \u0441\u043b\u0443\u0447\u0430\u0438, \u043c\u043e\u0436\u043d\u043e \u0441\u043e\u0445\u0440\u0430\u043d\u0438\u0442\u044c \u043f\u043e\u0447\u0442\u0438 \u0432\u0441\u044e \u0442\u043e\u0447\u043d\u043e\u0441\u0442\u044c \u0438 \u0437\u0430\u043c\u0435\u0442\u043d\u043e \u0441\u043e\u043a\u0440\u0430\u0442\u0438\u0442\u044c \u0440\u0430\u0441\u0445\u043e\u0434\u044b.\n\n\u0412 \u044d\u0442\u043e\u043c \u043e\u0431\u0437\u043e\u0440\u0435 \u0440\u0430\u0437\u0431\u0438\u0440\u0430\u0435\u043c, \u043a\u0430\u043a \u0443\u0441\u0442\u0440\u043e\u0435\u043d \u0442\u0430\u043a\u043e\u0439 \u0434\u0432\u0443\u0445\u044d\u0442\u0430\u043f\u043d\u044b\u0439 \u043e\u0442\u0431\u043e\u0440, \u0433\u0434\u0435 \u043f\u0440\u043e\u0441\u0442\u043e\u0439 \u0418\u0418-\u0441\u0443\u0434\u044c\u044f \u043e\u0448\u0438\u0431\u0430\u0435\u0442\u0441\u044f \u0438 \u043f\u043e\u0447\u0435\u043c\u0443 \u0443\u0432\u0435\u0440\u0435\u043d\u043d\u043e\u0441\u0442\u044c \u0432 \u0441\u043e\u0431\u0441\u0442\u0432\u0435\u043d\u043d\u043e\u043c \u0440\u0435\u0448\u0435\u043d\u0438\u0438 \u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u0441\u044f \u043a\u043b\u044e\u0447\u043e\u043c \u043a \u044d\u043a\u043e\u043d\u043e\u043c\u0438\u0447\u043d\u043e\u0439 \u043f\u0440\u043e\u0432\u0435\u0440\u043a\u0435 \u043e\u0442\u0432\u0435\u0442\u043e\u0432.",
+      "image": "https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/cover.jpg",
+      "url": "https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/"
+      },
+      "datePublished": "2026-09-24",
+      "inLanguage": "ru",
+      "citation": {
+        "@type": "ScholarlyArticle",        "name": "JEV-as-a-Judge: Accept When Confident, Escalate When Unsure",        "identifier": "arXiv:2609.26550",
+        "url": "https://arxiv.org/abs/2609.26550"
+      },
+      "isBasedOn": "https://arxiv.org/abs/2609.26550",      "author": {"@type": "Person", "name": "@dataist_ai"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ИИ-судья сохраняет 99% точности за меньшие деньги" />
+    <meta name="twitter:description" content="ИИ может проверять ответы почти так же точно, как сильнейшие модели, но обходиться намного дешевле.
+
+Исследователи предлагают сначала использовать простого судью, который выносит только решение, без длинного объяснения. Он хорошо справляется с обычным сравнением ответов и проверкой фактов по источникам, но чаще ошибается там, где нужно проверить сложный вывод или распознать убедительно написанную неправду. Если передавать более сильной модели только сомнительные случаи, можно сохранить почти всю точность и заметно сократить расходы.
+
+В этом обзоре разбираем, как устроен такой двухэтапный отбор, где простой ИИ-судья ошибается и почему уверенность в собственном решении становится ключом к экономичной проверке ответов." />
+    <meta name="twitter:image" content="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script><link rel="stylesheet" href="/static/css/tailwind.css">
+    <style>
+.glass-header{border-bottom-width:1px;border-color:rgba(0,0,0,.05);background-color:hsla(0,0%,100%,.7);--tw-backdrop-blur:blur(40px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.glass-header:is(.dark *){border-color:hsla(0,0%,100%,.1);background-color:rgba(0,0,0,.7)}.glass-panel{border-width:1px;border-color:rgba(0,0,0,.05);--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px rgba(0,0,0,.06);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.glass-panel:is(.dark *){border-color:hsla(0,0%,100%,.1);--tw-bg-opacity:1;background-color:rgb(28 28 30/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px hsla(0,0%,100%,.04);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);--tw-shadow-color:#000;--tw-shadow:var(--tw-shadow-colored)}body{--tw-bg-opacity:1;background-color:rgb(245 245 247/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1));transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.3s}body:is(.dark *){--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::-moz-selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}:is(.dark *)::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}:is(.dark *)::selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.article-content p{font-family:Inter,sans-serif;font-size:1.125rem;line-height:1.75;margin-bottom:1.5rem;color:rgba(0,0,0,.85)}.dark .article-content p{color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-content p{font-size:1.3125rem;line-height:1.8;margin-bottom:2rem}}.article-content strong{font-weight:600;color:#000}.dark .article-content strong{color:#fff}.article-content em{font-style:italic}.article-content h2{font-family:Inter,sans-serif;font-weight:700;font-size:1.5rem;line-height:1.15;letter-spacing:-.02em;margin-top:4rem;margin-bottom:2rem;color:#000}.dark .article-content h2{color:#fff}@media (min-width:768px){.article-content h2{font-size:1.875rem}}@media (min-width:1024px){.article-content h2{font-size:2.25rem}}.article-content section{max-width:48rem;margin-left:auto;margin-right:auto;width:100%}.article-content figure{margin:3rem auto;max-width:48rem}.apple-img,.article-content .arxiv-chart{width:100%;border-radius:1.5rem;overflow:hidden;background:#fff;border:1px solid rgba(0,0,0,.05);box-shadow:0 4px 24px rgba(0,0,0,.04);display:block;padding:0}.dark .apple-img,.dark .article-content .arxiv-chart{border-color:hsla(0,0%,100%,.1);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.article-content figure img{width:100%;height:auto;display:block;-o-object-fit:cover;object-fit:cover}.article-content figure p{font-family:Space Mono,monospace;font-size:.875rem;color:#86868b;margin:1rem auto 0;text-align:center;line-height:1.6;max-width:42rem}.dark .article-content figure p{color:#8e8e93}.article-content .tech-card{display:flex;gap:1rem;align-items:flex-start;padding:1.25rem 1.5rem;margin-bottom:.75rem;border-radius:1rem;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.05)}.dark .article-content .tech-card{background:hsla(0,0%,100%,.04);border-color:hsla(0,0%,100%,.1)}.article-lead{font-family:Inter,sans-serif;font-weight:500;font-size:1.25rem;line-height:1.6;margin:.5rem 0 3rem;padding-left:1.25rem;border-left:2px solid #000;color:#86868b}.dark .article-lead{border-color:#fff;color:#8e8e93}@media (min-width:768px){.article-lead{font-size:1.5rem;padding-left:2rem}}.rel-rail{display:flex;gap:16px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x proximity;padding:4px 2px 12px;overscroll-behavior-x:contain;scrollbar-width:none;-ms-overflow-style:none}.rel-rail::-webkit-scrollbar{display:none}.rel-rail>a{flex:0 0 auto;width:208px;scroll-snap-align:start;text-decoration:none;display:block;transition:transform .25s cubic-bezier(.2,.8,.2,1)}@media (min-width:640px){.rel-rail>a{width:244px}}.rel-rail>a:hover{transform:translateY(-4px)}.rel-thumb{display:block;position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:18px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.1);box-shadow:0 4px 24px rgba(0,0,0,.05)}.dark .rel-thumb{background:hsla(0,0%,100%,.045);border-color:hsla(0,0%,100%,.14);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.rel-thumb img{width:100%;height:100%;-o-object-fit:cover;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}.rel-rail>a:hover .rel-thumb img{transform:scale(1.05)}.rel-rail time{display:block;margin:12px 0 5px;font-family:Space Mono,monospace;font-size:.625rem;letter-spacing:.08em;color:#86868b}.dark .rel-rail time{color:#8e8e93}.rel-title{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.875rem;font-weight:600;line-height:1.4;letter-spacing:-.01em;color:#000}.dark .rel-title{color:#fff}.rel-fade{position:absolute;top:0;bottom:12px;width:96px;pointer-events:none;opacity:0;z-index:2;transition:opacity .35s ease}.rel-fade-l{left:0;background:linear-gradient(90deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.rel-fade-r{right:0;background:linear-gradient(270deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.dark .rel-fade-l{background:linear-gradient(90deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.dark .rel-fade-r{background:linear-gradient(270deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.rel-arrow{position:absolute;top:calc(50% - 34px);translate:0 -50%;z-index:3;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid rgba(0,0,0,.1);background:#fff;color:#000;box-shadow:0 8px 26px rgba(0,0,0,.14);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,transform .25s ease}.dark .rel-arrow{border-color:hsla(0,0%,100%,.14);background:#1c1c1e;color:#fff}.rel-arrow:hover{transform:scale(1.08)}.rel-arrow-l{left:6px}.rel-arrow-r{right:6px}.rel-wrap[data-left="1"] .rel-fade-l,.rel-wrap[data-right="1"] .rel-fade-r{opacity:1}.rel-wrap[data-left="1"] .rel-arrow-l,.rel-wrap[data-right="1"] .rel-arrow-r{opacity:1;visibility:visible;pointer-events:auto}@media (hover:none){.rel-arrow{display:none}}@media (prefers-reduced-motion:reduce){.rel-arrow,.rel-fade,.rel-rail>a,.rel-thumb img{transition:none}}
+    </style><style>
+        /* --- ряд рубрик в шапке -----------------------------------------
+           Палитра витрин. На странице статьи её не было вовсе: переменные
+           живут в styles.css приложения, которого страница не подключает.
+           Из-за этого и переключатель языка рисовал неактивный язык тем же
+           цветом, что активный — значение var(--text-muted) не определено,
+           объявление отбрасывается, цвет наследуется. */
+        :root {
+            --bg-color: #F5F5F7;
+            --text-main: #1d1d1f;
+            --text-muted: #86868B;
+            --chip-border: rgba(0, 0, 0, 0.08);
+        }
+        .dark {
+            --bg-color: #000000;
+            --text-main: #f5f5f7;
+            --text-muted: #8E8E93;
+            /* 0.19, а не 0.10: на чистом чёрном десятая доля даёт
+               rgb(25,25,25) — ряд читается не кнопками, а россыпью слов. */
+            --chip-border: rgba(255, 255, 255, 0.19);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Края растворяет МАСКА самого ряда, а не градиент поверх него:
+           накладной прямоугольник пришлось бы красить фоном страницы, и на
+           границе тем он выглядел бы грязным мазком.
+
+           Правый край растворён сразу, ещё до пересчёта скриптом: рубрики
+           в шапку обычно не помещаются, и до первого замера честнее
+           показать растворение, чем сухой обрез. Не понадобится — скрипт
+           обнулит. */
+        #category-scroll {
+            --fade-l: 0px;
+            --fade-r: 56px;
+            -webkit-mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+            mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+        }
+
+        /* Заливки у рубрики нет, всю форму держит рамка — значит и рамка
+           задаётся здесь, а не только утилитой Tailwind. */
+        .category-btn {
+            transition: all 0.25s ease;
+            background: transparent;
+            border: 1px solid var(--chip-border);
+        }
+        .category-btn.active,
+        .category-btn.active:hover {
+            background: var(--text-main);
+            color: var(--bg-color);
+            border-color: var(--text-main);
+        }
+
+        /* Выбор рубрики на телефоне — на <details>, то есть без единой
+           строки JavaScript: раскрытие списка не должно зависеть от того,
+           доехала ли чужая библиотека. */
+        #cat-menu > summary { list-style: none; cursor: pointer; }
+        #cat-menu > summary::-webkit-details-marker { display: none; }
+        #cat-menu > summary::marker { content: ""; }
+        #cat-menu[open] > summary .cat-caret { transform: rotate(180deg); }
+        .cat-caret { transition: transform 0.2s ease; }
+        /* Подпись на кнопке телефона не должна раздувать шапку, и её ширина не
+           должна зависеть от длины названия рубрики. У «Исследований» кнопка
+           выходила на 135 пикселей против 106 у «Новостей», и правый край
+           «Telegram» уезжал за экран на 390. Замер поймал; на широком экране
+           этого не видно вовсе.
+
+           3.5rem, а не 4.5: с четырьмя с половиной не хватало ровно четырёх
+           пикселей. Теперь длина названия на ширину шапки не влияет никак. */
+        #cat-menu > summary > span {
+            max-width: 3.5rem; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        #cat-menu .cat-item {
+            display: flex; align-items: center; gap: 0.625rem;
+            padding: 0.625rem 0.75rem; border-radius: 0.75rem;
+            font-family: "Space Mono", monospace; font-size: 11px;
+            font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+            color: var(--text-muted); text-decoration: none;
+        }
+        #cat-menu .cat-item.active {
+            background: var(--text-main); color: var(--bg-color);
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4 shrink-0">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>            <div id="category-scroll" class="hidden sm:block flex-1 min-w-0 overflow-x-auto no-scrollbar">
+                <nav aria-label="Рубрики" class="flex flex-nowrap items-center gap-2 w-max mx-auto">
+                    <a href="/ru/?cat=all" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="all" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i><span>Все</span></a>
+                    <a href="/ru/?cat=learning" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="learning" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="graduation-cap" class="w-3.5 h-3.5 shrink-0"></i><span>Обучение</span></a>
+                    <a href="/ru/?cat=research" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="research" aria-current="page" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white active"><i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i><span>Исследования</span></a>
+                    <a href="/ru/?cat=tech" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="tech" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="cpu" class="w-3.5 h-3.5 shrink-0"></i><span>Технологии</span></a>
+                    <a href="/ru/?cat=cases" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="cases" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="briefcase" class="w-3.5 h-3.5 shrink-0"></i><span>Кейсы</span></a>
+                    <a href="/ru/?cat=thoughts" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="thoughts" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="brain" class="w-3.5 h-3.5 shrink-0"></i><span>Мысли</span></a>
+                    <a href="/ru/?cat=news" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="news" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="newspaper" class="w-3.5 h-3.5 shrink-0"></i><span>Новости</span></a>
+                </nav>
+            </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0"><details id="cat-menu" class="sm:hidden relative">
+                <summary class="category-btn inline-flex items-center gap-1.5 px-3 py-2 rounded-full font-mono text-[10px] font-bold tracking-tight uppercase text-black dark:text-white" aria-label="Выбрать рубрику">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span>Исследования</span>
+                    <i data-lucide="chevron-down" class="cat-caret w-3.5 h-3.5 shrink-0"></i>
+                </summary>
+                <div class="absolute right-0 top-full mt-2 w-56 p-2 rounded-2xl glass-panel flex flex-col gap-0.5 z-50">
+                    <a href="/ru/?cat=all" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i><span>Все</span></a>
+                    <a href="/ru/?cat=learning" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="graduation-cap" class="w-4 h-4 shrink-0"></i><span>Обучение</span></a>
+                    <a href="/ru/?cat=research" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" aria-current="page" class="cat-item active"><i data-lucide="microscope" class="w-4 h-4 shrink-0"></i><span>Исследования</span></a>
+                    <a href="/ru/?cat=tech" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="cpu" class="w-4 h-4 shrink-0"></i><span>Технологии</span></a>
+                    <a href="/ru/?cat=cases" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="briefcase" class="w-4 h-4 shrink-0"></i><span>Кейсы</span></a>
+                    <a href="/ru/?cat=thoughts" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="brain" class="w-4 h-4 shrink-0"></i><span>Мысли</span></a>
+                    <a href="/ru/?cat=news" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="newspaper" class="w-4 h-4 shrink-0"></i><span>Новости</span></a>
+                </div>
+            </details>            <nav id="lang-switch" aria-label="Язык" class="flex items-center gap-1.5 md:gap-2 font-mono text-[11px] md:text-sm font-bold uppercase tracking-widest select-none"><span aria-current="true" class="text-black dark:text-white">RU</span><span aria-hidden="true" class="text-apple-textMutedLight dark:text-apple-textMutedDark opacity-40">|</span><a href="/research/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi/" hreflang="en" lang="en" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="text-apple-textMutedLight dark:text-apple-textMutedDark hover:text-black dark:hover:text-white transition-colors no-underline">EN</a></nav>            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <script>
+        /* Растворение краёв ряда рубрик.
+
+           Отдельным блоком намеренно: в общем блоке внизу страницы первой
+           строкой идёт обращение к библиотеке иконок с unpkg.com, и если
+           она не ответила, весь тот блок не исполняется. Ряду рубрик до
+           этого дела быть не должно. */
+        (function () {
+            var el = document.getElementById('category-scroll');
+            if (!el) return;
+            var row = el.firstElementChild;
+            var RAMP = 48, MAX = 56;          // те же числа, что на витрине
+            var placed = false;
+
+            function update() {
+                var max = el.scrollWidth - el.clientWidth;
+                var w = function (v) {
+                    return max <= 8 ? 0
+                        : Math.round(Math.min(1, Math.max(0, v) / RAMP) * MAX);
+                };
+                el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+
+                if (!placed && max > 8) {
+                    placed = true;
+                    var active = el.querySelector('.category-btn.active');
+                    if (active) {
+                        /* Ровно настолько, чтобы текущая рубрика влезла, и
+                           ни пикселем больше: центрирование утаскивало ряд
+                           до упора и прятало «Все» за краем насовсем.
+                           Запас 64 шире растворения (56), иначе рубрика
+                           встаёт под маску и читается наполовину. */
+                        var pad = 64;
+                        /* BR440: смещение считается ОТ САМОГО РЯДА, а не
+                           через `offsetLeft`. Тот меряет от ближайшего
+                           позиционированного предка, а это `<header>` — он
+                           `fixed`. Разница ровно на отступ ряда внутри шапки
+                           (около 230 пикселей), и ряд уезжал на неё дальше,
+                           чем нужно: активная рубрика оказывалась за левым
+                           краем. Замерено: на 768 её видно −23 пикселя из
+                           137, на 640 — восемь, и те под растворением.
+                           На новостях этого не видно, потому что там активна
+                           ПОСЛЕДНЯЯ рубрика и перелёт упирается в край. */
+                        var box = el.getBoundingClientRect();
+                        var ab = active.getBoundingClientRect();
+                        var from = ab.left - box.left + el.scrollLeft;
+                        var l = from - pad;
+                        var r = from + ab.width + pad;
+                        if (r > el.scrollLeft + el.clientWidth) el.scrollLeft = r - el.clientWidth;
+                        else if (l < el.scrollLeft) el.scrollLeft = Math.max(0, l);
+                        /* Узкий экран: рубрика с обоими запасами уже не
+                           помещается (123 + 64 + 64 больше 216 при 640), и
+                           подгонка по правому краю загоняет левый под маску.
+                           Читают слева направо — значит слева и освобождаем.
+                           Замерено: было 46 при маске 56, стало 56. */
+                        if (from - el.scrollLeft < MAX) el.scrollLeft = Math.max(0, from - MAX);
+                        max = el.scrollWidth - el.clientWidth;
+                        el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                        el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+                    }
+                }
+            }
+
+            el.addEventListener('scroll', update, { passive: true });
+            window.addEventListener('resize', update);
+
+            /* Главное. Ряд меняет ширину ПОСЛЕ первого замера: `<i
+               data-lucide>` превращается в svg, когда догрузится библиотека
+               иконок, и рубрики раздаются. Разовый замер этого не ловит —
+               край резался насухо. Наблюдатель ловит любое изменение
+               размера, чем бы оно ни было вызвано. */
+            if (window.ResizeObserver && row) new ResizeObserver(update).observe(row);
+            window.addEventListener('load', update);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+
+            update();
+        })();
+
+        /* Меню рубрик на телефоне закрывается нажатием мимо него.
+           Раскрытие держится на <details> и работает без скрипта; это лишь
+           удобство — не сработает, меню закроется повторным нажатием. */
+        (function () {
+            var menu = document.getElementById('cat-menu');
+            if (!menu) return;
+            document.addEventListener('click', function (e) {
+                if (menu.open && !menu.contains(e.target)) menu.open = false;
+            });
+        })();
+    </script>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-09-24</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    ИИ-судья сохраняет 99% точности за меньшие деньги
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/cover.jpg"
+                         alt="Обложка: ИИ-судья сохраняет 99% точности за меньшие деньги"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Дешёвый судья для ИИ</h2>
+<p>Оценивать ответы ИИ дорого. Особенно если проверять нужно не сотни примеров, а миллионы ответов в дата-пайплайне, бенчмарке или системе отбора данных.</p>
+<p>Обычно для такой работы берут сильную языковую модель. Она читает вопрос, сравнивает ответы, проверяет факты и выносит вердикт. Проблема в цене и задержке. Чем сложнее модель и длиннее её рассуждение, тем дороже каждый вызов.</p>
+<p>Статья Carnegie Mellon предлагает другой подход: <strong>сначала использовать дешёвого судью, а сильную модель подключать только там, где первый не уверен</strong>. В роли первого судьи выступает <strong>JEV</strong> — сервис, который возвращает не объяснение, а типизированный вердикт и вероятности по возможным меткам.</p>
+<p>На обычных задачах JEV оказался близок к GPT-6. При этом один его вердикт стоил примерно в 277 раз дешевле.</p>
+</section>
+<section>
+<h2>Что такое JEV</h2>
+<p>Генеративный судья обычно пишет рассуждение, а потом выдаёт итог. JEV работает иначе. Ему задают вопрос, описание меток и входные данные. На выходе он возвращает структурированный ответ:</p>
+<p>🟠 выбранную метку;</p>
+<p>🟠 вероятности всех возможных меток;</p>
+<p>🟠 уверенность, которую можно использовать для маршрутизации.</p>
+<p>Например, на задаче сравнения ответов возможны метки «ответ A» и «ответ B». На проверке фактов — «поддержано» и «галлюцинация». На проверке финального ответа — «верно», «неверно» и «нет ответа».</p>
+<p>Такой интерфейс удобен для пайплайна. Не нужно разбирать длинное объяснение и пытаться понять, какой именно вывод сделала модель. Система сразу получает значение нужного типа.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Сравнение ручной оценки, генеративного судьи и судьи с типизированным вердиктом и вероятностями.</p>
+</div></figure>
+<p>Но у подхода есть условие. Вероятность должна помогать отличать правильные решения от ошибок. Если модель уверенно ошибается, маршрутизация не спасёт.</p>
+</section>
+<section>
+<h2>Что проверяли</h2>
+<p>Исследователи сравнили JEV с шестнадцатью судьями: генеративными моделями, локальными моделями и моделями вознаграждения. В число сравнений вошёл GPT-6, который стал главным ориентиром по качеству.</p>
+<p>Проверка охватила несколько типов задач:</p>
+<p>🟣 сравнение двух ответов на один вопрос;</p>
+<p>🟣 проверка ответа по предоставленным доказательствам;</p>
+<p>🟣 оценка финального ответа модели относительно эталона;</p>
+<p>🟣 проверка сложных задач на знания, математику, рассуждение и программирование;</p>
+<p>🟣 выбор лучшего ответа из четырёх вариантов;</p>
+<p>🟣 сравнение ответов, написанных в разных стилях.</p>
+<p>Основные данные взяли из RewardBench, JudgeBench и HaluEval. Дополнительно авторы использовали сохранённые ответы из экспериментов с многошаговыми диалогами и отдельные контрольные наборы.</p>
+<p>Всего в базовом сравнении было 1312 заданий. Ошибка формата тоже считалась ошибкой. Если модель не вернула допустимую метку, нарушила схему или не ответила после повторных попыток, результат не исправляли вручную.</p>
+<p>Для проверки спорных случаев авторы провели слепую оценку человеком. Эксперт не видел метки бенчмарка и не знал, какой судья оказался прав.</p>
+</section>
+<section>
+<h2>Обычные задачи JEV решает дёшево</h2>
+<p>На RewardBench JEV получил 92,2% против 93,5% у GPT-6. Разница составила 1,3 процентного пункта.</p>
+<p>На HaluEval, где ответ нужно сверять с доказательствами, JEV набрал 87,5%, а GPT-6 — 86,7%. Разница оказалась в пользу JEV, но выборка и сами метки содержали спорные случаи.</p>
+<p>На наборе из 150 сохранённых ответов JEV достиг 94,0%, GPT-6 — 96,7%.</p>
+<p>Иными словами, на задачах обычного сравнения и проверки ответа по готовому контексту JEV держится рядом с гораздо более дорогой моделью.</p>
+<p>🟠 RewardBench: 92,2% у JEV против 93,5% у GPT-6.</p>
+<p>🟠 HaluEval: 87,5% против 86,7%.</p>
+<p>🟠 Проверка финального ответа: 94,0% против 96,7%.</p>
+<p>🟠 Стоимость JEV: около 0,044 доллара за тысячу решений.</p>
+<p>🟠 Стоимость GPT-6 на том же измерительном наборе: около 12,182 доллара.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Сравнение задержки и стоимости тысячи решений для размещённых моделей.</p>
+</div></figure>
+<p>Разница в скорости тоже заметна. Медианная задержка JEV составила 0,152 секунды. У GPT-6 — 1,885 секунды. Это измерение включает сеть, сервер провайдера и повторы запросов, поэтому его нельзя считать чистой скоростью инференса. Но для прикладного пайплайна важен именно полный срок получения результата.</p>
+</section>
+<section>
+<h2>На сложных задачах разрыв растёт</h2>
+<p>JudgeBench изменил картину. Здесь нужно проверять объективную правильность ответа, включая математику, рассуждение и программирование.</p>
+<p>JEV набрал 78,6%. GPT-6 — 93,1%. Разница составила 14,6 процентного пункта.</p>
+<p>Особенно заметным разрыв оказался в рассуждении и программировании:</p>
+<p>🟣 рассуждение: 68,4% у JEV против 95,9% у GPT-6;</p>
+<p>🟣 программирование: 76,2% против 97,6%;</p>
+<p>🟣 знания: 84,4% против 90,9%.</p>
+<p>Человек, проверивший спорные случаи, в основном согласился с GPT-6. На JudgeBench он выбрал GPT-6 в 57 из 69 случаев, где судьи разошлись. За JEV эксперт высказался только один раз.</p>
+<p>Проблема JEV проявляется там, где нужно самостоятельно проверить цепочку вывода. Короткой оценки ответа недостаточно. Судье приходится восстановить решение, найти ошибку в формуле или понять, что убедительно написанный ответ заканчивается неправильным выводом.</p>
+<p>Похожая ситуация возникла в RM-Bench. Если правильный ответ написан проще, а ошибочный — подробнее и аккуратнее, JEV начинает чаще выбирать неправильный вариант. При одинаковом стиле его точность составила 84,0%. В сложных стилевых парах — 74,8%. У GPT-6 этот эффект почти исчез: 93,3% и 94,6%.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/fig_8.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Точность JEV, GPT-6 и модели вознаграждения в задачах выбора и сравнения ответов разных стилей.</p>
+</div></figure>
+</section>
+<section>
+<h2>Уверенность превращается в маршрутизатор</h2>
+<p>Практическая идея статьи — <strong>не использовать JEV в одиночку</strong>.</p>
+<p>Схема выглядит так:</p>
+<p>1. JEV быстро оценивает каждый пример.</p>
+<p>2. Если максимальная вероятность высокая, система принимает его вердикт.</p>
+<p>3. Если уверенность ниже порога, пример передаётся GPT-6 или другой сильной модели.</p>
+<p>4. Итогом становится решение второго судьи.</p>
+<p>Это обычный каскад, но его эффективность зависит от того, умеет ли первый судья находить собственные ошибки.</p>
+<p>У JEV такая связь есть. На трёх основных наборах точность росла вместе с максимальной вероятностью выбранной метки. Среди решений с вероятностью 0,99 и выше он ошибался редко. Среди решений с вероятностью ниже 0,6 правильными были только 47,7%.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Распределение уверенности JEV для правильных и неправильных решений и кривые надёжности разных судей.</p>
+</div></figure>
+<p>В симуляции каскад с порогом 0,9 передавал сильной модели 34% примеров. Он сохранял 99,6% точности GPT-6, но требовал около 47% его стоимости. На JudgeBench пришлось передавать больше задач — около 61% при том же пороге. Даже там каскад сохранял 98,2% точности и обходился примерно в 62% стоимости GPT-6.</p>
+<p>В заранее зафиксированном эксперименте на парных сравнениях JEV принимал 53,7% решений сам. Остальные уходили к GPT-6. Точность составила 92,5% против 93,1% у GPT-6 без каскада. Относительная стоимость — около 57%.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Каскад принимает уверенные решения JEV и передаёт неуверенные случаи более сильной модели.</p>
+</div></figure>
+</section>
+<section>
+<h2>Уверенность не даёт гарантии</h2>
+<p>У маршрутизации есть границы.</p>
+<p>На сложных стилевых парах JEV иногда уверенно выбирал неправильный ответ. В задачах с проверкой свободного текста без доказательств ситуация оказалась ещё хуже. JEV набрал 52,5% — почти случайный результат. При этом средняя максимальная вероятность была около 0,90.</p>
+<p>Получается опасная комбинация: судья почти не понимает задачу, но сообщает высокую уверенность. В таком режиме порог не помогает. Система будет принимать ошибки как надёжные решения.</p>
+<p>Авторы также проверили перенос калибровки между наборами. Температура, подобранная на одном типе задач, иногда улучшала вероятности на другом, но могла их ухудшить. Универсального значения не нашлось.</p>
+<p>Для практического применения нужны локальные проверки:</p>
+<p>🟣 проверять оба порядка кандидатов в парных задачах;</p>
+<p>🟣 выбирать порог на отдельной отложенной выборке;</p>
+<p>🟣 считать ошибки формата полноценными ошибками;</p>
+<p>🟣 отдельно проверять задачи с обманчивым стилем;</p>
+<p>🟣 не переносить порог и калибровку на новый тип данных без повторного измерения.</p>
+</section>
+<section>
+<h2>Что это меняет для пайплайнов оценки</h2>
+<p>JEV не заменяет сильный ИИ-судья. Он сокращает число обращений к нему.</p>
+<p>Для массовой проверки предпочтений, ответов по предоставленным источникам и простого отбора финальных решений дешёвый первый проход выглядит разумно. Система может обработать большую часть данных быстро и передать дорогой модели только спорные случаи.</p>
+<p>Для математики, программирования, многошагового рассуждения и ответов, которые нужно проверять без внешнего источника, одного JEV недостаточно. Здесь стоит сразу использовать более сильную модель или строить отдельную проверку.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/fig_5.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Зависимость ошибок JEV от уверенности и экономия каскада при передаче неуверенных решений GPT-6.</p>
+</div></figure>
+<p>Есть и более общий вывод. <strong>Вердикт, правильность и надёжная уверенность — три разные свойства.</strong> Модель может корректно соблюдать формат, часто выбирать правильную метку и всё равно плохо понимать, когда она ошибается.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>JEV подходит как <strong>дешёвый первый судья</strong>. На обычных задачах он уступает GPT-6 на несколько процентных пунктов, но стоит на порядки меньше и отвечает быстрее.</p>
+<p>Каскад «принять уверенное, передать сомнительное» позволяет сохранить около 99% качества GPT-6 примерно за половину его стоимости. Но это работает только в пределах проверенного типа задач.</p>
+<p>Если вы строите пайплайн оценки ИИ, разумная схема выглядит так:</p>
+<p>🟠 быстрый судья для большинства примеров;</p>
+<p>🟠 вероятность как сигнал для маршрутизации;</p>
+<p>🟠 сильная модель для сложных и неуверенных случаев;</p>
+<p>🟠 отдельная проверка порогов на собственных данных.</p>
+<p>Уверенность модели стоит использовать как повод для дополнительной проверки, а не как доказательство правильности.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2609.26550" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                </div>
+
+                <section class="mt-16 md:mt-20 fade-in" aria-labelledby="related-heading">
+                    <h2 id="related-heading"
+                        class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight mb-6 md:mb-8">
+                        Читайте также
+                    </h2>
+                    
+                    <div class="rel-wrap relative -mx-4 md:mx-0" data-left="0" data-right="1"
+                         data-date="2026-09-24">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l"
+                                aria-label="Предыдущие материалы">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r"
+                                aria-label="Следующие материалы">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0">
+                            <a href="https://dataist.ai/research/ru/kak-samouluchshenie-ii-agenta-uluchshaet-rezultaty-i-ekonomit-tokeny_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-samouluchshenie-ii-agenta-uluchshaet-rezultaty-i-ekonomit-tokeny_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-23">2026-09-23</time>
+                                <span class="rel-title">Как самоулучшение ИИ-агента улучшает результаты и экономит токены</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-22">2026-09-22</time>
+                                <span class="rel-title">Почему ИИ-агентам трудно работать с разными данными</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/kak-ii-agentam-ekonomit-kontekst-i-izbegat-sboev_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-agentam-ekonomit-kontekst-i-izbegat-sboev_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-21">2026-09-21</time>
+                                <span class="rel-title">Как ИИ-агентам экономить контекст и избегать сбоев</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-20">2026-09-20</time>
+                                <span class="rel-title">Как ИИ симулирует мысли пользователя</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-09-18/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-18/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-18">2026-09-18</time>
+                                <span class="rel-title">Как ИИ-агенты восстанавливают приложения по их поведению</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-09-17/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-17/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-17">2026-09-17</time>
+                                <span class="rel-title">Как ИИ помогает разрабатывать игры</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-09-16/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-16/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-16">2026-09-16</time>
+                                <span class="rel-title">Как проверить, понимает ли ИИ-ассистент мотивы людей</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-09-14/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-14/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-14">2026-09-14</time>
+                                <span class="rel-title">Как ИИ-агент управлял интернет-магазином и увеличил капитал в 14 раз</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-09-12/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-12/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-12">2026-09-12</time>
+                                <span class="rel-title">Последний ИИ, созданный людьми: на пути к рекурсивному самоулучшению</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-09-11/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-11/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-11">2026-09-11</time>
+                                <span class="rel-title">Как ИИ-агент за несколько дней собрал играбельный шутер</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-09-10/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-10/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-10">2026-09-10</time>
+                                <span class="rel-title">Как граф превращает ошибки ИИ-агента в подсказки</span>
+                            </a>
+                            <a href="https://dataist.ai/2026-09-09/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-09/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-09">2026-09-09</time>
+                                <span class="rel-title">А что, если ИИ-агенту проще пересоздать библиотеку, чем чинить её?</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка мигает
+                                // в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+                            function step(dir) {
+                                // Листаем на видимую ширину минус нахлёст,
+                                // чтобы следующая карточка подсказывала, что
+                                // лента продолжается.
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            sync();
+
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них в
+                            // страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую подложку,
+                                    // а не значок сломанной картинки.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = item.date; }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            function same(url) {
+                                try { return new URL(url, location.href).pathname === location.pathname; }
+                                catch (e) { return false; }
+                            }
+
+                            // Лента — на языке самой страницы: на русском разборе только
+                            // русские, на английском только английские. Фид отдаёт оба языка
+                            // вперемешку. Есть в записи поле lang — верим ему; пока его нет,
+                            // русскую запись узнаём по кириллице в заголовке: на всех 403
+                            // записях фида этот признак совпал с lang самой страницы.
+                            var myLang = (document.documentElement.lang || 'ru').slice(0, 2).toLowerCase();
+                            function langOf(x) {
+                                if (x.lang) return String(x.lang).slice(0, 2).toLowerCase();
+                                return /[а-яёА-ЯЁ]/.test(x.title || '') ? 'ru' : 'en';
+                            }
+                            // Лента дотягивается ОДИН раз и только когда
+                            // читатель до неё добрался: 125 КБ фида не должны
+                            // грузиться у того, кто до подвала не дошёл.
+                            var loaded = false;
+                            function fill() {
+                                if (loaded) return;
+                                loaded = true;
+                                fetch('/papers.json')
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) return;
+                                        var all = list.filter(function (x) {
+                                            return x && x.url && x.title && langOf(x) === myLang;
+                                        });
+                                        // Свежие вперёд. Фид приходит уже в
+                                        // этом порядке, но сортировка здесь
+                                        // стоит явно: порядок ленты — правило
+                                        // блока, а не побочный эффект того,
+                                        // как список собрали на сервере.
+                                        all.sort(function (a, b) {
+                                            return String(b.date || '').localeCompare(String(a.date || ''));
+                                        });
+                                        // Где в этом списке стоит сама статья.
+                                        // Считаем ДО того, как её выбросить:
+                                        // её место и есть «здесь», а первым
+                                        // после неё идёт ровно предыдущий
+                                        // разбор.
+                                        var mineAt = -1;
+                                        for (var i = 0; i < all.length; i++) {
+                                            if (same(all[i].url)) { mineAt = i; break; }
+                                        }
+                                        var rows = all.filter(function (x) { return !same(x.url); });
+                                        if (!rows.length) return;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+
+                                        // ЛЕНТА ОТКРЫВАЕТСЯ НА МЕСТЕ ЭТОЙ
+                                        // СТАТЬИ, а не с самого свежего
+                                        // разбора. Влево от стартовой позиции
+                                        // остаётся то, что вышло ПОСЛЕ неё,
+                                        // вправо уходит то, что было ДО.
+                                        //
+                                        // Без этого лента получалась одинаковой
+                                        // на всех страницах сайта: у майской
+                                        // статьи она начиналась бы с сентября,
+                                        // и соседство по времени — то самое,
+                                        // ради чего блок и нужен, — пропадало
+                                        // ровно в тот момент, когда страница
+                                        // становится интерактивной.
+                                        //
+                                        // Позицию берём по месту самой статьи
+                                        // в фиде. Сравнивать по дате нельзя:
+                                        // за один день выходит по два разбора
+                                        // («2026-07-05» и «2026-07-05_1»), и
+                                        // правило «дата меньше моей» проскочит
+                                        // собрата того же дня — лента откроется
+                                        // на разборе через один.
+                                        //
+                                        // Дата остаётся запасным ответом на
+                                        // случай, если статьи в фиде нет
+                                        // вовсе: свежая страница попадает туда
+                                        // не раньше, чем пересоберётся индекс.
+                                        var at = 0;
+                                        if (mineAt >= 0) {
+                                            at = mineAt;
+                                        } else {
+                                            var mine = wrap.dataset.date || '';
+                                            if (mine) {
+                                                for (var k = 0; k < rows.length; k++) {
+                                                    if (String(rows[k].date || '') < mine) { at = k; break; }
+                                                }
+                                            }
+                                        }
+                                        // Самый старый разбор: предыдущего у
+                                        // него нет, поэтому лента встаёт в
+                                        // конец — слева от края всё свежее.
+                                        if (at > rows.length - 1) at = rows.length - 1;
+                                        var target = rail.children[at];
+                                        if (target) {
+                                            // Без плавности: это не жест
+                                            // читателя, а исходное положение.
+                                            rail.scrollLeft = target.offsetLeft - rail.offsetLeft;
+                                        }
+                                        sync();
+                                    })
+                                    .catch(function () { /* остаёмся с разметкой */ });
+                            }
+                            if ('IntersectionObserver' in window) {
+                                var io = new IntersectionObserver(function (es) {
+                                    if (es.some(function (e) { return e.isIntersecting; })) {
+                                        io.disconnect();
+                                        fill();
+                                    }
+                                }, { rootMargin: '400px' });
+                                io.observe(wrap);
+                            } else {
+                                fill();
+                            }
+                        })();
+                    </script>
+                </section>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        // BR436: ЧУЖАЯ БИБЛИОТЕКА НЕ РЕШАЕТ, УВИДИТ ЛИ ЧИТАТЕЛЬ ТЕКСТ.
+        // `lucide` едет с unpkg.com, а чужой сервер отвечает не всегда. Без
+        // проверки первая же строка бросала исключение — и ВЕСЬ остальной
+        // блок не исполнялся: ни кнопка темы, ни полоса прогресса, ни лента
+        // «Читайте также». Раньше к ним добавлялся и сам текст разбора: он
+        // был спрятан под `opacity: 0` до тех пор, пока наблюдатель не
+        // проставит `visible`, а наблюдатель регистрировался здесь же. Теперь
+        // правил `.fade-in` в стилях нет вовсе, и текст виден всегда — даже
+        // если JavaScript выключен или не дошёл. Иконка не показалась —
+        // досадно; разбор не показался — потеряли читателя.
+        if (window.lucide) lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
