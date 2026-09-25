@@ -1,0 +1,55 @@
+## A different job for an 8-billion-parameter model
+
+Stanford researchers have released CLM-8B, a model designed to choose among known actions rather than generate an answer token by token. It encodes the current state of a task, compares that representation with cached representations of available actions, and selects the closest match. The approach targets a recurring cost in agent systems: repeatedly asking a generative model to produce a tool name or rank a fixed set of options.
+
+CLM learns to represent task states and actions in a shared embedding space, bringing correct pairs closer and pushing incorrect ones farther apart. The researchers trained it with InfoNCE, a contrastive method that presents one correct state–action pair alongside incorrect alternatives.
+
+Training proceeded in three stages:
+
+- About 60 million question-and-answer pairs taught the model to match meanings.
+- About 30 million synthetic hard negatives introduced similar-looking alternatives with only one correct answer.
+- About one million AI-agent trajectories adapted it to decision-making.
+
+CLM-8B uses a frozen Qwen3-8B base model and separate projection layers for states and actions. That architecture lets an application encode a repeated set of actions once and keep their embeddings in a cache. For each new request, it only needs to encode the changing state and compare it against those stored options.
+
+A company could, for example, give an internal IT agent 50 permitted actions: reset a password, grant access, open a ticket or hand it to security. Instead of repeatedly processing all 50 choices in a generative prompt, CLM could prepare their representations in advance.
+
+[INFO:steps] Encode actions | Cache embeddings | Match state
+
+## A selector, not a solver
+
+The released model supports several tasks with a limited set of outcomes: choosing an option, estimating the probability of a yes-or-no answer, scoring on an ordered scale, and ranking arbitrary candidates. Potential uses include tool routing, ticket sorting, search-result filtering and choosing among proposed answers.
+
+Generative models can also be constrained to select from fixed tools or response options. Structured output and function calling have made those responses more reliable, but the model still has to operate as a decision system. CLM is built around that narrower job: rank known options given a state.
+
+That distinction could matter in multi-step agents, where small costs accumulate. A single routing decision may not take long, but an agent can make such choices dozens of times while routing, ranking and checking its work. CLM avoids autoregressive generation, though the researchers did not compare its cost with leading commercial interfaces under equivalent conditions. The publication therefore does not establish a specific reduction in deployment costs; CLM-8B still uses an 8-billion-parameter encoder.
+
+The researchers also fine-tuned CLM to check solutions to programming tasks. Larger models first generated candidate solutions: Opus 5 produced options for DeepSWE, and Fable 5 for Terminal-Bench 2.1. CLM then ranked the candidates and selected one to submit. It did not solve DeepSWE from scratch.
+
+On held-out subsets, CLM scored 81.6% across 38 DeepSWE tasks and 87.6% across 30 Terminal-Bench 2.1 tasks. Jev scored 71.1% and 83.1% on the same subsets. The researchers reported that CLM checked candidates 4.1–5.7 times faster than Jev.
+
+Project lead Jackie Kwok of Stanford told VentureBeat that contrastive training may suit domain-specific decision tasks better than standard supervised fine-tuning with cross-entropy loss. He also said starting from a pretrained CLM checkpoint can speed adaptation to new domains.
+
+Kwok described the division of labor this way: large reasoning models generate options and solve tasks; CLM cheaply selects, checks and tracks their results. He suggested that several low-cost open-weight models could generate answers or actions for CLM to rank, potentially costing less than relying on a leading model for most decisions.
+
+I think the more important question is not whether CLM can rank candidates quickly, but what happens when the candidate set is bad. CLM evaluates only the options it receives, and its probabilities depend on that set. If every proposed action is wrong, it still has to rank them.
+
+Kwok also said his team often sees a notable difference between CLM’s scores for successful and unsuccessful agent trajectories. The model could continuously score actions or action sequences and flag unusual behavior or signs of possible failure. That offers another way to monitor long-running agents, but it is not a guarantee of safety.
+
+CLM is not intended to replace a general reasoning model for open-ended work such as solving a mathematical problem, writing a long answer or planning at a high level. Its strength is narrower: selecting, ranking or checking options that are already known.
+
+The team has released CLM-8B’s weights under the Apache 2.0 license, along with open-source code, a TypeSafe-compatible API, fine-tuning tools and an interactive test environment for states, typed-answer questions and candidate ranking.
+
+## What the architecture makes reusable
+
+CLM is part of a recent wave of projects around the idea of “System 1.” On September 15, TypeSafe introduced Jev, a model for fast structured decisions trained with a method the company calls reinforcement learning for calibrated decisions. Laya takes a different approach based on small bidirectional encoders, while CUA-S1 is narrower still: its first model chooses constrained actions for filling forms.
+
+Kwok said the key architectural difference between CLM and models such as Jev and Laya is what they can cache. Jev and Laya mainly cache state representations; CLM’s dual-encoder design lets it compute and cache state and action embeddings independently.
+
+That matters when both context and action options are long. CLM can encode them separately and process them in batches. If the actions are known in advance—company tools, APIs or workflows, for example—their embeddings can be computed before requests arrive and reused. Kwok said that makes CLM particularly suitable for applications with long context and reusable action sets.
+
+I would want to know how much that advantage survives when the action set changes often, or when choosing the right option depends on reasoning that cannot be captured by comparing embeddings. The design looks most compelling when the choices are stable and the agent makes them repeatedly; outside that setting, the cache is less of a differentiator.
+
+The team is also working beyond the current 8-billion-parameter model. Kwok said CLM-8B is part of a model line intended to study how performance changes with scale. Researchers are training a multimodal CLM-35B-A3B with more data and compute, with a release planned for early October. They are also adding substantially more data about AI-agent use to improve integration with existing management systems and workflows.
+
+That next model will test whether CLM’s value comes mainly from making fixed choices cheaply—or whether a larger, more agent-aware model can extend the approach without losing its advantage.
