@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<title>AI-перевод романа · вертикальные карточки</title>
+<meta name="description" content="7 вертикальных тёмных карточек: цифры и вывод эксперимента с AI-переводом романа.">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================================
+   AI-перевод романа — 7 ВЕРТИКАЛЬНЫХ карточек 1080×1350 (4:5, Instagram).
+   Инверсия стиля урока Loop Engineering: ТЁМНЫЙ фон, белый текст, палитра
+   строго оранжевый (#F97316) + фиолетовый (#8854F3), шрифт JetBrains Mono,
+   иконки inline-SVG, логотип AIT слева вверху. ?export → все карточки в столбик.
+   ============================================================================ */
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400;font-display:swap;src:url('assets/fonts/JetBrainsMono-400.ttf') format('truetype')}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:500;font-display:swap;src:url('assets/fonts/JetBrainsMono-500.ttf') format('truetype')}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:700;font-display:swap;src:url('assets/fonts/JetBrainsMono-700.ttf') format('truetype')}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:800;font-display:swap;src:url('assets/fonts/JetBrainsMono-800.ttf') format('truetype')}
+
+:root{
+  --flame:#F97316; --plum:#8854F3;
+  --bg:#050505; --fg:#F4F4F5; --muted:rgba(255,255,255,.55);
+  --line:rgba(255,255,255,.12); --panel:rgba(255,255,255,.045);
+  --scale:1;
+  --mono:'JetBrains Mono','SFMono-Regular',ui-monospace,Menlo,Consolas,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:#111114;color:var(--fg);font-family:var(--mono);
+  -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;overflow-x:hidden}
+
+/* ---------- deck ---------- */
+#deck{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden}
+.card{position:absolute;width:1080px;height:1350px;overflow:hidden;background:var(--bg);
+  transform:scale(var(--scale)) translateY(14px);transform-origin:center center;
+  opacity:0;visibility:hidden;transition:opacity .5s ease,transform .5s ease;border-radius:10px}
+.card.active{opacity:1;visibility:visible;transform:scale(var(--scale)) translateY(0)}
+body.export{background:#1b1b20;overflow:auto}
+body.export #deck{position:static;display:block;height:auto;padding:24px 0}
+body.export .card{position:relative;opacity:1;visibility:visible;transform:none;margin:0 auto 30px;box-shadow:0 18px 60px rgba(0,0,0,.5)}
+
+/* ---------- chrome ---------- */
+.grain{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.06;mix-blend-mode:screen;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px}
+.logo{position:absolute;top:58px;left:64px;z-index:5;height:60px;display:flex;align-items:center}
+.logo img{height:60px;width:auto;object-fit:contain;display:block}
+.idx{position:absolute;top:74px;right:66px;z-index:5;font-size:20px;font-weight:700;letter-spacing:.18em;color:rgba(255,255,255,.4)}
+.ico{display:inline-block;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+
+/* ---------- vertical body ---------- */
+.vb{position:absolute;left:84px;right:84px;top:190px;bottom:110px;z-index:4;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:44px;text-align:center}
+.tile{width:132px;height:132px;border-radius:34px;display:grid;place-items:center;animation:breathe 4.5s ease-in-out infinite}
+.tile svg{width:66px;height:66px}
+.tile.f{background:rgba(249,115,22,.13);color:var(--flame);border:1.6px solid rgba(249,115,22,.4)}
+.tile.p{background:rgba(136,84,243,.13);color:var(--plum);border:1.6px solid rgba(136,84,243,.4)}
+.big{font-size:300px;font-weight:800;line-height:.95;letter-spacing:-.04em}
+.grad{background:linear-gradient(120deg,var(--plum) 0%,var(--flame) 45%,var(--plum) 100%);
+  background-size:220% 220%;-webkit-background-clip:text;background-clip:text;color:transparent;
+  animation:gshift 5s ease-in-out infinite}
+.lab{font-size:46px;font-weight:700;line-height:1.3;color:var(--fg)}
+.sub{font-size:30px;font-weight:500;line-height:1.5;color:var(--muted)}
+.ttl{font-size:60px;font-weight:800;letter-spacing:-.02em;line-height:1.1;white-space:nowrap}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes pulse{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes gshift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes chipglow{0%,100%{filter:brightness(1);transform:translateY(0)}15%{filter:brightness(1.4);transform:translateY(-5px)}}
+@keyframes stepglow{0%,100%{filter:brightness(1)}12%{filter:brightness(1.55)}}
+@keyframes nudgex{0%,100%{transform:translateX(0)}50%{transform:translateX(10px)}}
+@keyframes barup{0%{transform:scaleY(0)}16%{transform:scaleY(1)}86%{transform:scaleY(1)}100%{transform:scaleY(0)}}
+@keyframes fadepop{0%,12%{opacity:0;transform:translateY(14px)}26%{opacity:1;transform:none}84%{opacity:1;transform:none}100%{opacity:0;transform:translateY(14px)}}
+@keyframes ringping{0%{box-shadow:0 0 0 0 rgba(249,115,22,.55)}75%{box-shadow:0 0 0 30px rgba(249,115,22,0)}100%{box-shadow:0 0 0 0 rgba(249,115,22,0)}}
+@keyframes travel{0%{offset-distance:0%;opacity:0}12%{opacity:1}88%{opacity:1}100%{offset-distance:100%;opacity:0}}
+@keyframes frameglow{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,0)}50%{box-shadow:0 0 70px 6px rgba(249,115,22,.3)}}
+@keyframes emglow{0%,100%{text-shadow:0 0 0 rgba(249,115,22,0)}50%{text-shadow:0 0 26px rgba(249,115,22,.6)}}
+
+/* card 2 — chips языков: подсветка бежит по чипам */
+.chips{display:flex;align-items:center;gap:20px}
+.chips .arr{color:var(--muted);font-size:44px;font-weight:700;animation:nudgex 1.8s ease-in-out infinite}
+.chip{border:2px solid;border-radius:16px;padding:14px 26px;font-size:34px;font-weight:700;animation:chipglow 4s ease-in-out infinite}
+.chip:nth-of-type(1){animation-delay:0s}
+.chip:nth-of-type(2){animation-delay:.45s}
+.chip:nth-of-type(3){animation-delay:.9s}
+.chip:nth-of-type(4){animation-delay:1.35s}
+.chip.f{border-color:var(--flame);color:var(--flame)}
+.chip.p{border-color:var(--plum);color:var(--plum)}
+
+/* card 3 — конвейер: волна подсветки сверху вниз */
+.steps{display:flex;flex-direction:column;align-items:center;gap:16px}
+.step{width:480px;border:2px solid;border-radius:18px;padding:22px 20px;font-size:36px;font-weight:700;background:var(--panel);
+  animation:stepglow 4.5s ease-in-out infinite}
+.step.f{border-color:var(--flame);color:var(--flame)}
+.step.p{border-color:var(--plum);color:var(--plum)}
+.sarr{color:var(--flame);animation:pulse 2.4s ease-in-out infinite}
+.sarr svg{width:34px;height:34px;transform:rotate(90deg)}
+.steps>*:nth-child(1){animation-delay:0s}
+.steps>*:nth-child(2){animation-delay:.3s}
+.steps>*:nth-child(3){animation-delay:.6s}
+.steps>*:nth-child(4){animation-delay:.9s}
+.steps>*:nth-child(5){animation-delay:1.2s}
+.steps>*:nth-child(6){animation-delay:1.5s}
+.steps>*:nth-child(7){animation-delay:1.8s}
+
+/* card 4 — прогресс: блик бежит по заполненной части */
+.big2{font-size:180px;font-weight:800;line-height:1;letter-spacing:-.03em}
+.big2 .dim{color:rgba(255,255,255,.3)}
+.pbar{width:660px;height:18px;border-radius:9px;background:rgba(255,255,255,.12);overflow:hidden}
+.pfill{position:relative;width:63.3%;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--plum),var(--flame));overflow:hidden}
+.pfill::after{content:"";position:absolute;top:0;bottom:0;width:120px;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);
+  transform:translateX(-140px);animation:sheen 2.8s ease-in-out infinite}
+@keyframes sheen{0%{transform:translateX(-140px)}60%,100%{transform:translateX(720px)}}
+
+/* card 5 — сравнение: столбики вырастают, цифры появляются (цикл) */
+.cmp{display:flex;align-items:flex-end;gap:70px}
+.ccol{display:flex;flex-direction:column;align-items:center;gap:22px}
+.cnum{font-size:120px;font-weight:800;line-height:1;letter-spacing:-.03em;animation:fadepop 5s ease-in-out infinite}
+.ccol:nth-child(3) .cnum{animation-delay:.3s}
+.cbar{width:180px;border-radius:18px;transform-origin:bottom;animation:barup 5s ease-in-out infinite}
+.cbar.f{height:380px;background:linear-gradient(180deg,var(--flame),rgba(249,115,22,.25))}
+.cbar.p{height:182px;background:linear-gradient(180deg,var(--plum),rgba(136,84,243,.25));animation-delay:.25s}
+.clab{font-size:30px;font-weight:700;letter-spacing:.14em;color:var(--muted)}
+.cvs{font-size:46px;font-weight:800;color:rgba(255,255,255,.35);margin-bottom:190px;animation:fadepop 5s ease-in-out infinite;animation-delay:.5s}
+
+/* card 6 — волна качества */
+.wavewrap{position:relative;width:800px;height:300px}
+.wavewrap svg{width:100%;height:100%;overflow:visible}
+.wpath{fill:none;stroke:url(#wgrad);stroke-width:5;stroke-linecap:round;
+  stroke-dasharray:12 10;animation:wdash 3s linear infinite}
+@keyframes wdash{to{stroke-dashoffset:-88}}
+.wdot{position:absolute;width:22px;height:22px;border-radius:50%;transform:translate(-50%,-50%)}
+.wdot.p{background:var(--plum);box-shadow:0 0 0 8px rgba(136,84,243,.18)}
+.wdot.f{background:var(--flame);box-shadow:0 0 0 8px rgba(249,115,22,.2);animation:ringping 2.6s ease-out infinite}
+.wlab{position:absolute;font-size:28px;font-weight:700;white-space:nowrap;transform:translateX(-50%)}
+.wlab.p{color:var(--plum)}
+.wlab.f{color:var(--flame)}
+/* светящаяся точка, бегущая по волне (offset-path); в статике невидима (opacity:0) */
+.wtrav{position:absolute;left:0;top:0;width:16px;height:16px;border-radius:50%;background:var(--flame);
+  filter:drop-shadow(0 0 10px rgba(249,115,22,.95));opacity:0;offset-rotate:0deg;
+  offset-path:path('M20 150 C 90 110, 170 105, 250 125 S 380 115, 430 140 C 465 158, 470 240, 505 242 C 535 242, 552 165, 610 148 S 740 132, 780 138');
+  animation:travel 4.5s linear infinite}
+
+/* card 7 — вывод */
+.kick{font-size:26px;font-weight:700;letter-spacing:.26em;text-transform:uppercase;color:var(--muted)}
+.frame{border:2.4px solid rgba(249,115,22,.55);background:rgba(249,115,22,.07);border-radius:30px;
+  padding:70px 64px;display:flex;flex-direction:column;align-items:center;gap:40px;max-width:840px;
+  animation:frameglow 4s ease-in-out infinite}
+.frame .em{animation:emglow 3s ease-in-out infinite}
+.frame .bulb{width:110px;height:110px;border-radius:28px;display:grid;place-items:center;
+  background:rgba(249,115,22,.15);color:var(--flame)}
+.frame .bulb svg{width:58px;height:58px;animation:blink 2.2s ease-in-out infinite}
+.frame p{margin:0;font-size:48px;font-weight:700;line-height:1.45}
+.frame .em{color:var(--flame)}
+
+/* ---------- nav ---------- */
+#nav{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:14px;
+  background:rgba(20,20,26,.72);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:10px 16px;color:#fff}
+#nav button{background:rgba(255,255,255,.1);border:0;color:#fff;width:42px;height:42px;border-radius:50%;font-size:18px;cursor:pointer}
+#dots{display:flex;gap:9px}
+#dots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.3);cursor:pointer;transition:all .2s}
+#dots i.on{background:var(--flame);width:26px;border-radius:6px}
+#count{position:fixed;top:18px;right:20px;z-index:50;color:rgba(255,255,255,.85);font-weight:700;letter-spacing:.14em;font-size:15px;
+  background:rgba(20,20,26,.55);padding:7px 14px;border-radius:999px}
+body.export #nav,body.export #count{display:none}
+@media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="7" cy="7" r="3"/><path d="M2 20a5 5 0 0 1 10 0"/><circle cx="17" cy="7" r="3"/><path d="M12 20a5 5 0 0 1 10 0"/></symbol>
+<symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a13.5 13.5 0 0 1 0 18"/><path d="M12 3a13.5 13.5 0 0 0 0 18"/></symbol>
+<symbol id="i-flow" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/><path d="M7 10v3.4a2.6 2.6 0 0 0 2.6 2.6H14"/></symbol>
+<symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V11"/><path d="M9 20V6"/><path d="M14 20v-5"/><circle cx="18" cy="9" r="3.4"/><path d="m22 13-1.6-1.6"/></symbol>
+<symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M8.5 14.5C7 13.5 6 11.9 6 10a6 6 0 0 1 12 0c0 1.9-1 3.5-2.5 4.5-.6.4-1 .9-1 1.6v.4H9.5v-.4c0-.7-.4-1.2-1-1.6z"/></symbol>
+<symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+</defs>
+</svg>
+
+<div id="deck">
+
+  <!-- 1 — 15 активных читателей -->
+  <section class="card active" id="card-1">
+    <div class="grain"></div>
+    <div class="logo"><img src="https://raw.githubusercontent.com/andre-kuzminykh/andre-ait-page/main/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.png'"></div>
+    <div class="idx">01 / 07</div>
+    <div class="vb">
+      <span class="tile f"><svg class="ico"><use href="#i-users"/></svg></span>
+      <div class="big grad">15</div>
+      <div class="lab">активных читателей</div>
+    </div>
+  </section>
+
+  <!-- 2 — 3 языка -->
+  <section class="card" id="card-2">
+    <div class="grain"></div>
+    <div class="logo"><img src="https://raw.githubusercontent.com/andre-kuzminykh/andre-ait-page/main/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.png'"></div>
+    <div class="idx">02 / 07</div>
+    <div class="vb">
+      <span class="tile p"><svg class="ico"><use href="#i-globe"/></svg></span>
+      <div class="big grad">3</div>
+      <div class="lab">языка</div>
+      <div class="chips">
+        <span class="arr">→</span>
+        <span class="chip f">EN</span>
+        <span class="chip p">FR</span>
+        <span class="chip f">PL</span>
+        <span class="chip p">JP</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 — Не сырой AI -->
+  <section class="card" id="card-3">
+    <div class="grain"></div>
+    <div class="logo"><img src="https://raw.githubusercontent.com/andre-kuzminykh/andre-ait-page/main/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.png'"></div>
+    <div class="idx">03 / 07</div>
+    <div class="vb" style="gap:38px">
+      <span class="tile f"><svg class="ico"><use href="#i-flow"/></svg></span>
+      <div class="ttl">Не сырой AI</div>
+      <div class="steps">
+        <div class="step f">фрагменты</div>
+        <span class="sarr"><svg class="ico"><use href="#i-chevron"/></svg></span>
+        <div class="step p">стиль</div>
+        <span class="sarr"><svg class="ico"><use href="#i-chevron"/></svg></span>
+        <div class="step f">перевод</div>
+        <span class="sarr"><svg class="ico"><use href="#i-chevron"/></svg></span>
+        <div class="step p">проверка</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 — 19 / 30 -->
+  <section class="card" id="card-4">
+    <div class="grain"></div>
+    <div class="logo"><img src="https://raw.githubusercontent.com/andre-kuzminykh/andre-ait-page/main/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.png'"></div>
+    <div class="idx">04 / 07</div>
+    <div class="vb">
+      <span class="tile p"><svg class="ico"><use href="#i-chart"/></svg></span>
+      <div class="big2"><span class="grad">19</span><span class="dim"> / 30</span></div>
+      <div class="pbar"><div class="pfill"></div></div>
+      <div class="lab">длинных отрывков —<br>за человеком</div>
+    </div>
+  </section>
+
+  <!-- 5 — 522 vs 250 -->
+  <section class="card" id="card-5">
+    <div class="grain"></div>
+    <div class="logo"><img src="https://raw.githubusercontent.com/andre-kuzminykh/andre-ait-page/main/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.png'"></div>
+    <div class="idx">05 / 07</div>
+    <div class="vb" style="gap:56px">
+      <div class="cmp">
+        <div class="ccol">
+          <div class="cnum" style="color:var(--flame)">522</div>
+          <div class="cbar f"></div>
+          <div class="clab">ЧЕЛОВЕК</div>
+        </div>
+        <div class="cvs">vs</div>
+        <div class="ccol">
+          <div class="cnum" style="color:var(--plum)">250</div>
+          <div class="cbar p"></div>
+          <div class="clab">AI</div>
+        </div>
+      </div>
+      <div class="lab">фрагменты: человек vs AI</div>
+    </div>
+  </section>
+
+  <!-- 6 — Проблема — в неровности -->
+  <section class="card" id="card-6">
+    <div class="grain"></div>
+    <div class="logo"><img src="https://raw.githubusercontent.com/andre-kuzminykh/andre-ait-page/main/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.png'"></div>
+    <div class="idx">06 / 07</div>
+    <div class="vb" style="gap:70px">
+      <div class="ttl" style="font-size:56px">Проблема — в неровности</div>
+      <div class="wavewrap">
+        <svg viewBox="0 0 800 300">
+          <defs>
+            <linearGradient id="wgrad" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stop-color="#8854F3"/><stop offset="1" stop-color="#F97316"/>
+            </linearGradient>
+          </defs>
+          <path class="wpath" d="M20 150 C 90 110, 170 105, 250 125 S 380 115, 430 140 C 465 158, 470 240, 505 242 C 535 242, 552 165, 610 148 S 740 132, 780 138"/>
+        </svg>
+        <span class="wdot p" style="left:26%;top:38%"></span>
+        <span class="wlab p" style="left:26%;top:16%">сильный абзац</span>
+        <span class="wdot f" style="left:63%;top:80%"></span>
+        <span class="wlab f" style="left:63%;top:93%">неловкая фраза</span>
+        <span class="wtrav"></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 — Главный вывод -->
+  <section class="card" id="card-7">
+    <div class="grain"></div>
+    <div class="logo"><img src="https://raw.githubusercontent.com/andre-kuzminykh/andre-ait-page/main/866f2500-dd81-4d09-8c0f-2b55c25a3464-removalai-preview.png" alt="AIT" onerror="this.onerror=null;this.src='assets/ait-logo.png'"></div>
+    <div class="idx">07 / 07</div>
+    <div class="vb" style="gap:52px">
+      <div class="kick">Главный вывод</div>
+      <div class="frame">
+        <span class="bulb"><svg class="ico"><use href="#i-bulb"/></svg></span>
+        <p>AI пишет гладко,<br>но в романе именно<br><span class="em">мелочи решают всё</span></p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="count">01 / 07</div>
+<nav id="nav">
+  <button id="prev" aria-label="Назад">‹</button>
+  <div id="dots"></div>
+  <button id="next" aria-label="Вперёд">›</button>
+</nav>
+
+<script>
+(function(){
+  var cards = Array.prototype.slice.call(document.querySelectorAll('.card'));
+  var N = cards.length, i = 0;
+  var isExport = /[?&]export/.test(location.search);
+
+  var dotsWrap = document.getElementById('dots');
+  for(var k=0;k<N;k++){ var d=document.createElement('i'); d.dataset.k=k; dotsWrap.appendChild(d); }
+  var dots = dotsWrap.querySelectorAll('i');
+  var countEl = document.getElementById('count');
+  function pad(n){ return (n<10?'0':'')+n; }
+  function show(n){
+    i = (n+N)%N;
+    cards.forEach(function(c,k){ c.classList.toggle('active', k===i); });
+    dots.forEach(function(dt,k){ dt.classList.toggle('on', k===i); });
+    countEl.textContent = pad(i+1)+' / '+pad(N);
+  }
+  document.getElementById('next').onclick=function(){ show(i+1); };
+  document.getElementById('prev').onclick=function(){ show(i-1); };
+  dots.forEach(function(dt){ dt.onclick=function(){ show(+dt.dataset.k); }; });
+  document.addEventListener('keydown',function(e){
+    if(e.key==='ArrowRight'||e.key===' ') show(i+1);
+    else if(e.key==='ArrowLeft') show(i-1);
+  });
+  var sx=0;
+  document.addEventListener('touchstart',function(e){ sx=e.touches[0].clientX; },{passive:true});
+  document.addEventListener('touchend',function(e){
+    var dx=e.changedTouches[0].clientX-sx;
+    if(Math.abs(dx)>50) show(i+(dx<0?1:-1));
+  },{passive:true});
+
+  function fit(){
+    if(isExport){ document.documentElement.style.setProperty('--scale',1); return; }
+    var s = Math.min((innerWidth-40)/1080, (innerHeight-150)/1350, 1.25);
+    document.documentElement.style.setProperty('--scale', s.toFixed(4));
+  }
+  window.addEventListener('resize', fit);
+  if(isExport){ document.body.classList.add('export'); }
+  fit(); show(0);
+})();
+</script>
+</body>
+</html>
