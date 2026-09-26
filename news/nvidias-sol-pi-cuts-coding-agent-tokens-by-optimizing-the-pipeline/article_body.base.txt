@@ -1,0 +1,52 @@
+## The pipeline is part of the bill
+
+As agents run longer without supervision, one prediction becomes a chain of reasoning, tool calls and feedback loops. Token use rises with it. Most earlier cost-cutting approaches target the model or the infrastructure around it: faster attention, cheaper serving, quantization or less expensive models.
+
+SoL-Pi targets the control layer instead: the pipeline that determines how an agent observes its environment, acts and responds to feedback. Systems such as Codex, Claude Code and OpenClaw use this kind of pipeline.
+
+The challenge is that its parts interact. A change that saves tokens in one step can introduce errors elsewhere or simply shift costs to a later step. SoL-Pi automates the search: one research agent studies another agent’s action logs, proposes pipeline changes and tests them in prepared environments. Candidates are selected based on performance and efficiency checks.
+
+The researchers tested 152 optimization directions across 535 executable environments, using 495 tasks derived from GitHub issue–pull request pairs and 40 synthetic tests. The process involved more than 3,000 runs and over 60,000 agent-environment interactions. The researchers caution that a broad search is not necessarily a better one: automatically optimized pipelines have previously tended to fit training tasks and perform poorly on unfamiliar ones.
+
+To limit that risk, SoL-Pi kept search feedback separate from evaluation. It used EdgeBench as a benchmark without feeding its data into the search. Of 51 open tasks, 11 were reserved for a one-time check of completed candidates. The other 40 were used only for final evaluation, and their results were not returned to the search process.
+
+[FIGURE:0]
+
+## Four ways to spend fewer tokens
+
+The search produced four mechanisms:
+
+- **Action Fusion** combines two consecutive actions, such as editing code and running a test, to avoid a language-model call.
+- **Online Context Compact** reduces accumulated context after each planning stage when it can do so without losing important information.
+- **ObservationPack** stores long tool outputs and substitutes a short summary in later steps.
+- **Evidence-Preserving Reducer** sends large error and test logs to a cheaper model, which keeps the key findings. Automated checks help catch important details that the reduction may have missed.
+
+[FIGURE:1]
+
+Across the 51 open EdgeBench tasks, SoL-Pi performed about as well as the original Pi pipeline. The most economical configuration combined all four mechanisms: it used 49% fewer tokens while achieving 93.7% of Pi’s score. For users who value performance more than maximum savings, the best single mechanism beat Pi by 5.3% while also reducing token use. In two configurations, token consumption fell by 44.7–49%.
+
+[INFO:facts] 44.7–49% :: token savings | 93.7% :: score of leanest setup | 5.3% :: best single-mechanism gain over Pi
+
+At current API prices, the authors estimate savings of $8.75–13.50 per hour compared with the built-in pipelines in Codex and Claude Code, and $4.36–5.71 per hour compared with Pi.
+
+[FIGURE:2]
+
+The researchers built SoL-Pi using only GPT-5.6 Sol, then applied it unchanged to Opus 5. It retained 94.3% of Pi’s performance with comparable savings, though the mechanisms triggered less often and acted more cautiously. The researchers attribute that difference to optimizing the pipeline only on GPT-5.6 Sol trajectories.
+
+[FIGURE:3]
+
+## Savings do not settle the performance question
+
+Results on other benchmarks were mixed. On Terminal-Bench 4, SoL-Pi solved 15 of 63 processor tasks, compared with 18 each for Codex and Pi. Its total costs were about a quarter lower than Pi’s.
+
+On Lean 4 tasks with formal verification from the 2026 International Mathematical Olympiad (IMO 2026), SoL-Pi solved three of six problems and had the lowest cost per solved problem. In a kernel-optimization experiment, a group of 20 SoL-Pi agents cut costs by 26.8% compared with a comparable Pi group.
+
+[FIGURE:4]
+
+There are trade-offs. Shorter context can reduce prompt-cache reuse, though in one test run total costs still fell from $1339 to $894. The authors propose pretraining a pipeline across many tasks, much as models are pretrained, and using an efficient pipeline to search for its successor. They describe recursive efficiency gains as a possibility, not a result of this study.
+
+The potential leverage is credible: in an August test, Composio ran Deepseek V4 Flash on four agent frameworks, including Claude Code and Oh My Pi, which is based on Pi. The cost of solving a task varied almost threefold even though the model stayed the same.
+
+Agent token use has also been rising. OpenRouter analyst Peter Walker said it had increased 14-fold since February 2026, with nearly 70% of the volume coming from cached prompts. But compression itself can discard useful context: one study found that, on average, only 17% of user instructions survived compression. And parallel agents can add overhead. Codex developer Eric Provencher recently warned that more than two subagents almost always means extra tokens without better results, because they spend much of their time checking one another’s work.
+
+I think SoL-Pi’s strongest result is not the 49% figure; it is the evidence that the same model can cost nearly three times as much across different frameworks. The open question is whether pipeline optimizations can keep those savings on unfamiliar tasks without losing instructions or cache efficiency. If they cannot, the cheaper run may simply move the bill from tokens to mistakes.
