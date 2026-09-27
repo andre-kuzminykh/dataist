@@ -1,0 +1,63 @@
+# Building RAG takes days. Making it dependable takes longer
+
+## The data problem comes first
+
+When retrieval quality drops, changing the embedding model may seem like the obvious fix. But the trouble may be more basic: one source calls a product “Enterprise Security Gateway,” another “ESG,” and a third just “gateway.” Current configuration limits might be in a spreadsheet the system parsed incorrectly.
+
+Before tuning retrieval, a team needs to know which document is authoritative, when an old policy was replaced, and who owns the information. Those are data-governance questions, not model questions.
+
+Otherwise, a system can find the wrong document with impressive semantic accuracy and still get the answer wrong.
+
+Chunking has the same tendency to look like a minor setting when it is really an architectural choice. A technical document may contain a heading, a table of parameters and a paragraph describing exceptions. Split them apart and retrieval may return the table without the explanation of when its rules do not apply.
+
+The right indexing strategy depends on the source:
+
+- Product manuals may need their headings and sections preserved.
+- Policies may need metadata for department, region and effective date.
+- Database schemas may be better represented as structured relationships than as ordinary text.
+
+There is no universal chunk size. Chunks should follow the meaning and structure of the information, not an arbitrary token count.
+
+## Retrieval needs its own test
+
+A polished answer does not prove that retrieval worked. The model may sound convincing despite receiving the wrong material. Conversely, the right passage may be present but buried in so much irrelevant context that the model cannot use it.
+
+The failure could come from bad source data, faulty parsing, lost context during chunking, a missed result, poor ranking, conflicting documents or a model that made an error despite having the necessary evidence. Each cause calls for a different fix.
+
+Amazon Bedrock’s RAG evaluation documentation, for example, separates retrieval-only evaluation from evaluation of retrieval together with generation. Its metrics include context relevance, coverage, correctness, completeness and whether the answer is supported by its sources. The specific tool matters less than isolating which part of the system failed. If the right document never reached the model, changing the prompt is unlikely to help.
+
+The same distinction applies to search methods. Semantic retrieval is useful for questions about meaning, but a request for an exact product ID, contract number, error code or policy name calls for precision. Hybrid search combines semantic signals with keyword search and, where appropriate, reranking.
+
+That does not mean every company should abandon vector search. Different queries call for different retrieval methods:
+
+- Questions about meaning: semantic search.
+- Exact identifiers: keyword search.
+- Mixed queries: potentially a combination.
+
+## Ring treated retrieval as operations
+
+AWS described a multilingual RAG system for Ring customer support in a technical article from March 2026. It served 10 international regions, each with different product configurations, requirements and support information. Translation alone was not enough.
+
+Ring used metadata filters to return materials for the relevant region from a centralized knowledge base. Content ingestion, evaluation and approval for production were handled as separate processes. AWS said the approach reduced the cost of onboarding each additional region by 21%.
+
+The notable part is less the choice of AWS products than the operating model: region became metadata, content updates became controlled procedures, and evaluation became part of the workflow rather than a check performed only after launch.
+
+Security belongs in that workflow too. If an employee asks about a customer contract, retrieval can find the right document and still create a serious access-control failure by passing it to the model. Access needs to be checked before restricted information enters the model’s context, not after the answer has been generated.
+
+- Verify the user before sending restricted data into context.
+- Pass access rules along with search requests.
+- Keep auditing possible when the system makes multiple data requests or uses tools.
+
+Freshness is another operational concern. Prices change, policies are updated, product specifications are replaced, permissions are revised and support cases are closed. If the index falls behind, a model can confidently return information that was true last week but is now obsolete. Teams need to decide which sources require near-real-time updates, how quickly changes reach the index, what happens when an authoritative document is removed, and whether engineers can trace an answer to the document version that influenced it.
+
+## The architecture is the product
+
+Retrieving more documents can improve coverage, but it also expands context. Reranking and additional search stages may improve relevance while adding latency. Larger prompts increase inference costs. More context is not automatically better context: if five passages are enough, retrieving twenty may add noise and contradictions.
+
+I think this is where the “build RAG in days” framing becomes misleading. A prototype can demonstrate that retrieval and generation work together. It cannot, by itself, show that the system will remain accurate as sources change, enforce access controls, or make failures diagnosable.
+
+A mature RAG system has connected layers for sources and data lineage, processing, indexing, retrieval, access policies, evaluation, observability and generation. A team does not have to build every layer itself; cloud services and open-source components can provide different parts. But someone must own each layer, and the team needs a way to tell when it is failing.
+
+Longer context windows make it reasonable to ask whether RAG is still needed. The more useful question is whether a system can consistently deliver the right information to the right model and user at the right time. Sometimes that calls for ordinary RAG; sometimes hybrid search, structured data, graph retrieval or long context. Many systems will combine methods.
+
+The model cannot repair a system that supplies it with the wrong information. Enterprise AI depends as much on the controlled path into the model as on the model itself.
