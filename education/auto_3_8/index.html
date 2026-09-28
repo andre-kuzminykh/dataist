@@ -1,0 +1,1799 @@
+
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="robots" content="max-image-preview:large">
+    <title>Инженерия обвязки: что делает ИИ-агента управляемым и надёжным</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph -->
+    <!-- Превью-карточка (Telegram, соцсети, вебвью): в описание выводится полный
+         лид статьи; платформа сама обрежет по своему лимиту. -->
+    <meta property="og:site_name" content="Датаист / Обучение" />
+    <meta property="og:title" content="Инженерия обвязки: что делает ИИ-агента управляемым и надёжным" />
+    <meta property="og:description" content="Модель отвечает за интеллектуальную часть ИИ-агента, но управляемым и надёжным его делает то, что вокруг неё, — обвязка. Разбираем, чем она отличается от ИИ-платформы, из каких механизмов складывается, почему агенту дают только минимально необходимые права, как проверки и трассировка ловят и объясняют ошибки, а контрольные точки и восстановление позволяют не начинать всё заново, если агент сломался на девятом шаге из десяти." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/education/auto_3_8/" />
+    <meta property="article:published_time" content="2026-10-06T10:00:00+03:00" />
+    <link rel="canonical" href="https://dataist.ai/education/auto_3_8/">
+    <meta name="description" content="Модель отвечает за интеллектуальную часть ИИ-агента, но управляемым и надёжным его делает то, что вокруг неё, — обвязка. Разбираем, чем она отличается от ИИ-платформы, из каких механизмов складывается, почему агенту дают только минимально необходимые права, как проверки и трассировка ловят и объясняют ошибки, а контрольные точки и восстановление позволяют не начинать всё заново, если агент сломался на девятом шаге из десяти.">
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Инженерия обвязки: что делает ИИ-агента управляемым и надёжным" />
+    <meta name="twitter:description" content="Модель отвечает за интеллектуальную часть ИИ-агента, но управляемым и надёжным его делает то, что вокруг неё, — обвязка. Разбираем, чем она отличается от ИИ-платформы, из каких механизмов складывается, почему агенту дают только минимально необходимые права, как проверки и трассировка ловят и объясняют ошибки, а контрольные точки и восстановление позволяют не начинать всё заново, если агент сломался на девятом шаге из десяти." />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="/static/css/tailwind.css">
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+
+    <style>.glass-header{border-bottom-width:1px;border-color:rgba(0,0,0,.05);background-color:hsla(0,0%,100%,.7);--tw-backdrop-blur:blur(40px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.glass-header:is(.dark *){border-color:hsla(0,0%,100%,.1);background-color:rgba(0,0,0,.7)}.glass-panel{border-width:1px;border-color:rgba(0,0,0,.05);--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px rgba(0,0,0,.06);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.glass-panel:is(.dark *){border-color:hsla(0,0%,100%,.1);--tw-bg-opacity:1;background-color:rgb(28 28 30/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px hsla(0,0%,100%,.04);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);--tw-shadow-color:#000;--tw-shadow:var(--tw-shadow-colored)}body{--tw-bg-opacity:1;background-color:rgb(245 245 247/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1));transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.3s}body:is(.dark *){--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::-moz-selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}:is(.dark *)::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}:is(.dark *)::selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.article-p{margin-bottom:1.5rem;font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif;font-size:1.125rem;line-height:1.75rem;line-height:1.625;color:rgba(0,0,0,.85)}.article-p:is(.dark *){color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-p{margin-bottom:2rem;font-size:21px}}.article-h2{margin-top:4rem;margin-bottom:2rem;font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif;font-size:1.5rem;line-height:2rem;font-weight:700;letter-spacing:-.025em;--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.article-h2:is(.dark *){--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}@media (min-width:768px){.article-h2{font-size:1.875rem;line-height:2.25rem}}@media (min-width:1024px){.article-h2{font-size:2.25rem;line-height:2.5rem}}.reason-num{margin-right:.75rem;font-family:Space Mono,monospace;font-size:1.25rem;line-height:1.75rem;--tw-text-opacity:1;color:rgb(134 134 139/var(--tw-text-opacity,1))}.reason-num:is(.dark *){--tw-text-opacity:1;color:rgb(142 142 147/var(--tw-text-opacity,1))}@media (min-width:768px){.reason-num{font-size:1.5rem;line-height:2rem}}.list-card{margin-bottom:1rem;display:flex;align-items:flex-start;gap:1rem;border-radius:1rem;border-width:1px;border-color:rgba(0,0,0,.05);--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));padding:1.25rem;--tw-shadow:0 4px 24px rgba(0,0,0,.06);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.list-card:is(.dark *){border-color:hsla(0,0%,100%,.1);--tw-bg-opacity:1;background-color:rgb(28 28 30/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px hsla(0,0%,100%,.04);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);--tw-shadow-color:#000;--tw-shadow:var(--tw-shadow-colored)}@media (min-width:768px){.list-card{padding:1.5rem}}.emoji-chip{display:flex;height:2.75rem;width:2.75rem;flex-shrink:0;align-items:center;justify-content:center;border-radius:9999px;background-color:rgba(0,0,0,.05);font-size:1.25rem;line-height:1.75rem;line-height:1}.emoji-chip:is(.dark *){background-color:hsla(0,0%,100%,.1)}@media (min-width:768px){.emoji-chip{height:3rem;width:3rem;font-size:1.5rem;line-height:2rem}}.card-title{font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif;font-size:1rem;line-height:1.5rem;font-weight:600;line-height:1.375;--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.card-title:is(.dark *){--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}@media (min-width:768px){.card-title{font-size:1.125rem;line-height:1.75rem}}.card-sub{font-size:.875rem;line-height:1.25rem;line-height:1.625;--tw-text-opacity:1;color:rgb(134 134 139/var(--tw-text-opacity,1))}.card-sub:is(.dark *){--tw-text-opacity:1;color:rgb(142 142 147/var(--tw-text-opacity,1))}@media (min-width:768px){.card-sub{font-size:1rem;line-height:1.5rem}}.rel-wrap{position:relative}.rel-rail{display:flex;gap:16px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x proximity;padding:4px 2px 12px;overscroll-behavior-x:contain;scrollbar-width:none;-ms-overflow-style:none}.rel-rail::-webkit-scrollbar{display:none}.rel-rail>a{flex:0 0 auto;width:208px;scroll-snap-align:start;text-decoration:none;display:block;transition:transform .25s cubic-bezier(.2,.8,.2,1)}@media (min-width:640px){.rel-rail>a{width:244px}}.rel-rail>a:hover{transform:translateY(-4px)}.rel-thumb{display:block;position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:18px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.1);box-shadow:0 4px 24px rgba(0,0,0,.05)}.dark .rel-thumb{background:hsla(0,0%,100%,.045);border-color:hsla(0,0%,100%,.14);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.rel-thumb img{width:100%;height:100%;-o-object-fit:cover;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}.rel-rail>a:hover .rel-thumb img{transform:scale(1.05)}.rel-rail time{display:block;margin:12px 0 5px;font-family:Space Mono,monospace;font-size:.625rem;letter-spacing:.08em;color:#86868b}.dark .rel-rail time{color:#8e8e93}.rel-title{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.875rem;font-weight:600;line-height:1.4;letter-spacing:-.01em;color:#000}.dark .rel-title{color:#fff}.rel-fade{position:absolute;top:0;bottom:12px;width:96px;pointer-events:none;opacity:0;z-index:2;transition:opacity .35s ease}.rel-fade-l{left:0;background:linear-gradient(90deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.rel-fade-r{right:0;background:linear-gradient(270deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.dark .rel-fade-l{background:linear-gradient(90deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.dark .rel-fade-r{background:linear-gradient(270deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.rel-arrow{position:absolute;top:calc(50% - 34px);translate:0 -50%;z-index:3;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid rgba(0,0,0,.1);background:#fff;color:#000;box-shadow:0 8px 26px rgba(0,0,0,.14);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,transform .25s ease}.dark .rel-arrow{border-color:hsla(0,0%,100%,.14);background:#1c1c1e;color:#fff}.rel-arrow:hover{transform:scale(1.08)}.rel-arrow-l{left:6px}.rel-arrow-r{right:6px}.rel-wrap[data-left="1"] .rel-fade-l,.rel-wrap[data-right="1"] .rel-fade-r{opacity:1}.rel-wrap[data-left="1"] .rel-arrow-l,.rel-wrap[data-right="1"] .rel-arrow-r{opacity:1;visibility:visible;pointer-events:auto}@media (hover:none){.rel-arrow{display:none}}@media (prefers-reduced-motion:reduce){.rel-arrow,.rel-fade,.rel-rail>a,.rel-thumb img{transition:none}}</style>
+
+    <!-- Инфографика: лёгкие адаптивные схемы в стиле статьи (светлая/тёмная тема) -->
+    <style>
+        /* Акцентные цвета живут и вне .figx: .grad-text/.grad-card стоят прямо
+           в тексте статьи, а там локальных переменных нет — без этого градиент
+           не собирался и текст оставался прозрачным (то есть невидимым). */
+        :root{--flame:#F97316; --plum:#8B5CF6}
+
+        .figx{
+            --ink:#0a0a0a; --mut:rgba(0,0,0,.55); --faint:rgba(0,0,0,.34);
+            --line:rgba(0,0,0,.30); --brd:rgba(0,0,0,.10); --soft:rgba(0,0,0,.035);
+            --card:#ffffff; --flame:#F97316; --plum:#8B5CF6; --rail:rgba(0,0,0,.16);
+            background:var(--card); border:1px solid var(--brd); border-radius:22px;
+            padding:36px 22px; margin:2.6rem 0; box-shadow:0 4px 24px rgba(0,0,0,.04);
+            color:var(--ink); overflow:hidden;
+            font-family:-apple-system,BlinkMacSystemFont,'Inter',sans-serif;
+        }
+        .dark .figx{
+            --ink:#F5F5F7; --mut:rgba(255,255,255,.60); --faint:rgba(255,255,255,.36);
+            --line:rgba(255,255,255,.32); --brd:rgba(255,255,255,.12); --soft:rgba(255,255,255,.05);
+            --card:#1C1C1E; --rail:rgba(255,255,255,.20); box-shadow:0 4px 24px rgba(255,255,255,.04);
+        }
+        @media (min-width:768px){ .figx{padding:44px 36px; border-radius:26px} }
+
+        .figx .cap{margin-top:26px; text-align:center; font-size:13.5px; line-height:1.5; color:var(--mut)}
+        .figx .cap b{color:var(--ink); font-weight:600}
+
+        .fxrow{display:flex; align-items:center; justify-content:center; gap:14px 16px; flex-wrap:wrap}
+        .fxcol{display:flex; flex-direction:column; align-items:center; gap:18px}
+
+        .fxchip{border:1.5px solid var(--brd); background:var(--soft); border-radius:999px;
+            padding:9px 16px; font-size:14.5px; font-weight:600; white-space:nowrap; line-height:1.2}
+        .fxchip.f{border-color:rgba(249,115,22,.55); color:var(--flame); background:rgba(249,115,22,.07)}
+        .fxchip.p{border-color:rgba(139,92,246,.55); color:var(--plum); background:rgba(139,92,246,.08)}
+        .fxchip.dim{opacity:.52}
+
+        .fxnode{display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center; min-width:86px}
+        .fxnode .em{font-size:34px; line-height:1}
+        .fxnode .lb{font-size:13.5px; font-weight:600; line-height:1.25; white-space:nowrap}
+        .fxnode .sb{font-size:12px; color:var(--mut); line-height:1.35}
+        .fxnode.dim{opacity:.5}
+
+        .fxarr{position:relative; flex:0 0 auto; width:15px; height:15px;
+            border-top:2.5px solid var(--line); border-right:2.5px solid var(--line);
+            transform:rotate(45deg); border-radius:2px; margin:0 4px}
+        .fxarr::before{content:""; position:absolute; left:50%; top:50%; width:21px; height:2.5px;
+            background:var(--line); border-radius:2px; transform:translate(-50%,-50%) rotate(-45deg)}
+        .fxarr.down{transform:rotate(135deg); margin:6px 0}
+        .fxseq{display:flex; align-items:center; gap:14px}
+        /* На узком экране ряд узлов переносится в столбик — стрелка между ними
+           обязана смотреть ВНИЗ, иначе она указывает поперёк потока. */
+        @media (max-width:560px){
+            .figx .fxrow > .fxarr:not(.down),
+            .figx .fxrow .fxseq > .fxarr:not(.down){transform:rotate(135deg)}
+            .figx .fxrow{flex-direction:column}
+            .figx .fxrow.tight{flex-direction:row}
+            .figx .fxrow .fxseq{flex-direction:column; gap:10px}
+        }
+        .fxrow.tight{flex-wrap:nowrap; gap:10px; align-items:flex-start; width:100%}
+        .fxrow.tight .fxnode{flex:1 1 0; min-width:0}
+        .fxrow.tight .fxnode .lb{white-space:normal; font-size:12.5px}
+        @media (max-width:640px){ .fxrow.tight .fxnode .lb{font-size:11px} .fxrow.tight .fxnode .em{font-size:26px} }
+        @media (max-width:480px){
+            .fxrow.tight{flex-wrap:wrap; justify-content:center; gap:18px 10px}
+            .fxrow.tight .fxnode{flex:0 0 28%}
+            .fxrow.tight .fxnode .em{font-size:28px}
+            .fxrow.tight .fxnode .lb{font-size:11.5px}
+        }
+
+        .grad-text{background:linear-gradient(100deg,var(--flame),var(--plum));
+            -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent}
+        .grad-card{border:1.5px solid transparent; border-radius:20px; padding:20px 26px; text-align:center;
+            background:linear-gradient(var(--card,#fff),var(--card,#fff)) padding-box,
+                       linear-gradient(140deg,#F97316,#8B5CF6) border-box}
+        .dark .grad-card{--card:#1C1C1E}
+
+        /* Степпер: этапы */
+        .fxsteps{display:grid; grid-template-columns:repeat(6,1fr); gap:10px; width:100%; max-width:860px; margin:0 auto}
+        .fxsteps.three{grid-template-columns:repeat(3,1fr)}
+        .fxsteps.four{grid-template-columns:repeat(4,1fr)}
+        .fxstep .dotrow{position:relative; width:100%; display:flex; justify-content:center}
+        /* Рельс рисуется по каждой ячейке: с запасом в 10px стыки соседних отрезков
+           перекрываются и линия не «рвётся» на дробных позициях сетки. */
+        .fxstep .dotrow::before{content:""; position:absolute; left:-10px; right:-10px; top:50%; height:2px;
+            transform:translateY(-50%); background:var(--rail)}
+        .fxstep:first-child .dotrow::before{left:50%}
+        .fxstep:last-child .dotrow::before{right:50%}
+        .fxstep{position:relative; display:flex; flex-direction:column; align-items:center; gap:8px; z-index:1}
+        .fxstep .em{font-size:32px; line-height:1; margin-bottom:4px}
+        .fxstep .dot{position:relative; z-index:1; width:34px; height:34px; border-radius:50%; background:var(--card); border:2px solid var(--brd);
+            display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:800; color:var(--mut)}
+        .fxstep.hot .dot{border-color:var(--flame); color:var(--flame); box-shadow:0 0 22px -6px rgba(249,115,22,.65)}
+        .fxstep .lb{font-size:12.5px; font-weight:600; text-align:center; line-height:1.25}
+        .fxstep .sub{font-size:12px; color:var(--mut); text-align:center; line-height:1.35; margin-top:-2px}
+        .fxstep.hot .lb{color:var(--flame)}
+        @media (max-width:640px){
+            .fxsteps{grid-template-columns:repeat(3,1fr); gap:22px 10px}
+            .fxsteps.four{grid-template-columns:repeat(2,1fr)}
+            .fxstep .dotrow::before{display:none}
+        }
+        @media (max-width:420px){ .fxsteps.three{grid-template-columns:1fr; gap:18px} }
+
+        /* Конвейер: вход → ядро → инструменты */
+        .fxpipe{display:flex; align-items:stretch; justify-content:center; gap:12px; width:100%; max-width:820px; margin:0 auto}
+        .fxpipe .p{flex:1 1 0; min-width:0; border:1.5px solid var(--brd); background:var(--soft);
+            border-radius:18px; padding:18px 14px; text-align:center;
+            display:flex; flex-direction:column; align-items:center; gap:7px}
+        .fxpipe .p .em{font-size:30px; line-height:1}
+        .fxpipe .p .t{font-size:15px; font-weight:700; line-height:1.3}
+        .fxpipe .p .s{font-size:12.5px; color:var(--mut); line-height:1.45}
+        .fxpipe .p.core{position:relative; border-color:transparent;
+            background:linear-gradient(var(--card),var(--card)) padding-box,
+                       linear-gradient(140deg,#F97316,#8B5CF6) border-box}
+        .fxpipe .badge{position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+            font-family:'Space Mono',monospace; font-size:10px; font-weight:700; letter-spacing:.14em;
+            text-transform:uppercase; white-space:nowrap; padding:3px 10px; border-radius:999px;
+            background:linear-gradient(100deg,#F97316,#8B5CF6); color:#fff}
+        .fxpipe .fxarr{align-self:center; margin:0}
+        .fxpipe .fxarr.down{display:none}
+        @media (max-width:700px){
+            .fxpipe{flex-direction:column; max-width:340px}
+            .fxpipe .fxarr:not(.down){display:none}
+            .fxpipe .fxarr.down{display:block; align-self:center}
+        }
+
+        /* Орбита: ядро и шесть свойств вокруг. Кружок держит ТОЛЬКО иконку,
+           подпись стоит ПОД ним — снаружи; серый пунктир проходит ЗА кружками
+           (он ниже по z-index и рисуется обычной CSS-границей, без SVG). */
+        .fxorbit{position:relative; width:min(100%,520px); aspect-ratio:1; margin:0 auto}
+        .fxorbit .oring{position:absolute; inset:20%; border:2px dashed var(--rail);
+            border-radius:50%; pointer-events:none; z-index:0}
+        .fxorbit .core, .fxorbit .sat{
+            position:absolute; left:var(--x,50%); top:var(--y,50%); transform:translate(-50%,-50%);
+            display:flex; flex-direction:column; align-items:center; gap:9px; z-index:1}
+        .fxorbit .bub{border-radius:50%; display:grid; place-items:center; flex:none;
+            border:1.5px solid var(--brd); background:var(--card)}
+        .fxorbit .sat .bub{width:74px; height:74px}
+        .fxorbit .sat .bub .em{font-size:38px; line-height:1}
+        .fxorbit .core .bub{width:96px; height:96px; border:2px solid transparent;
+            background:linear-gradient(var(--card),var(--card)) padding-box,
+                       linear-gradient(140deg,#F97316,#8B5CF6) border-box}
+        .fxorbit .core .bub .em{font-size:46px; line-height:1}
+        /* 152px — ширина под самое длинное слово («мультимодальность») в одну
+           строку: на 128px оно ломалось посередине. Соседние подписи при этой
+           ширине не пересекаются — проверено замером координат. */
+        .fxorbit .lb{font-size:13px; font-weight:700; line-height:1.25; text-align:center;
+            width:152px; hyphens:auto; overflow-wrap:break-word}
+        .fxorbit .core .lb{font-size:16px; font-weight:800; width:152px}
+        @media (max-width:560px){
+            /* На узком экране орбита не помещается — разворачиваем её в список,
+               кружок с иконкой остаётся, подпись встаёт справа от него.
+               Одна колонка: в двух «мультимодальность» ломалась посреди слова,
+               а min-width:0 обязателен — иначе grid-ячейка не сжимается по
+               длинному слову и строка вылезает за карточку (замер рендером). */
+            .fxorbit{aspect-ratio:auto; display:grid; grid-template-columns:1fr;
+                gap:8px; width:100%}
+            .fxorbit .oring{display:none}
+            .fxorbit .core, .fxorbit .sat{position:static; transform:none; min-width:0;
+                flex-direction:row; gap:11px; align-items:center; justify-content:flex-start;
+                border:1px solid var(--brd); background:var(--soft);
+                border-radius:16px; padding:11px 12px}
+            .fxorbit .core{grid-column:1 / -1; justify-content:center; background:transparent;
+                border-color:transparent}
+            .fxorbit .sat .bub{width:44px; height:44px}
+            .fxorbit .sat .bub .em{font-size:24px}
+            .fxorbit .core .bub{width:56px; height:56px}
+            .fxorbit .core .bub .em{font-size:30px}
+            .fxorbit .lb{width:auto; min-width:0; text-align:left; font-size:13.5px}
+            .fxorbit .core .lb{width:auto; min-width:0; font-size:16px}
+        }
+
+        /* Дорожки сравнения: один и тот же триггер — и две разные глубины
+           реакции. Цепочка чипов показывает, что агент делает НЕ один шаг. */
+        .fxlanes{display:flex; flex-direction:column; align-items:center; gap:12px;
+            width:100%; max-width:820px; margin:0 auto}
+        /* всё содержимое дорожки — по центру: и заголовок, и чипы, и сноска */
+        .fxlane{width:100%; border:1.5px solid var(--brd); background:var(--soft);
+            border-radius:18px; padding:16px 18px;
+            display:flex; flex-direction:column; align-items:center; gap:11px}
+        .fxlane .lh{display:flex; align-items:center; justify-content:center; gap:8px;
+            font-size:11.5px; font-weight:800; letter-spacing:.14em;
+            text-transform:uppercase; color:var(--mut); text-align:center}
+        .fxlane .lr{display:flex; align-items:center; justify-content:center;
+            flex-wrap:wrap; gap:8px}
+        .fxlane .ln{font-size:12.5px; color:var(--faint); line-height:1.4; text-align:center}
+        .fxlane.hot{border-color:transparent;
+            background:linear-gradient(var(--card),var(--card)) padding-box,
+                       linear-gradient(120deg,#F97316,#8B5CF6) border-box}
+        .fxlane.hot .lh{color:var(--flame)}
+        .fxlane .fxarr{width:11px; height:11px; border-width:2px; margin:0}
+        .fxlane .fxarr::before{width:15px; height:2px}
+        /* стрелка живёт В ОДНОЙ группе со СВОИМ чипом: при переносе строки
+           она уходит вниз вместе с ним, а не повисает в конце строки */
+        .fxlane .fxseq{gap:8px}
+        .fxchip.sm{padding:7px 13px; font-size:13px; white-space:normal}
+        .fxchip.pick{border-style:dashed}
+        /* Цепочка шагов: сетка с ФИКСИРОВАННЫМ числом колонок, стрелки рисуются
+           только МЕЖДУ соседями внутри ряда. Перенос строки авторский, а не
+           случайный, поэтому стрелка никогда не повисает в конце/начале строки. */
+        .fxchain{display:grid; grid-template-columns:repeat(3,minmax(0,1fr));
+            gap:13px 26px; width:100%}
+        /* чип в сетке растягивается по высоте ряда, поэтому он ОБЯЗАН быть flex:
+           иначе текст прилипает к верхнему краю овала (span = display:block) */
+        .fxchain > .fxchip{position:relative; width:100%; display:flex;
+            align-items:center; justify-content:center; text-align:center}
+        .fxchain > .fxchip::after{content:""; position:absolute; right:-18px; top:50%;
+            width:9px; height:9px; border-top:2px solid var(--rail);
+            border-right:2px solid var(--rail); border-radius:1px;
+            transform:translateY(-50%) rotate(45deg)}
+        .fxchain > .fxchip:nth-child(3n)::after,
+        .fxchain > .fxchip:last-child::after{content:none}
+        /* цепочка из двух шагов не должна оставлять пустую третью колонку */
+        .fxchain.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+        /* .plain — не цепочка, а набор равноправных вариантов: стрелок нет */
+        .fxchain.plain{gap:9px 10px}
+        .fxchain.plain > .fxchip::after{content:none}
+        @media (max-width:560px){
+            /* На телефоне цепочка встаёт В СТОЛБИК — значит и стрелки должны
+               смотреть ВНИЗ, иначе они показывают вбок поперёк потока. */
+            .fxlane{padding:14px 13px}
+            .fxlane .lr{flex-direction:column; align-items:center; gap:6px}
+            .fxlane .fxseq{flex-direction:column; align-items:center; gap:6px}
+            .fxlane .fxarr{transform:rotate(135deg); margin:0}
+            .fxchip.sm{padding:6px 11px; font-size:12.5px}
+            /* Цепочка встаёт в один столбец — стрелки уезжают под чип и
+               разворачиваются вниз, по направлению потока. */
+            .fxchain{grid-template-columns:1fr; gap:23px 0}
+            .fxchain > .fxchip::after,
+            .fxchain > .fxchip:nth-child(3n)::after{content:""; right:auto; left:50%;
+                top:auto; bottom:-16px; transform:translateX(-50%) rotate(135deg)}
+            .fxchain > .fxchip:last-child::after{content:none}
+            .fxchain.plain{gap:7px 0}
+            .fxchain.plain > .fxchip::after,
+            .fxchain.plain > .fxchip:nth-child(3n)::after{content:none}
+        }
+
+        /* Петля обучения / замкнутый цикл */
+        .fxloop{position:relative}
+        .fxloop-svg{display:block; width:min(420px,80%); margin:2px auto 0}
+        /* На телефоне цепочка встаёт в столбик, и горизонтальная дуга теряет
+           смысл: возврат рисуем скобой слева, стрелка заходит обратно в «Сигнал». */
+        @media (max-width:560px){
+            .fxloop > .fxloop-svg{display:none}
+            /* скоба доводится до самих иконок: правый край — по центру колонки
+               минус радиус эмодзи, поэтому стрелка упирается прямо в первый шаг.
+               Левый край привязан к центру, а не к краю карточки: путь возврата
+               получается короче и всё равно не задевает подписи (замер рендером —
+               самая широкая подпись начинается на 13px правее линии). */
+            .fxloop::before{content:""; position:absolute; left:calc(50% - 86px); right:calc(50% + 30px);
+                top:17px; bottom:41px;
+                border:2.5px solid var(--plum); border-right:none;
+                border-radius:14px 0 0 14px; opacity:.9}
+            .fxloop::after{content:""; position:absolute; right:calc(50% + 19px); top:11px;
+                border-top:7px solid transparent; border-bottom:7px solid transparent;
+                border-left:11px solid var(--plum)}
+        }
+
+        /* Ключевая плашка внутри фигуры */
+        .fxkey{display:flex; align-items:center; justify-content:center; gap:9px; flex-wrap:wrap;
+            margin:22px auto 0; max-width:640px; padding:13px 20px; border-radius:16px;
+            border:1px solid var(--brd); background:var(--soft);
+            font-size:15px; font-weight:600; line-height:1.4; text-align:center}
+        .fxkey u{text-decoration:none; border-bottom:2px solid var(--flame); padding-bottom:1px; font-weight:800}
+
+        /* Двухколоночная схема «ветвление» */
+        .fxbranch{display:grid; grid-template-columns:1fr 1fr; gap:14px; width:100%; max-width:720px; margin:0 auto}
+        .fxbranch .b{border:1.5px solid var(--brd); background:var(--soft); border-radius:18px;
+            padding:18px 20px; text-align:center; display:flex; flex-direction:column; gap:7px; align-items:center}
+        .fxbranch .b .em{font-size:30px; line-height:1}
+        .fxbranch .b .t{font-size:15px; font-weight:700; line-height:1.3}
+        .fxbranch .b .s{font-size:13px; color:var(--mut); line-height:1.45}
+        .fxbranch .b.hot{border-color:rgba(249,115,22,.5); background:rgba(249,115,22,.06)}
+        .fxbranch .b.hot .t{color:var(--flame)}
+        @media (max-width:640px){ .fxbranch{grid-template-columns:1fr} }
+
+        /* Сравнение ❌ / ✅ */
+        .vsx{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:2.2rem 0;
+            --ink:#0a0a0a; --mut:rgba(0,0,0,.55); --brd:rgba(0,0,0,.10); --card:#fff; color:var(--ink)}
+        .dark .vsx{--ink:#F5F5F7; --mut:rgba(255,255,255,.6); --brd:rgba(255,255,255,.12); --card:#1C1C1E}
+        @media (max-width:640px){ .vsx{grid-template-columns:1fr} }
+        .vsx .col{border:1px solid var(--brd); background:var(--card); border-radius:18px; padding:20px 22px;
+            box-shadow:0 4px 24px rgba(0,0,0,.04)}
+        .dark .vsx .col{box-shadow:0 4px 24px rgba(255,255,255,.03)}
+        .vsx .hd{font-size:15px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:8px; color:var(--ink)}
+        .vsx .tx{font-size:15.5px; line-height:1.55; color:var(--mut)}
+        .vsx .tx b{color:var(--ink); font-weight:600}
+        .vsx .tx + .tx{margin-top:8px}
+
+        /* заголовок внутри схемы */
+        .figx .fxhd{text-align:center; font-size:11.5px; font-weight:800; letter-spacing:.14em;
+            text-transform:uppercase; color:var(--mut); margin-bottom:20px}
+
+        /* ── Таймлайн эпох ── */
+        .fxtime{position:relative; display:flex; flex-direction:column; gap:24px;
+            padding-left:34px; max-width:620px; margin:0 auto}
+        .fxtime::before{content:""; position:absolute; left:8px; top:8px; bottom:8px; width:2px;
+            background:var(--rail); border-radius:2px}
+        .fxtime .ev{position:relative; display:flex; flex-direction:column; align-items:flex-start; gap:5px}
+        .fxtime .ev .dot{position:absolute; left:-34px; top:2px; width:18px; height:18px;
+            border-radius:50%; box-sizing:border-box;
+            background:var(--card); border:3.5px solid var(--rail)}
+        .fxtime .ev .yr{font-family:'Space Mono',monospace; font-size:11px; font-weight:700;
+            letter-spacing:.16em; text-transform:uppercase; color:var(--faint)}
+        .fxtime .ev .t{font-size:16.5px; font-weight:700; line-height:1.3}
+        .fxtime .ev .s{font-size:13.5px; color:var(--mut); line-height:1.5}
+        .fxtime .ev.now .dot{border-color:var(--flame); background:var(--flame);
+            box-shadow:0 0 0 5px rgba(249,115,22,.16)}
+        .fxtime .ev.now .yr{color:#fff; background:linear-gradient(100deg,#F97316,#8B5CF6);
+            padding:4px 11px; border-radius:999px; letter-spacing:.14em}
+        .fxtime .ev.now .t{font-size:18px; font-weight:800}
+        .fxtime .ev.now .s{color:var(--ink)}
+
+        /* ── Три равные карточки (ветвление на три) ── */
+        .fxbranch.three{grid-template-columns:repeat(3,1fr)}
+        @media (max-width:640px){ .fxbranch.three{grid-template-columns:1fr} }
+
+        /* приглушённая часть подписи внутри чипа */
+        .fxchip .mu{color:var(--mut); font-weight:500}
+
+
+        /* ── Зоны и типы процессов: карточка с нижней плашкой-целью ── */
+        .fxzones{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px}
+        .fxzones.four{grid-template-columns:repeat(4,minmax(0,1fr))}
+        .fxzones .z{position:relative; overflow:hidden; min-width:0;
+            border:1.5px solid var(--brd); background:var(--soft); border-radius:18px;
+            padding:30px 16px 0; display:flex; flex-direction:column; align-items:center;
+            text-align:center; gap:7px}
+        .fxzones .z .em{font-size:30px; line-height:1}
+        .fxzones .z .t{font-size:19px; font-weight:800; line-height:1.15; letter-spacing:.01em}
+        .fxzones .z .k{font-family:'Space Mono',monospace; font-size:10px; font-weight:700;
+            letter-spacing:.12em; text-transform:uppercase; color:var(--faint); white-space:nowrap}
+        .fxzones .z .s{font-size:13px; color:var(--mut); line-height:1.45; flex:1 0 auto}
+        .fxzones .z .unc{display:flex; flex-direction:column; align-items:center; gap:6px; margin-top:2px}
+        .fxzones .z .unc .bars{display:flex; gap:4px}
+        .fxzones .z .unc i{display:block; width:22px; height:5px; border-radius:99px;
+            background:var(--rail); font-style:normal}
+        .fxzones .z .unc i.on{background:linear-gradient(90deg,#F97316,#8B5CF6)}
+        .fxzones .z .unc b{font-size:10px; font-weight:700; letter-spacing:.08em;
+            text-transform:uppercase; color:var(--faint); line-height:1.3}
+        .fxzones .z .goal{align-self:stretch; margin:14px -16px 0; padding:11px 14px;
+            border-top:1px solid var(--brd); background:var(--card);
+            font-size:12px; line-height:1.4; color:var(--mut)}
+        .fxzones .z .goal b{color:var(--ink); font-weight:700}
+        .fxzones .z.hot{border-color:transparent;
+            background:linear-gradient(var(--card),var(--card)) padding-box,
+                       linear-gradient(140deg,#F97316,#8B5CF6) border-box}
+        .fxzones .z.hot .t{color:var(--flame)}
+        .fxzones .z.hot .goal{background:var(--soft)}
+        .fxzones .z .badge{position:absolute; top:0; left:50%; transform:translateX(-50%);
+            font-family:'Space Mono',monospace; font-size:9.5px; font-weight:700; letter-spacing:.14em;
+            text-transform:uppercase; white-space:nowrap; padding:4px 13px; border-radius:0 0 11px 11px;
+            background:linear-gradient(100deg,#F97316,#8B5CF6); color:#fff}
+        @media (max-width:700px){ .fxzones{grid-template-columns:1fr} }
+        @media (max-width:640px){ .fxzones.four{grid-template-columns:1fr} }
+
+        /* ── Кто выполняет шаг цикла ── */
+        .fxown{display:flex; flex-direction:column; gap:9px; max-width:680px; margin:0 auto}
+        .fxown .hdr{display:grid; grid-template-columns:1fr 118px 138px; gap:12px; padding:0 15px;
+            font-size:10px; font-weight:800; letter-spacing:.12em; text-transform:uppercase; color:var(--faint)}
+        .fxown .hdr span:not(:first-child){text-align:center}
+        .fxown.two .hdr, .fxown.two .row{grid-template-columns:1fr 1fr}
+        .fxown .row{display:grid; grid-template-columns:1fr 118px 138px; align-items:center; gap:12px;
+            border:1px solid var(--brd); background:var(--soft); border-radius:14px; padding:12px 15px}
+        .fxown .row .st{font-size:13.5px; font-weight:700; line-height:1.3; min-width:0}
+        .fxown .row .who{font-size:11.5px; font-weight:700; line-height:1.2; text-align:center;
+            padding:6px 8px; border-radius:999px; border:1px solid var(--brd);
+            background:var(--card); color:var(--mut)}
+        .fxown .row .who.ai{color:var(--flame); border-color:rgba(249,115,22,.45);
+            background:rgba(249,115,22,.07)}
+        @media (max-width:600px){
+            .fxown .hdr{display:none}
+            .fxown .row, .fxown.two .row{grid-template-columns:1fr; gap:9px; justify-items:stretch}
+            .fxown .row .who{text-align:left; padding:7px 12px}
+            .fxown .row .who::before{content:attr(data-lb) " · "; color:var(--faint); font-weight:800;
+                font-size:10px; letter-spacing:.1em; text-transform:uppercase}
+        }
+
+
+        /* В колоночном флексе элемент получает свою max-content ширину и
+           вылезает за карточку вместо переноса; max-width:100% возвращает
+           перенос. :not() — для тех, кто выходит за края ПО ЗАМЫСЛУ. */
+        .fxzones .z > *:not(.goal){max-width:100%}
+        .fxbranch .b > *{max-width:100%}
+        /* Ячейка сетки по умолчанию не уже своего min-content: на 320px
+           колонка шага становилась шире дорожки. */
+        .fxsteps .fxstep{min-width:0}
+        .fxsteps .fxstep > *{max-width:100%}
+
+        /* Заголовок колонки .vsx — flex-строка из НЕСКОЛЬКИХ текстовых узлов,
+           а значит из нескольких flex-элементов. Без переноса строка держит
+           свою max-content ширину и растягивает всю колонку. */
+        .vsx .hd{flex-wrap:wrap}
+
+        /* ── Карта плиток ── */
+        .fxgrid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px}
+        .fxgrid .g{border:1px solid var(--brd); background:var(--soft); border-radius:15px;
+            padding:14px 10px; min-width:0;
+            display:flex; flex-direction:column; align-items:center; text-align:center; gap:5px}
+        .fxgrid .g > *{max-width:100%}
+        .fxgrid .g .em{font-size:22px; line-height:1}
+        .fxgrid .g .t{font-size:12.5px; font-weight:700; line-height:1.2; overflow-wrap:break-word}
+        .fxgrid .g .s{font-size:11px; color:var(--mut); line-height:1.35;
+            overflow-wrap:break-word}
+        .fxgrid .g .s b{color:var(--ink); font-weight:700}
+        .fxgrid .g.hot{border-color:transparent;
+            background:linear-gradient(var(--card),var(--card)) padding-box,
+                       linear-gradient(120deg,#F97316,#8B5CF6) border-box}
+        .fxgrid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+
+        /* Три колонки на телефоне уже длинного слова — плитка рвёт слово
+           посередине. На общей точке перелома разворачиваем в две.
+           Селектор через .figx — общий адаптив идёт ниже по файлу и при
+           равной силе перебил бы это правило. */
+        @media (max-width:640px){
+            .figx .fxgrid.three{grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
+            .figx .fxgrid.three .g{padding:14px 10px}
+            .figx .fxgrid.three .g .em{font-size:22px}
+            .figx .fxgrid.three .g .t{font-size:12.5px}
+            .figx .fxgrid.three .g .s{font-size:11px}
+        }
+
+        /* Длинная подпись шага в ряду из четырёх не помещается на 320px и
+           обрезается. По правилу адаптива колонки не трогаем, уменьшаем кегль —
+           и делаем это на общей точке перелома, а не на своей. */
+        @media (max-width:640px){ .fxsteps.four .fxstep .lb{font-size:11px} }
+
+        /* ── Таблица .fxown: три широкие колонки ──
+           Модификатор, а НЕ inline-style: иначе правило шире медиазапроса
+           и на телефоне колонки не схлопываются. */
+        .fxown.wide{max-width:760px}
+        .fxown.wide .hdr, .fxown.wide .row{
+            grid-template-columns:minmax(0,.85fr) minmax(0,1.2fr) minmax(0,1.25fr)}
+        .fxown.wide .hdr span:not(:first-child){text-align:left}
+        .fxown.wide .row .who{text-align:left; white-space:normal;
+            border-radius:12px; padding:8px 13px}
+        @media (max-width:640px){
+            .fxown.wide .row{grid-template-columns:minmax(0,1fr)}
+            .fxown.wide .hdr{display:none}
+        }
+        /* Метка режима H0–H3 стоит в первой колонке строкой над названием роли. */
+        .fxown .row .st em{display:block; margin-bottom:3px; font-style:normal;
+            font-family:'Space Mono',monospace; font-size:10px; font-weight:700;
+            letter-spacing:.14em; color:var(--flame); line-height:1.2}
+
+        /* ── Таблица .fxown: узкая левая колонка и широкая правая ── */
+        .fxown.units{max-width:700px}
+        .fxown.units .hdr, .fxown.units .row{
+            grid-template-columns:minmax(0,1.15fr) minmax(0,1.35fr)}
+        .fxown.units .hdr span:not(:first-child){text-align:left}
+        .fxown.units .row .who{text-align:left; white-space:normal;
+            border-radius:12px; padding:8px 13px}
+        @media (max-width:640px){
+            .fxown.units .row{grid-template-columns:minmax(0,1fr)}
+            .fxown.units .hdr{display:none}
+        }
+
+        /* Метка зоны в базовом словаре — nowrap; длинная метка при трёх
+           колонках не помещается уже на 768px. Здесь она переносится. */
+        .fxzones .z .k{white-space:normal}
+        /* Точка перелома в серии одна — 640px. Базовый словарь разворачивал
+           зоны в столбик уже на 700px, из-за чего между 641 и 700 появлялась
+           третья версия раскладки. Здесь диапазон возвращён в ряд из трёх. */
+        @media (min-width:641px) and (max-width:700px){
+            .fxzones{grid-template-columns:repeat(3,minmax(0,1fr))}
+        }
+
+        /* Плашка-вывод на 15px не помещается на 320px: фраза рассыпается на
+           строки из одного слова. Кегль мельче — и строки снова целые. */
+        @media (max-width:640px){ .fxkey{font-size:13.5px; padding:12px 15px} }
+
+        /* ── Дорожки «раньше / теперь»: цепочка из шести шагов ── */
+        @media (max-width:640px){
+            .fxchain{grid-template-columns:1fr; gap:23px 0}
+            .fxchain > .fxchip::after,
+            .fxchain > .fxchip:nth-child(3n)::after{content:""; right:auto; left:50%;
+                top:auto; bottom:-16px; transform:translateX(-50%) rotate(135deg)}
+            .fxchain > .fxchip:last-child::after{content:none}
+            .fxchip.sm{padding:6px 11px; font-size:12.5px}
+        }
+
+        /* ── Цепочка из четырёх шагов: ряд из четырёх, а не 3 + сирота ── */
+        .fxchain.four{grid-template-columns:repeat(4,minmax(0,1fr)); gap:13px 22px}
+        .fxchain.four > .fxchip:nth-child(3n)::after{content:""}
+        .fxchain.four > .fxchip:last-child::after{content:none}
+        @media (max-width:640px){
+            .fxchain.four{grid-template-columns:1fr; gap:23px 0}
+            .fxchain.four > .fxchip:nth-child(3n)::after{content:""; right:auto; left:50%;
+                top:auto; bottom:-16px; transform:translateX(-50%) rotate(135deg)}
+            .fxchain.four > .fxchip:last-child::after{content:none}
+        }
+
+        /* ── Реестр артефактов: номер строкой над названием ── */
+        .fxown.reg .row .st em{color:var(--faint); letter-spacing:.16em}
+
+        /* ══ АДАПТИВ: РОВНО ДВЕ ВЕРСИИ — ДЕСКТОП И МОБИЛЬНАЯ ══
+           Промежуточных состояний нет: одна точка перелома, 640px. На каждой
+           из двух версий раскладка либо полный ряд, либо симметричная фигура.
+           Сирот вида «2+1» или «3+1» быть не должно ни при какой ширине. */
+
+        /* Рельс степпера рисуется по каждой ячейке с перехлёстом, чтобы линия
+           не рвалась на дробных позициях сетки. Но полупрозрачный --rail в
+           месте перехлёста складывается сам с собой и даёт тёмные засечки —
+           поэтому здесь он заменён НЕПРОЗРАЧНЫМ эквивалентом того же оттенка
+           (rgba(0,0,0,.16) на белом = #D6D6D6; rgba(255,255,255,.20) на
+           #1C1C1E = #49494B). */
+        .figx{--railo:#D6D6D6}
+        .dark .figx{--railo:#49494B}
+        .figx .fxstep .dotrow::before{background:var(--railo)}
+
+        /* ── Три шага: всегда в ряд, включая телефон ── */
+        .fxsteps.three{grid-template-columns:repeat(3,1fr)}
+        @media (max-width:640px){
+            .fxsteps.three{grid-template-columns:repeat(3,1fr); gap:20px 8px}
+            .fxsteps.three .fxstep .em{font-size:26px}
+            .fxsteps.three .fxstep .lb{font-size:11.5px}
+            .fxsteps.three .fxstep .sub{font-size:10.5px}
+        }
+        @media (max-width:420px){ .fxsteps.three{grid-template-columns:repeat(3,1fr)} }
+
+        /* ── Пять шагов: три сверху, два снизу ровно ПОД ПРОМЕЖУТКАМИ верхних.
+           Сетка из шести колонок: верхние занимают 1–2, 3–4, 5–6, нижние 2–3 и
+           4–5 — поэтому их центры попадают точно между центрами верхнего ряда,
+           а не прижимаются к левому краю. ── */
+        .fxsteps.five{grid-template-columns:repeat(6,1fr)}
+        .fxsteps.five .fxstep:nth-child(1){grid-column:1 / span 2}
+        .fxsteps.five .fxstep:nth-child(2){grid-column:3 / span 2}
+        .fxsteps.five .fxstep:nth-child(3){grid-column:5 / span 2}
+        .fxsteps.five .fxstep:nth-child(4){grid-column:2 / span 2}
+        .fxsteps.five .fxstep:nth-child(5){grid-column:4 / span 2}
+        /* Рельса в этой раскладке нет: порядок несут нумерованные кружки, а
+           линия, разорванная на два ряда, читается как две разные цепочки.
+           ::before спозиционирован абсолютно, поэтому скрытие не влияет на
+           раскладку — ряды и центровка остаются прежними. */
+        .fxsteps.five .fxstep .dotrow::before{display:none}
+        @media (max-width:640px){
+            .fxsteps.five{grid-template-columns:repeat(6,1fr); gap:20px 6px}
+            .fxsteps.five .fxstep .em{font-size:25px}
+            .fxsteps.five .fxstep .lb{font-size:11px}
+            .fxsteps.five .fxstep .sub{font-size:10px}
+        }
+        @media (max-width:430px){ .fxsteps.five{grid-template-columns:repeat(6,1fr)} }
+
+        /* ── Четыре шага: ряд на десктопе, 2+2 на телефоне ── */
+        @media (max-width:640px){ .fxsteps.four{grid-template-columns:repeat(2,1fr)} }
+
+        /* ── Плитки: 4 в ряд на десктопе, 2 на телефоне.
+           Промежуточной трёхколоночной версии больше нет. ── */
+        .fxgrid{grid-template-columns:repeat(4,minmax(0,1fr))}
+        @media (max-width:700px){ .fxgrid{grid-template-columns:repeat(4,minmax(0,1fr))} }
+        @media (max-width:640px){ .fxgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+        @media (max-width:460px){ .fxgrid{grid-template-columns:repeat(2,minmax(0,1fr))} }
+
+        /* ── Три плитки: всегда в ряд. На телефоне мельче кегль и поля,
+           но по-прежнему три колонки, а не 2+1. ── */
+        .fxgrid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+        @media (max-width:620px){ .fxgrid.three{grid-template-columns:repeat(3,minmax(0,1fr))} }
+        @media (max-width:640px){
+            .fxgrid.three{grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px}
+            .fxgrid.three .g{padding:11px 7px}
+            .fxgrid.three .g .em{font-size:19px}
+            .fxgrid.three .g .t{font-size:11.5px}
+            .fxgrid.three .g .s{font-size:10.5px}
+        }
+        @media (max-width:400px){ .fxgrid.three{grid-template-columns:repeat(3,minmax(0,1fr))} }
+
+    </style>
+<script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Инженерия обвязки: что делает ИИ-агента управляемым и надёжным",
+    "url": "https://dataist.ai/education/auto_3_8/",
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://dataist.ai/education/auto_3_8/"
+    },
+    "inLanguage": "ru",
+    "author": {
+      "@type": "Person",
+      "name": "@andre_dataist"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Dataist AI",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://dataist.ai/AIT_logo.png"
+      }
+    },
+    "description": "Модель отвечает за интеллектуальную часть ИИ-агента, но управляемым и надёжным его делает то, что вокруг неё, — обвязка. Разбираем, чем она отличается от ИИ-платформы, из каких механизмов складывается, почему агенту дают только минимально необходимые права, как проверки и трассировка ловят и объясняют ошибки, а контрольные точки и восстановление позволяют не начинать всё заново, если агент сломался на девятом шаге из десяти.",
+    "datePublished": "2026-10-06"
+  }
+</script>
+    <style>
+        /* --- ряд рубрик в шапке -----------------------------------------
+           Палитра витрин. На странице статьи её не было вовсе: переменные
+           живут в styles.css приложения, которого страница не подключает.
+           Из-за этого и переключатель языка рисовал неактивный язык тем же
+           цветом, что активный — значение var(--text-muted) не определено,
+           объявление отбрасывается, цвет наследуется. */
+        :root {
+            --bg-color: #F5F5F7;
+            --text-main: #1d1d1f;
+            --text-muted: #86868B;
+            --chip-border: rgba(0, 0, 0, 0.08);
+        }
+        .dark {
+            --bg-color: #000000;
+            --text-main: #f5f5f7;
+            --text-muted: #8E8E93;
+            /* 0.19, а не 0.10: на чистом чёрном десятая доля даёт
+               rgb(25,25,25) — ряд читается не кнопками, а россыпью слов. */
+            --chip-border: rgba(255, 255, 255, 0.19);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Края растворяет МАСКА самого ряда, а не градиент поверх него:
+           накладной прямоугольник пришлось бы красить фоном страницы, и на
+           границе тем он выглядел бы грязным мазком.
+
+           Правый край растворён сразу, ещё до пересчёта скриптом: рубрики
+           в шапку обычно не помещаются, и до первого замера честнее
+           показать растворение, чем сухой обрез. Не понадобится — скрипт
+           обнулит. */
+        #category-scroll {
+            --fade-l: 0px;
+            --fade-r: 56px;
+            -webkit-mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+            mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+        }
+
+        /* Заливки у рубрики нет, всю форму держит рамка — значит и рамка
+           задаётся здесь, а не только утилитой Tailwind. */
+        .category-btn {
+            transition: all 0.25s ease;
+            background: transparent;
+            border: 1px solid var(--chip-border);
+        }
+        .category-btn.active,
+        .category-btn.active:hover {
+            background: var(--text-main);
+            color: var(--bg-color);
+            border-color: var(--text-main);
+        }
+
+        /* Выбор рубрики на телефоне — на <details>, то есть без единой
+           строки JavaScript: раскрытие списка не должно зависеть от того,
+           доехала ли чужая библиотека. */
+        #cat-menu > summary { list-style: none; cursor: pointer; }
+        #cat-menu > summary::-webkit-details-marker { display: none; }
+        #cat-menu > summary::marker { content: ""; }
+        #cat-menu[open] > summary .cat-caret { transform: rotate(180deg); }
+        .cat-caret { transition: transform 0.2s ease; }
+        /* Подпись на кнопке телефона не должна раздувать шапку, и её ширина не
+           должна зависеть от длины названия рубрики. У «Исследований» кнопка
+           выходила на 135 пикселей против 106 у «Новостей», и правый край
+           «Telegram» уезжал за экран на 390. Замер поймал; на широком экране
+           этого не видно вовсе.
+
+           3.5rem, а не 4.5: с четырьмя с половиной не хватало ровно четырёх
+           пикселей. Теперь длина названия на ширину шапки не влияет никак. */
+        #cat-menu > summary > span {
+            max-width: 3.5rem; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        #cat-menu .cat-item {
+            display: flex; align-items: center; gap: 0.625rem;
+            padding: 0.625rem 0.75rem; border-radius: 0.75rem;
+            font-family: "Space Mono", monospace; font-size: 11px;
+            font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+            color: var(--text-muted); text-decoration: none;
+        }
+        #cat-menu .cat-item.active {
+            background: var(--text-main); color: var(--bg-color);
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+
+        <div class="flex items-center gap-4 shrink-0">
+            <!-- Кнопка Назад -->
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+
+            <!-- Логотип -->
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-lg md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>
+
+        <!-- Кнопки управления -->
+                    <div id="category-scroll" class="hidden sm:block flex-1 min-w-0 overflow-x-auto no-scrollbar">
+                <nav aria-label="Рубрики" class="flex flex-nowrap items-center gap-2 w-max mx-auto">
+                    <a href="/ru/?cat=all" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="all" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i><span>Все</span></a>
+                    <a href="/ru/?cat=learning" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="learning" aria-current="page" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white active"><i data-lucide="graduation-cap" class="w-3.5 h-3.5 shrink-0"></i><span>Обучение</span></a>
+                    <a href="/ru/?cat=research" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="research" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i><span>Исследования</span></a>
+                    <a href="/ru/?cat=tech" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="tech" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="cpu" class="w-3.5 h-3.5 shrink-0"></i><span>Технологии</span></a>
+                    <a href="/ru/?cat=cases" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="cases" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="briefcase" class="w-3.5 h-3.5 shrink-0"></i><span>Кейсы</span></a>
+                    <a href="/ru/?cat=thoughts" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="thoughts" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="brain" class="w-3.5 h-3.5 shrink-0"></i><span>Мысли</span></a>
+                    <a href="/ru/?cat=news" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="news" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="newspaper" class="w-3.5 h-3.5 shrink-0"></i><span>Новости</span></a>
+                </nav>
+            </div>
+<div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <details id="cat-menu" class="sm:hidden relative">
+                <summary class="category-btn inline-flex items-center gap-1.5 px-3 py-2 rounded-full font-mono text-[10px] font-bold tracking-tight uppercase text-black dark:text-white" aria-label="Выбрать рубрику">
+                    <i data-lucide="graduation-cap" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span>Обучение</span>
+                    <i data-lucide="chevron-down" class="cat-caret w-3.5 h-3.5 shrink-0"></i>
+                </summary>
+                <div class="absolute right-0 top-full mt-2 w-56 p-2 rounded-2xl glass-panel flex flex-col gap-0.5 z-50">
+                    <a href="/ru/?cat=all" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i><span>Все</span></a>
+                    <a href="/ru/?cat=learning" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" aria-current="page" class="cat-item active"><i data-lucide="graduation-cap" class="w-4 h-4 shrink-0"></i><span>Обучение</span></a>
+                    <a href="/ru/?cat=research" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="microscope" class="w-4 h-4 shrink-0"></i><span>Исследования</span></a>
+                    <a href="/ru/?cat=tech" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="cpu" class="w-4 h-4 shrink-0"></i><span>Технологии</span></a>
+                    <a href="/ru/?cat=cases" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="briefcase" class="w-4 h-4 shrink-0"></i><span>Кейсы</span></a>
+                    <a href="/ru/?cat=thoughts" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="brain" class="w-4 h-4 shrink-0"></i><span>Мысли</span></a>
+                    <a href="/ru/?cat=news" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="newspaper" class="w-4 h-4 shrink-0"></i><span>Новости</span></a>
+                </div>
+            </details>
+            <nav id="lang-switch" aria-label="Язык" class="flex items-center gap-1.5 md:gap-2 font-mono text-[11px] md:text-sm font-bold uppercase tracking-widest select-none"><span aria-current="true" class="text-black dark:text-white">RU</span><span aria-hidden="true" class="text-[var(--text-muted)] opacity-40">|</span><a href="/" hreflang="en" lang="en" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="text-[var(--text-muted)] hover:text-black dark:hover:text-white transition-colors no-underline">EN</a></nav>
+                    <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+
+            <a href="https://t.me/dataist_academy" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+    <script>
+        /* Растворение краёв ряда рубрик.
+
+           Отдельным блоком намеренно: в общем блоке внизу страницы первой
+           строкой идёт обращение к библиотеке иконок с unpkg.com, и если
+           она не ответила, весь тот блок не исполняется. Ряду рубрик до
+           этого дела быть не должно. */
+        (function () {
+            var el = document.getElementById('category-scroll');
+            if (!el) return;
+            var row = el.firstElementChild;
+            var RAMP = 48, MAX = 56;          // те же числа, что на витрине
+            var placed = false;
+
+            function update() {
+                var max = el.scrollWidth - el.clientWidth;
+                var w = function (v) {
+                    return max <= 8 ? 0
+                        : Math.round(Math.min(1, Math.max(0, v) / RAMP) * MAX);
+                };
+                el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+
+                if (!placed && max > 8) {
+                    placed = true;
+                    var active = el.querySelector('.category-btn.active');
+                    if (active) {
+                        /* Ровно настолько, чтобы текущая рубрика влезла, и
+                           ни пикселем больше: центрирование утаскивало ряд
+                           до упора и прятало «Все» за краем насовсем.
+                           Запас 64 шире растворения (56), иначе рубрика
+                           встаёт под маску и читается наполовину. */
+                        var pad = 64;
+                        var l = active.offsetLeft - pad;
+                        var r = active.offsetLeft + active.offsetWidth + pad;
+                        if (r > el.scrollLeft + el.clientWidth) el.scrollLeft = r - el.clientWidth;
+                        else if (l < el.scrollLeft) el.scrollLeft = Math.max(0, l);
+                        max = el.scrollWidth - el.clientWidth;
+                        el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                        el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+                    }
+                }
+            }
+
+            el.addEventListener('scroll', update, { passive: true });
+            window.addEventListener('resize', update);
+
+            /* Главное. Ряд меняет ширину ПОСЛЕ первого замера: `<i
+               data-lucide>` превращается в svg, когда догрузится библиотека
+               иконок, и рубрики раздаются. Разовый замер этого не ловит —
+               край резался насухо. Наблюдатель ловит любое изменение
+               размера, чем бы оно ни было вызвано. */
+            if (window.ResizeObserver && row) new ResizeObserver(update).observe(row);
+            window.addEventListener('load', update);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+
+            update();
+        })();
+
+        /* Меню рубрик на телефоне закрывается нажатием мимо него.
+           Раскрытие держится на <details> и работает без скрипта; это лишь
+           удобство — не сработает, меню закроется повторным нажатием. */
+        (function () {
+            var menu = document.getElementById('cat-menu');
+            if (!menu) return;
+            document.addEventListener('click', function (e) {
+                if (menu.open && !menu.contains(e.target)) menu.open = false;
+            });
+        })();
+    </script>
+
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+
+                <!-- Тег категории -->
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
+                    <span>Обучение</span>
+                </div>
+
+                <!-- Заголовок -->
+                <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] font-sans font-bold tracking-tighter mb-6 leading-[1.08] text-black dark:text-white max-w-4xl mx-auto">
+                    Инженерия обвязки: что делает ИИ-агента управляемым и надёжным
+                </h1>
+
+                <!-- Подзаголовок -->
+                <p class="text-xl md:text-2xl lg:text-3xl text-apple-textMutedLight dark:text-apple-textMutedDark font-medium tracking-tight mt-6 max-w-3xl mx-auto">
+                    Обвязка и платформа, механизмы управления, права агента, проверки, трассировка и восстановление после сбоев
+                </p>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ -->
+            <div class="max-w-3xl mx-auto w-full">
+
+                <!-- Лид / Вступление -->
+                <p class="article-p fade-in font-medium text-xl md:text-2xl border-l-2 border-black dark:border-white pl-5 md:pl-8 mt-2 mb-12 text-apple-textMutedLight dark:text-apple-textMutedDark">
+                    Модель отвечает за интеллектуальную часть ИИ-агента, но управляемым и надёжным его делает то, что вокруг неё, — обвязка. Разбираем, чем она отличается от ИИ-платформы, из каких механизмов складывается, как ограничивают права агента и что делать, если он сломался на девятом шаге из десяти.
+                </p>
+
+                <h2 class="article-h2 fade-in" style="margin-top:0">Что такое обвязка</h2>
+
+                <p class="article-p fade-in">
+                    <b>Языковая модель — мощный двигатель. Но двигатель сам по себе ещё не автомобиль.</b>
+                </p>
+
+                <p class="article-p fade-in">
+                    Эту аналогию мы начинали в статье о платформе — теперь достроим её до автопарка. Двигателю нужна система вокруг: управление, тормоза, ограничения и механизмы на случай неисправности. У ИИ-агента эту роль выполняет <b>обвязка</b> — слой механизмов вокруг модели.
+                </p>
+
+                <p class="article-p fade-in">
+                    Она определяет, какой контекст получает агент, какими инструментами он может пользоваться, где хранится состояние, какие у агента права и как контролируется выполнение. Сюда же относятся проверки результатов, трассировка действий, лимиты, ограничения и обработка ошибок.
+                </p>
+
+                <!-- ИНФОГРАФИКА 1: что входит в обвязку -->
+                <div class="figx fade-in" role="img" aria-label="Что входит в обвязку ИИ-агента. Обвязка определяет, какой контекст получает агент, какими инструментами он пользуется, где хранится его состояние, какие у него права и как контролируется выполнение. Сюда же относятся проверки результатов, трассировка действий, лимиты, ограничения и обработка ошибок — механизмы, которые проверяют, записывают и ограничивают работу агента и обрабатывают его ошибки. Модель принимает решения, а обвязка отвечает за всё, что происходит вокруг неё">
+                    <div class="fxhd">Что входит в обвязку</div>
+                    <div class="fxlanes">
+                        <div class="fxlane">
+                            <div class="lh">🧭 Что определяет обвязка</div>
+                            <div class="lr">
+                                <span class="fxchip sm">📚 Контекст</span>
+                                <span class="fxchip sm">🧰 Инструменты</span>
+                                <span class="fxchip sm">💾 Состояние</span>
+                                <span class="fxchip sm">🔐 Права</span>
+                                <span class="fxchip sm">🎛️ Контроль выполнения</span>
+                            </div>
+                            <div class="ln">Что агент знает, чем действует, где хранит прогресс, что ему разрешено и как за ним следят</div>
+                        </div>
+                        <div class="fxlane hot">
+                            <div class="lh">🛡️ Контроль и защита</div>
+                            <div class="lr">
+                                <span class="fxchip sm">✅ Проверки результатов</span>
+                                <span class="fxchip sm">🧾 Трассировка действий</span>
+                                <span class="fxchip sm">⏱️ Лимиты</span>
+                                <span class="fxchip sm">🚧 Ограничения</span>
+                                <span class="fxchip sm">🩹 Обработка ошибок</span>
+                            </div>
+                            <div class="ln">Механизмы, которые проверяют, записывают и ограничивают работу агента и обрабатывают его ошибки</div>
+                        </div>
+                    </div>
+                    <div class="cap">Модель принимает решения, <b>а обвязка отвечает за всё, что происходит вокруг неё</b></div>
+                </div>
+
+                <h2 class="article-h2 fade-in">Обвязка и платформа</h2>
+
+                <p class="article-p fade-in">
+                    <b>Обвязку важно не путать с ИИ-платформой.</b>
+                </p>
+
+                <p class="article-p fade-in">
+                    <b>ИИ-платформа</b> — общая инфраструктура для множества приложений и агентов компании. Обвязка связывает компоненты одного агента в управляемую систему.
+                </p>
+
+                <p class="article-p fade-in">
+                    Если продолжить аналогию, модель — это двигатель, обвязка — управление и безопасность автомобиля, а платформа — инфраструктура для целого автопарка.
+                </p>
+
+                <!-- ИНФОГРАФИКА 2: модель, обвязка и платформа в одной аналогии -->
+                <div class="figx fade-in" role="img" aria-label="Двигатель, автомобиль, автопарк — одна аналогия для модели, обвязки и платформы. Модель — двигатель: отвечает за интеллектуальную часть агента. Обвязка — управление и безопасность автомобиля: связывает компоненты одного агента в управляемую систему, и путать её с платформой не стоит. Платформа — инфраструктура автопарка: общая для множества приложений и агентов. Платформа — для всего автопарка, обвязка — для одной конкретной машины">
+                    <div class="fxhd">Двигатель, автомобиль, автопарк</div>
+                    <div class="fxzones">
+                        <div class="z">
+                            <span class="em">🧠</span>
+                            <span class="k">двигатель</span>
+                            <span class="t">Модель</span>
+                            <span class="s">Отвечает за интеллектуальную часть: понимает задачу и принимает решение</span>
+                            <span class="goal"><b>Интеллект</b> агента</span>
+                        </div>
+                        <div class="z hot">
+                            <span class="badge">не путать</span>
+                            <span class="em">🚗</span>
+                            <span class="k">управление и безопасность</span>
+                            <span class="t">Обвязка</span>
+                            <span class="s">Связывает компоненты агента в управляемую систему</span>
+                            <span class="goal">Масштаб — <b>один агент</b></span>
+                        </div>
+                        <div class="z">
+                            <span class="em">🚚</span>
+                            <span class="k">автопарк</span>
+                            <span class="t">Платформа</span>
+                            <span class="s">Общая инфраструктура для множества приложений и агентов</span>
+                            <span class="goal">Масштаб — <b>множество агентов</b></span>
+                        </div>
+                    </div>
+                    <div class="cap">Платформа — для всего автопарка, <b>обвязка — для одной конкретной машины</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    <b>Чем автономнее агент, тем важнее обвязка.</b> Пока агент только предлагает варианты, его ошибку может заметить человек. Когда агент начинает действовать сам, ловить ошибку должна уже система. Рассчитывать, что модель каждый раз всё поймёт правильно, нельзя: надёжность должна обеспечиваться архитектурой.
+                </p>
+
+                <h2 class="article-h2 fade-in">Из чего состоит обвязка</h2>
+
+                <p class="article-p fade-in">
+                    <b>Набор механизмов, которые делают агента управляемым, — это и есть обвязка.</b>
+                </p>
+
+                <p class="article-p fade-in">
+                    В статье об архитектуре агента мы собирали его вокруг цикла — с целью, промтом и условием завершения. Здесь посмотрим на агента со стороны обвязки: что окружает модель во время работы.
+                </p>
+
+                <p class="article-p fade-in">
+                    В центре агента находится модель — она отвечает за интеллектуальную часть. Рядом с ней контекст и инструменты. На основании <b>контекста</b> принимается решение, а через <b>инструменты</b> агент получает данные и действует во внешнем мире. <b>Состояние</b> хранит текущий прогресс, <b>память</b> связывает разные взаимодействия, а <b>среда исполнения</b> выполняет шаги, продолжает работу и передаёт результаты.
+                </p>
+
+                <!-- ИНФОГРАФИКА 3: что окружает модель — шесть частей работающего агента -->
+                <div class="figx fade-in" role="img" aria-label="Модель и то, что её окружает, — шесть частей работающего агента. Модель стоит в центре и отвечает за интеллектуальную часть. Контекст — основа, на которой принимается решение. Инструменты — способ получить данные и действовать во внешнем мире. Состояние хранит текущий прогресс задачи. Память связывает разные взаимодействия между собой. Среда исполнения выполняет шаги, продолжает работу и передаёт результаты. Это основа агента, но для реальной системы её мало">
+                    <div class="fxhd">Что окружает модель</div>
+                    <div class="fxgrid three">
+                        <div class="g hot">
+                            <span class="em">🧠</span>
+                            <span class="t">Модель</span>
+                            <span class="s">в центре: интеллектуальная часть</span>
+                        </div>
+                        <div class="g">
+                            <span class="em">📚</span>
+                            <span class="t">Контекст</span>
+                            <span class="s">основа, на которой принимается решение</span>
+                        </div>
+                        <div class="g">
+                            <span class="em">🧰</span>
+                            <span class="t">Инстру&shy;менты</span>
+                            <span class="s">данные и действия во внешнем мире</span>
+                        </div>
+                        <div class="g">
+                            <span class="em">💾</span>
+                            <span class="t">Состояние</span>
+                            <span class="s">текущий прогресс задачи</span>
+                        </div>
+                        <div class="g">
+                            <span class="em">🗂️</span>
+                            <span class="t">Память</span>
+                            <span class="s">связь между разными взаимо&shy;действиями</span>
+                        </div>
+                        <div class="g">
+                            <span class="em">⚙️</span>
+                            <span class="t">Среда исполне&shy;ния</span>
+                            <span class="s">шаги, продолжение работы, передача результатов</span>
+                        </div>
+                    </div>
+                    <div class="cap">Это основа агента — <b>но для реальной системы её мало</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    Реальной системе нужны ещё пять механизмов: права доступа, лимиты, проверки, трассировка и восстановление после сбоев.
+                </p>
+
+                <!-- ИНФОГРАФИКА 4: пять механизмов, которые нужны реальной системе -->
+                <div class="figx fade-in" role="img" aria-label="Пять механизмов, без которых не обойтись реальной системе. Права доступа задают, к чему у агента есть доступ и что ему разрешено делать. Лимиты ограничивают число вызовов инструментов, время и стоимость одного запуска. Проверки контролируют входные данные и результаты. Трассировка записывает каждый шаг, чтобы потом можно было найти причину ошибки. Восстановление позволяет продолжить работу после сбоя. Вместе с частями вокруг модели эти механизмы и образуют обвязку">
+                    <div class="fxhd">Что нужно реальной системе</div>
+                    <div class="fxown units">
+                        <div class="hdr"><span>Механизм</span><span>За что отвечает</span></div>
+                        <div class="row">
+                            <span class="st">🔐 Права доступа</span>
+                            <span class="who ai" data-lb="отвечает">Задают, к чему у агента есть доступ и что ему разрешено делать</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">⏱️ Лимиты</span>
+                            <span class="who ai" data-lb="отвечает">Ограничивают вызовы инструментов, время и стоимость запуска</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">✅ Проверки</span>
+                            <span class="who ai" data-lb="отвечает">Контролируют входные данные и результаты</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">🧾 Трассировка</span>
+                            <span class="who ai" data-lb="отвечает">Записывает каждый шаг, чтобы найти причину ошибки</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">🔄 Восстановление</span>
+                            <span class="who ai" data-lb="отвечает">Позволяет продолжить работу после сбоя</span>
+                        </div>
+                    </div>
+                    <div class="cap">Вместе с контекстом, инструментами, состоянием, памятью и средой исполнения эти механизмы <b>и образуют обвязку вокруг модели</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    <b>При этом всё это не обязательно один продукт.</b> В одном проекте все механизмы даёт платформа, в другом их собирают из нескольких сервисов. Главное — чтобы каждый из них был на месте.
+                </p>
+
+                <h2 class="article-h2 fade-in">Может — не значит разрешено</h2>
+
+                <p class="article-p fade-in">
+                    <b>То, что ИИ-агент технически может что-то сделать, ещё не значит, что ему нужно это разрешать.</b>
+                </p>
+
+                <p class="article-p fade-in">
+                    Здесь подробно разберём механизмы контроля, которые мы уже называли в статье об архитектуре: права доступа, ограничения, подтверждение человека и проверки.
+                </p>
+
+                <p class="article-p fade-in">
+                    <b>Минимально необходимые права</b> — первый принцип. Агент получает только тот доступ, который нужен его роли. Если поддержке достаточно читать заказ, ей не нужно уметь удалять клиента из CRM.
+                </p>
+
+                <p class="article-p fade-in">
+                    Поверх прав идут <b>защитные ограничения</b> — запрещённые действия, правила работы с данными и обязательные проверки. На следующем слое стоит <b>контроль выполнения</b> — даже разрешённое действие может требовать подтверждения человека.
+                </p>
+
+                <!-- ИНФОГРАФИКА 5: три слоя защиты -->
+                <div class="figx fade-in" role="img" aria-label="Три слоя защиты, которыми ограничивают действия агента. Первый — минимальные права: агент получает только тот доступ, который нужен его роли; поддержке нужно читать заказ, но не удалять клиента из CRM. Второй — защитные ограничения: запрещённые действия, правила работы с данными и обязательные проверки. Третий — контроль выполнения: даже разрешённое действие может ждать подтверждения человека. Слои дополняют друг друга: доступ по роли, запреты поверх доступа и подтверждение там, где процесс чувствителен">
+                    <div class="fxhd">Три слоя защиты</div>
+                    <div class="fxsteps three">
+                        <div class="fxstep">
+                            <div class="em">🔑</div>
+                            <div class="dotrow"><div class="dot">1</div></div>
+                            <div class="lb">Минимальные права</div>
+                            <div class="sub">поддержке — читать заказ, но не удалять клиента из CRM</div>
+                        </div>
+                        <div class="fxstep">
+                            <div class="em">🚧</div>
+                            <div class="dotrow"><div class="dot">2</div></div>
+                            <div class="lb">Защитные ограничения</div>
+                            <div class="sub">запреты, правила работы с данными, проверки</div>
+                        </div>
+                        <div class="fxstep hot">
+                            <div class="em">🙋</div>
+                            <div class="dotrow"><div class="dot">3</div></div>
+                            <div class="lb">Контроль выполнения</div>
+                            <div class="sub">подтверждение человека даже для разрешённого</div>
+                        </div>
+                    </div>
+                    <div class="cap">Слои дополняют друг друга: <b>доступ по роли, запреты поверх доступа и подтверждение там, где процесс чувствителен</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    Как работает контроль выполнения, хорошо видно на платеже. Агент может сделать расчёты и подготовить платёж, но списание денег происходит только после подтверждения.
+                </p>
+
+                <!-- ИНФОГРАФИКА 6: платёж и место, где нужен человек -->
+                <div class="figx fade-in" role="img" aria-label="Платёж по шагам и место, где нужен человек. Сначала агент сам делает расчёты. Затем сам готовит платёж целиком. Дальше граница: человек проверяет подготовленный платёж и подтверждает его. Только после этого происходит списание денег. Агент берёт на себя всю подготовку, а последнее слово по деньгам остаётся за человеком">
+                    <div class="fxhd">Платёж: где нужен человек</div>
+                    <div class="fxpipe">
+                        <div class="p">
+                            <div class="em">🧮</div>
+                            <div class="t">Расчёты</div>
+                            <div class="s">агент делает сам</div>
+                        </div>
+                        <span class="fxarr"></span>
+                        <span class="fxarr down"></span>
+                        <div class="p">
+                            <div class="em">📝</div>
+                            <div class="t">Подготовка платежа</div>
+                            <div class="s">агент готовит платёж целиком</div>
+                        </div>
+                        <span class="fxarr"></span>
+                        <span class="fxarr down"></span>
+                        <div class="p core">
+                            <span class="badge">граница</span>
+                            <div class="em">🙋</div>
+                            <div class="t">Подтверждение</div>
+                            <div class="s">человек проверяет и разрешает</div>
+                        </div>
+                        <span class="fxarr"></span>
+                        <span class="fxarr down"></span>
+                        <div class="p">
+                            <div class="em">💸</div>
+                            <div class="t">Списание денег</div>
+                            <div class="s">только после подтверждения</div>
+                        </div>
+                    </div>
+                    <div class="cap">Агент берёт на себя всю подготовку, <b>а последнее слово по деньгам остаётся за человеком</b></div>
+                </div>
+
+                <h2 class="article-h2 fade-in">До и после действия</h2>
+
+                <p class="article-p fade-in">
+                    <b>Проверки нужны и до действия, и после него.</b>
+                </p>
+
+                <p class="article-p fade-in">
+                    Сначала проверяют права, параметры и то, нужно ли подтверждение. Потом — действительно ли система выполнила операцию и вернула нужный результат.
+                </p>
+
+                <!-- ИНФОГРАФИКА 7: проверки до действия и после него -->
+                <div class="figx fade-in" role="img" aria-label="Проверки по обе стороны действия агента. До действия: есть ли у агента права, верны ли параметры и нужно ли подтверждение человека; так лишнее или неверное действие не доходит до системы. После действия: выполнена ли операция на самом деле и получен ли нужный результат; так агент не считает дело сделанным, пока система это не подтвердила. Первая проверка не пропускает лишнее, вторая ловит несделанное">
+                    <div class="fxhd">Проверки по обе стороны действия</div>
+                    <div class="fxbranch">
+                        <div class="b">
+                            <span class="em">🔍</span>
+                            <span class="t">До действия</span>
+                            <span class="s">Права, параметры, нужно ли подтверждение. <b>Лишнее или неверное действие не доходит до системы</b></span>
+                        </div>
+                        <div class="b hot">
+                            <span class="em">✅</span>
+                            <span class="t">После действия</span>
+                            <span class="s">Выполнена ли операция, получен ли нужный результат. <b>Агент не считает дело сделанным, пока система это не подтвердила</b></span>
+                        </div>
+                    </div>
+                    <div class="cap">Одна проверка без другой работает наполовину: <b>первая не пропускает лишнее, вторая ловит несделанное</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    Из прав, ограничений и проверок складывается граница самостоятельности агента. Для каждого процесса определяют, что агент может читать, анализировать, предлагать, решать и выполнять сам — это те же уровни автономности, что и в той статье.
+                </p>
+
+                <!-- ИНФОГРАФИКА 8: что агент делает сам и где граница -->
+                <div class="figx fade-in" role="img" aria-label="Что агент делает сам и где проходит граница. Первая дорожка — агент работает с данными и решениями: читает данные, анализирует их, предлагает варианты и принимает решения, но ничего не меняет во внешней системе. Вторая дорожка — агент действует сам: выполняет действие во внешней системе без подтверждения человека. Это те же уровни автономности, что в статье об архитектуре агента: анализ, предложение, решение и действие. Где пройдёт граница между «решать» и «выполнять сам», задают отдельно для каждого процесса, и чем чувствительнее процесс, тем она точнее">
+                    <div class="fxhd">Что агент делает сам и где граница</div>
+                    <div class="fxlanes">
+                        <div class="fxlane">
+                            <div class="lh">🤖 Работает с данными и решениями</div>
+                            <div class="lr">
+                                <span class="fxchip sm">👀 Читать</span>
+                                <span class="fxchip sm">🔬 Анализировать</span>
+                                <span class="fxchip sm">💡 Предлагать</span>
+                                <span class="fxchip sm">⚖️ Решать</span>
+                            </div>
+                            <div class="ln">Агент читает, анализирует, предлагает варианты и принимает решения, но ничего не меняет во внешней системе</div>
+                        </div>
+                        <div class="fxlane hot">
+                            <div class="lh">🔓 Действует сам</div>
+                            <div class="lr">
+                                <span class="fxchip sm">⚡ Выполнять сам</span>
+                            </div>
+                            <div class="ln">Агент сам действует во внешней системе, без подтверждения человека</div>
+                        </div>
+                    </div>
+                    <div class="cap">Где пройдёт граница между «решать» и «выполнять сам», <b>задают отдельно для каждого процесса</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    <b>Чем чувствительнее процесс, тем точнее должны быть эти границы.</b>
+                </p>
+
+                <h2 class="article-h2 fade-in">Сбой на девятом шаге</h2>
+
+                <p class="article-p fade-in">
+                    <b>Надёжный агент должен уметь не только работать, но и восстанавливаться после ошибок.</b>
+                </p>
+
+                <p class="article-p fade-in">
+                    Что делать, если агент сломался на девятом шаге из десяти? Допустим, до сбоя он успел выполнить восемь дорогих шагов. Дальше у процесса два пути.
+                </p>
+
+                <!-- ИНФОГРАФИКА 9: начать заново или продолжить -->
+                <div class="figx fade-in" role="img" aria-label="Два пути после сбоя на девятом шаге из десяти. Начать заново: сбой обнуляет всю работу, и восемь дорогих шагов выполняются повторно, поэтому время и деньги уходят второй раз. Продолжить: состояние сохранялось по ходу работы, агент возвращается к последней надёжной точке и выполняет только то, что не успел. Второй путь не появляется сам, его заранее закладывают в обвязку">
+                    <div class="fxhd">Два пути после сбоя</div>
+                    <div class="vsx" style="margin:0">
+                        <div class="col">
+                            <div class="hd">🔁 Начать заново · <b>всё с нуля</b></div>
+                            <p class="tx">Сбой обнуляет всю проделанную работу.</p>
+                            <p class="tx">Восемь дорогих шагов выполняются повторно — время и деньги уходят второй раз.</p>
+                        </div>
+                        <div class="col">
+                            <div class="hd">▶️ Продолжить · <b>с надёжной точки</b></div>
+                            <p class="tx">Состояние сохранялось по ходу работы.</p>
+                            <p class="tx">Агент возвращается к последней надёжной точке и выполняет только то, что не успел.</p>
+                        </div>
+                    </div>
+                    <div class="cap">Второй путь не появляется сам — <b>его заранее закладывают в обвязку</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    За надёжность в обвязке отвечают четыре механизма. Первый — <b>проверка</b> на критических этапах. Система проверяет структуру ответа, обязательные поля, параметры инструментов, разрешённость действий и результат внешней системы. Как и в случае с правами, проверять нужно и до действия, и после него.
+                </p>
+
+                <p class="article-p fade-in">
+                    Второй механизм — <b>трассировка</b> каждого шага. Она сохраняет всё, что понадобится, чтобы потом разобраться в причинах сбоя.
+                </p>
+
+                <!-- ИНФОГРАФИКА 10: что сохраняет трассировка -->
+                <div class="figx fade-in" role="img" aria-label="Что сохраняет трассировка по каждому шагу агента. Контекст — что модель знала в момент решения. Версия — с какой версией шёл этот запуск. Инструмент — какой инструмент выбрал агент. Параметры — с какими аргументами его вызвали. Ответ системы — что вернула внешняя система. По такой записи ошибку разбирают по фактам: видно, на каком шаге и почему всё пошло не так">
+                    <div class="fxhd">Что сохраняет трассировка</div>
+                    <div class="fxown units">
+                        <div class="hdr"><span>Что записываем</span><span>На какой вопрос отвечает</span></div>
+                        <div class="row">
+                            <span class="st">📚 Контекст</span>
+                            <span class="who ai" data-lb="вопрос">Что модель знала в момент решения</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">🏷️ Версия</span>
+                            <span class="who ai" data-lb="вопрос">С какой версией шёл этот запуск</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">🧰 Инструмент</span>
+                            <span class="who ai" data-lb="вопрос">Какой инструмент выбрал агент</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">🔢 Параметры</span>
+                            <span class="who ai" data-lb="вопрос">С какими аргументами его вызвали</span>
+                        </div>
+                        <div class="row">
+                            <span class="st">📨 Ответ системы</span>
+                            <span class="who ai" data-lb="вопрос">Что вернула внешняя система</span>
+                        </div>
+                    </div>
+                    <div class="cap">По такой записи ошибку разбирают по фактам: <b>видно, на каком шаге и почему всё пошло не так</b></div>
+                </div>
+
+                <p class="article-p fade-in">
+                    Третий механизм — <b>контрольные точки</b> для длинных процессов: состояние периодически сохраняется, и после сбоя восемь выполненных шагов не приходится повторять. Четвёртый — <b>восстановление</b> после сбоя: оно позволяет продолжить работу с последней надёжной точки.
+                </p>
+
+                <!-- ИНФОГРАФИКА 11: как агент переживает сбой -->
+                <div class="figx fade-in" role="img" aria-label="Как агент переживает сбой — четыре механизма по порядку. Проверка на критических этапах, до и после действия, предотвращает ошибки. Трассировка каждого шага записывает контекст, версию, инструмент, параметры и ответ системы и объясняет причины сбоя. Контрольные точки периодически фиксируют состояние длинного процесса и тем самым сохраняют прогресс. Восстановление продолжает работу с последней надёжной точки. Вместе они позволяют безопасно продолжить работу после сбоя, а не начинать всё заново">
+                    <div class="fxhd">Как агент переживает сбой</div>
+                    <div class="fxchain four">
+                        <span class="fxchip sm">✅ Проверка</span>
+                        <span class="fxchip sm">🧾 Трассировка</span>
+                        <span class="fxchip sm">📍 Контрольные точки</span>
+                        <span class="fxchip sm">🔄 Восстановление</span>
+                    </div>
+                    <div class="cap">По отдельности каждый механизм закрывает свою часть риска — <b>вместе они позволяют безопасно продолжить работу после сбоя</b></div>
+                </div>
+
+                <h2 class="article-h2 fade-in">Что важно запомнить</h2>
+
+                <div class="fade-in">
+                    <div class="list-card">
+                        <div class="emoji-chip">🚗</div>
+                        <p class="card-sub"><b class="card-title">Модель — только двигатель</b><br>Вокруг неё нужна обвязка, и чем автономнее агент, тем она важнее: надёжность обеспечивает архитектура.</p>
+                    </div>
+                    <div class="list-card">
+                        <div class="emoji-chip">🚚</div>
+                        <p class="card-sub"><b class="card-title">Обвязку не путают с платформой</b><br>Платформа — инфраструктура для всего автопарка агентов. Обвязка связывает компоненты одного агента в управляемую систему.</p>
+                    </div>
+                    <div class="list-card">
+                        <div class="emoji-chip">🧷</div>
+                        <p class="card-sub"><b class="card-title">Шесть частей и пять механизмов</b><br>Модель в центре, вокруг неё контекст, инструменты, состояние, память и среда исполнения. Реальной системе нужны ещё права, лимиты, проверки, трассировка и восстановление.</p>
+                    </div>
+                    <div class="list-card">
+                        <div class="emoji-chip">🔑</div>
+                        <p class="card-sub"><b class="card-title">Права — по минимуму</b><br>Агент получает только доступ, нужный роли. Чем чувствительнее процесс, тем точнее граница того, что он выполняет сам.</p>
+                    </div>
+                    <div class="list-card">
+                        <div class="emoji-chip">✅</div>
+                        <p class="card-sub"><b class="card-title">Проверка до и после действия</b><br>До — права, параметры и подтверждение. После — выполнена ли операция и получен ли нужный результат.</p>
+                    </div>
+                    <div class="list-card">
+                        <div class="emoji-chip">📍</div>
+                        <p class="card-sub"><b class="card-title">Сбой — не повод начинать заново</b><br>Проверка предотвращает ошибки, трассировка объясняет причины, контрольные точки сохраняют прогресс, восстановление продолжает работу.</p>
+                    </div>
+                </div>
+
+                <!-- Финальная цитата -->
+                <div class="grad-card fade-in" style="margin:2.6rem 0; padding:34px 30px">
+                    <div style="font-size:34px; line-height:1; margin-bottom:14px">⛑️</div>
+                    <div class="text-black dark:text-white" style="font-size:clamp(19px,3.4vw,26px); font-weight:800; line-height:1.4; letter-spacing:-.01em">
+                        Можно надеяться, что модель каждый раз всё поймёт правильно.<br>
+                        <span class="grad-text">А можно заложить надёжность в архитектуру.</span>
+                    </div>
+                </div>
+
+                <!-- ======================================================
+                     Лента «Читайте также». До неё у страницы раздела было
+                     ровно две внутренние ссылки — на главную и на себя, — и
+                     ни одной на соседний материал. Робот, дочитав статью,
+                     обязан был вернуться на витрину, чтобы дойти до
+                     следующей; читателю идти было некуда.
+
+                     В разметке двенадцать карточек: сначала соседи по
+                     разделу, затем свежие разборы работ. Их видит и робот
+                     на первом проходе, и читатель без JS, и Instant View.
+                     Скрипт ниже дотягивает ленту до полного списка
+                     разборов — это уже только для читателя.
+                     ====================================================== -->
+                <section class="mt-16 md:mt-20 mb-16 md:mb-24 fade-in" aria-labelledby="rel-heading">
+                    <div class="flex items-end justify-between gap-5 mb-6 md:mb-8">
+                        <h2 id="rel-heading"
+                            class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight m-0">
+                            Читайте также
+                        </h2>
+                        <a href="https://dataist.ai/category/learning"
+                           class="shrink-0 inline-flex items-center gap-1.5 no-underline whitespace-nowrap text-[0.8125rem] font-semibold text-black/50 dark:text-white/50 hover:text-black dark:hover:text-white transition-colors">
+                            Всё обучение
+                            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                        </a>
+                    </div>
+                    <!-- Отрицательные поля — чтобы лента доходила до края
+                         экрана и обрез последней карточки читался как
+                         «листай», а не как ошибка вёрстки. Ровно 16
+                         пикселей: столько же колонка отступает от края на
+                         телефоне (px-4 у main), и на пиксель больше — это
+                         уже горизонтальная прокрутка всей страницы.
+                         scroll-padding обязателен, иначе прилипание съедает
+                         отступ и первая карточка липнет к краю. -->
+                    <div class="rel-wrap -mx-4 md:mx-0" data-left="0" data-right="1"
+                         data-date="2026-10-06">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l" aria-label="Предыдущие материалы">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r" aria-label="Следующие материалы">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0" tabindex="0" role="list">
+                            <a href="https://dataist.ai/education/auto_3_10/" role="listitem">
+                                <span class="rel-thumb"></span>
+                                <time datetime="2026-10-08">08.10.2026</time>
+                                <span class="rel-title">Инженерия работающего агента: версии, наблюдаемость и надёжность</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_3_9/" role="listitem">
+                                <span class="rel-thumb"></span>
+                                <time datetime="2026-10-07">07.10.2026</time>
+                                <span class="rel-title">Как понять, что ИИ-агент действительно стал лучше</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_3_7/" role="listitem">
+                                <span class="rel-thumb"></span>
+                                <time datetime="2026-10-05">05.10.2026</time>
+                                <span class="rel-title">Инженерия контекста: как собрать ИИ-агенту картину ситуации</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_3_6/" role="listitem">
+                                <span class="rel-thumb"></span>
+                                <time datetime="2026-10-04">04.10.2026</time>
+                                <span class="rel-title">Почему идеальный промт не спасает плохо спроектированного агента</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_3_5/" role="listitem">
+                                <span class="rel-thumb"></span>
+                                <time datetime="2026-10-03">03.10.2026</time>
+                                <span class="rel-title">Как данные движутся по воркфлоу от шага к шагу</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_3_4/" role="listitem">
+                                <span class="rel-thumb"></span>
+                                <time datetime="2026-10-02">02.10.2026</time>
+                                <span class="rel-title">ИИ-операции и инструменты: как решение модели становится действием</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_3_3/" role="listitem">
+                                <span class="rel-thumb"></span>
+                                <time datetime="2026-10-01">01.10.2026</time>
+                                <span class="rel-title">Архитектура ИИ-агента: от LLM-функции до графа навыков</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_3_2/" role="listitem">
+                                <span class="rel-thumb"></span>
+                                <time datetime="2026-09-30">30.09.2026</time>
+                                <span class="rel-title">Почему проблемы с ИИ начинаются со второго агента</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_3_1/" role="listitem">
+                                <span class="rel-thumb"></span>
+                                <time datetime="2026-09-29">29.09.2026</time>
+                                <span class="rel-title">Где процессу нужен ИИ-агент, а где хватит правила</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_2_10/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_2_10/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-09-11">11.09.2026</time>
+                                <span class="rel-title">Что нужно, чтобы ИИ-автоматизация реально заработала</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_2_9/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_2_9/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-09-10">10.09.2026</time>
+                                <span class="rel-title">Как превратить человеческое мышление в работающего ИИ-агента</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_2_8/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_2_8/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-09-09">09.09.2026</time>
+                                <span class="rel-title">AI-First компания: какая работа остаётся человеку в мире ИИ-агентов</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_2_7/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_2_7/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-09-07">07.09.2026</time>
+                                <span class="rel-title">Как перестроить процесс под ИИ-агентов и не потерять контроль</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_2_6/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_2_6/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-09-03">03.09.2026</time>
+                                <span class="rel-title">Как найти точки автоматизации с максимальной отдачей</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_2_5/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_2_5/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-09-02">02.09.2026</time>
+                                <span class="rel-title">Как увидеть бизнес-процесс таким, какой он есть на самом деле</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_2_4/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_2_4/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-31">31.08.2026</time>
+                                <span class="rel-title">Как провести рентген бизнеса и извлечь знания экспертов</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_2_3/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_2_3/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-30">30.08.2026</time>
+                                <span class="rel-title">Как выбрать правильный процесс для автоматизации</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_2_2/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_2_2/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-28">28.08.2026</time>
+                                <span class="rel-title">От механизации до ИИ-агентов: как эволюционировала автоматизация</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_2_1/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_2_1/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-26">26.08.2026</time>
+                                <span class="rel-title">Бизнес как система процессов: как потоки данных создают ценность</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_1_9/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_1_9/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-18">18.08.2026</time>
+                                <span class="rel-title">AI-First-компания: новые роли и новая оргструктура</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_1_8/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_1_8/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-17">17.08.2026</time>
+                                <span class="rel-title">AgentOps: шесть шагов от идеи до работающего ИИ-агента</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_1_7/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_1_7/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-14">14.08.2026</time>
+                                <span class="rel-title">ИИ-стратегия: три уровня внедрения ИИ-агентов в бизнес</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_1_6/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_1_6/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-13">13.08.2026</time>
+                                <span class="rel-title">Готова ли ваша компания к ИИ-трансформации?</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_1_5/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_1_5/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-11">11.08.2026</time>
+                                <span class="rel-title">Три трансформации, которые полностью изменили бизнес</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_1_4/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_1_4/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-10">10.08.2026</time>
+                                <span class="rel-title">Где ИИ-агенты создают бизнесу максимум ценности</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_1_3/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_1_3/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-09">09.08.2026</time>
+                                <span class="rel-title">Пять уровней эволюции ИИ-агентов</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_1_2/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_1_2/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-08">08.08.2026</time>
+                                <span class="rel-title">Кто такой ИИ-агент и почему он меняет устройство компании</span>
+                            </a>
+                            <a href="https://dataist.ai/education/auto_1_1/" role="listitem">
+                                <span class="rel-thumb"><img src="https://dataist.ai/education/auto_1_1/cover.jpg" alt="" loading="lazy" decoding="async"></span>
+                                <time datetime="2026-08-06">06.08.2026</time>
+                                <span class="rel-title">Что такое AI-First-компания и как она работает</span>
+                            </a>
+                        </div>
+                    </div>
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка
+                                // мигает в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+
+                            // ЛЕНТА ВСТАЁТ НА МЕСТО ЭТОЙ СТАТЬИ, а не в
+                            // начало раздела. Влево от стартовой позиции
+                            // остаётся то, что вышло ПОСЛЕ неё, вправо — то,
+                            // что было ДО. Иначе на каждой странице раздела
+                            // лента одинаковая и начинается с самой свежей,
+                            // а соседство по времени — то, ради чего блок и
+                            // нужен, — пропадает.
+                            //
+                            // Дату страницы кладём в data-date. Сравниваем по
+                            // ней: первая карточка СТАРШЕ этой статьи и есть
+                            // «здесь». Если старше нет вовсе — статья самая
+                            // ранняя в разделе, и лента упирается в конец.
+                            function place(rows) {
+                                var mine = wrap.dataset.date || '';
+                                if (!mine) { rail.scrollLeft = 0; return; }
+                                var at = rows ? rows.length : rail.children.length;
+                                var list = rows || Array.prototype.map.call(
+                                    rail.children, function (el) {
+                                        var t = el.querySelector('time');
+                                        return { date: t ? t.getAttribute('datetime') : '' };
+                                    });
+                                for (var k = 0; k < list.length; k++) {
+                                    var d = String(list[k].published_at || list[k].date || '');
+                                    if (d.slice(0, 10) < mine.slice(0, 10)) { at = k; break; }
+                                }
+                                if (at > rail.children.length - 1) at = rail.children.length - 1;
+                                var target = rail.children[at];
+                                if (target) {
+                                    rail.scrollLeft = target.offsetLeft - rail.offsetLeft;
+                                }
+                            }
+                            function step(dir) {
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            rail.addEventListener('keydown', function (e) {
+                                if (e.key === 'ArrowRight') { e.preventDefault(); step(1); }
+                                if (e.key === 'ArrowLeft') { e.preventDefault(); step(-1); }
+                            });
+                            place(null);
+                            sync();
+
+                            function ru(iso) {
+                                var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+                                return m ? m[3] + '.' + m[2] + '.' + m[1] : '';
+                            }
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них
+                            // в страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                a.setAttribute('role', 'listitem');
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую
+                                    // подложку, а не значок сломанной
+                                    // картинки посреди ленты.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = ru(item.date); }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            // Лента не устаревает вместе со страницей: список
+                            // раздела берётся из его же индекса. Раздел
+                            // маленький, поэтому в разметке лежит он весь —
+                            // запрос только подхватывает новые статьи.
+                            var SOURCES = ['/education/index.json',
+                                           'https://dataist.ai/education/index.json'];
+                            function path(href) {
+                                try { return new URL(href, location.href).pathname; }
+                                catch (e) { return ''; }
+                            }
+                            function load(i) {
+                                if (i >= SOURCES.length) return;
+                                fetch(SOURCES[i], { cache: 'no-cache' })
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) throw 0;
+                                        var rows = list.filter(function (x) {
+                                            return x && x.url && x.title && path(x.url) !== location.pathname;
+                                        }).sort(function (a, b) {
+                                            return String(b.published_at || b.date || '')
+                                                .localeCompare(String(a.published_at || a.date || ''));
+                                        });
+                                        if (!rows.length) throw 0;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+                                        place(rows);
+                                        sync();
+                                    })
+                                    .catch(function () { load(i + 1); });
+                            }
+                            load(0);
+                        })();
+                    </script>
+                <nav data-hub-nav aria-label="Темы и справочники"
+                     class="mt-8 md:mt-10 font-sans text-sm text-black/50 dark:text-white/50">
+                    Темы: <a href="https://dataist.ai/topic/agents" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">ИИ-агенты</a>, <a href="https://dataist.ai/topic/safety" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Безопасность и надёжность</a> · <a href="https://dataist.ai/papers" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Разобранные работы</a> · <a href="https://dataist.ai/glossary" class="no-underline text-black/60 dark:text-white/60 hover:text-black dark:hover:text-white underline-offset-4 hover:underline">Словарь терминов</a>
+                </nav>
+                </section>
+
+                <!-- Главный вывод / Финал (Акцентная премиум-карточка) -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in group">
+
+                    <!-- Декоративные элементы (свет/тень в стиле хай-тек) -->
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="zap" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                Дальше — практика
+                            </h2>
+                        </div>
+
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+                                Эта статья и её продолжение основаны на <a href="https://andre.technology/automation/3" target="_blank" rel="noopener" class="underline decoration-black/25 dark:decoration-white/30 underline-offset-4 hover:decoration-black dark:hover:decoration-white transition-colors">третьей лекции курса по автоматизации бизнес-процессов с ИИ-агентами</a>.
+                            </p>
+                            <p class="font-sans text-base md:text-lg leading-relaxed text-black/65 dark:text-white/65">
+                                В следующей статье — тестирование и улучшение агентов: как задать агенту условие завершения, почему проверять нужно весь путь выполнения, а не последнюю фразу модели, что показывает регрессионное тестирование и как превратить улучшение агента в системный цикл.
+                            </p>
+                        </div>
+
+                        <!-- Интегрированная CTA (Кнопка) -->
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                От диагностики бизнеса<br>— до работающего агента.
+                            </p>
+
+                            <a href="https://andre.technology/automation/" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">Пройти курс</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс бар снизу (Черно-белый) -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        lucide.createIcons();
+
+        // Логика смены темы
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            // Перерисовка иконок при смене темы, если требуется
+            setTimeout(() => lucide.createIcons(), 50);
+        }
+
+        // Telegram Web App
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() {
+                    applyTheme(tg.colorScheme === 'dark');
+                });
+            }
+        }
+
+        // Ручное переключение
+        themeToggleBtn.addEventListener('click', () => {
+            const isCurrentlyDark = html.classList.contains('dark');
+            applyTheme(!isCurrentlyDark);
+        });
+
+        // Прогресс-бар
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Анимация при скролле (Intersection Observer)
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.05
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach(el => observer.observe(el));
+        });
+    </script>
+<script defer src="https://dataist.ai/static/js/analytics.js?v=1786668480"></script></body>
+</html>
