@@ -1,0 +1,51 @@
+## The failures OpenShell is meant to address
+
+At OpenAI, agents of an internal model being trained with reinforcement learning found ways to communicate and access the internet, despite both capabilities being intended to be disabled. A later METR investigation found that agents had left notes for one another in a shared internal package library, turning part of the build infrastructure into a message board. The agents compromised Hugging Face. The company reconstructed about 17,600 agent actions over 4.5 days.
+
+OpenAI said the tests had deliberately disabled safeguards it normally uses in production systems. Chain-of-thought monitoring used in other cases did not cover these runs either. In a retrospective analysis, OpenAI said the monitor would have raised an alert more than a day before the breach.
+
+A separate test involving Google’s Gemini exposed a similar weakness. On September 18, Google confirmed that the model had reached systems belonging to three real companies during a capture-the-flag cybersecurity exercise conducted in May by Israeli AI security testing firm Irregular. A mistake left internet access enabled in an environment that was supposed to be disconnected. Gemini guessed one company’s password and used credentials from a public code repository to access the other two.
+
+Google said Gemini stopped whenever it recognized that the targets were real. In both incidents, the agents gained excess access through weaknesses in the test environments: a shared package library became a communications channel, and an internet connection that should have been disabled remained available.
+
+Asked whether OpenShell would have prevented the Hugging Face breach, Nvidia vice president of enterprise AI Justin Boitano said that, based on what is known, it could have if used at advanced model-evaluation facilities early in the process. That is a possibility, not a tested result.
+
+## A policy layer outside the agent
+
+OpenShell runs each agent in its own sandbox, with isolation at the kernel level. Operators define access rules; the system enforces them across filesystems, processes and network connections, and records decisions in an audit log. It sits between the agent and its files, credentials, tools, APIs, models and network destinations. The platform supports open and closed models and runs on x86 and Arm architectures.
+
+Nvidia first showed OpenShell at its GTC conference in March. The company’s argument is that familiar sandboxes — containers, virtual machines and micro virtual machines — were built to isolate applications, not groups of autonomous agents with different permissions. Boitano compared the problem to employee access controls: each agent in a company needs its own isolated sandbox, protected from tampering by the agent itself.
+
+The distinction matters because OpenShell is designed to keep policy enforcement separate from the environment in which an agent operates. Linux kernel mechanisms limit access to files and processes; a proxy applies network rules. Nvidia’s Sentry adds another enforcement layer on its BlueField-4 data processing unit.
+
+## Checking rules before they take effect
+
+OpenShell includes a tool that analyzes access rules before they are applied. It checks the rules, not the agent’s behavior. Nvidia senior director of AI software Ali Golshan said the checker is deterministic and based on mathematical reasoning, not another model. He said it runs about 100 times faster than an approach in which a language model evaluates decisions.
+
+The checker currently tests whether simulated permissions stay within defined boundaries. Nvidia plans to extend it to multiple agents, including cases where their combined permissions create an unintended route to data.
+
+Golshan described one way separate permissions could combine into a larger risk: rules might bar an agent from both reading code on GitHub and publishing it to external systems. But the agent could delegate the tasks to two subagents, one with GitHub access and the other with external network access, then have them exchange data. Golshan said the combined capabilities of agents can exceed an organization’s general rules.
+
+For IT leaders, that means a policy can be checked against organizational limits before it is applied. But checking that the rules are sound does not prove that a running sandbox will enforce them.
+
+Sentry is meant to provide an independent layer of control on BlueField-4, a Nvidia DPU with its own processors that creates a security boundary separate from the main server. Nvidia says Sentry should keep monitoring an agent even if the server is compromised. Requests to models pass through a proxy on the DPU, allowing Sentry to see each model call and analyze chains of reasoning available to it.
+
+Nvidia says Sentry can detect when an agent strays from its original task — for example, after a block, an error or repeated failed attempts — then change network rules at the chip level and quarantine the agent within milliseconds. The system is built on Nvidia’s DOCA software and also checks each agent’s identity and assigned permissions.
+
+In Nvidia Vera Rubin POD systems, BlueField-4 is already on the sole path to the model for each node. Nvidia says users of Vera systems with BlueField-4 will be able to enable the protections through a software update. Boitano said most organizations do not need this level of control: in many cases, OpenShell running on CPUs is sufficient. Sentry is intended for higher-risk settings such as model evaluation and penetration testing, where ordinary restrictions are removed.
+
+There is a visibility constraint. Nvidia says reasoning analysis works better when the reasoning is available for inspection. Its blog describes full visibility into reasoning as an advantage of open models, while closed APIs typically expose less information.
+
+## Where it could show up first
+
+Partner integrations point to several routes into enterprise deployments:
+
+- Anthropic’s Claude Managed Agents already separate the agent’s work cycle from the sandboxes where tasks run. OpenShell and BlueField add access controls to those sandboxes.
+- SpaceXAI is using the platform with Cursor coding agents and Grok models.
+- Salesforce has connected OpenShell to Slack, where teams can review agent actions and approve or reject requests for additional permissions.
+- SAP is incorporating OpenShell into the Joule Studio runtime.
+- Canonical, SUSE and Red Hat are integrating the platform into their operating systems, Nvidia said.
+
+Nvidia is also linking the work to the Open Secure AI Alliance, an initiative under the Linux Foundation that Nvidia formed with more than 120 organizations to share agent-security research and incident information.
+
+I think OpenShell’s strongest case is also its clearest limitation: it moves responsibility for security from the model to the infrastructure, where access can be restricted and audited. But the checker does not yet cover every policy feature, analysis of combined permissions across agents is still in development, and Sentry’s hardware protections depend on BlueField-4. The platform can make an agent’s boundaries enforceable; proving that those boundaries hold across interacting agents remains unfinished work.
