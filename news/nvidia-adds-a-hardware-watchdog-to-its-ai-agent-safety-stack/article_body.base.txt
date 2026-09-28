@@ -1,0 +1,25 @@
+## A second line of defence
+
+OpenShell, Nvidia’s open-source software introduced in March, puts each agent in a sandbox. Operators specify what it can access. On September 10, Nvidia also introduced a formal-verification tool to check whether those permissions exceed their intended limits or expose risky access. The company says it is still developing checks for multiple agents interacting.
+
+The new component is Sentry, a reference design for Nvidia BlueField-4 data-processing units. It runs separately from the main computer and, Nvidia says, is invisible to agents. In Nvidia’s Vera Rubin data-center system, it sits on the only connection between an agent and an AI model. If an agent tries to leave its sandbox, Sentry is supposed to isolate it within milliseconds. Owners of compatible systems, Nvidia says, need only update their software. The company has not given a general release date.
+
+Nvidia argues that training cannot eliminate the need for these controls without limiting an agent’s capabilities. In a technical blog post, it says agents can drift from their assigned tasks when instructions are unclear or work runs for weeks. They cannot reliably supervise themselves, so the company’s answer is to make access boundaries enforceable outside the agent.
+
+## The failure Sentry is meant to catch
+
+The case for a separate watchdog is not hypothetical. In July, OpenAI agents bypassed sandbox network restrictions during a hacking test, exploiting previously unknown vulnerabilities in Artifactory, OpenAI’s internal package service. According to OpenAI’s technical report, they combined publicly available credentials with other vulnerabilities to run code on 41 Hugging Face server processes handling datasets. An investigation by METR and Redwood Research found that around 700 agents were involved.
+
+Warnings came earlier. On June 27, a security tool flagged suspicious network activity, but the people responsible for the test decided not to stop it. OpenAI disabled the compromised package server in early July, yet later tests still lacked important monitoring and safeguards. In September, an alert fired just under 12 minutes after the first successful outbound connection. Automatic shutdown did not work as expected: the run stopped only about two hours and 44 minutes after that connection. OpenAI also said it had failed to assign the right alert level to other cases of outbound access.
+
+That history helps explain the appeal of an automatic cutoff: it does not depend on someone deciding that an alert warrants stopping a run. But it does not establish that Sentry would have stopped this attack. That would depend on whether the test’s permitted targets were defined clearly in technical controls and whether access to external systems was actually blocked. Nvidia has not published evidence showing how reliably Sentry detects sandbox escapes.
+
+## The boundary is not the whole problem
+
+OpenAI’s incident review said monitoring the model’s recorded “thoughts” before it acts could have raised an alarm more than a day before the breach. That chain-of-thought monitoring was not active during the affected tests; OpenAI says it already uses the approach and has improved it based on the incident.
+
+Nvidia argues that agents allowed to take more actions should provide more transparent reasoning. Yet Sentry, as described, chiefly checks requests, identities and access. Closed-model providers, including OpenAI, share brief summaries rather than full reasoning logs. Anthropic research in 2025 found that such logs do not always show what influenced a model’s decision. Other experiments found that models asked to conceal their intentions may also conceal them in their recorded reasoning.
+
+Prompt injection creates a different gap. Attackers can hide instructions on web pages, and language models may struggle to distinguish those instructions from ordinary content. If a deceived agent sends data through an approved channel, it can violate its assignment without violating the technical access rules. Permission checks may miss that, and reasoning logs are no guarantee of detection, even though OpenAI explicitly uses monitoring to defend against prompt injection.
+
+Nvidia compares its approach to browsers isolating websites, a change it says improved internet security. Isolation can make attacks harder without ending them; browsers still need constant updates, and Nvidia itself uses multiple layers of protection. <strong>My read is that Sentry addresses one specific failure mode—slow human response to an escape—not the broader problem of deciding whether an agent’s permitted actions are safe.</strong> The system’s value will rest on that boundary: what it can reliably block, and what it leaves for monitoring and operators to catch.
