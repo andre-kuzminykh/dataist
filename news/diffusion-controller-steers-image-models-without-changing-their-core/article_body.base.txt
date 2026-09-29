@@ -1,0 +1,41 @@
+## Steering without rebuilding the model
+
+A diffusion model turns random noise into an image over a sequence of steps. Diffusion Controller frames those steps as a trajectory that can be adjusted during generation. Its “steering damper” is a lightweight network attached to a frozen base model, intended to shift the image toward a target while preserving its quality.
+
+That trade-off matters when a prompt asks for several things at once. A model might render a realistic lizard but omit its sunglasses; pushing harder for the glasses can distort the animal’s face. The controller is designed to add the missing attribute without damaging the rest of the image.
+
+[FIGURE:0]
+
+The authors propose two training methods based on a final evaluation of the generated image:
+
+- **Policy gradients and PPO:** Gradual changes steer the model, while a step-size constraint limits abrupt shifts in its behavior.
+- **Reward-weighted loss:** Outputs with higher reward receive more weight during training.
+
+The broader aim is to put inference-time controls and fine-tuning methods under one mathematical framework, rather than treating them as unrelated tools.
+
+## A control layer for restricted models
+
+Many image generators expose limited access to their internals. Diffusion Controller’s gray-box design uses information from the base model plus a small correction network, which tracks the denoising process and adjusts it without changing the original model’s code.
+
+[FIGURE:1]
+
+The experiments used Stable Diffusion v1.4 and compared supervised fine-tuning (SFT), reward-weighted loss (RWL) and PPO. The authors evaluated results with Human Preference Score (HPS-v2), a standardized metric for prompt alignment and aesthetic preference. They tested four configurations:
+
+- **Diffusion Controller:** A gray-box design that uses the intermediate mean of the reverse denoising process and a proposed adapter side stream.
+- **Diffusion Controller-Naive:** A simplified steering network without the intermediate mean or adapter side stream.
+- **Diffusion Controller-J:** A white-box version that trains the steering network and base model together.
+- **Diffusion Controller-S:** A white-box version that trains them separately.
+
+[FIGURE:2]
+
+Across the tested checkpoints, the authors report that Diffusion Controller beat the corresponding pretrained baselines in both white-box and gray-box settings. In SFT and RWL experiments, the gray-box version also had a higher HPS-v2 win rate than LoRA, despite changing significantly fewer internal layers. Human evaluations favored it for subjective image quality and prompts with multiple attributes.
+
+At inference time, users can adjust the strength of control with one parameter, increasing or reducing how strongly the generation follows its constraints.
+
+[FIGURE:3]
+
+## What the result does—and does not—show
+
+The 90% figure applies to the fully open version against the original model; it is not a general result across every setup. The reported comparisons are promising, but the account here leaves key details unclear: how large the human-evaluation set was, how the prompts were selected, and how much control strength affected the trade-off between prompt adherence and image quality. I’d want those details before treating the win rates as evidence that the method will transfer beyond this test.
+
+Still, the gray-box result points to the framework’s most useful distinction: a control layer could be adapted even when the base model cannot. The authors name personalization, safety controls and complex video models as possible next applications. For now, the unresolved tension is whether a small steering network can reliably add constraints without reintroducing the distortions it is meant to prevent.
