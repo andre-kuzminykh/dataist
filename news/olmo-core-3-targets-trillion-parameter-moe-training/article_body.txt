@@ -1,0 +1,46 @@
+## What changed in the training system
+
+Olmo-core has evolved alongside each Olmo generation. The team’s earlier sparse-model work used OlmoE, with 64 routed experts. Olmo 3, by contrast, used a dense architecture, so its training system was built around activating nearly the whole model for each token. Olmo-core 3 adds infrastructure for much larger MoE models.
+
+The previous MoE implementation in Olmo-core used fully sharded data parallelism (FSDP): model weights were gathered for each small batch of training data, then distributed across accelerators again. Olmo-core 3 moves to distributed data parallelism (DDP), keeping experts resident in accelerator memory and sending the relevant data to them instead.
+
+That change also produced a clear result in a preliminary test. On eight NVIDIA B300 accelerators, the new system processed 52,000 tokens per second per accelerator for a 47-billion-parameter MoE model, versus 19,400 with the previous implementation—about 2.7 times as many.
+
+NVIDIA Megatron-Core already supports training large MoE models. Olmo-core 3 instead integrates MoE training into the framework underlying Olmo, while rebuilding its earlier FSDP implementation for higher throughput.
+
+## Keeping the whole system in balance
+
+Olmo-core 3 combines several ways to divide a large model and its training workload across accelerators:
+
+- <strong>Expert parallelism</strong> places different experts on different accelerators, so each device holds only part of the expert pool.
+- <strong>Pipeline parallelism</strong> splits model layers across accelerator groups, reducing how much of the model each device must hold.
+- <strong>A distributed optimizer</strong> divides optimizer state across accelerators instead of keeping a full copy on each one.
+
+The system also targets the costs of moving data to experts and running their computations. Its row-wise expert parallelism places data directly into expert input buffers, reducing extra rearrangement. Accelerator-side routing keeps routing metadata on the accelerator, allowing the CPU to queue work without waiting for that data to be copied back. Grouped GEMM combines many small expert computations so accelerators can execute them more efficiently.
+
+Olmo-core 3 also supports MXFP8, a lower-precision number format that can reduce computation and data transfer when those savings outweigh the cost of converting between formats. In a controlled benchmark on four NVIDIA B300 accelerators, using MXFP8 where it had the greatest effect increased training speed by about 21% compared with BF16. Peak active memory use fell from 103 GiB to 95 GiB. Most of the gain came from direct computation and data transfer between experts, not just attention.
+
+These optimizations interact. Faster computation can create more pressure on data transfers; reducing transfer volume may not help if format conversion takes too long. <strong>My read is that the important claim here is not any single optimization, but that Olmo-core 3 gives users control over how those trade-offs fit together.</strong> The announcement gives performance measurements, but not a full account of what those choices cost across a sustained training run.
+
+## What trillion-parameter tests show
+
+The team tested Olmo-core 3 on several NVIDIA B300 configurations, including a model with 1.2 trillion parameters and 58.36 billion active parameters per token, spread across 512 accelerators. The highest measured performance was 858 TFLOP/s per accelerator. These tests used random routing, so they measured system performance, not the quality of a trained model.
+
+A separate experiment with DeepEP v2, an alternative way to transfer data between experts on different accelerators, configured the system for a 2.38-trillion-parameter model. That was a short capacity test, not a complete training run: it shows the scale the system could accommodate, not the speed of sustained training.
+
+The technical report also describes results that complicate simple performance claims:
+
+- A score intended to reward balanced routing could rise even as the actual workload became less balanced, a failure the authors called token manipulation.
+- Reducing expert learning rates because experts processed fewer tokens did not improve results in the model family tested.
+- Accelerator compute time changed with input values even when matrix sizes stayed the same, so performance comparisons need to match both.
+- Overlapping data transfers and computation on separate accelerator streams sometimes increased total execution time rather than speeding training.
+
+<strong>What I’d want to know next is how these capacity and benchmark results translate into a complete, useful training run.</strong> The report offers tests and trade-offs, but the trillion-parameter result in particular is not evidence of a finished model—or of its quality.
+
+## An open foundation for the next Olmo
+
+Olmo-core 3 will underpin the team’s next work, and the next Olmo generation will use an MoE architecture. The team expects it to be the most capable model in the Olmo family, trained on the largest dataset and with the longest context window.
+
+The system is fully open and available on GitHub. Researchers and developers can use it to train their own MoE models, adapt it to different accelerators, and experiment with routing and parallelism. That makes the release about more than a path to a larger Olmo: it offers outsiders access to the infrastructure and training decisions behind the models.
+
+[FIGURE:0]
