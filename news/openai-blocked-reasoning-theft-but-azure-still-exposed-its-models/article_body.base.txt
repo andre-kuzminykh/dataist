@@ -1,0 +1,31 @@
+## What the extraction exposed
+
+Distillation lets one model learn from another’s output. That can include not only answers but also the reasoning steps behind them—material that OpenAI says may contain information deliberately left out of the final response and can help reproduce a model’s capabilities.
+
+OpenAI said activity was small on July 1, then surged on July 24 and 25: more than 4,000 users made 16,000 requests in a pattern consistent with extraction. Its investigation found a network of more than 15,000 accounts with similar behavior. OpenAI says it blocked them by July 28, while clarifying that attempted extraction does not mean every attempt succeeded.
+
+The company linked the main group to people associated with Moonshot AI, which makes the Kimi language model. It said it was unclear whether all the activity came from one source. Anthropic had previously reported similar attempts by Chinese AI companies.
+
+The method relied on moving encrypted reasoning between conversations, then asking a model in a separate conversation to decrypt it and print the contents. Researchers led by Joachim Scheffer had described the technique in a paper: shared encryption keys let packets move across sessions, users and models from the same provider. A cheaper, weaker model could then act as a decryption oracle for a stronger one.
+
+OpenAI confirmed that the researchers’ attack methods worked and said their findings helped it move faster on mitigations. The company said it blocked fraudulent accounts, tightened registration, fixed the flaw that enabled reuse and reading of other users’ encrypted reasoning, and began checking streaming responses for possible disclosures.
+
+[FIGURE:1]
+
+## The platform was the weak link
+
+On September 13, researchers tested the attack again. It failed through the native APIs of OpenAI and Anthropic, but worked on Microsoft Azure with every tested OpenAI model, including GPT-6 Astra, and with Anthropic models up to Sonnet 5. One attempt was enough. Scheffer said the models were the same; the level of protection depended on the platform serving them.
+
+Researchers also described a simpler route, publicly demonstrated by developer Jan Bülow: give a model a virtual notepad as a tool and ask it to write its reasoning there. The user can then read the notes. The technique worked with all OpenAI models, as well as Opus 4.8 and Sonnet 5. It did not reveal reasoning from Opus 5, Fable 5 or Fable 5.1. Researchers said the extracted text closely resembled the output of the decryption attack and could likely be just as useful for distillation.
+
+The researchers characterized the mitigations as piecemeal and superficial, with many relying on fragile matching of specific prompt patterns. Some protections reached cloud platforms days later. GPT-6 Astra appeared on third-party platforms without protections; according to the researchers’ timeline, OpenAI added protection to the Azure endpoint only on September 27. The reported extraction method stopped reproducing on Azure for Anthropic models on September 28.
+
+[INFO:compare] OpenAI API :: attack blocked | Azure :: attack worked
+
+## A fix on one API is not a fix for the ecosystem
+
+Scheffer argues that defenses need to cover every attack method and every cloud platform hosting a model. Otherwise, attackers can simply choose the weakest route. The researchers go further in their paper: cloud providers without comparable protections should not be allowed to offer access to reasoning models, since exposed routes could effectively bypass API-level export restrictions. OpenAI agrees that partner-hosted models should be protected as well as those on its own services, and says the work is not finished.
+
+I think the central issue is not whether one company can patch one endpoint. It is whether model providers can make protections travel with their models across platforms. The disclosure shows how quickly that distinction matters: OpenAI’s own APIs resisted the tested attack, while Azure did not.
+
+OpenAI expects extraction attempts to grow more sophisticated as frontier models improve and more actors look for cheap ways to copy their capabilities. That makes partner-platform security part of the model’s security boundary, not an optional layer around it.
