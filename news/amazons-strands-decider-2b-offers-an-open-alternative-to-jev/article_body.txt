@@ -1,0 +1,42 @@
+## A judge, not a chatbot
+
+Strands Decider is built on the pretrained Qwen3.5-2B model. AWS removed the component that predicts the next word and replaced it with a small scoring component, adding a little over one million parameters. The architecture diagram calls this design “Hobson.” Given a set of available answers, the model makes one pass and returns a probability distribution.
+
+In AWS’s weather-tool demo, the agent assumes a location even though the user has not named a city. Strands Decider checks the conversation and proposed tool call, then the application uses its result to send the agent back to ask for the missing detail.
+
+The demo uses Strands’ existing intervention mechanism, which can allow or block a tool call, request confirmation or redirect the agent with feedback. But AWS says the questions and thresholds were set manually, and libraries for integrating decision models are still in development. The model supplies a judgment; the application’s developer decides what to do with it.
+
+AWS plans to release version 20 with the model, training data and scripts. Developers will be able to inspect the training process, fine-tune the model and run it on their own infrastructure instead of sending every decision to an external API.
+
+## The speed claim needs a footnote
+
+AWS says Strands can make local decisions in tens of milliseconds on short tasks, and in under 100 milliseconds on some common hardware and inputs. Its more specific comparison with Jev comes with important qualifications: version 18 had a median latency of 106 milliseconds and a 95th-percentile latency of 296 milliseconds across 230 requests on a local Nvidia RTX 3090, including HTTP time. Longer prompts generally took longer. AWS excluded a 7.7-second first request while the server started.
+
+AWS also reports a median of about 150 milliseconds on small tasks on a MacBook with M3. These figures do not establish that Strands always responds in under 100 milliseconds.
+
+For quality, AWS tested the open portion of JevBench. Version 19 reached about 72% accuracy with a Brier score of 0.35. Mapika’s similar-sized decider-2b v11 scored about 76% accuracy and 0.32. Higher accuracy and a lower Brier score are better, putting Mapika ahead on both measures in this comparison.
+
+AWS says its model ranks second among open models of comparable size on the test, and first among those with a fully published training recipe. But the chart does not include planned version 20 or Jev itself. It therefore cannot show that Strands outperforms Jev.
+
+The cost comparison is just as incomplete. TypeSafe charges $0.042 per million input tokens for Jev and nothing for output tokens. A billion input tokens at that rate costs $42. AWS offers Strands without a hosted API or per-call fee, but running it still requires local hardware or paid cloud computing. Amazon has not provided a comparable cost per token or request.
+
+## An open alternative, not a proven winner
+
+Jev launched on September 15 as TypeSafe’s “System One.” It takes application state and questions with specified answer types, then returns options, scores or “yes” and “no” probabilities rather than a written response. Jev is available through an API; TypeSafe has not published its model weights or full training recipe. The company says it gives probability calibration particular attention during subsequent training.
+
+The category is attracting models with different designs and trade-offs:
+
+- Laya uses a 421-million-parameter model based on ModernBERT for local decisions.
+- Jared Palmer publishes the Kev model family and research materials.
+- Bespoke Nimble 9B offers an Apache-licensed adapter and a code example.
+- Mapika’s decider family spans several sizes, with training code and model cards.
+- FLock’s this-that-model is another small option designed to run locally.
+- Researchers from Stanford and Nvidia introduced the open CLM-8B, which can cache representations of reusable actions. VentureBeat reported that it ran up to nine times faster than Jev on some tasks in the researchers’ tests, but was less accurate at tool calling.
+
+Those results come from specific tasks and test conditions; they do not make the models’ benchmarks interchangeable. VentureBeat has also shown why a cheap probability check should not be treated as a foolproof safety boundary: hostile text in an agent’s input can influence a decision model. TypeSafe and integration partners have acknowledged that risk.
+
+I think Amazon’s clearest advantage here is reproducibility, not benchmark performance. Developers can inspect the recipe, change the model and keep decisions within their own infrastructure. That may matter more than a few percentage points on a benchmark for organizations with existing compute or a strong need for local control.
+
+What I’d want to know is whether the released model remains accurate and well-calibrated on companies’ own rules, documents and rare cases—and whether operating it costs less than Jev’s unusually cheap API. The weather demo shows one useful place to put a check before an agent calls a tool; it does not show that a decision model alone makes an agent safe.
+
+Amazon has made the trade-off concrete: Jev is a low-cost service, while Strands offers control at the price of deployment and maintenance work. Its strongest case is an open decision layer developers can reproduce and adapt—not a demonstrated win over Jev.
