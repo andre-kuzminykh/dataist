@@ -1,0 +1,47 @@
+## The memory behind the skill
+
+A skill packages task-specific instructions, scripts and workflows without changing a model’s parameters. But building useful skills by hand means guessing in advance which processes and edge cases an agent will face. Newer systems try to learn from task attempts, yet they do not all preserve what those attempts reveal.
+
+Trace2Skill analyzes successful and failed attempts separately before combining its findings into skill edits. EvoSkill retrieves relevant skills and sends failures and a flat history of earlier proposals to a system that suggests changes. SkillOpt analyzes attempts in stages and updates a skill document.
+
+Google researcher Liyan Tang, a co-author of the paper, says an optimizer can identify why an attempt failed and still lose that diagnosis after proposing a fix. If a proposed change is rejected, the information behind it may disappear too. The system can then repeat the same analysis and suggest a fix that has already failed validation.
+
+WikiSkill keeps those findings in a persistent store. A rejected skill change remains alongside the evidence that prompted it and the validation result, so later iterations can build on the record rather than start over.
+
+The design draws on Andrej Karpathy’s idea of an “LLM Wiki”: a knowledge base that grows over time. Tang’s version keeps immutable sources, a language-model-maintained wiki, an index and a log. But instead of relying on outside material, it takes the agent’s own work traces as input and produces an executable `SKILL.md` file.
+
+The workspace has three layers:
+
+- **Raw layer:** immutable records of the agent’s actions, reasoning, tool calls and results, and final answers.
+- **Wiki layer:** structured knowledge, including pages on recurring failures and successful strategies, a development log, and a tracker recording which proposed changes improved results.
+- **Skill layer:** procedural instructions available to the agent during tasks, with links back to the wiki patterns that prompted each skill or revision.
+
+Each development cycle has four steps: an inference agent tries training tasks using the current skills; a wiki curator reviews a sample of successes and failures and updates the wiki; a skill proposer uses the updated wiki and selected traces to suggest a new skill or edit; then validation data tests the proposed set. A change is kept only if it improves the best validation result so far.
+
+An ALFWorld example shows why retaining rejected proposals matters. The text-based simulation asks an agent to complete multi-step tasks with objects. In one iteration, WikiSkill noticed that the agent repeatedly picked up objects, inspected them and put them back. The proposer created a general “purposeful actions” skill, but it failed validation.
+
+The wiki kept both the pattern and the failed proposal. In the next iteration, the system suggested a narrower “break repetition loops” skill with the rule “Never return an object to its original location.” That change improved validation results and was accepted. When another recurring loop appeared later, the system added a rule to the same skill rather than starting again.
+
+## The results, and the cost of memory
+
+The researchers tested WikiSkill on five benchmarks covering mathematical reasoning, web search, spreadsheets, long-context document question answering and interactive household tasks. They used Qwen, Gemma and Gemini models, comparing WikiSkill with Trace2Skill, EvoSkill, SkillOpt and agents without skills.
+
+WikiSkill had the highest average result for every tested model. Against the strongest competing skill-development method for each model, its advantage ranged from 3.3 to 12 percentage points.
+
+For Qwen, the average gain over using no skills grew with model size: 12.3 points for the 4-billion-parameter model, 17.5 for the 9-billion-parameter model and 23.9 for the 27-billion-parameter model, each using skills developed for it. Skills also narrowed the gap between model sizes: Qwen-3.5-9B with WikiSkill reached 47.4% average accuracy, compared with 39.4% for Qwen-3.6-27B without skills.
+
+Skills could transfer across models, too. On ALFWorld, Qwen-3.5-9B scored 70.2% using a skill developed by Qwen-3.6-27B, versus 63.4% with its own skill.
+
+[INFO:facts] 3.3–12 points :: edge over strongest rival | 47.4% :: Qwen-3.5-9B with WikiSkill | 39.4% :: Qwen-3.6-27B without skills | 70.2% :: transferred skill on ALFWorld
+
+That performance comes with extra work during skill development. WikiSkill’s proposer uses a ReAct process, alternating reasoning and tool calls as it reads the wiki and work traces. One development iteration took roughly 10 to 20 ReAct turns, not counting the wiki curator. The researchers processed the full training set as one batch, so the number of optimizer model calls per iteration did not depend on the number of training examples.
+
+The authors’ ablation tests suggest that the wiki’s value depends on who can use it. With Gemini-3.5-Flash on four benchmarks, the standard setup—wiki available to the skill proposer but not the inference agent—averaged 63.7%. Removing the curator and denying the proposer access to the wiki brought the result to 48.7%. Giving the wiki to the inference agent instead lowered the score to 60.9%. The researchers suggest that an inference agent able to solve training tasks from wiki knowledge may produce traces that reveal less about weaknesses in its skills.
+
+Keeping the wiki out of inference also limits what runs in the production prompt. Tang’s distinction is that memory should be complete while the production prompt should stay compact; combining the two would force a compromise. In the experiments, the active skills occupied roughly 45 to 129 lines.
+
+<strong>I think the strongest result here is not just the benchmark lead, but the separation between a rich record of what the agent learned and the small set of instructions it actually needs at runtime.</strong> That makes WikiSkill a plausible fit for agents that repeat multi-step workflows and generate enough history to expose recurring patterns. But it also makes the system’s unresolved limits central to any deployment decision.
+
+Skills are placed directly in the model prompt, and the researchers did not test how to retrieve and launch them as a library grows. Validation rejects changes that fail to improve results immediately, even if they might help later. The wiki itself keeps growing without an automatic way to prune it, and the experiments did not cover tasks lasting hundreds of actions or several hours.
+
+The authors identify automatic wiki compression and adapting skills during long tasks as open problems. Tang says the team is already studying those directions and sees the move toward them as a matter of time. Until then, WikiSkill’s memory can accumulate lessons—but its usefulness at scale depends on solving how to keep that memory manageable.
