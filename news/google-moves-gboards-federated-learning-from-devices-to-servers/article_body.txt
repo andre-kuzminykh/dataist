@@ -1,0 +1,46 @@
+## What moved to the server
+
+Google introduced federated learning in 2017. Instead of gathering data in one place, the approach lets participants train models using data distributed across devices. Google has used it for next-word prediction and Smart Compose in Gboard, suggested replies in Google Messages, and Smart Text Selection in Android.
+
+The new system collects encrypted training examples from devices, then runs training on servers inside TEEs. Devices set access policies that specify which computations may process their data. Those computations can release only anonymized results, and clients require the policies to be published in a public transparency log.
+
+The system has four main components:
+
+- **Data upload:** Devices encrypt training examples locally and send them to the server. Access policies define which TEE computations may process the data.
+- **Key management and policy checks:** A key management system (KMS), built from a cluster of TEEs using the RAFT consensus protocol, releases decryption keys only to server tasks that match the policies.
+- **Task execution:** A data-processing TEE runs a Python training program and distributes parallel subtasks across worker TEEs. The system uses Federated Language, an open-source orchestration language based on TensorFlow Federated.
+- **Recovery:** At the end of each round, the program saves encrypted recovery state using the KMS. That lets training resume after a temporary failure without exposing more sensitive data.
+
+[FIGURE:0]
+
+The diagram shows the system’s data flows and the checks used to verify privacy guarantees for its tasks.
+
+The access policies are published in Rekor, an open transparency log. External auditors can track the server tasks that devices could potentially connect to. The KMS and data-processing components can also be rebuilt from source code in Google’s Confidential Federated Compute repository on GitHub.
+
+## What the TEE is meant to guarantee
+
+Earlier federated-learning systems uploaded data for immediate aggregation, but outside observers could not verify that the data had not been recorded or inspected. Secure aggregation later added cryptographic protection for uploads, but did not combine with the strongest guarantees of centralized differential privacy. Google presents the TEE system as another step toward making server-side processing possible without requiring trust in the server operator.
+
+In the new system, task operators see only metrics and model weights protected by differential privacy. Uploaded training data can be decrypted and processed only inside TEEs running Python programs specified in the access policies, and access is limited in time after upload.
+
+The design also addresses a gap in earlier systems: neither devices nor auditors could verify the logic running on the server. Users therefore had to trust Google to add random noise correctly to gradient sums. Now, policies published in Rekor describe the Python program that defines the training logic.
+
+There is a trade-off. To keep model architectures and preprocessing logic secret while preserving auditability, data-processing TEEs can dynamically load serialized data into the program. The authors say this can support private logic as long as all privacy-relevant logic is fixed in the Python program. They also discuss side-channel observation risks.
+
+## Faster training, with a different bottleneck
+
+Gboard uses the system to train next-word prediction models in English and Japanese. Google says collecting data from devices first and running training on the server means changes in device availability throughout the day no longer affect the training process. The server program can dynamically choose an optimal schedule for device participation and use it to tune other differential-privacy parameters.
+
+The authors say schedule optimization can provide stronger privacy guarantees while reducing noise multipliers. Their graph is based on English next-word prediction training over 5,000 rounds, with 6,500 devices in each group.
+
+Training previously took one to two months. Device availability, device computing capacity, and competing tasks all constrained progress. Moving the bottlenecks to servers allows computation to run in parallel across many machines; Google says training is now substantially faster, with TEE resources the remaining constraint.
+
+I think the more important change is not the speedup but the new trust boundary: training can scale beyond the compute available on users’ devices, while its privacy case now depends on what the TEEs can actually prove. The announcement describes remote verification of the code running inside them, but also acknowledges the limits of current TEEs and the risk of side-channel observation. That leaves a distinction between making a system auditable and proving that every part of its execution is safe.
+
+## What remains to be built
+
+Google says the system could support larger federated models because gradient computation no longer has to run on devices. Larger workloads will make it important to combine TEEs with accelerators.
+
+The infrastructure can also run arbitrary tasks expressible in Python. Google is experimenting with other kinds of computation, including synthetic-data generation, and exploring combinations of general-purpose Python TEEs with specialized data-processing TEEs for tasks such as large language model inference.
+
+The authors see newer TEE hardware and research into side-channel defenses as ways to strengthen protection for dynamically loaded tasks. Further ahead, they point to full proofs that software implements differential-privacy algorithms and system components correctly. Until then, the system offers a more inspectable form of server-side learning—not a claim that the remaining trust problem has disappeared.
