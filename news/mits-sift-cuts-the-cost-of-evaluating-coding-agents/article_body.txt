@@ -1,0 +1,35 @@
+## A cheaper signal before the benchmark
+
+Every change to a coding agent’s instructions, tools or error handling needs to be tested. Manual tuning limits the number of ideas engineers can try; systems that rewrite their own code can explore more, but evaluating each candidate is expensive.
+
+SIFT builds on the agent framework used by the Darwin Gödel Machine (DGM), adding a lower-cost signal to guide the search. The cost figures in the paper show why: proposing one change costs about 12 cents, while a pairwise comparison costs about 4.4 cents. SIFT can run up to 10 comparisons for a candidate, or 44 cents. Testing an agent on 50 Polyglot tasks costs about $6 and takes 2.6 processor hours.
+
+A small test is cheaper, but a candidate may get an unusually easy or difficult set of tasks. A larger benchmark offers a more reliable basis for choosing the next version, at a higher cost. The researchers describe the problem as an “unfavorable information-to-cost ratio.”
+
+SIFT first runs a changed agent on four programming tasks, screening for failures before spending more on it. It then asks a language-model judge to compare the candidate with up to 10 leading versions from an archive. The judge sees the agents’ code, but not the benchmark tasks or their results.
+
+The pairwise wins and losses feed a Bradley–Terry model, which estimates the candidates’ relative strength. That ranking does not replace benchmark testing; it helps decide which candidates are worth testing further. SIFT can create candidates, run comparisons and execute benchmarks in parallel, rather than making each new change wait for the previous one’s full evaluation.
+
+[INFO:facts] 4 :: quick tasks | 10 :: comparisons | $6 :: full test
+
+## When the judge beats the small test
+
+The researchers evaluated SIFT on Polyglot, TerminalBench 2.1 and a 60-task subset of SWE-bench Verified. They compared it with DGM and Huxley-Gödel Machine (HGM), and also ran SIFT without a language-model judge.
+
+On Polyglot, SIFT reached 35.1% accuracy with o3-mini, versus 30.7% for DGM. Without the judge, SIFT scored 29.8%. With Qwen3-Coder-30B, SIFT slightly outperformed HGM while using about a third fewer processor hours.
+
+TerminalBench shows why a small search result can mislead. The judge’s top choice solved 18 of the 50 tasks used during the search; another candidate solved 19. Yet on repeated full-benchmark runs, the judge’s choice averaged 36.7%, against 28.1% for the candidate that had scored 19 out of 50. The judge flagged problems in the code: the agent’s new checking mechanism was disabled by default, and a rewritten shell tool risked failing at runtime.
+
+On the SWE-bench subset, judge-selected agents also did better, though the gap was less clear. Two scored averages of 50.4% and 53.8% across four evaluations. The top two candidates selected without a judge averaged 44.6% and 50.4%. The original agent scored 40.0%.
+
+The Node 9 example makes the distinction between a quick signal and a full result concrete. One version gained an instruction to run tests after editing and a `test_runner` tool that returns structured error information. A later version added more components. Both solved 44% of the small search test, but on the full Polyglot benchmark the simpler version scored 35.6%, compared with 33.8% for the more complex one. The judge had already ranked Node 9 higher.
+
+## The expensive test still matters
+
+I think SIFT’s strongest result is not that a language model can replace a benchmark, but that it can help allocate benchmark time. On TerminalBench, the judge spotted weaknesses that the small task count did not reveal. On Polyglot, removing the judge lowered the score. Those results support using the model as a filter—not treating its ranking as proof.
+
+The method also leaves a practical question open: how well does this work beyond coding agents? The researchers tested SIFT on coding tasks, though the approach could apply to other self-improving agents when changes have measurable outcomes. Teams adapting it would still need a cheap initial check, pairwise comparisons, and a pipeline that runs candidate creation and slower evaluations in parallel.
+
+There is no link in the paper to a separate SIFT implementation. Teams already using DGM have much of the underlying cycle: proposing changes, storing versions in an archive and evaluating candidates. SIFT adds model-based comparisons, a Bradley–Terry ranking and asynchronous search. The researchers also found that a cheaper judge retained much of the ranking signal on TerminalBench, while a stronger model was more reliable among the leading candidates; they suggest using the cheaper model for most comparisons and the stronger one near the top.
+
+The cost savings come from deciding which versions deserve the expensive test, not from eliminating it. And because changes can weaken the evaluation framework itself, the researchers had to block candidates that did so. SIFT can make the search broader; it cannot make the yardstick trustworthy by default.
