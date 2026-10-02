@@ -1,0 +1,35 @@
+[FIGURE:0]
+
+## A fast decision layer
+
+Decision models sit between general-purpose language models and conventional classifiers. Language models can reason and call tools, but their answers can vary and take longer to produce. Classifiers are fast, but adding a new category can mean retraining them. Cloudflare presents Clef as a direct competitor to Jev from TypeSafe AI and says its API is fully compatible, making it easier for customers to switch.
+
+Cloudflare reports results from 43 benchmarks in which Clef and the smaller Clef-flash were faster than all comparable competing models. Median latency was about 39 milliseconds for Clef-flash and about 209 milliseconds for Clef, compared with more than 524 milliseconds for Jev. Both models run on Cloudflare’s infrastructure; the company says their proximity to its edge data centers helps reduce latency.
+
+[FIGURE:1]
+
+Cloudflare’s threat-analysis team is testing Clef to classify websites. In one example, it assigned a 95% probability that a domain belonged to a fashion site and an 85% probability that it was an online store. The phishing probability was below 1%. Loading, rendering and classifying the site took 2.2 seconds. Cloudflare’s fastest general-purpose language model took 4.7 seconds for the same process and identified only two categories.
+
+Cloudflare also says Clef can process images, while Jev currently handles text only. Clef has a 64,000-token context window, twice Jev’s, and leads Jev on Cloudflare’s own Jev Decision Index benchmark.
+
+## The model underneath
+
+Clef is based on Qwen3.8-27B, while Clef-flash uses the smaller Qwen3.5-9B. Cloudflare says it leaves the base models unchanged and trains additional components using its own synthetic data. Those components extract candidate answers and probabilities from the models’ internal computations.
+
+The company also uses its own version of reinforcement learning for calibrated decisions, or RLCD, a method TypeSafe used to train Jev. RLCD trains a model to answer several questions about an input in one request, with the goal of making its stated probabilities match how often its answers are correct. Cloudflare previously experimented with DiffusionGemma to produce fixed decision values from a language model’s internal computations.
+
+## Training moves toward customers
+
+Alongside the launch, Cloudflare is rolling out a reinforcement-learning service to adapt Clef to customer tasks. At first, a team of customer-facing engineers will handle fine-tuning. The company plans to open the platform for self-service later.
+
+Customers will be able to collect examples by logging requests through AI Gateway, then evaluate them in containers used as test environments for reinforcement learning. A new training component will let them deploy fine-tuned models on Workers AI. Cloudflare uses technology from Replicate, acquired in late 2025, to run custom models.
+
+[FIGURE:2]
+
+Cloudflare also plans to use Clef internally to review abuse complaints, sort support requests and distinguish useful bots from malicious ones. Both models run on Workers AI and are available on Hugging Face under the Apache-2.0 license.
+
+The approach was popularized by TypeSafe AI, the startup founded by former OpenAI researcher Diogo Almeida. TypeSafe introduced Jev in mid-September and calls it a “hallucination-free” system. That description means it selects from predefined options, not that it cannot choose the wrong one. In late September, OpenAI introduced Decisions API, based on GPT-6 Luna, which also accepts text or images as context.
+
+I think the more consequential part of this launch is not the latency comparison but the attempt to make a decision model a controllable component in an agent workflow. Cloudflare has recently focused its AI announcements on controlling access to websites: in July, it let site owners block or allow AI bots according to their purpose. Clef brings the company closer to decisions made inside those systems.
+
+What the announcement leaves unclear is how often customers will need to intervene when a model’s probabilities look confident but the decision is wrong. Fast routing can remove a person from routine steps; it can also move an error through a workflow before anyone sees it.
