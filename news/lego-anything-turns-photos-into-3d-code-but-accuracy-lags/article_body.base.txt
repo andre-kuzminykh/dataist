@@ -1,0 +1,49 @@
+## A benchmark built to expose the gap
+
+LEGO-Anything uses an Image-to-Code approach. An AI agent receives an image, writes code for Blender, runs it, inspects the rendered scene and revises the code. Objects, geometry, positions and camera placement are all explicit in the program, so the result can be run and edited like ordinary code.
+
+[FIGURE:0]
+
+The researchers built LEGO-Bench to measure how well this process works. It contains 208 images from 104 indoor and outdoor scenes, using 443 registered objects. The images are rendered from professionally built simulator scenes: they look natural, while their exact geometry, depth and object correspondence remain hidden as ground truth for automatic evaluation. Scene complexity can be increased without changing lighting or camera settings.
+
+Each scene is scored on three dimensions:
+
+- **Usability** — whether the agent produced a working scene file.
+- **Reconstruction** — how accurately it recovered the visible geometry.
+- **Appearance** — how closely a new render matches the original image, measured pixel by pixel.
+
+[FIGURE:1]
+
+## A working file is not a faithful scene
+
+All six tested GPT configurations almost always produced usable scenes. Their reconstruction accuracy was much less consistent. GPT-6 Astra performed best, scoring 53.4% on indoor scenes and 39.6% outdoors; weaker configurations scored around 15%.
+
+More complex scenes reduced accuracy, and outdoor environments were harder than interiors. Giving GPT-6 variants a larger reasoning budget helped: on the office subset, Astra’s score rose from 32.3% to 61.8%.
+
+[FIGURE:2]
+
+The researchers traced errors to poor initial attempts, revisions that undid earlier progress and unreliable self-evaluation. When asked which of two versions better matched the source image, the models judged geometry at around chance or below. In other words, the agent could not reliably tell whether its latest change made the scene better.
+
+LEGO-Plugin addresses that failure without additional training. It anchors the initial scene to the source image, replaces the model’s self-assessment with concrete measurements and protects existing progress from changes that make the result worse.
+
+The plugin improved all six models. Weaker agents gained the most, reaching gains of up to 62.7%; the strongest model improved by only about two percentage points.
+
+[FIGURE:3]
+
+[FIGURE:4]
+
+## Useful for vision, but not yet a substitute
+
+Because each reconstruction is an executable program, it can also supply data for computer-vision tasks such as object detection, segmentation and depth estimation. Without additional training, the scenes produced usable results across all three tasks, but did not match specialized models.
+
+Object detection came closest: the reconstructed scenes reached about half the performance of the specialized model DINO. The gaps were larger for segmentation and depth estimation, compared with models such as SAM 3 and Depth Anything 3.
+
+My read is that the benchmark’s most important result is not that agents can build scenes from photos; it is that they still cannot reliably check their own work. A scene that runs is a low bar when the intended output is accurate geometry. LEGO-Plugin’s gains point toward measurement as the missing feedback loop, not simply more confident model judgment.
+
+That distinction matters as 3D tools make room for agents. Unity has released official plugins for Claude Code and Codex. Other approaches reconstruct scenes inside the model without code: World Labs’ Atlas is a world model. Google DeepMind’s GenCeption takes another route, using a video model for depth estimation and segmentation and reaching results comparable to specialized models in those tasks.
+
+GPT-6 Astra’s lead on LEGO-Bench also aligns with researcher Yoav Artzi’s view that the model made a major leap in spatial understanding. Artzi has speculated that it may have been trained on large volumes of 3D data, such as Blender scenes.
+
+What I’d want to know is whether the gains from explicit measurement hold up as scenes become more complex, not just whether agents can make a convincing first render. Until they do, editable 3D code is a useful representation of a reconstruction—but not evidence that the reconstruction is right.
+
+[FIGURE:5]
