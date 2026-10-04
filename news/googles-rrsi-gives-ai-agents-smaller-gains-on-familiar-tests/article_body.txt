@@ -1,0 +1,33 @@
+## The agent around the model
+
+An AI agent is more than a language model. Its framework—the prompts, tools, memory, workflow and logic around the model—determines what it sees and does at each step. Researchers argue that much of the recent progress in agents has come from improving these frameworks, not from introducing new models.
+
+Frameworks were once tuned by people reviewing failed runs. Newer methods automate the loop: a language model rewrites the framework based on performance on test tasks. The researchers describe this as a practical form of recursive self-improvement: the system optimizes the framework that, in turn, shapes the system’s behavior.
+
+That feedback loop creates a familiar risk. An agent repeatedly exposed to the same limited set of tasks can learn their quirks. Scores on those tasks rise, while gains on new ones shrink or disappear. Search can favor patterns specific to a benchmark, select changes that scored highly by chance, or add complexity that improves test performance without making the agent more capable.
+
+## Putting limits on the optimization loop
+
+RRSI, or Regularized Recursive Self-Improvement of Agent Scaffolds, leaves the framework editable but constrains both the changes proposed and the changes adopted.
+
+- Early in optimization, the system can make larger changes. The allowed number of independent edits then falls, making later changes smaller and easier to connect to results.
+- It records previous attempts to avoid revisiting failed ideas. If progress stalls, it searches parts of the framework that have not yet been changed.
+- A critic rejects edits that hard-code task names, solutions or other benchmark-specific tricks. Another rule allows higher compute costs only when they measurably improve quality; components that no longer help are removed.
+
+The researchers tested RRSI on eight benchmarks spanning coding, AI-assisted office work and engineering design. They kept the base model, Claude Opus 4.8, unchanged and compared RRSI with the original framework and four recently proposed optimization methods.
+
+RRSI improved scores by up to 14.1 points on tasks used for training and up to 4.7 points on five unfamiliar benchmarks. It used about 30% fewer tokens than the unrestricted version. On none of the new benchmarks did it score below the baseline framework—a common failure when a framework has learned its training tasks.
+
+Its largest gain on an unfamiliar benchmark was 4.7 points on JobBench. Across optimized frameworks, RRSI used the fewest tokens and steps and performed best on new tasks, though the unchanged baseline still used fewer resources.
+
+[INFO:compare] Familiar tasks :: smaller gains | New tasks :: higher scores
+
+## The trade-off is the result
+
+All the methods did well on familiar tasks, but two fell below the baseline on new ones. RRSI had the smallest gains on training tasks, yet it was the only method to substantially outperform the baseline on unfamiliar tasks. That is the trade-off its constraints are designed to produce.
+
+I think that is a more meaningful result than a higher score on a benchmark the optimizer has repeatedly seen. But the evidence is bounded: the study covers frameworks around fixed models, not changes to model weights. The researchers also found that a framework tuned for coding with Gemini 3.5 Flash raised Gemini 3.1 Flash Lite’s accuracy from 11.2 to 14.6 points without changing the weaker model. They say the mechanisms found by the system do not depend on the capabilities of the model used to find them.
+
+The wider question is whether these safeguards keep working as agents encounter tasks beyond the benchmarks used to tune them. The researchers’ own comparison with ARC-AGI-3 shows why that matters: Opus 4.6 scored 97.1% in a familiar environment with a framework built for it, and 0% in an unfamiliar one. Nvidia recently introduced SoL-Pi, which automatically rebuilds coding-agent frameworks and cuts token use by up to 49% without a noticeable drop in results. Google had also proposed letting agents “dream” about past search runs to improve their strategies, again without changing the model.
+
+RRSI’s code is available on GitHub. The unresolved test is whether a framework can keep improving when the next task is genuinely new—not just new to the agent, but outside the optimizer’s playbook.
