@@ -1,0 +1,50 @@
+## A lunar archive, not just an image collection
+
+The model was trained on SomBench, which the team describes as the largest multimodal lunar dataset with spatially aligned coordinates. It combines 11 data types at two spatial scales:
+
+- About one million high-resolution images from the Lunar Reconnaissance Orbiter’s narrow-angle camera, at roughly one meter per pixel.
+- Just under 964,000 multispectral images from its wide-angle camera, at 100 meters per pixel.
+
+The dataset draws mainly on 17 years of LRO observations. NASA says their volume exceeds the combined data from all of the agency’s other planetary missions. SomBench also includes measurements from the GRAIL mission on the Moon’s gravity field, Lunar Prospector data on hydrogen, and mineralogy data from Japan’s JAXA Kaguya/SELENE spacecraft.
+
+In total, the dataset brings together more than 30 spatially aligned layers from nine instruments and four missions. The researchers split training, validation and test data by geographic regions rather than assigning image patches at random, reducing overlap between the sets.
+
+## The model is given the lighting conditions
+
+The model builds on TerraMind, a multimodal Earth-observation model, but NASA and IBM trained the lunar version from scratch rather than adapting an existing model. For each image patch, it receives information about imaging geometry, including illumination angles, the Sun’s position and the patch boundaries. On the Moon, lighting can affect how the surface appears more than its physical properties do; giving the model those parameters directly avoids making it infer them from pixels alone.
+
+The model also trains on high- and low-resolution images together, combining local detail with broader context. FlexiViT lets the same trained model handle tasks that use different image-patch sizes without retraining.
+
+Researchers tested it on crater detection at resolutions of 100 meters and one meter, predicting polar ice deposits, and segmenting irregular mare patches — young volcanic features that complicate efforts to check accepted timelines for the Moon’s cooling. According to the technical report, the pretrained model matched or beat common baselines across the tasks, as well as a control model with the same architecture but random initialization.
+
+The strongest reported gain was in predicting ice deposits. Permanently shadowed polar regions are cold enough for water ice to persist for billions of years, and those deposits are considered a potential source of water, oxygen and rocket fuel. IBM says the model reduced prediction error by up to 22% compared with the best baseline, SwinV2-B. On low-resolution crater detection, IBM reports it beat SwinV2-B by nearly 19%, while using only half the data for training.
+
+[FIGURE:0]
+
+## The gains are uneven
+
+A randomly initialized control model that had not been trained on lunar data still beat five of seven baselines on ice detection. The researchers suggest that part of the advantage comes from the model’s data handling: it uses a separate processing path for each data layer, while the baselines combine all inputs into channels.
+
+On meter-scale crater detection and irregular mare patch segmentation, the model was roughly on par with the strongest baselines, with differences within the variation between training runs. IBM reports a 3% advantage over SwinV2-B on mare patches, but the results look more comparable than clearly better.
+
+The researchers also report that LoRA, a lighter fine-tuning method that trains only part of the model’s parameters, generally matched full fine-tuning and did better on crater detection. Full fine-tuning won only on the two smallest tasks.
+
+[FIGURE:1]
+
+The model is not a substitute for physical measurements. In tests that generated geographic coordinates, latitude and longitude sometimes differed by tens of degrees. The model could also recover terrain shape while getting its absolute elevation wrong. The authors present it as a reusable starting point for later tasks, not a tool for precise geodetic positioning.
+
+They say controlled experiments to isolate the contribution of each design choice still need to be done, and some test datasets are small. I think that caveat matters as much as the headline gains: the results support using the model to help interpret lunar data, but do not yet show which parts of the system account for those gains.
+
+[FIGURE:2]
+
+## An extension of the NASA–IBM partnership
+
+The model is available on Hugging Face, its source code is on GitHub, and it is included in the open TerraTorch toolkit. The team has also released machine-learning-ready datasets for pretraining and benchmark collections.
+
+The work is part of NASA and IBM’s “AI for science” collaboration. The organizations have worked on foundation models under a Space Act Agreement since early 2022. In August 2023, they released Prithvi on Hugging Face, trained on Landsat and Sentinel-2 imagery covering the contiguous United States and adapted for flood and wildfire mapping.
+
+IBM later presented Prithvi as part of its Watsonx platform. TerraMind, the Earth-observation model behind the lunar project, was developed by IBM in 2025 with ESA and Forschungszentrum Jülich. Google DeepMind is pursuing a similar approach with AlphaEarth Foundations, combining optical satellite imagery, radar and lidar scans, and climate simulations into compact embeddings of Earth’s surface.
+
+[FIGURE:3]
+
+NASA and IBM have made a broad lunar archive more usable for machine-learning research. The next test is whether the model’s gains hold up when researchers separate the value of its architecture and training choices from the value of the data preparation itself.
