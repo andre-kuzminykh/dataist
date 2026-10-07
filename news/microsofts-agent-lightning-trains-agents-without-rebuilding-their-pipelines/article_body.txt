@@ -1,0 +1,48 @@
+## Keep the agent, change the training path
+
+Many reinforcement-learning systems expect the training framework to control an agent’s interaction with its environment. That works for a simple loop: the model chooses an action, receives an observation, then chooses again. But real agents bring their own context management, tool protocols, execution logic and dependencies.
+
+Rebuilding those systems inside a training framework takes work and can produce an agent that behaves differently from the one used in production. Agent Lightning’s alternative is to route the agent’s model requests through an LLM proxy. The agent keeps its existing code; the framework observes and records its requests and responses.
+
+The v1.0 architecture has three components:
+
+- <strong>API Gateway</strong> stores agent runs, models and events, and acts as an OpenAI-compatible LLM proxy. It links model calls to runs and records prompts, responses and log probabilities.
+- <strong>Rollout Controller</strong> launches and manages agents as local processes or ordinary Kubernetes jobs, separating agent execution from training.
+- <strong>Customized Trainer</strong>, built on verl, collects completed runs and turns them into training data through a sample adapter.
+
+[FIGURE:0]
+
+Using the real pipeline leaves the trainer with an awkward view of the data: it sees LLM requests and responses, not the whole agent run. One run may yield different numbers of training samples, creating several problems:
+
+- Text must be converted back into the token IDs used during execution, but applying a chat template and tokenizer again can change token boundaries.
+- Advantage calculations at the sample level can overcount runs that produce more samples.
+- Losses averaged by sample count can give those same runs more weight, even when sample count reflects pipeline behavior rather than training value.
+- The number and length of samples are known only after a pipeline finishes, complicating scheduling across fixed GPU resources.
+
+## One GPU pool, asynchronous runs
+
+Agent runs take different amounts of time. In synchronous training, the system waits for the slowest agent in a group. Fully asynchronous training can improve utilization but typically needs separate GPU pools for agent runs and training.
+
+Agent Lightning v1.0 allows both to run asynchronously on one set of GPUs. Once enough runs are collected, the API Gateway pauses new requests and waits for in-flight ones to finish while the model is updated. Agent execution then resumes. The researchers report roughly twice the end-to-end speed of synchronous training, using fewer GPUs than conventional asynchronous training.
+
+[FIGURE:1]
+
+The framework also runs agents as standard Kubernetes jobs rather than relying on commercial sandboxes such as Modal Sandbox or E2B. Researchers can use their own clusters, cloud Kubernetes or local infrastructure.
+
+For a coding-agent test, the researchers combined SWE-smith, mini-SWE-agent and Qwen3.5-9B in a pipeline covering data cleanup, runtime setup, reward-hacking protections and reinforcement learning. About 6,000 training samples raised the model’s SWE-bench Verified score from 41.8% to 56.4% Pass@1—a gain of 14.6 percentage points.
+
+[FIGURE:2]
+
+## The harder question is what the score measures
+
+<strong>I think the most consequential claim here is not the score increase; it is that reinforcement learning can use an agent’s actual pipeline without making that pipeline part of the trainer.</strong> If that holds beyond this example, it addresses a practical mismatch between how agents are trained and how they are run.
+
+The paper also reports that calculating advantages and normalizing losses at the run level produced higher validation rewards than doing so at the sample level, while helping keep policy entropy stable. Those choices matter because the pipeline itself determines how many samples a run produces.
+
+What I’d want to know is how robust the result is across agents and tasks. The report gives one coding-agent example, and the framework’s design shifts complexity into handling variable runs, tokenization and scheduling. A compact implementation is appealing, but the real test is whether teams can keep their own pipelines intact without those edge cases becoming the new integration burden.
+
+[FIGURE:3]
+
+The work is described in *Agent Lightning v1.0: Towards Harnessed Agentic RL*. The listed authors are Zhiyuan He, a Software Engineer II, and Yuqing Yang.
+
+[FIGURE:4]
