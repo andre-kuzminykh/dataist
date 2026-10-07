@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>How an AI agent learns to solve problems from others’ experience</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="How an AI agent learns to solve problems from others’ experience" />
+    <meta property="og:description" content="An AI agent can learn from another agent’s hard-won success—but only if it can separate the useful know-how from the special setup that made it work.
+
+The authors propose a way to turn successful task-solving attempts into reusable instructions for an AI model. One part extracts practical steps, another checks that the instructions do not rely on hidden answers or tools that will not be available later, and a final part tests them in a fresh environment. This lets the model learn from successes gathered under different setups and carry that experience into a more general one.
+
+In this review we look at how recursive rewriting turns a small collection of successful attempts into a much broader set of training examples, and why that helps an AI agent tackle more challenging tasks." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/how-an-ai-agent-learns-to-solve-problems-from-others-experience/" /><meta property="og:image" content="https://dataist.ai/research/ru/kak-ii-agent-uchitsia-reshat-zadachi-na-chuzhom-opyte_ru/cover_card.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />    <meta property="article:published_time" content="2026-10-07" />
+
+    <meta name="description" content="An AI agent can learn from another agent’s hard-won success—but only if it can separate the useful know-how from the special setup that made it work. The authors propose a way to turn successful task-solving attempts into reusable instructions for…" />
+    <link rel="canonical" href="https://dataist.ai/research/how-an-ai-agent-learns-to-solve-problems-from-others-experience/" />    <link rel="alternate" hreflang="ru" href="https://dataist.ai/research/ru/kak-ii-agent-uchitsia-reshat-zadachi-na-chuzhom-opyte_ru/">
+    <link rel="alternate" hreflang="en" href="https://dataist.ai/research/how-an-ai-agent-learns-to-solve-problems-from-others-experience/">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "How an AI agent learns to solve problems from others\u2019 experience",
+      "description": "An AI agent can learn from another agent\u2019s hard-won success\u2014but only if it can separate the useful know-how from the special setup that made it work.\n\nThe authors propose a way to turn successful task-solving attempts into reusable instructions for an AI model. One part extracts practical steps, another checks that the instructions do not rely on hidden answers or tools that will not be available later, and a final part tests them in a fresh environment. This lets the model learn from successes gathered under different setups and carry that experience into a more general one.\n\nIn this review we look at how recursive rewriting turns a small collection of successful attempts into a much broader set of training examples, and why that helps an AI agent tackle more challenging tasks.",
+      "image": "https://dataist.ai/research/ru/kak-ii-agent-uchitsia-reshat-zadachi-na-chuzhom-opyte_ru/cover_card.jpg",
+      "url": "https://dataist.ai/research/how-an-ai-agent-learns-to-solve-problems-from-others-experience/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/research/how-an-ai-agent-learns-to-solve-problems-from-others-experience/"
+      },
+      "datePublished": "2026-10-07",
+      "inLanguage": "en",
+      "citation": {
+        "@type": "ScholarlyArticle",        "name": "Scaling Trajectories for Complex Tasks through Recursive Self-Rewrite",        "identifier": "arXiv:2610.02826",
+        "url": "https://arxiv.org/abs/2610.02826"
+      },
+      "isBasedOn": "https://arxiv.org/abs/2610.02826",      "author": {"@type": "Person", "name": "@dataist_ai"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="How an AI agent learns to solve problems from others’ experience" />
+    <meta name="twitter:description" content="An AI agent can learn from another agent’s hard-won success—but only if it can separate the useful know-how from the special setup that made it work.
+
+The authors propose a way to turn successful task-solving attempts into reusable instructions for an AI model. One part extracts practical steps, another checks that the instructions do not rely on hidden answers or tools that will not be available later, and a final part tests them in a fresh environment. This lets the model learn from successes gathered under different setups and carry that experience into a more general one.
+
+In this review we look at how recursive rewriting turns a small collection of successful attempts into a much broader set of training examples, and why that helps an AI agent tackle more challenging tasks." />
+    <meta name="twitter:image" content="https://dataist.ai/research/ru/kak-ii-agent-uchitsia-reshat-zadachi-na-chuzhom-opyte_ru/cover_card.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script><link rel="stylesheet" href="/static/css/tailwind.css">
+    <style>
+.glass-header{border-bottom-width:1px;border-color:rgba(0,0,0,.05);background-color:hsla(0,0%,100%,.7);--tw-backdrop-blur:blur(40px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.glass-header:is(.dark *){border-color:hsla(0,0%,100%,.1);background-color:rgba(0,0,0,.7)}.glass-panel{border-width:1px;border-color:rgba(0,0,0,.05);--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px rgba(0,0,0,.06);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.glass-panel:is(.dark *){border-color:hsla(0,0%,100%,.1);--tw-bg-opacity:1;background-color:rgb(28 28 30/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px hsla(0,0%,100%,.04);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);--tw-shadow-color:#000;--tw-shadow:var(--tw-shadow-colored)}body{--tw-bg-opacity:1;background-color:rgb(245 245 247/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1));transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.3s}body:is(.dark *){--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::-moz-selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}:is(.dark *)::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}:is(.dark *)::selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.article-content p{font-family:Inter,sans-serif;font-size:1.125rem;line-height:1.75;margin-bottom:1.5rem;color:rgba(0,0,0,.85)}.dark .article-content p{color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-content p{font-size:1.3125rem;line-height:1.8;margin-bottom:2rem}}.article-content strong{font-weight:600;color:#000}.dark .article-content strong{color:#fff}.article-content em{font-style:italic}.article-content h2{font-family:Inter,sans-serif;font-weight:700;font-size:1.5rem;line-height:1.15;letter-spacing:-.02em;margin-top:4rem;margin-bottom:2rem;color:#000}.dark .article-content h2{color:#fff}@media (min-width:768px){.article-content h2{font-size:1.875rem}}@media (min-width:1024px){.article-content h2{font-size:2.25rem}}.article-content section{max-width:48rem;margin-left:auto;margin-right:auto;width:100%}.article-content figure{margin:3rem auto;max-width:48rem}.apple-img,.article-content .arxiv-chart{width:100%;border-radius:1.5rem;overflow:hidden;background:#fff;border:1px solid rgba(0,0,0,.05);box-shadow:0 4px 24px rgba(0,0,0,.04);display:block;padding:0}.dark .apple-img,.dark .article-content .arxiv-chart{border-color:hsla(0,0%,100%,.1);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.article-content figure img{width:100%;height:auto;display:block;-o-object-fit:cover;object-fit:cover}.article-content figure p{font-family:Space Mono,monospace;font-size:.875rem;color:#86868b;margin:1rem auto 0;text-align:center;line-height:1.6;max-width:42rem}.dark .article-content figure p{color:#8e8e93}.article-content .tech-card{display:flex;gap:1rem;align-items:flex-start;padding:1.25rem 1.5rem;margin-bottom:.75rem;border-radius:1rem;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.05)}.dark .article-content .tech-card{background:hsla(0,0%,100%,.04);border-color:hsla(0,0%,100%,.1)}.article-lead{font-family:Inter,sans-serif;font-weight:500;font-size:1.25rem;line-height:1.6;margin:.5rem 0 3rem;padding-left:1.25rem;border-left:2px solid #000;color:#86868b}.dark .article-lead{border-color:#fff;color:#8e8e93}@media (min-width:768px){.article-lead{font-size:1.5rem;padding-left:2rem}}.rel-rail{display:flex;gap:16px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x proximity;padding:4px 2px 12px;overscroll-behavior-x:contain;scrollbar-width:none;-ms-overflow-style:none}.rel-rail::-webkit-scrollbar{display:none}.rel-rail>a{flex:0 0 auto;width:208px;scroll-snap-align:start;text-decoration:none;display:block;transition:transform .25s cubic-bezier(.2,.8,.2,1)}@media (min-width:640px){.rel-rail>a{width:244px}}.rel-rail>a:hover{transform:translateY(-4px)}.rel-thumb{display:block;position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:18px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.1);box-shadow:0 4px 24px rgba(0,0,0,.05)}.dark .rel-thumb{background:hsla(0,0%,100%,.045);border-color:hsla(0,0%,100%,.14);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.rel-thumb img{width:100%;height:100%;-o-object-fit:cover;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}.rel-rail>a:hover .rel-thumb img{transform:scale(1.05)}.rel-rail time{display:block;margin:12px 0 5px;font-family:Space Mono,monospace;font-size:.625rem;letter-spacing:.08em;color:#86868b}.dark .rel-rail time{color:#8e8e93}.rel-title{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.875rem;font-weight:600;line-height:1.4;letter-spacing:-.01em;color:#000}.dark .rel-title{color:#fff}.rel-fade{position:absolute;top:0;bottom:12px;width:96px;pointer-events:none;opacity:0;z-index:2;transition:opacity .35s ease}.rel-fade-l{left:0;background:linear-gradient(90deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.rel-fade-r{right:0;background:linear-gradient(270deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.dark .rel-fade-l{background:linear-gradient(90deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.dark .rel-fade-r{background:linear-gradient(270deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.rel-arrow{position:absolute;top:calc(50% - 34px);translate:0 -50%;z-index:3;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid rgba(0,0,0,.1);background:#fff;color:#000;box-shadow:0 8px 26px rgba(0,0,0,.14);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,transform .25s ease}.dark .rel-arrow{border-color:hsla(0,0%,100%,.14);background:#1c1c1e;color:#fff}.rel-arrow:hover{transform:scale(1.08)}.rel-arrow-l{left:6px}.rel-arrow-r{right:6px}.rel-wrap[data-left="1"] .rel-fade-l,.rel-wrap[data-right="1"] .rel-fade-r{opacity:1}.rel-wrap[data-left="1"] .rel-arrow-l,.rel-wrap[data-right="1"] .rel-arrow-r{opacity:1;visibility:visible;pointer-events:auto}@media (hover:none){.rel-arrow{display:none}}@media (prefers-reduced-motion:reduce){.rel-arrow,.rel-fade,.rel-rail>a,.rel-thumb img{transition:none}}
+    </style><style>
+        /* --- ряд рубрик в шапке -----------------------------------------
+           Палитра витрин. На странице статьи её не было вовсе: переменные
+           живут в styles.css приложения, которого страница не подключает.
+           Из-за этого и переключатель языка рисовал неактивный язык тем же
+           цветом, что активный — значение var(--text-muted) не определено,
+           объявление отбрасывается, цвет наследуется. */
+        :root {
+            --bg-color: #F5F5F7;
+            --text-main: #1d1d1f;
+            --text-muted: #86868B;
+            --chip-border: rgba(0, 0, 0, 0.08);
+        }
+        .dark {
+            --bg-color: #000000;
+            --text-main: #f5f5f7;
+            --text-muted: #8E8E93;
+            /* 0.19, а не 0.10: на чистом чёрном десятая доля даёт
+               rgb(25,25,25) — ряд читается не кнопками, а россыпью слов. */
+            --chip-border: rgba(255, 255, 255, 0.19);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Края растворяет МАСКА самого ряда, а не градиент поверх него:
+           накладной прямоугольник пришлось бы красить фоном страницы, и на
+           границе тем он выглядел бы грязным мазком.
+
+           Правый край растворён сразу, ещё до пересчёта скриптом: рубрики
+           в шапку обычно не помещаются, и до первого замера честнее
+           показать растворение, чем сухой обрез. Не понадобится — скрипт
+           обнулит. */
+        #category-scroll {
+            --fade-l: 0px;
+            --fade-r: 56px;
+            -webkit-mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+            mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+        }
+
+        /* Заливки у рубрики нет, всю форму держит рамка — значит и рамка
+           задаётся здесь, а не только утилитой Tailwind. */
+        .category-btn {
+            transition: all 0.25s ease;
+            background: transparent;
+            border: 1px solid var(--chip-border);
+        }
+        .category-btn.active,
+        .category-btn.active:hover {
+            background: var(--text-main);
+            color: var(--bg-color);
+            border-color: var(--text-main);
+        }
+
+        /* Выбор рубрики на телефоне — на <details>, то есть без единой
+           строки JavaScript: раскрытие списка не должно зависеть от того,
+           доехала ли чужая библиотека. */
+        #cat-menu > summary { list-style: none; cursor: pointer; }
+        #cat-menu > summary::-webkit-details-marker { display: none; }
+        #cat-menu > summary::marker { content: ""; }
+        #cat-menu[open] > summary .cat-caret { transform: rotate(180deg); }
+        .cat-caret { transition: transform 0.2s ease; }
+        /* Подпись на кнопке телефона не должна раздувать шапку, и её ширина не
+           должна зависеть от длины названия рубрики. У «Исследований» кнопка
+           выходила на 135 пикселей против 106 у «Новостей», и правый край
+           «Telegram» уезжал за экран на 390. Замер поймал; на широком экране
+           этого не видно вовсе.
+
+           3.5rem, а не 4.5: с четырьмя с половиной не хватало ровно четырёх
+           пикселей. Теперь длина названия на ширину шапки не влияет никак. */
+        #cat-menu > summary > span {
+            max-width: 3.5rem; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        #cat-menu .cat-item {
+            display: flex; align-items: center; gap: 0.625rem;
+            padding: 0.625rem 0.75rem; border-radius: 0.75rem;
+            font-family: "Space Mono", monospace; font-size: 11px;
+            font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+            color: var(--text-muted); text-decoration: none;
+        }
+        #cat-menu .cat-item.active {
+            background: var(--text-main); color: var(--bg-color);
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4 shrink-0">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">
+                    Dataist
+                </div>
+            </a>
+        </div>            <div id="category-scroll" class="hidden sm:block flex-1 min-w-0 overflow-x-auto no-scrollbar">
+                <nav aria-label="Sections" class="flex flex-nowrap items-center gap-2 w-max mx-auto">
+                    <a href="/?cat=all" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="all" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i><span>All</span></a>
+                    <a href="/?cat=research" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="research" aria-current="page" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white active"><i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i><span>Research</span></a>
+                    <a href="/?cat=news" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="news" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="newspaper" class="w-3.5 h-3.5 shrink-0"></i><span>News</span></a>
+                </nav>
+            </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0"><details id="cat-menu" class="sm:hidden relative">
+                <summary class="category-btn inline-flex items-center gap-1.5 px-3 py-2 rounded-full font-mono text-[10px] font-bold tracking-tight uppercase text-black dark:text-white" aria-label="Choose a section">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span>Research</span>
+                    <i data-lucide="chevron-down" class="cat-caret w-3.5 h-3.5 shrink-0"></i>
+                </summary>
+                <div class="absolute right-0 top-full mt-2 w-56 p-2 rounded-2xl glass-panel flex flex-col gap-0.5 z-50">
+                    <a href="/?cat=all" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="cat-item"><i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i><span>All</span></a>
+                    <a href="/?cat=research" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" aria-current="page" class="cat-item active"><i data-lucide="microscope" class="w-4 h-4 shrink-0"></i><span>Research</span></a>
+                    <a href="/?cat=news" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="cat-item"><i data-lucide="newspaper" class="w-4 h-4 shrink-0"></i><span>News</span></a>
+                </div>
+            </details>            <nav id="lang-switch" aria-label="Language" class="flex items-center gap-1.5 md:gap-2 font-mono text-[11px] md:text-sm font-bold uppercase tracking-widest select-none"><a href="/research/ru/kak-ii-agent-uchitsia-reshat-zadachi-na-chuzhom-opyte_ru/" hreflang="ru" lang="ru" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="text-apple-textMutedLight dark:text-apple-textMutedDark hover:text-black dark:hover:text-white transition-colors no-underline">RU</a><span aria-hidden="true" class="text-apple-textMutedLight dark:text-apple-textMutedDark opacity-40">|</span><span aria-current="true" class="text-black dark:text-white">EN</span></nav>            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://x.com/andre_dataist" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">X</span>
+            </a>
+        </div>
+    </header>
+
+    <script>
+        /* Растворение краёв ряда рубрик.
+
+           Отдельным блоком намеренно: в общем блоке внизу страницы первой
+           строкой идёт обращение к библиотеке иконок с unpkg.com, и если
+           она не ответила, весь тот блок не исполняется. Ряду рубрик до
+           этого дела быть не должно. */
+        (function () {
+            var el = document.getElementById('category-scroll');
+            if (!el) return;
+            var row = el.firstElementChild;
+            var RAMP = 48, MAX = 56;          // те же числа, что на витрине
+            var placed = false;
+
+            function update() {
+                var max = el.scrollWidth - el.clientWidth;
+                var w = function (v) {
+                    return max <= 8 ? 0
+                        : Math.round(Math.min(1, Math.max(0, v) / RAMP) * MAX);
+                };
+                el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+
+                if (!placed && max > 8) {
+                    placed = true;
+                    var active = el.querySelector('.category-btn.active');
+                    if (active) {
+                        /* Ровно настолько, чтобы текущая рубрика влезла, и
+                           ни пикселем больше: центрирование утаскивало ряд
+                           до упора и прятало «Все» за краем насовсем.
+                           Запас 64 шире растворения (56), иначе рубрика
+                           встаёт под маску и читается наполовину. */
+                        var pad = 64;
+                        /* BR440: смещение считается ОТ САМОГО РЯДА, а не
+                           через `offsetLeft`. Тот меряет от ближайшего
+                           позиционированного предка, а это `<header>` — он
+                           `fixed`. Разница ровно на отступ ряда внутри шапки
+                           (около 230 пикселей), и ряд уезжал на неё дальше,
+                           чем нужно: активная рубрика оказывалась за левым
+                           краем. Замерено: на 768 её видно −23 пикселя из
+                           137, на 640 — восемь, и те под растворением.
+                           На новостях этого не видно, потому что там активна
+                           ПОСЛЕДНЯЯ рубрика и перелёт упирается в край. */
+                        var box = el.getBoundingClientRect();
+                        var ab = active.getBoundingClientRect();
+                        var from = ab.left - box.left + el.scrollLeft;
+                        var l = from - pad;
+                        var r = from + ab.width + pad;
+                        if (r > el.scrollLeft + el.clientWidth) el.scrollLeft = r - el.clientWidth;
+                        else if (l < el.scrollLeft) el.scrollLeft = Math.max(0, l);
+                        /* Узкий экран: рубрика с обоими запасами уже не
+                           помещается (123 + 64 + 64 больше 216 при 640), и
+                           подгонка по правому краю загоняет левый под маску.
+                           Читают слева направо — значит слева и освобождаем.
+                           Замерено: было 46 при маске 56, стало 56. */
+                        if (from - el.scrollLeft < MAX) el.scrollLeft = Math.max(0, from - MAX);
+                        max = el.scrollWidth - el.clientWidth;
+                        el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                        el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+                    }
+                }
+            }
+
+            el.addEventListener('scroll', update, { passive: true });
+            window.addEventListener('resize', update);
+
+            /* Главное. Ряд меняет ширину ПОСЛЕ первого замера: `<i
+               data-lucide>` превращается в svg, когда догрузится библиотека
+               иконок, и рубрики раздаются. Разовый замер этого не ловит —
+               край резался насухо. Наблюдатель ловит любое изменение
+               размера, чем бы оно ни было вызвано. */
+            if (window.ResizeObserver && row) new ResizeObserver(update).observe(row);
+            window.addEventListener('load', update);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+
+            update();
+        })();
+
+        /* Меню рубрик на телефоне закрывается нажатием мимо него.
+           Раскрытие держится на <details> и работает без скрипта; это лишь
+           удобство — не сработает, меню закроется повторным нажатием. */
+        (function () {
+            var menu = document.getElementById('cat-menu');
+            if (!menu) return;
+            document.addEventListener('click', function (e) {
+                if (menu.open && !menu.contains(e.target)) menu.open = false;
+            });
+        })();
+    </script>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-10-07</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    How an AI agent learns to solve problems from others’ experience
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/research/ru/kak-ii-agent-uchitsia-reshat-zadachi-na-chuzhom-opyte_ru/cover.jpg"
+                         alt="Cover: How an AI agent learns to solve problems from others’ experience"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>Models learn from tasks they solve themselves</h2>
+<p>The same AI can fail at a task in one harness and solve it in another. One system helps it track each step, another lets it continue after a failed check, and a third gives it more freedom. If you collect successful solutions from different harnesses and simply feed them to the model, it may learn the harnesses’ control rules rather than how to solve the tasks.</p>
+<p>The paper’s authors propose <strong>Recursive Self-Rewrite</strong>. First, different harnesses help the model find solutions. Then the model tackles the tasks again in a single, shared harness. Only verified results are kept for training. The goal is to transfer useful techniques from external tools into the model itself.</p>
+<p>The authors tested the method with Qwen-3.8-27B on around 3,000 command-line tasks spanning software development, science, and data work. After rewriting, the number of successful trajectories grew from 2,001 to 11,094. Fine-tuning on those trajectories improved the model’s performance on several benchmarks, including challenging tasks that require long sequences of actions.</p>
+</section>
+<section>
+<h2>Why one harness isn’t enough</h2>
+<p>A harness defines how a model interacts with tools: what it sees, how it tracks its work, when it checks results, and what it does after an error. It’s like the difference between working without a plan and working with a checklist. The person doing the work is the same, but the process helps them organize their actions in different ways.</p>
+<p>The authors compared three harnesses. Terminus 2 provides a general command-line workflow. StateM tracks task state and checks transitions between steps. Recursive Self-Reflect Terminus (RSRT) checks the result and, if it fails, asks the model to keep working.</p>
+<p>At first glance, it might seem enough to collect all the successful attempts from these systems and use them for training. But those attempts may contain prompts or control actions available only in the original harness. If the model learns to rely on them, it may get stuck repeating steps or stop too early when that support is gone.</p>
+<p><strong>The authors’ goal is to preserve useful experience without making the model dependent on a particular harness.</strong></p>
+</section>
+<section>
+<h2>How experience rewriting works</h2>
+<p>The process has three roles, all performed by the same underlying model.</p>
+<p>First, a <strong>planner</strong> studies a successful attempt and writes instructions: a list of key steps, checks, possible errors, and ways to fix them. The instructions should describe the process without giving away the answer.</p>
+<p>Next, a <strong>critic</strong> reviews the instructions. It rejects anything that reveals the solution or relies on information unavailable from the task or environment. Finally, an <strong>executor</strong> receives the approved instructions and tackles the task again, in a clean environment using the shared Terminus 2 harness.</p>
+<p>Only a new attempt that passes the check is added to the training set. The instructions and the exchange with the critic are discarded. At deployment, the model must handle the task without them.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/kak-ii-agent-uchitsia-reshat-zadachi-na-chuzhom-opyte_ru/fig_2.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Different harnesses find successful solutions; rewriting turns them into verified examples for a shared harness.</p>
+</div></figure>
+<p>“Recursive” refers to repeating the cycle: the model generates several sets of instructions, checks them, and tries the task again. The authors used up to four instruction variants and up to four new attempts for each successful original trajectory. Failed attempts were useful too: their check results helped identify examples suitable for training.</p>
+</section>
+<section>
+<h2>Three harnesses find different solutions</h2>
+<p>The combined dataset contained 2,929 tasks. Each of the three harnesses solved at least some of them, and together they solved 759. That’s 34.3% more than the best individual harness in the dataset.</p>
+<p>Each system also had successes of its own. Terminus 2 solved 129 tasks that the other two harnesses couldn’t. RSRT solved 91 such tasks, and StateM solved 68. This diversity helped in more ways than simply providing extra attempts: different control strategies helped the model tackle different tasks.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/kak-ii-agent-uchitsia-reshat-zadachi-na-chuzhom-opyte_ru/fig_4.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Tasks solved by each harness alone and in combination with the others.</p>
+</div></figure>
+<p>Each harness had its own working style. RSRT could continue after a failed check: in 4.5% of its successful attempts, the first version of the answer failed, but the model corrected it. StateM devoted a significant share of its commands to managing task state. Terminus 2 more often explored the environment directly.</p>
+<p>But more steps don’t always mean more success. Among failed attempts, RSRT averaged 67.1 turns—three times as many as Terminus 2 and StateM. The extra time gave the model a chance to correct mistakes, but it could also be spent without making progress.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/kak-ii-agent-uchitsia-reshat-zadachi-na-chuzhom-opyte_ru/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Harnesses support different strategies: a general workflow, explicit step management, and continuing after a failed check.</p>
+</div></figure>
+</section>
+<section>
+<h2>What another attempt achieved</h2>
+<p>Starting from the original successful solutions, the authors generated 11,094 new, verified trajectories—more than five times the original 2,001 successful attempts. But more data alone didn’t guarantee an improvement. What mattered was having the model solve the tasks again in a shared harness and keeping only the successful results for training.</p>
+<p>After fine-tuning on the rewritten trajectories, the model outperformed both the baseline and a version trained directly on the original attempts. The pass@3 metric measures whether a task is solved in at least one of three attempts. On Terminal-Bench 2, it rose from 57% for the baseline to 74.2%. On Terminal-Bench 4, it increased from 1.5% to 9.1%. On the authors’ own set of challenging tasks, it climbed from 39% to 63%.</p>
+<p>On a software engineering benchmark, the score rose from 3% to 6%. The gain was more modest, but the model still solved twice as many tasks out of 100. On a benchmark involving long sequences of actions, its progress score increased from 0.21 to 0.29. However, none of the versions fully solved any of the benchmark’s 46 tasks.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/kak-ii-agent-uchitsia-reshat-zadachi-na-chuzhom-opyte_ru/fig_6.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Repeated attempts based on the same instructions can succeed or fail.</p>
+</div></figure>
+<p>The comparison with direct training shows why rewriting matters. Training directly on the original trajectories helped on several benchmarks, but performance on Terminal-Bench 2 fell from 57% to 53.4%. The authors found repeated actions in those attempts that made little or no progress. Some RSRT trajectories were especially long, and the model may have picked up their dead-end habits.</p>
+<p>Rewritten trajectories didn’t always succeed either. In an example involving Markdown parsing, seven of 12 repeated attempts passed. In an OpenFOAM task, seven of eight did. The same instructions could lead to either success or failure. That’s why checking the result remains essential: even careful instructions can’t replace successful execution.</p>
+</section>
+<section>
+<h2>Conclusion</h2>
+<p>The results show that <strong>harnesses can serve not only as a way to help a model while it works, but also as a source of training experience</strong>. Different systems find different solutions, and having the model repeat a task helps separate transferable techniques from the quirks of the original harness.</p>
+<p>But these findings apply to the experiments the authors conducted. The study focuses on command-line tasks and a single base model. Some of the data comes from the authors’ own benchmark, and the method requires many additional attempts: of nearly 12,900 reruns, 86% succeeded. What’s more, passing an automated check doesn’t guarantee that a result is good in every respect.</p>
+<p>Models don’t have to learn only from answers they’ve already produced. Powerful external tools can help find a solution; then their support is removed and the model is asked to solve the task again. If that second attempt passes the check, the experience is closer to what the model should be able to do on its own.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2610.02826" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span>
+                    </a>
+                    <a href="https://huggingface.co/IntelligenceLab/RSR-27B" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <span class="text-xl leading-none">🤗</span>
+                        <span class="font-sans text-sm md:text-base font-medium">Dataset / model on HuggingFace</span>
+                    </a>
+                </div>
+
+                <section class="mt-16 md:mt-20 fade-in" aria-labelledby="related-heading">
+                    <h2 id="related-heading"
+                        class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight mb-6 md:mb-8">
+                        Read next
+                    </h2>
+                    
+                    <div class="rel-wrap relative -mx-4 md:mx-0" data-left="0" data-right="1"
+                         data-date="2026-10-07">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l"
+                                aria-label="Previous">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r"
+                                aria-label="Next">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0">
+                            <a href="https://dataist.ai/research/how-to-create-a-video-from-a-spreadsheet-without-spending-hours-editing-it/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-sobrat-video-iz-tablitsy-bez-dolgogo-montazha_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-10-06">2026-10-06</time>
+                                <span class="rel-title">DataMagic: How to create a video from a spreadsheet without spending</span>
+                            </a>
+                            <a href="https://dataist.ai/research/how-can-you-check-whether-an-ai-agent-has-completed-the-task/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-proverit-spravilsia-li-ii-agent-s-zadachei_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-10-05">2026-10-05</time>
+                                <span class="rel-title">GraphForge: How can you check whether an AI agent has completed</span>
+                            </a>
+                            <a href="https://dataist.ai/research/can-the-necessary-ai-agents-be-assembled-automatically-as-the-work-progresses/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/mozhno-li-avtomaticheski-sobrat-nuzhnykh-ii-agentov-po-khodu-raboty_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-10-02">2026-10-02</time>
+                                <span class="rel-title">Raven: Can the necessary AI agents be assembled automatically</span>
+                            </a>
+                            <a href="https://dataist.ai/research/how-a-thousand-ai-agents-work-together-without-a-boss/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-tysiacha-ii-agentov-rabotaiut-vmeste-bez-nachalnika_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-29">2026-09-29</time>
+                                <span class="rel-title">Agensh: How a Thousand AI Agents Work Together Without a Boss</span>
+                            </a>
+                            <a href="https://dataist.ai/research/how-to-give-an-ai-agent-more-freedom-with-less-risk/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-dat-ii-agentu-bolshe-svobody-s-menshim-riskom_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-28">2026-09-28</time>
+                                <span class="rel-title">AgentKernel: How to Give an AI Agent More Freedom with Less Risk</span>
+                            </a>
+                            <a href="https://dataist.ai/research/kak-ii-agent-podbiraet-proshlyi-opyt-pod-novuiu-zadachu/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-agent-podbiraet-proshlyi-opyt-pod-novuiu-zadachu_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-26">2026-09-26</time>
+                                <span class="rel-title">How an AI agent selects past experience for a new task</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-24">2026-09-24</time>
+                                <span class="rel-title">JEV-as-a-Judge: The AI judge maintains 99% accuracy at a lower cost.</span>
+                            </a>
+                            <a href="https://dataist.ai/research/kak-samouluchshenie-ii-agenta-uluchshaet-rezultaty-i-ekonomit-tokeny/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-samouluchshenie-ii-agenta-uluchshaet-rezultaty-i-ekonomit-tokeny_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-23">2026-09-23</time>
+                                <span class="rel-title">RRSI: How AI agent self-improvement enhances results and saves tokens</span>
+                            </a>
+                            <a href="https://dataist.ai/research/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-22">2026-09-22</time>
+                                <span class="rel-title">EvoOntology: Why is it difficult for AI agents to work with different</span>
+                            </a>
+                            <a href="https://dataist.ai/research/kak-ii-agentam-ekonomit-kontekst-i-izbegat-sboev/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-agentam-ekonomit-kontekst-i-izbegat-sboev_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-21">2026-09-21</time>
+                                <span class="rel-title">How AI Agents Can Save Context and Avoid Failures</span>
+                            </a>
+                            <a href="https://dataist.ai/research/kak-ii-simuliruet-mysli-polzovatelia/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-20">2026-09-20</time>
+                                <span class="rel-title">How AI Simulates a User’s Thoughts</span>
+                            </a>
+                            <a href="https://dataist.ai/research/coding-agents-skip-looking-at-the-app-when-the-task-gets-long/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/2026-09-18/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-18">2026-09-18</time>
+                                <span class="rel-title">Coding agents skip looking at the app when the task gets long</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка мигает
+                                // в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+                            function step(dir) {
+                                // Листаем на видимую ширину минус нахлёст,
+                                // чтобы следующая карточка подсказывала, что
+                                // лента продолжается.
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            sync();
+
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них в
+                            // страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую подложку,
+                                    // а не значок сломанной картинки.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = item.date; }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            function same(url) {
+                                try { return new URL(url, location.href).pathname === location.pathname; }
+                                catch (e) { return false; }
+                            }
+
+                            // Лента — на языке самой страницы: на русском разборе только
+                            // русские, на английском только английские. Фид отдаёт оба языка
+                            // вперемешку. Есть в записи поле lang — верим ему; пока его нет,
+                            // русскую запись узнаём по кириллице в заголовке: на всех 403
+                            // записях фида этот признак совпал с lang самой страницы.
+                            var myLang = (document.documentElement.lang || 'ru').slice(0, 2).toLowerCase();
+                            function langOf(x) {
+                                if (x.lang) return String(x.lang).slice(0, 2).toLowerCase();
+                                return /[а-яёА-ЯЁ]/.test(x.title || '') ? 'ru' : 'en';
+                            }
+                            // Лента дотягивается ОДИН раз и только когда
+                            // читатель до неё добрался: 125 КБ фида не должны
+                            // грузиться у того, кто до подвала не дошёл.
+                            var loaded = false;
+                            function fill() {
+                                if (loaded) return;
+                                loaded = true;
+                                fetch('/papers_en.json')
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) return;
+                                        var all = list.filter(function (x) {
+                                            return x && x.url && x.title && langOf(x) === myLang;
+                                        });
+                                        // Свежие вперёд. Фид приходит уже в
+                                        // этом порядке, но сортировка здесь
+                                        // стоит явно: порядок ленты — правило
+                                        // блока, а не побочный эффект того,
+                                        // как список собрали на сервере.
+                                        all.sort(function (a, b) {
+                                            return String(b.date || '').localeCompare(String(a.date || ''));
+                                        });
+                                        // Где в этом списке стоит сама статья.
+                                        // Считаем ДО того, как её выбросить:
+                                        // её место и есть «здесь», а первым
+                                        // после неё идёт ровно предыдущий
+                                        // разбор.
+                                        var mineAt = -1;
+                                        for (var i = 0; i < all.length; i++) {
+                                            if (same(all[i].url)) { mineAt = i; break; }
+                                        }
+                                        var rows = all.filter(function (x) { return !same(x.url); });
+                                        if (!rows.length) return;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+
+                                        // ЛЕНТА ОТКРЫВАЕТСЯ НА МЕСТЕ ЭТОЙ
+                                        // СТАТЬИ, а не с самого свежего
+                                        // разбора. Влево от стартовой позиции
+                                        // остаётся то, что вышло ПОСЛЕ неё,
+                                        // вправо уходит то, что было ДО.
+                                        //
+                                        // Без этого лента получалась одинаковой
+                                        // на всех страницах сайта: у майской
+                                        // статьи она начиналась бы с сентября,
+                                        // и соседство по времени — то самое,
+                                        // ради чего блок и нужен, — пропадало
+                                        // ровно в тот момент, когда страница
+                                        // становится интерактивной.
+                                        //
+                                        // Позицию берём по месту самой статьи
+                                        // в фиде. Сравнивать по дате нельзя:
+                                        // за один день выходит по два разбора
+                                        // («2026-07-05» и «2026-07-05_1»), и
+                                        // правило «дата меньше моей» проскочит
+                                        // собрата того же дня — лента откроется
+                                        // на разборе через один.
+                                        //
+                                        // Дата остаётся запасным ответом на
+                                        // случай, если статьи в фиде нет
+                                        // вовсе: свежая страница попадает туда
+                                        // не раньше, чем пересоберётся индекс.
+                                        var at = 0;
+                                        if (mineAt >= 0) {
+                                            at = mineAt;
+                                        } else {
+                                            var mine = wrap.dataset.date || '';
+                                            if (mine) {
+                                                for (var k = 0; k < rows.length; k++) {
+                                                    if (String(rows[k].date || '') < mine) { at = k; break; }
+                                                }
+                                            }
+                                        }
+                                        // Самый старый разбор: предыдущего у
+                                        // него нет, поэтому лента встаёт в
+                                        // конец — слева от края всё свежее.
+                                        if (at > rows.length - 1) at = rows.length - 1;
+                                        var target = rail.children[at];
+                                        if (target) {
+                                            // Без плавности: это не жест
+                                            // читателя, а исходное положение.
+                                            rail.scrollLeft = target.offsetLeft - rail.offsetLeft;
+                                        }
+                                        sync();
+                                    })
+                                    .catch(function () { /* остаёмся с разметкой */ });
+                            }
+                            if ('IntersectionObserver' in window) {
+                                var io = new IntersectionObserver(function (es) {
+                                    if (es.some(function (e) { return e.isIntersecting; })) {
+                                        io.disconnect();
+                                        fill();
+                                    }
+                                }, { rootMargin: '400px' });
+                                io.observe(wrap);
+                            } else {
+                                fill();
+                            }
+                        })();
+                    </script>
+                </section>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI reviews in simple way
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read fresh AI papers and retell the essentials in plain human language — no hype, no fluff. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New reviews — every day
+                            </p>
+                            <a href="https://x.com/andre_dataist" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">Follow on X</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        // BR436: ЧУЖАЯ БИБЛИОТЕКА НЕ РЕШАЕТ, УВИДИТ ЛИ ЧИТАТЕЛЬ ТЕКСТ.
+        // `lucide` едет с unpkg.com, а чужой сервер отвечает не всегда. Без
+        // проверки первая же строка бросала исключение — и ВЕСЬ остальной
+        // блок не исполнялся: ни кнопка темы, ни полоса прогресса, ни лента
+        // «Читайте также». Раньше к ним добавлялся и сам текст разбора: он
+        // был спрятан под `opacity: 0` до тех пор, пока наблюдатель не
+        // проставит `visible`, а наблюдатель регистрировался здесь же. Теперь
+        // правил `.fade-in` в стилях нет вовсе, и текст виден всегда — даже
+        // если JavaScript выключен или не дошёл. Иконка не показалась —
+        // досадно; разбор не показался — потеряли читателя.
+        if (window.lucide) lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
