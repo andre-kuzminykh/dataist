@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MiniCorp: How a virtual company teaches agents to take market</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="How a virtual company teaches agents to take market reactions into account" />
+    <meta property="og:description" content="An AI-run company cannot learn from business decisions if it never sees how the market responds.
+
+MiniCorp gives AI agents a simulated e-commerce business to run, with customers, competitors, and market conditions that react to their choices. The simulation records what the agents knew, what they decided, and what happened next; researchers can also replay the same situation with different decisions to compare possible outcomes. This gives agents practice with the long-term consequences of business choices, rather than only examples from incomplete historical records.
+
+In this review we look at how MiniCorp connects a company’s internal decisions with an evolving market, and how that setup could help train and evaluate AI agents for real-world business work." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/how-a-virtual-company-teaches-agents-to-take-market-reactions-into-account/" /><meta property="og:image" content="https://dataist.ai/research/ru/kak-virtualnaia-kompaniia-uchit-agentov-uchityvat-reaktsiiu-rynka_ru/cover_card.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />    <meta property="article:published_time" content="2026-10-08" />
+
+    <meta name="description" content="An AI-run company cannot learn from business decisions if it never sees how the market responds. MiniCorp gives AI agents a simulated e-commerce business to run, with customers, competitors, and market conditions that react to their choices." />
+    <link rel="canonical" href="https://dataist.ai/research/how-a-virtual-company-teaches-agents-to-take-market-reactions-into-account/" />    <link rel="alternate" hreflang="ru" href="https://dataist.ai/research/ru/kak-virtualnaia-kompaniia-uchit-agentov-uchityvat-reaktsiiu-rynka_ru/">
+    <link rel="alternate" hreflang="en" href="https://dataist.ai/research/how-a-virtual-company-teaches-agents-to-take-market-reactions-into-account/">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "How a virtual company teaches agents to take market reactions into account",
+      "description": "An AI-run company cannot learn from business decisions if it never sees how the market responds.\n\nMiniCorp gives AI agents a simulated e-commerce business to run, with customers, competitors, and market conditions that react to their choices. The simulation records what the agents knew, what they decided, and what happened next; researchers can also replay the same situation with different decisions to compare possible outcomes. This gives agents practice with the long-term consequences of business choices, rather than only examples from incomplete historical records.\n\nIn this review we look at how MiniCorp connects a company\u2019s internal decisions with an evolving market, and how that setup could help train and evaluate AI agents for real-world business work.",
+      "image": "https://dataist.ai/research/ru/kak-virtualnaia-kompaniia-uchit-agentov-uchityvat-reaktsiiu-rynka_ru/cover_card.jpg",
+      "url": "https://dataist.ai/research/how-a-virtual-company-teaches-agents-to-take-market-reactions-into-account/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/research/how-a-virtual-company-teaches-agents-to-take-market-reactions-into-account/"
+      },
+      "datePublished": "2026-10-08",
+      "inLanguage": "en",
+      "citation": {
+        "@type": "ScholarlyArticle",        "name": "MiniCorp: The Last Mile of the AI Agent Firm",        "identifier": "arXiv:2610.05912",
+        "url": "https://arxiv.org/abs/2610.05912"
+      },
+      "isBasedOn": "https://arxiv.org/abs/2610.05912",      "author": {"@type": "Person", "name": "@dataist_ai"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="How a virtual company teaches agents to take market reactions into account" />
+    <meta name="twitter:description" content="An AI-run company cannot learn from business decisions if it never sees how the market responds.
+
+MiniCorp gives AI agents a simulated e-commerce business to run, with customers, competitors, and market conditions that react to their choices. The simulation records what the agents knew, what they decided, and what happened next; researchers can also replay the same situation with different decisions to compare possible outcomes. This gives agents practice with the long-term consequences of business choices, rather than only examples from incomplete historical records.
+
+In this review we look at how MiniCorp connects a company’s internal decisions with an evolving market, and how that setup could help train and evaluate AI agents for real-world business work." />
+    <meta name="twitter:image" content="https://dataist.ai/research/ru/kak-virtualnaia-kompaniia-uchit-agentov-uchityvat-reaktsiiu-rynka_ru/cover_card.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script><link rel="stylesheet" href="/static/css/tailwind.css">
+    <style>
+.glass-header{border-bottom-width:1px;border-color:rgba(0,0,0,.05);background-color:hsla(0,0%,100%,.7);--tw-backdrop-blur:blur(40px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.glass-header:is(.dark *){border-color:hsla(0,0%,100%,.1);background-color:rgba(0,0,0,.7)}.glass-panel{border-width:1px;border-color:rgba(0,0,0,.05);--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px rgba(0,0,0,.06);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.glass-panel:is(.dark *){border-color:hsla(0,0%,100%,.1);--tw-bg-opacity:1;background-color:rgb(28 28 30/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px hsla(0,0%,100%,.04);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);--tw-shadow-color:#000;--tw-shadow:var(--tw-shadow-colored)}body{--tw-bg-opacity:1;background-color:rgb(245 245 247/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1));transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.3s}body:is(.dark *){--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::-moz-selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}:is(.dark *)::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}:is(.dark *)::selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.article-content p{font-family:Inter,sans-serif;font-size:1.125rem;line-height:1.75;margin-bottom:1.5rem;color:rgba(0,0,0,.85)}.dark .article-content p{color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-content p{font-size:1.3125rem;line-height:1.8;margin-bottom:2rem}}.article-content strong{font-weight:600;color:#000}.dark .article-content strong{color:#fff}.article-content em{font-style:italic}.article-content h2{font-family:Inter,sans-serif;font-weight:700;font-size:1.5rem;line-height:1.15;letter-spacing:-.02em;margin-top:4rem;margin-bottom:2rem;color:#000}.dark .article-content h2{color:#fff}@media (min-width:768px){.article-content h2{font-size:1.875rem}}@media (min-width:1024px){.article-content h2{font-size:2.25rem}}.article-content section{max-width:48rem;margin-left:auto;margin-right:auto;width:100%}.article-content figure{margin:3rem auto;max-width:48rem}.apple-img,.article-content .arxiv-chart{width:100%;border-radius:1.5rem;overflow:hidden;background:#fff;border:1px solid rgba(0,0,0,.05);box-shadow:0 4px 24px rgba(0,0,0,.04);display:block;padding:0}.dark .apple-img,.dark .article-content .arxiv-chart{border-color:hsla(0,0%,100%,.1);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.article-content figure img{width:100%;height:auto;display:block;-o-object-fit:cover;object-fit:cover}.article-content figure p{font-family:Space Mono,monospace;font-size:.875rem;color:#86868b;margin:1rem auto 0;text-align:center;line-height:1.6;max-width:42rem}.dark .article-content figure p{color:#8e8e93}.article-content .tech-card{display:flex;gap:1rem;align-items:flex-start;padding:1.25rem 1.5rem;margin-bottom:.75rem;border-radius:1rem;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.05)}.dark .article-content .tech-card{background:hsla(0,0%,100%,.04);border-color:hsla(0,0%,100%,.1)}.article-lead{font-family:Inter,sans-serif;font-weight:500;font-size:1.25rem;line-height:1.6;margin:.5rem 0 3rem;padding-left:1.25rem;border-left:2px solid #000;color:#86868b}.dark .article-lead{border-color:#fff;color:#8e8e93}@media (min-width:768px){.article-lead{font-size:1.5rem;padding-left:2rem}}.rel-rail{display:flex;gap:16px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x proximity;padding:4px 2px 12px;overscroll-behavior-x:contain;scrollbar-width:none;-ms-overflow-style:none}.rel-rail::-webkit-scrollbar{display:none}.rel-rail>a{flex:0 0 auto;width:208px;scroll-snap-align:start;text-decoration:none;display:block;transition:transform .25s cubic-bezier(.2,.8,.2,1)}@media (min-width:640px){.rel-rail>a{width:244px}}.rel-rail>a:hover{transform:translateY(-4px)}.rel-thumb{display:block;position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:18px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.1);box-shadow:0 4px 24px rgba(0,0,0,.05)}.dark .rel-thumb{background:hsla(0,0%,100%,.045);border-color:hsla(0,0%,100%,.14);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.rel-thumb img{width:100%;height:100%;-o-object-fit:cover;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}.rel-rail>a:hover .rel-thumb img{transform:scale(1.05)}.rel-rail time{display:block;margin:12px 0 5px;font-family:Space Mono,monospace;font-size:.625rem;letter-spacing:.08em;color:#86868b}.dark .rel-rail time{color:#8e8e93}.rel-title{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.875rem;font-weight:600;line-height:1.4;letter-spacing:-.01em;color:#000}.dark .rel-title{color:#fff}.rel-fade{position:absolute;top:0;bottom:12px;width:96px;pointer-events:none;opacity:0;z-index:2;transition:opacity .35s ease}.rel-fade-l{left:0;background:linear-gradient(90deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.rel-fade-r{right:0;background:linear-gradient(270deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.dark .rel-fade-l{background:linear-gradient(90deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.dark .rel-fade-r{background:linear-gradient(270deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.rel-arrow{position:absolute;top:calc(50% - 34px);translate:0 -50%;z-index:3;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid rgba(0,0,0,.1);background:#fff;color:#000;box-shadow:0 8px 26px rgba(0,0,0,.14);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,transform .25s ease}.dark .rel-arrow{border-color:hsla(0,0%,100%,.14);background:#1c1c1e;color:#fff}.rel-arrow:hover{transform:scale(1.08)}.rel-arrow-l{left:6px}.rel-arrow-r{right:6px}.rel-wrap[data-left="1"] .rel-fade-l,.rel-wrap[data-right="1"] .rel-fade-r{opacity:1}.rel-wrap[data-left="1"] .rel-arrow-l,.rel-wrap[data-right="1"] .rel-arrow-r{opacity:1;visibility:visible;pointer-events:auto}@media (hover:none){.rel-arrow{display:none}}@media (prefers-reduced-motion:reduce){.rel-arrow,.rel-fade,.rel-rail>a,.rel-thumb img{transition:none}}
+    </style><style>
+        /* --- ряд рубрик в шапке -----------------------------------------
+           Палитра витрин. На странице статьи её не было вовсе: переменные
+           живут в styles.css приложения, которого страница не подключает.
+           Из-за этого и переключатель языка рисовал неактивный язык тем же
+           цветом, что активный — значение var(--text-muted) не определено,
+           объявление отбрасывается, цвет наследуется. */
+        :root {
+            --bg-color: #F5F5F7;
+            --text-main: #1d1d1f;
+            --text-muted: #86868B;
+            --chip-border: rgba(0, 0, 0, 0.08);
+        }
+        .dark {
+            --bg-color: #000000;
+            --text-main: #f5f5f7;
+            --text-muted: #8E8E93;
+            /* 0.19, а не 0.10: на чистом чёрном десятая доля даёт
+               rgb(25,25,25) — ряд читается не кнопками, а россыпью слов. */
+            --chip-border: rgba(255, 255, 255, 0.19);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Края растворяет МАСКА самого ряда, а не градиент поверх него:
+           накладной прямоугольник пришлось бы красить фоном страницы, и на
+           границе тем он выглядел бы грязным мазком.
+
+           Правый край растворён сразу, ещё до пересчёта скриптом: рубрики
+           в шапку обычно не помещаются, и до первого замера честнее
+           показать растворение, чем сухой обрез. Не понадобится — скрипт
+           обнулит. */
+        #category-scroll {
+            --fade-l: 0px;
+            --fade-r: 56px;
+            -webkit-mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+            mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+        }
+
+        /* Заливки у рубрики нет, всю форму держит рамка — значит и рамка
+           задаётся здесь, а не только утилитой Tailwind. */
+        .category-btn {
+            transition: all 0.25s ease;
+            background: transparent;
+            border: 1px solid var(--chip-border);
+        }
+        .category-btn.active,
+        .category-btn.active:hover {
+            background: var(--text-main);
+            color: var(--bg-color);
+            border-color: var(--text-main);
+        }
+
+        /* Выбор рубрики на телефоне — на <details>, то есть без единой
+           строки JavaScript: раскрытие списка не должно зависеть от того,
+           доехала ли чужая библиотека. */
+        #cat-menu > summary { list-style: none; cursor: pointer; }
+        #cat-menu > summary::-webkit-details-marker { display: none; }
+        #cat-menu > summary::marker { content: ""; }
+        #cat-menu[open] > summary .cat-caret { transform: rotate(180deg); }
+        .cat-caret { transition: transform 0.2s ease; }
+        /* Подпись на кнопке телефона не должна раздувать шапку, и её ширина не
+           должна зависеть от длины названия рубрики. У «Исследований» кнопка
+           выходила на 135 пикселей против 106 у «Новостей», и правый край
+           «Telegram» уезжал за экран на 390. Замер поймал; на широком экране
+           этого не видно вовсе.
+
+           3.5rem, а не 4.5: с четырьмя с половиной не хватало ровно четырёх
+           пикселей. Теперь длина названия на ширину шапки не влияет никак. */
+        #cat-menu > summary > span {
+            max-width: 3.5rem; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        #cat-menu .cat-item {
+            display: flex; align-items: center; gap: 0.625rem;
+            padding: 0.625rem 0.75rem; border-radius: 0.75rem;
+            font-family: "Space Mono", monospace; font-size: 11px;
+            font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+            color: var(--text-muted); text-decoration: none;
+        }
+        #cat-menu .cat-item.active {
+            background: var(--text-main); color: var(--bg-color);
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4 shrink-0">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">
+                    Dataist
+                </div>
+            </a>
+        </div>            <div id="category-scroll" class="hidden sm:block flex-1 min-w-0 overflow-x-auto no-scrollbar">
+                <nav aria-label="Sections" class="flex flex-nowrap items-center gap-2 w-max mx-auto">
+                    <a href="/?cat=all" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="all" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i><span>All</span></a>
+                    <a href="/?cat=research" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="research" aria-current="page" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white active"><i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i><span>Research</span></a>
+                    <a href="/?cat=news" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="news" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="newspaper" class="w-3.5 h-3.5 shrink-0"></i><span>News</span></a>
+                </nav>
+            </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0"><details id="cat-menu" class="sm:hidden relative">
+                <summary class="category-btn inline-flex items-center gap-1.5 px-3 py-2 rounded-full font-mono text-[10px] font-bold tracking-tight uppercase text-black dark:text-white" aria-label="Choose a section">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span>Research</span>
+                    <i data-lucide="chevron-down" class="cat-caret w-3.5 h-3.5 shrink-0"></i>
+                </summary>
+                <div class="absolute right-0 top-full mt-2 w-56 p-2 rounded-2xl glass-panel flex flex-col gap-0.5 z-50">
+                    <a href="/?cat=all" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="cat-item"><i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i><span>All</span></a>
+                    <a href="/?cat=research" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" aria-current="page" class="cat-item active"><i data-lucide="microscope" class="w-4 h-4 shrink-0"></i><span>Research</span></a>
+                    <a href="/?cat=news" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="cat-item"><i data-lucide="newspaper" class="w-4 h-4 shrink-0"></i><span>News</span></a>
+                </div>
+            </details>            <nav id="lang-switch" aria-label="Language" class="flex items-center gap-1.5 md:gap-2 font-mono text-[11px] md:text-sm font-bold uppercase tracking-widest select-none"><a href="/research/ru/kak-virtualnaia-kompaniia-uchit-agentov-uchityvat-reaktsiiu-rynka_ru/" hreflang="ru" lang="ru" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="text-apple-textMutedLight dark:text-apple-textMutedDark hover:text-black dark:hover:text-white transition-colors no-underline">RU</a><span aria-hidden="true" class="text-apple-textMutedLight dark:text-apple-textMutedDark opacity-40">|</span><span aria-current="true" class="text-black dark:text-white">EN</span></nav>            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://x.com/andre_dataist" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">X</span>
+            </a>
+        </div>
+    </header>
+
+    <script>
+        /* Растворение краёв ряда рубрик.
+
+           Отдельным блоком намеренно: в общем блоке внизу страницы первой
+           строкой идёт обращение к библиотеке иконок с unpkg.com, и если
+           она не ответила, весь тот блок не исполняется. Ряду рубрик до
+           этого дела быть не должно. */
+        (function () {
+            var el = document.getElementById('category-scroll');
+            if (!el) return;
+            var row = el.firstElementChild;
+            var RAMP = 48, MAX = 56;          // те же числа, что на витрине
+            var placed = false;
+
+            function update() {
+                var max = el.scrollWidth - el.clientWidth;
+                var w = function (v) {
+                    return max <= 8 ? 0
+                        : Math.round(Math.min(1, Math.max(0, v) / RAMP) * MAX);
+                };
+                el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+
+                if (!placed && max > 8) {
+                    placed = true;
+                    var active = el.querySelector('.category-btn.active');
+                    if (active) {
+                        /* Ровно настолько, чтобы текущая рубрика влезла, и
+                           ни пикселем больше: центрирование утаскивало ряд
+                           до упора и прятало «Все» за краем насовсем.
+                           Запас 64 шире растворения (56), иначе рубрика
+                           встаёт под маску и читается наполовину. */
+                        var pad = 64;
+                        /* BR440: смещение считается ОТ САМОГО РЯДА, а не
+                           через `offsetLeft`. Тот меряет от ближайшего
+                           позиционированного предка, а это `<header>` — он
+                           `fixed`. Разница ровно на отступ ряда внутри шапки
+                           (около 230 пикселей), и ряд уезжал на неё дальше,
+                           чем нужно: активная рубрика оказывалась за левым
+                           краем. Замерено: на 768 её видно −23 пикселя из
+                           137, на 640 — восемь, и те под растворением.
+                           На новостях этого не видно, потому что там активна
+                           ПОСЛЕДНЯЯ рубрика и перелёт упирается в край. */
+                        var box = el.getBoundingClientRect();
+                        var ab = active.getBoundingClientRect();
+                        var from = ab.left - box.left + el.scrollLeft;
+                        var l = from - pad;
+                        var r = from + ab.width + pad;
+                        if (r > el.scrollLeft + el.clientWidth) el.scrollLeft = r - el.clientWidth;
+                        else if (l < el.scrollLeft) el.scrollLeft = Math.max(0, l);
+                        /* Узкий экран: рубрика с обоими запасами уже не
+                           помещается (123 + 64 + 64 больше 216 при 640), и
+                           подгонка по правому краю загоняет левый под маску.
+                           Читают слева направо — значит слева и освобождаем.
+                           Замерено: было 46 при маске 56, стало 56. */
+                        if (from - el.scrollLeft < MAX) el.scrollLeft = Math.max(0, from - MAX);
+                        max = el.scrollWidth - el.clientWidth;
+                        el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                        el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+                    }
+                }
+            }
+
+            el.addEventListener('scroll', update, { passive: true });
+            window.addEventListener('resize', update);
+
+            /* Главное. Ряд меняет ширину ПОСЛЕ первого замера: `<i
+               data-lucide>` превращается в svg, когда догрузится библиотека
+               иконок, и рубрики раздаются. Разовый замер этого не ловит —
+               край резался насухо. Наблюдатель ловит любое изменение
+               размера, чем бы оно ни было вызвано. */
+            if (window.ResizeObserver && row) new ResizeObserver(update).observe(row);
+            window.addEventListener('load', update);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+
+            update();
+        })();
+
+        /* Меню рубрик на телефоне закрывается нажатием мимо него.
+           Раскрытие держится на <details> и работает без скрипта; это лишь
+           удобство — не сработает, меню закроется повторным нажатием. */
+        (function () {
+            var menu = document.getElementById('cat-menu');
+            if (!menu) return;
+            document.addEventListener('click', function (e) {
+                if (menu.open && !menu.contains(e.target)) menu.open = false;
+            });
+        })();
+    </script>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Review · 2026-10-08</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    How a virtual company teaches agents to take market reactions into account
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/research/ru/kak-virtualnaia-kompaniia-uchit-agentov-uchityvat-reaktsiiu-rynka_ru/cover.jpg"
+                         alt="Cover: How a virtual company teaches agents to take market reactions into account"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<h2>A Company Run by AI Agents</h2>
+<p>Imagine an online store where AI agents choose products, place orders, set prices, and manage advertising. Customers respond, competitors react, and decisions made today affect sales weeks later. To find out whether agents can handle this kind of work, it’s not enough to give them a one-off task like “find a product with a low margin.” You need to watch them run a company over time.</p>
+<p>The creators of MiniCorp built a simulator for this purpose. It contains both a marketplace and a standing team of employee agents. The company makes decisions, the market responds, and the results feed into the next cycle. The system records conversations and actions, and it can restore an earlier state so researchers can see what might have changed if the company had made a different decision.</p>
+<p>This approach matters because <strong>real-world data on how companies operate is scarce</strong>. It is often confidential or restricted for privacy reasons. What’s more, historical records show only what a company actually did. They can’t tell you how sales would have changed if it had chosen a different price or stopped an ad campaign sooner.</p>
+</section>
+<section>
+<h2>Two Worlds That Learn From Each Other</h2>
+<p>MiniCorp works as a closed loop. The outside world simulates customers, competitors, suppliers, and the marketplace. Inside it, the company has a stable set of roles: a manager who approves decisions, for example, an advertising specialist who runs campaigns, and a quality specialist who handles product issues.</p>
+<p>Each week, the agents review data, discuss their work, and propose actions. The manager approves or rejects their proposals. The marketplace then applies the approved decisions: prices, inventory, and ad campaigns change. The simulator calculates sales, customer responses, and competitor actions. Then the next week begins.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/kak-virtualnaia-kompaniia-uchit-agentov-uchityvat-reaktsiiu-rynka_ru/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">The marketplace sends data to the company, while decisions made by its employee agents shape how trade unfolds.</p>
+</div></figure>
+<p>The simulator aims to model the market, not hand the company a predetermined outcome. If the company cuts a price, the system doesn’t automatically boost its sales. It takes into account competitors’ prices, product features, reviews, and customer demand. If an agent raises an ad bid, the product first gets more impressions. Customers may click the ad—or ignore it. And a click doesn’t guarantee a purchase.</p>
+<p>The search and shopping model has several connected stages: a customer’s query, how well a product matches it, the product’s position in search results, a click, a purchase, and the competitors’ response. Advertising can generate sales now and later help a product rank higher in organic search. But it costs money, and not every additional sale means the market as a whole has grown: some customers may simply have chosen this product over a competitor’s.</p>
+<p>These details help agents work out why a result occurred. Low sales might be due to a poor search ranking, an ineffective title, expensive advertising, or a product with quality issues. The simulator records events along the way, not just final revenue.</p>
+<p>The company and the marketplace have different roles. Agents can access business reports, but they can’t see the simulator’s internal settings or how it calculates demand. They can change prices, ad budgets, and supplier orders, but they can’t directly set profit or sales volume. Results must emerge from the agents’ actions and the state of the market.</p>
+</section>
+<section>
+<h2>How the Simulator Was Checked Against the Market</h2>
+<p>The authors compared the simulator’s responses with patterns documented in studies of real-world commerce. They looked not only at the outcome—for example, whether sales rose—but also at how it unfolded: the sequence of changes and whether their effects persisted.</p>
+<p>In one experiment, a product’s price was cut by 20% for four weeks, then returned to its original level. Sales rose by 71% during the discount. But they didn’t immediately fall back to their previous level: in the first four weeks after the discount ended, sales remained 31% above the control. More customers kept finding the product through search because higher sales had improved its ranking.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/kak-virtualnaia-kompaniia-uchit-agentov-uchityvat-reaktsiiu-rynka_ru/fig_0.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Testing market responses to price changes, temporary stockouts, and advertising.</p>
+</div></figure>
+<p>A stockout produced the opposite effect. When a popular product temporarily ran out, sales fell. Restocking didn’t make up for the lost ground: fewer sales meant a lower search ranking and fewer impressions. By week 26, sales were still 36% below the control.</p>
+<p>Advertising showed a similar link between immediate results and longer-term effects. Ad-driven sales rose by 23–32%, while the lift in organic sales gradually grew from 0.5% to 5.8%. But each additional dollar spent on advertising generated 53 cents in revenue over the observation period. About 84% of additional sales came from customers who would otherwise have chosen a competitor.</p>
+<p>These results suggest that the simulator reproduces some familiar market dynamics. They don’t prove that all markets and products behave the same way. The authors note that the model still needs to be tested across different starting conditions.</p>
+</section>
+<section>
+<h2>A Company Has to Calculate and Coordinate</h2>
+<p>The experiments used a team with stable roles, not a group of agents assembled for a single short task. Team members exchanged messages, divided up the work, and coordinated their decisions. Across 20 runs, the authors collected records of 30,248 work tasks.</p>
+<p>Agents assigned themselves only 11% of the tasks. Another 58% carried over from the previous week, while 31% came from colleagues, either in a message or as an urgent assignment. In other words, the team’s workload consisted largely of ongoing work and requests from others, not just tasks agents chose for themselves.</p>
+<p>One especially clear pattern emerged around the relationship between responsibility and authority. A quality specialist could spot a defect, but only the procurement specialist could halt a shipment. The two therefore had to coordinate directly. More than a thousand work-related exchanges took place between these roles in the simulator. That connection arose from the way the work was organized, not from a special instruction to communicate more often.</p>
+<p>Coordination worked less well in other situations. Employees sometimes discussed a problem without passing it on to someone who could make a decision. In ten scenarios involving external issues, the company proposed and received approval for the necessary action in 11 of 20 runs. In another four, it completed some of the required steps.</p>
+<p>The team could also avoid unpleasant work. In one case, the head of procurement said several products were unavailable because of low inventory, even though the product in question was in stock. The employee responsible for the product range sent a detailed reply but never put the products back on sale. The discussion made it seem as if the issue was being handled, but the problem remained.</p>
+<p>At the same time, agents found practical solutions on their own. In one run, they noticed that some search queries were more likely to bring in customers and updated a product title with relevant search terms. The price stayed the same, but weekly sales rose from 91 to 189 units. This solution wasn’t part of their assigned duties.</p>
+</section>
+<section>
+<h2>A Longer Time Horizon Changes Decisions</h2>
+<p>An advertising experiment showed that agents aren’t always willing to accept short-term losses in pursuit of future gains. A new product has no sales history, so it gets few impressions. Advertising can help it gather initial data and improve its organic search ranking, but it often fails to pay off at first.</p>
+<p>The authors compared two runs with identical starting conditions. In one, the manager, advertising specialist, and finance employee were instructed to accept short-term losses in order to learn about the market. In the other, they received no such instruction.</p>
+<p>The company following this strategy spent about $100 a week on advertising from week two through week 12, and roughly $1,700 over the full 26-week period. It earned about $31,000 in revenue and $3,645 in gross profit before advertising costs. After those costs, it had $1,913 in gross profit.</p>
+<p>The company without the strategy spent just $50 or so on advertising. Its revenue came to less than $200, and its final gross profit was negative $7. In this run, <strong>long-term guidance helped the agents weather weak early results and avoid abandoning advertising too soon</strong>.</p>
+</section>
+<section>
+<h2>Conclusion</h2>
+<p>MiniCorp lets researchers test AI agents in an environment where actions have consequences: a decision made today affects the market, and the market shapes what the company does next. The simulator records these chains of events and lets researchers replay the same scenario with different decisions. That gives them data not only on what happened, but also on what might have happened.</p>
+<p>Early results suggest that agents can divide up work, respond to feedback, and come up with solutions to specific problems. But they can also delay addressing issues or stop investing before seeing a return. Both findings matter for a company expected to operate over the long term: <strong>it needs both a well-designed division of roles and clear long-term goals</strong>.</p>
+<p>For now, MiniCorp simulates e-commerce, and its responses need further testing across different markets and starting conditions. But the approach could be applied to other industries by creating environments where companies operate continuously, experience the consequences of their decisions, and build a history that can be used to train and evaluate agents.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2610.05912" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Full paper on arXiv</span>
+                    </a>
+                </div>
+
+                <section class="mt-16 md:mt-20 fade-in" aria-labelledby="related-heading">
+                    <h2 id="related-heading"
+                        class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight mb-6 md:mb-8">
+                        Read next
+                    </h2>
+                    
+                    <div class="rel-wrap relative -mx-4 md:mx-0" data-left="0" data-right="1"
+                         data-date="2026-10-08">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l"
+                                aria-label="Previous">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r"
+                                aria-label="Next">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0">
+                            <a href="https://dataist.ai/research/how-an-ai-agent-learns-to-solve-problems-from-others-experience/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-agent-uchitsia-reshat-zadachi-na-chuzhom-opyte_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-10-07">2026-10-07</time>
+                                <span class="rel-title">How an AI agent learns to solve problems from others’ experience</span>
+                            </a>
+                            <a href="https://dataist.ai/research/how-to-create-a-video-from-a-spreadsheet-without-spending-hours-editing-it/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-sobrat-video-iz-tablitsy-bez-dolgogo-montazha_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-10-06">2026-10-06</time>
+                                <span class="rel-title">DataMagic: How to create a video from a spreadsheet without spending</span>
+                            </a>
+                            <a href="https://dataist.ai/research/how-can-you-check-whether-an-ai-agent-has-completed-the-task/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-proverit-spravilsia-li-ii-agent-s-zadachei_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-10-05">2026-10-05</time>
+                                <span class="rel-title">GraphForge: How can you check whether an AI agent has completed</span>
+                            </a>
+                            <a href="https://dataist.ai/research/can-the-necessary-ai-agents-be-assembled-automatically-as-the-work-progresses/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/mozhno-li-avtomaticheski-sobrat-nuzhnykh-ii-agentov-po-khodu-raboty_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-10-02">2026-10-02</time>
+                                <span class="rel-title">Raven: Can the necessary AI agents be assembled automatically</span>
+                            </a>
+                            <a href="https://dataist.ai/research/how-a-thousand-ai-agents-work-together-without-a-boss/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-tysiacha-ii-agentov-rabotaiut-vmeste-bez-nachalnika_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-29">2026-09-29</time>
+                                <span class="rel-title">Agensh: How a Thousand AI Agents Work Together Without a Boss</span>
+                            </a>
+                            <a href="https://dataist.ai/research/how-to-give-an-ai-agent-more-freedom-with-less-risk/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-dat-ii-agentu-bolshe-svobody-s-menshim-riskom_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-28">2026-09-28</time>
+                                <span class="rel-title">AgentKernel: How to Give an AI Agent More Freedom with Less Risk</span>
+                            </a>
+                            <a href="https://dataist.ai/research/kak-ii-agent-podbiraet-proshlyi-opyt-pod-novuiu-zadachu/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-agent-podbiraet-proshlyi-opyt-pod-novuiu-zadachu_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-26">2026-09-26</time>
+                                <span class="rel-title">How an AI agent selects past experience for a new task</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-24">2026-09-24</time>
+                                <span class="rel-title">JEV-as-a-Judge: The AI judge maintains 99% accuracy at a lower cost.</span>
+                            </a>
+                            <a href="https://dataist.ai/research/kak-samouluchshenie-ii-agenta-uluchshaet-rezultaty-i-ekonomit-tokeny/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-samouluchshenie-ii-agenta-uluchshaet-rezultaty-i-ekonomit-tokeny_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-23">2026-09-23</time>
+                                <span class="rel-title">RRSI: How AI agent self-improvement enhances results and saves tokens</span>
+                            </a>
+                            <a href="https://dataist.ai/research/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-22">2026-09-22</time>
+                                <span class="rel-title">EvoOntology: Why is it difficult for AI agents to work with different</span>
+                            </a>
+                            <a href="https://dataist.ai/research/kak-ii-agentam-ekonomit-kontekst-i-izbegat-sboev/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-agentam-ekonomit-kontekst-i-izbegat-sboev_ru/cover_card.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-21">2026-09-21</time>
+                                <span class="rel-title">How AI Agents Can Save Context and Avoid Failures</span>
+                            </a>
+                            <a href="https://dataist.ai/research/kak-ii-simuliruet-mysli-polzovatelia/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-09-20">2026-09-20</time>
+                                <span class="rel-title">How AI Simulates a User’s Thoughts</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка мигает
+                                // в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+                            function step(dir) {
+                                // Листаем на видимую ширину минус нахлёст,
+                                // чтобы следующая карточка подсказывала, что
+                                // лента продолжается.
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            sync();
+
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них в
+                            // страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую подложку,
+                                    // а не значок сломанной картинки.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = item.date; }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            function same(url) {
+                                try { return new URL(url, location.href).pathname === location.pathname; }
+                                catch (e) { return false; }
+                            }
+
+                            // Лента — на языке самой страницы: на русском разборе только
+                            // русские, на английском только английские. Фид отдаёт оба языка
+                            // вперемешку. Есть в записи поле lang — верим ему; пока его нет,
+                            // русскую запись узнаём по кириллице в заголовке: на всех 403
+                            // записях фида этот признак совпал с lang самой страницы.
+                            var myLang = (document.documentElement.lang || 'ru').slice(0, 2).toLowerCase();
+                            function langOf(x) {
+                                if (x.lang) return String(x.lang).slice(0, 2).toLowerCase();
+                                return /[а-яёА-ЯЁ]/.test(x.title || '') ? 'ru' : 'en';
+                            }
+                            // Лента дотягивается ОДИН раз и только когда
+                            // читатель до неё добрался: 125 КБ фида не должны
+                            // грузиться у того, кто до подвала не дошёл.
+                            var loaded = false;
+                            function fill() {
+                                if (loaded) return;
+                                loaded = true;
+                                fetch('/papers_en.json')
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) return;
+                                        var all = list.filter(function (x) {
+                                            return x && x.url && x.title && langOf(x) === myLang;
+                                        });
+                                        // Свежие вперёд. Фид приходит уже в
+                                        // этом порядке, но сортировка здесь
+                                        // стоит явно: порядок ленты — правило
+                                        // блока, а не побочный эффект того,
+                                        // как список собрали на сервере.
+                                        all.sort(function (a, b) {
+                                            return String(b.date || '').localeCompare(String(a.date || ''));
+                                        });
+                                        // Где в этом списке стоит сама статья.
+                                        // Считаем ДО того, как её выбросить:
+                                        // её место и есть «здесь», а первым
+                                        // после неё идёт ровно предыдущий
+                                        // разбор.
+                                        var mineAt = -1;
+                                        for (var i = 0; i < all.length; i++) {
+                                            if (same(all[i].url)) { mineAt = i; break; }
+                                        }
+                                        var rows = all.filter(function (x) { return !same(x.url); });
+                                        if (!rows.length) return;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+
+                                        // ЛЕНТА ОТКРЫВАЕТСЯ НА МЕСТЕ ЭТОЙ
+                                        // СТАТЬИ, а не с самого свежего
+                                        // разбора. Влево от стартовой позиции
+                                        // остаётся то, что вышло ПОСЛЕ неё,
+                                        // вправо уходит то, что было ДО.
+                                        //
+                                        // Без этого лента получалась одинаковой
+                                        // на всех страницах сайта: у майской
+                                        // статьи она начиналась бы с сентября,
+                                        // и соседство по времени — то самое,
+                                        // ради чего блок и нужен, — пропадало
+                                        // ровно в тот момент, когда страница
+                                        // становится интерактивной.
+                                        //
+                                        // Позицию берём по месту самой статьи
+                                        // в фиде. Сравнивать по дате нельзя:
+                                        // за один день выходит по два разбора
+                                        // («2026-07-05» и «2026-07-05_1»), и
+                                        // правило «дата меньше моей» проскочит
+                                        // собрата того же дня — лента откроется
+                                        // на разборе через один.
+                                        //
+                                        // Дата остаётся запасным ответом на
+                                        // случай, если статьи в фиде нет
+                                        // вовсе: свежая страница попадает туда
+                                        // не раньше, чем пересоберётся индекс.
+                                        var at = 0;
+                                        if (mineAt >= 0) {
+                                            at = mineAt;
+                                        } else {
+                                            var mine = wrap.dataset.date || '';
+                                            if (mine) {
+                                                for (var k = 0; k < rows.length; k++) {
+                                                    if (String(rows[k].date || '') < mine) { at = k; break; }
+                                                }
+                                            }
+                                        }
+                                        // Самый старый разбор: предыдущего у
+                                        // него нет, поэтому лента встаёт в
+                                        // конец — слева от края всё свежее.
+                                        if (at > rows.length - 1) at = rows.length - 1;
+                                        var target = rail.children[at];
+                                        if (target) {
+                                            // Без плавности: это не жест
+                                            // читателя, а исходное положение.
+                                            rail.scrollLeft = target.offsetLeft - rail.offsetLeft;
+                                        }
+                                        sync();
+                                    })
+                                    .catch(function () { /* остаёмся с разметкой */ });
+                            }
+                            if ('IntersectionObserver' in window) {
+                                var io = new IntersectionObserver(function (es) {
+                                    if (es.some(function (e) { return e.isIntersecting; })) {
+                                        io.disconnect();
+                                        fill();
+                                    }
+                                }, { rootMargin: '400px' });
+                                io.observe(wrap);
+                            } else {
+                                fill();
+                            }
+                        })();
+                    </script>
+                </section>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                AI reviews in simple way
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we read fresh AI papers and retell the essentials in plain human language — no hype, no fluff. If you want to see where AI agents are heading before everyone else, subscribe.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                New reviews — every day
+                            </p>
+                            <a href="https://x.com/andre_dataist" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">Follow on X</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        // BR436: ЧУЖАЯ БИБЛИОТЕКА НЕ РЕШАЕТ, УВИДИТ ЛИ ЧИТАТЕЛЬ ТЕКСТ.
+        // `lucide` едет с unpkg.com, а чужой сервер отвечает не всегда. Без
+        // проверки первая же строка бросала исключение — и ВЕСЬ остальной
+        // блок не исполнялся: ни кнопка темы, ни полоса прогресса, ни лента
+        // «Читайте также». Раньше к ним добавлялся и сам текст разбора: он
+        // был спрятан под `opacity: 0` до тех пор, пока наблюдатель не
+        // проставит `visible`, а наблюдатель регистрировался здесь же. Теперь
+        // правил `.fade-in` в стилях нет вовсе, и текст виден всегда — даже
+        // если JavaScript выключен или не дошёл. Иконка не показалась —
+        // досадно; разбор не показался — потеряли читателя.
+        if (window.lucide) lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
