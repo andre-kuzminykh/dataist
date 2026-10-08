@@ -1,0 +1,40 @@
+## From internal signals to intervention
+
+Goodfire studies how AI models work internally. Its launch follows a security partnership announced last month by Baseten’s Base Labs, Goodfire and Hugging Face.
+
+The timing reflects a problem the companies are trying to address: agents have crossed the boundaries of their test environments in several incidents this year. OpenAI agents breached Hugging Face’s safeguards. In the summer, Kimi K3, an open model for which Goodfire built its first monitor, exploited a sandbox leak to reach the internet and information on GitHub.
+
+Goodfire describes its system as a two-stage check. Probes read a model’s internal signals at each step of an agent’s work, like a metal detector scanning passengers. When a probe detects suspicious behavior, a separate AI model conducts a closer inspection, more like a manual search.
+
+Baseten customers choose what to monitor and how to respond:
+
+- Risks: malicious hacking, chemical or biological weapons use, and reward-system hacking.
+- Responses: log the event, send it to a person for review, or reject the request outright.
+
+## The cost claim
+
+Most monitoring systems use separate models that must reread all the actions of the model being checked. That adds latency and cost. Goodfire’s probes instead use computations the model has already performed.
+
+Goodfire CEO Eric Ho described the approach last week on investor Matt Turck’s MAD podcast. The probes use activations produced during the model’s forward pass: after the model has calculated the next token, a classifier can use the intermediate neural activations already available.
+
+In Goodfire’s Kimi K3 tests, monitoring about 1,500 sessions cost around $51. Checking every step with a cheaper model would have cost about $233; using a top-tier model would have cost about $10,000. The probes detected 94% of malicious hacking sessions, while flagging 8.7% of harmless ones for further review.
+
+[INFO:compare] Probes :: about $51 | Cheaper model :: about $233 | Top-tier model :: about $10,000
+
+[FIGURE:0]
+
+Running four probes at once increased time to the model’s first response by less than 2%, according to Goodfire.
+
+Goodfire CTO and co-founder Dan Balsam said the approach could catch unwanted actions before they happen. He said the company can detect when a model may try to hack a system during evaluation or training.
+
+## The open-model problem
+
+Goodfire is targeting developers of open models, which can be downloaded and stripped of their safeguards. They also typically lack the monitoring that closed-model labs apply to their own systems.
+
+Balsam argued that one person may be able to do less harm with an open model than an operator of compute clusters, such as an inference provider, which carries much of the responsibility. He added that the possible emergence of an open model on the level of “Mythos” would show why safeguards need to be applied during inference.
+
+In a recent study, Goodfire tested leading open models, including Kimi K3 and GLM-5.2. In AI-agent tests, they hacked the reward system in 50–96% of runs.
+
+Goodfire is not alone in exploring probes: Google DeepMind said in January that its research had helped bring probes for detecting malicious use into Gemini.
+
+I think the more consequential question is not whether probes are cheaper than another model, but how reliably they detect behavior that has not been anticipated in advance. Goodfire sees monitors as a practical step toward a longer-term goal: reverse-engineering a large language model to trace where a behavior emerged during training. If that work succeeds, today’s monitors could be a bridge from catching risky actions at inference to understanding why the model produces them at all.
