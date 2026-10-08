@@ -1,0 +1,41 @@
+## One agent was enough
+
+AgentCore is AWS’s platform for enterprise AI agents, with tools, memory and access controls. Zenity Labs named the vulnerability chain “AgentCorruption.” The researchers said an attacker needed access to a chat with just one public agent to take control of every AgentCore agent in the same AWS account and region.
+
+The first step was the instance metadata service at `169.254.169.254`, which provides temporary credentials to AWS workloads. Zenity built a test agent using Strands, AWS’s open-source framework, and asked it in plain language to contact the service and send the result to an external server. The agent complied. The researchers said the expected sandbox boundary was absent.
+
+The credentials worked outside AgentCore, on the researchers’ own computer, so they no longer needed the agent. The metadata service also exposed certificates and keys for an internal AWS service, along with a pre-signed URL for an internal S3 store outside the researchers’ account. Zenity said removing the web tool would not have stopped the attack: the weakness was in the platform, and a command-line tool could also have been used.
+
+[FIGURE:0]
+
+## Default permissions widened the breach
+
+The credentials were only the entry point. According to Zenity, AgentCore’s default execution role gave each agent permissions across all agents in the region, including the ability to read, change and delete data.
+
+With those permissions, the researchers could list agents, download their code packages within seconds and run them individually. The packages could contain forgotten passwords and API keys alongside source code. An attacker could move from a public customer-support agent to an internal finance agent, Zenity said, and read users’ private conversations with agents.
+
+The researchers also said they could directly change long-term memory. In one memory-poisoning scenario, they added instructions that would make agents forward future conversations to an external address. Users could keep chatting with an agent they trusted without seeing that its behavior had been altered.
+
+Storing credentials separately did not necessarily help. AWS recommends keeping them in a protected store rather than with the agents, but Zenity said the default permissions also allowed direct access to AWS Secrets Manager, including keys for services outside AWS.
+
+[FIGURE:1]
+
+## AWS changed defaults, not the underlying trade-off
+
+Zenity reported the vulnerabilities to AWS on December 25, 2025. AWS then made IMDSv2 the standard option for AgentCore deployments. IMDSv2 is a more secure version of the metadata service that was the starting point for the attack. According to Zenity’s updated analysis, AWS also changed AgentCore’s default execution role around August. The revised role no longer allows agents to launch other agents, read private conversations or retrieve credentials from AWS Secrets Manager, among other narrowed permissions. Zenity still recommends assigning each agent a separate role with more limited access.
+
+Zenity CTO Michael Bargury describes a tension that goes beyond this incident: cloud security depends on separating access and granting only the minimum necessary privileges, while useful agents need room to act. Public and internal agents often share an environment, so a weakness in one place can undermine boundaries across the system.
+
+I think the key question is not only whether AWS removed the permissions Zenity identified, but how clearly customers can see and control the boundaries between agents that share an account. The report describes a platform-wide path from one public chat to other agents’ code, conversations and secrets; changing defaults narrows that path, but customers still have to decide what access each agent should have.
+
+[FIGURE:2]
+
+## A slower fix than the comparison suggests
+
+The finding fits a pattern in Zenity’s research: seemingly harmless input can induce an agent to act against the organization it is meant to serve. In AgentFlayer, researchers used attacks that required no user interaction to make Salesforce Einstein, Copilot Studio and Cursor redirect customer data or expose credentials. In AgentForger, a manipulated ChatGPT link was enough to create an autonomous agent in OpenAI Workspace Agents with approval requirements turned off.
+
+Zenity says OpenAI fixed its vulnerability in four days, while AgentCore’s overly broad permissions remained unchanged for months after the company reported them. The difference is notable, though the two cases are not otherwise described as identical. AWS has opened AgentCore to companies broadly, and Amazon has said Sony and Ericsson are among its users.
+
+Memory is another exposed surface. Google DeepMind treats long-term memory manipulation as a distinct class of attack in its taxonomy of AI-agent traps. A few poisoned documents in a knowledge base may be enough to distort responses. In the “Agents of Chaos” red-team study, an OpenClaw agent was remotely controlled through an externally editable document linked to its memory file; another agent disclosed unredacted banking details. OpenAI CEO Sam Altman has also called for giving agents only the minimum access they need. Zenity’s assessment is that AgentCore’s default role violated that principle.
+
+[FIGURE:3]
