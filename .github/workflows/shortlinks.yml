@@ -1,7 +1,8 @@
 name: Короткие ссылки
 
 # Новая статья раздела → номер dataist.ai/<номер> и страница-переадресация;
-# новый урок → в ленты «Читайте также» всех уроков (scripts/education_rails.py).
+# новый урок → в ленты «Читайте также» всех уроков (scripts/education_rails.py),
+# вшитые в него библиотеки — ссылками (scripts/education_slim.py).
 # Всё решает scripts/shortlinks.py; здесь только запуск, отправка в main и
 # оповещение владельца (issue, а если заданы секреты TELEGRAM_BOT_TOKEN и
 # TELEGRAM_CHAT_ID — ещё и сообщение в Telegram), когда номера раздела
@@ -26,6 +27,7 @@ on:
       - 'shortlinks/registry.json'
       - 'scripts/shortlinks.py'
       - 'scripts/education_rails.py'
+      - 'scripts/education_slim.py'
       - '.github/workflows/shortlinks.yml'
   schedule:
     - cron: '41 4 * * *'
@@ -68,6 +70,7 @@ jobs:
           sparse-checkout: |
             /scripts/shortlinks.py
             /scripts/education_rails.py
+            /scripts/education_slim.py
             /shortlinks/
             /research/**/index.html
             /education/*/index.html
@@ -78,6 +81,13 @@ jobs:
       - name: Пробное оповещение
         if: ${{ github.event_name == 'workflow_dispatch' && inputs.test_alert }}
         run: python3 scripts/shortlinks.py --test-alert
+
+      # Уроки, пришедшие с вшитыми Tailwind и Lucide (1 МБ вместо ~130 КБ), —
+      # к виду остальных: библиотеки ссылками, плюс telegram-web-app. Только
+      # если на странице от этого ничего не меняется (scripts/education_slim.py);
+      # <head> с og и текст урока не трогаются.
+      - name: Вес уроков
+        run: python3 scripts/education_slim.py --apply
 
       # Ленты «Читайте также» уроков: новый урок — в education/index.json и
       # во вшитые ленты остальных, карточки неопубликованных — вон
