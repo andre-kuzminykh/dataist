@@ -1,0 +1,84 @@
+name: Короткие ссылки
+
+# Новая статья раздела → номер dataist.ai/<номер> и страница-переадресация.
+# Всё решает scripts/shortlinks.py; здесь только запуск, отправка в main и
+# оповещение владельца (issue, а если заданы секреты TELEGRAM_BOT_TOKEN и
+# TELEGRAM_CHAT_ID — ещё и сообщение в Telegram), когда номера раздела
+# подходят к концу, раздел перешёл на запасной диапазон или номеров не осталось.
+#
+# Запускается на пуш статей раздела (у конвейеров это свой токен, поэтому
+# событие срабатывает), раз в сутки для подстраховки и вручную. Свой коммит
+# workflow делает токеном Actions — такой пуш новых запусков не порождает.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'research/**'
+      - '20[0-9][0-9]-*/**'
+      - 'shortlinks/registry.json'
+      - 'scripts/shortlinks.py'
+      - '.github/workflows/shortlinks.yml'
+  schedule:
+    - cron: '41 4 * * *'
+  workflow_dispatch:
+    inputs:
+      test_alert:
+        description: 'Отправить пробное оповещение (issue и Telegram, если настроен)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: shortlinks
+  cancel-in-progress: false
+
+jobs:
+  shortlinks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+    steps:
+      # Репозиторий весит гигабайты (обложки), а нужны только страницы
+      # статей раздела, реестр и уже созданные короткие ссылки.
+      # Берём свежий main, а не коммит события: запуски идут по одному,
+      # и следующий должен видеть номера, выданные предыдущим.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+          filter: blob:none
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/shortlinks.py
+            /shortlinks/
+            /research/**/index.html
+            /[0-9]*/index.html
+
+      - name: Пробное оповещение
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.test_alert }}
+        run: python3 scripts/shortlinks.py --test-alert
+
+      - name: Номера и страницы
+        run: python3 scripts/shortlinks.py --apply --notify
+
+      # Выполняется и после сбоя оповещения: созданные ссылки не должны ждать.
+      - name: Отправить в main
+        if: ${{ always() }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --sparse -A shortlinks $(ls -d [0-9]* 2>/dev/null | grep -xE '[0-9]+')
+          if git diff --cached --quiet; then echo "нечего отправлять"; exit 0; fi
+          git commit -q -m "Короткие ссылки: новые номера и страницы"
+          for i in 1 2 3 4 5 6 7 8; do
+            if git pull -q --rebase origin main && git push -q origin HEAD:main; then exit 0; fi
+            sleep $((i * 5))
+          done
+          echo "не удалось отправить в main"; exit 1
