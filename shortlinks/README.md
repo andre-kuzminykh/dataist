@@ -1,87 +1,11 @@
 # Короткие ссылки dataist.ai
 
-Человек вбивает `dataist.ai/<номер>` и попадает на статью: на русскую, если первый язык браузера русский (на телефоне — язык телефона), иначе на английскую. Номер выдаётся один раз и навсегда.
+Человек вбивает `dataist.ai/<номер>` и попадает на статью: на русскую, если первый язык браузера русский (на телефоне — язык телефона), иначе на английскую. Номер выдаётся один раз и навсегда; кончился диапазон раздела — номера больше не выдаются, владельцу приходит оповещение.
 
-Файл обновляется сам (`scripts/shortlinks.py`), руками его не правят.
+Файлы обновляются сами (`scripts/shortlinks.py`), руками их не правят.
 
-| Раздел | Номера | Выдано | Последний | Осталось в диапазоне |
-|---|---|---|---|---|
-| Исследования | 1–999, 2000–4999 (запас) | 43 | 43 | 956 из 999 |
-| Обучение | 1001–1999, 5000–9999 (запас) | 23 | 1023 | 976 из 999 |
-| Новости — пока выключен | 10001–99999, 100000–999999 (запас) | 0 | — | 89999 из 89999 |
-
-## Исследования
-
-| № | Дата | Статья | English |
-|---|---|---|---|
-| [1](https://dataist.ai/1) | 2026-08-04 | [Как один ИИ-агент работает в телефоне, браузере и на компьютере](https://dataist.ai/2026-08-04/) | [Qwen-UI-Agent scores 92.2% on real Android phones, not simulators](https://dataist.ai/research/qwen-ui-agent-scores-92-2-on-real-android-phones-not-simulators/) |
-| [2](https://dataist.ai/2) | 2026-08-05 | [Игра в шпиона помогает ИИ улучшать тексты и рассуждения](https://dataist.ai/2026-08-05/) | [SpyRL turns open-ended tasks into a spy hunt with a checkable reward](https://dataist.ai/research/spyrl-turns-open-ended-tasks-into-a-spy-hunt-with-a-checkable-reward/) |
-| [3](https://dataist.ai/3) | 2026-08-07 | [Как проверить, способен ли ИИ вести торги целый год](https://dataist.ai/2026-08-07/) | [Over a simulated year, the best AI agent reached 27% of human net assets](https://dataist.ai/research/over-a-simulated-year-the-best-ai-agent-reached-27-of-human-net-assets/) |
-| [4](https://dataist.ai/4) | 2026-08-08 | [Почему для продвижения бренда в ответах ИИ нужны сторонние сайты](https://dataist.ai/2026-08-08/) | [85.7% of what AI cites about a brand comes from someone else's site](https://dataist.ai/research/85-7-of-what-ai-cites-about-a-brand-comes-from-someone-elses-site/) |
-| [5](https://dataist.ai/5) | 2026-08-09 | [Почему лучший ИИ собрал ответ из разных данных с точностью лишь 66%](https://dataist.ai/2026-08-09/) | [The best AI agent scores only 66% when data is spread across files](https://dataist.ai/research/the-best-ai-agent-scores-only-66-when-data-is-spread-across-files/) |
-| [6](https://dataist.ai/6) | 2026-08-11 | [Как миллионы виртуальных пользователей помогают заменить дорогие тесты на людях](https://dataist.ai/2026-08-11/) | [8.3 billion simulated users, and the model playing them changes the verdict](https://dataist.ai/research/8-3-billion-simulated-users-and-the-model-playing-them-changes-the-verdict/) |
-| [7](https://dataist.ai/7) | 2026-08-12 | [ИИ-агенты для генерации кода решили лишь 41% задач в новом тесте](https://dataist.ai/2026-08-12/) | [Coding agents solve just 41% of tasks in a new refactoring benchmark](https://dataist.ai/research/coding-agents-solve-just-41-of-tasks-in-a-new-refactoring-benchmark/) |
-| [8](https://dataist.ai/8) | 2026-08-13 | [Зачем агенту понимать причины поступков человека](https://dataist.ai/2026-08-13/) | [Combodied agents: measuring help by what the person keeps](https://dataist.ai/research/combodied-agents-measuring-help-by-what-the-person-keeps/) |
-| [9](https://dataist.ai/9) | 2026-08-14 | [Что если агенты смогут менять среду и саму эволюцию](https://dataist.ai/2026-08-14/) | [Self-improving agents stall unless the environment changes too](https://dataist.ai/research/self-improving-agents-stall-unless-the-environment-changes-too/) |
-| [10](https://dataist.ai/10) | 2026-08-16 | [Как сильная модель улучшает слабую без переобучения](https://dataist.ai/2026-08-16/) | [Strong-model scaffolding lifts a weak model from 0.49 to 0.91 without retraining](https://dataist.ai/research/strong-model-scaffolding-lifts-a-weak-model-from-0-49-to-0-91-without-retraining/) |
-| [11](https://dataist.ai/11) | 2026-08-18 | [Как ИИ-агент переносит навыки между разными задачами](https://dataist.ai/2026-08-18/) | [Evolving the scaffolding around a frozen model adds 17 points](https://dataist.ai/research/evolving-the-scaffolding-around-a-frozen-model-adds-17-points/) |
-| [12](https://dataist.ai/12) | 2026-08-25 | [Как графы помогают ИИ-агентам работать вместе](https://dataist.ai/2026-08-25/) | [Multi-agent systems need explicit graphs, not smarter agents](https://dataist.ai/research/multi-agent-systems-need-explicit-graphs-not-smarter-agents/) |
-| [13](https://dataist.ai/13) | 2026-08-26 | [Как ИИ-агент восстанавливается после ошибок и меняет план](https://dataist.ai/2026-08-26/) | [Apodex 1.1 gains from agent coordination, but full research runs still fail](https://dataist.ai/research/apodex-1-1-gains-from-agent-coordination-but-full-research-runs-still-fail/) |
-| [14](https://dataist.ai/14) | 2026-08-27 | [Можно ли научить ИИ-агента делать покупки как человек](https://dataist.ai/2026-08-27/) | [Scoring the whole session makes a shopping agent behave more like a user](https://dataist.ai/research/scoring-the-whole-session-makes-a-shopping-agent-behave-more-like-a-user/) |
-| [15](https://dataist.ai/15) | 2026-08-28 | [Автоматическая отладка улучшила ИИ-агентов на 10%](https://dataist.ai/2026-08-28/) | [An agent that debugs its own scaffolding gains 9 to 10 points on three benchmarks](https://dataist.ai/research/an-agent-that-debugs-its-own-scaffolding-gains-9-to-10-points-on-three/) |
-| [16](https://dataist.ai/16) | 2026-08-31 | [Как опыт превращается в рабочие навыки ИИ-агента](https://dataist.ai/2026-08-31/) | [Keeping a wiki of failed attempts makes agent skills improve faster](https://dataist.ai/research/keeping-a-wiki-of-failed-attempts-makes-agent-skills-improve-faster/) |
-| [17](https://dataist.ai/17) | 2026-09-01 | [ИИ-агент собирает законы физики из видео](https://dataist.ai/2026-09-01/) | [An agent recovers physics from video by writing simulator code](https://dataist.ai/research/an-agent-recovers-physics-from-video-by-writing-simulator-code/) |
-| [18](https://dataist.ai/18) | 2026-09-02 | [Как ИИ-агенты меняют роль разработчика](https://dataist.ai/2026-09-02/) | [Coding agents hit 80% on single tasks, 38% over a whole project](https://dataist.ai/research/coding-agents-hit-80-on-single-tasks-38-over-a-whole-project/) |
-| [19](https://dataist.ai/19) | 2026-09-03 | [Почему каждому студенту нужен ИИ-репетитор](https://dataist.ai/2026-09-03/) | [A fine-tuned student simulator trains a better AI tutor than GPT-5.4](https://dataist.ai/research/a-fine-tuned-student-simulator-trains-a-better-ai-tutor-than-gpt-5-4/) |
-| [20](https://dataist.ai/20) | 2026-09-04 | [Как собирать готовые навыки для ИИ-агентов из репозиториев с кодом](https://dataist.ai/2026-09-04/) | [Distilling 1,000 GitHub repos into agent skills more than doubles MLE-bench scores](https://dataist.ai/research/distilling-1-000-github-repos-into-agent-skills-more-than-doubles-mle-bench/) |
-| [21](https://dataist.ai/21) | 2026-09-07 | [Как ИИ-агент делает дизайн красивым и редактируемым](https://dataist.ai/2026-09-07/) | [Imagining the poster first lets a coding agent build it in editable layers](https://dataist.ai/research/imagining-the-poster-first-lets-a-coding-agent-build-it-in-editable-layers/) |
-| [22](https://dataist.ai/22) | 2026-09-08 | [Как ИИ-агент превращает научную статью в рабочий код](https://dataist.ai/2026-09-08/) | [Compiling a paper into a repo-level spec cuts AI's algorithmic shortcuts](https://dataist.ai/research/compiling-a-paper-into-a-repo-level-spec-cuts-ais-algorithmic-shortcuts/) |
-| [23](https://dataist.ai/23) | 2026-09-09 | [А что, если ИИ-агенту проще пересоздать библиотеку, чем чинить её?](https://dataist.ai/2026-09-09/) | [A library rebuilt from 50 design docs matches its hand-checked models](https://dataist.ai/research/a-library-rebuilt-from-50-design-docs-matches-its-hand-checked-models/) |
-| [24](https://dataist.ai/24) | 2026-09-10 | [Как граф превращает ошибки ИИ-агента в подсказки](https://dataist.ai/2026-09-10/) | [An editable graph of next steps beats memory for long-horizon agents](https://dataist.ai/research/an-editable-graph-of-next-steps-beats-memory-for-long-horizon-agents/) |
-| [25](https://dataist.ai/25) | 2026-09-11 | [Как ИИ-агент за несколько дней собрал играбельный шутер](https://dataist.ai/2026-09-11/) | [An AI agent built a playable shooter over 70 autonomous iterations](https://dataist.ai/research/an-ai-agent-built-a-playable-shooter-over-70-autonomous-iterations/) |
-| [26](https://dataist.ai/26) | 2026-09-12 | [Последний ИИ, созданный людьми: на пути к рекурсивному самоулучшению](https://dataist.ai/2026-09-12/) | [Five levels of self-improving AI, and why level 5 barely exists](https://dataist.ai/research/five-levels-of-self-improving-ai-and-why-level-5-barely-exists/) |
-| [27](https://dataist.ai/27) | 2026-09-14 | [Как ИИ-агент управлял интернет-магазином и увеличил капитал в 14 раз](https://dataist.ai/2026-09-14/) | [Given a store for a year, the top-earning agent ranked 16th of 18 on fraud](https://dataist.ai/research/given-a-store-for-a-year-the-top-earning-agent-ranked-16th-of-18-on-fraud/) |
-| [28](https://dataist.ai/28) | 2026-09-16 | [Как проверить, понимает ли ИИ-ассистент мотивы людей](https://dataist.ai/2026-09-16/) | [LLMs misread motives when the story comes through a biased user](https://dataist.ai/research/llms-misread-motives-when-the-story-comes-through-a-biased-user/) |
-| [29](https://dataist.ai/29) | 2026-09-17 | [Как ИИ помогает разрабатывать игры](https://dataist.ai/2026-09-17/) | [AI covers six roles in game development, but skills rarely transfer](https://dataist.ai/research/ai-covers-six-roles-in-game-development-but-skills-rarely-transfer/) |
-| [30](https://dataist.ai/30) | 2026-09-18 | [Как ИИ-агенты восстанавливают приложения по их поведению](https://dataist.ai/2026-09-18/) | [Coding agents skip looking at the app when the task gets long](https://dataist.ai/research/coding-agents-skip-looking-at-the-app-when-the-task-gets-long/) |
-| [31](https://dataist.ai/31) | 2026-09-20 | [Как ИИ симулирует мысли пользователя](https://dataist.ai/research/ru/kak-ii-simuliruet-mysli-polzovatelia_ru/) | [How AI Simulates a User’s Thoughts](https://dataist.ai/research/kak-ii-simuliruet-mysli-polzovatelia/) |
-| [32](https://dataist.ai/32) | 2026-09-21 | [Как ИИ-агентам экономить контекст и избегать сбоев](https://dataist.ai/research/ru/kak-ii-agentam-ekonomit-kontekst-i-izbegat-sboev_ru/) | [How AI Agents Can Save Context and Avoid Failures](https://dataist.ai/research/kak-ii-agentam-ekonomit-kontekst-i-izbegat-sboev/) |
-| [33](https://dataist.ai/33) | 2026-09-22 | [Почему ИИ-агентам трудно работать с разными данными](https://dataist.ai/research/ru/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi_ru/) | [Why is it difficult for AI agents to work with different types of data?](https://dataist.ai/research/pochemu-ii-agentam-trudno-rabotat-s-raznymi-dannymi/) |
-| [34](https://dataist.ai/34) | 2026-09-23 | [Как самоулучшение ИИ-агента улучшает результаты и экономит токены](https://dataist.ai/research/ru/kak-samouluchshenie-ii-agenta-uluchshaet-rezultaty-i-ekonomit-tokeny_ru/) | [How AI agent self-improvement enhances results and saves tokens](https://dataist.ai/research/kak-samouluchshenie-ii-agenta-uluchshaet-rezultaty-i-ekonomit-tokeny/) |
-| [35](https://dataist.ai/35) | 2026-09-24 | [ИИ-судья сохраняет 99% точности за меньшие деньги](https://dataist.ai/research/ru/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi_ru/) | [The AI judge maintains 99% accuracy at a lower cost.](https://dataist.ai/research/ii-sudia-sokhraniaet-99-tochnosti-za-menshie-dengi/) |
-| [36](https://dataist.ai/36) | 2026-09-26 | [Как ИИ-агент подбирает прошлый опыт под новую задачу](https://dataist.ai/research/ru/kak-ii-agent-podbiraet-proshlyi-opyt-pod-novuiu-zadachu_ru/) | [How an AI agent selects past experience for a new task](https://dataist.ai/research/kak-ii-agent-podbiraet-proshlyi-opyt-pod-novuiu-zadachu/) |
-| [37](https://dataist.ai/37) | 2026-09-28 | [Как дать ИИ-агенту больше свободы с меньшим риском](https://dataist.ai/research/ru/kak-dat-ii-agentu-bolshe-svobody-s-menshim-riskom_ru/) | [How to Give an AI Agent More Freedom with Less Risk](https://dataist.ai/research/how-to-give-an-ai-agent-more-freedom-with-less-risk/) |
-| [38](https://dataist.ai/38) | 2026-09-29 | [Как тысяча ИИ-агентов работают вместе без начальника](https://dataist.ai/research/ru/kak-tysiacha-ii-agentov-rabotaiut-vmeste-bez-nachalnika_ru/) | [How a Thousand AI Agents Work Together Without a Boss](https://dataist.ai/research/how-a-thousand-ai-agents-work-together-without-a-boss/) |
-| [39](https://dataist.ai/39) | 2026-10-02 | [Можно ли автоматически собрать нужных ИИ-агентов по ходу работы](https://dataist.ai/research/ru/mozhno-li-avtomaticheski-sobrat-nuzhnykh-ii-agentov-po-khodu-raboty_ru/) | [Can the necessary AI agents be assembled automatically as the work progresses?](https://dataist.ai/research/can-the-necessary-ai-agents-be-assembled-automatically-as-the-work-progresses/) |
-| [40](https://dataist.ai/40) | 2026-10-05 | [Как проверить, справился ли ИИ-агент с задачей](https://dataist.ai/research/ru/kak-proverit-spravilsia-li-ii-agent-s-zadachei_ru/) | [How can you check whether an AI agent has completed the task?](https://dataist.ai/research/how-can-you-check-whether-an-ai-agent-has-completed-the-task/) |
-| [41](https://dataist.ai/41) | 2026-10-06 | [Как собрать видео из таблицы без долгого монтажа](https://dataist.ai/research/ru/kak-sobrat-video-iz-tablitsy-bez-dolgogo-montazha_ru/) | [How to create a video from a spreadsheet without spending hours editing it](https://dataist.ai/research/how-to-create-a-video-from-a-spreadsheet-without-spending-hours-editing-it/) |
-| [42](https://dataist.ai/42) | 2026-10-07 | [Как ИИ-агент учится решать задачи на чужом опыте](https://dataist.ai/research/ru/kak-ii-agent-uchitsia-reshat-zadachi-na-chuzhom-opyte_ru/) | [How an AI agent learns to solve problems from others’ experience](https://dataist.ai/research/how-an-ai-agent-learns-to-solve-problems-from-others-experience/) |
-| [43](https://dataist.ai/43) | 2026-10-08 | [Как виртуальная компания учит агентов учитывать реакцию рынка](https://dataist.ai/research/ru/kak-virtualnaia-kompaniia-uchit-agentov-uchityvat-reaktsiiu-rynka_ru/) | [How a virtual company teaches agents to take market reactions into account](https://dataist.ai/research/how-a-virtual-company-teaches-agents-to-take-market-reactions-into-account/) |
-
-## Обучение
-
-| № | Дата | Статья | English |
-|---|---|---|---|
-| [1001](https://dataist.ai/1001) | 2026-08-06 | [Что такое AI-First-компания и как она работает](https://dataist.ai/education/auto_1_1/) | — |
-| [1002](https://dataist.ai/1002) | 2026-08-08 | [Кто такой ИИ-агент и почему он меняет устройство компании](https://dataist.ai/education/auto_1_2/) | — |
-| [1003](https://dataist.ai/1003) | 2026-08-09 | [Пять уровней эволюции ИИ-агентов](https://dataist.ai/education/auto_1_3/) | — |
-| [1004](https://dataist.ai/1004) | 2026-08-10 | [Где ИИ-агенты создают бизнесу максимум ценности](https://dataist.ai/education/auto_1_4/) | — |
-| [1005](https://dataist.ai/1005) | 2026-08-11 | [Три трансформации, которые полностью изменили бизнес](https://dataist.ai/education/auto_1_5/) | — |
-| [1006](https://dataist.ai/1006) | 2026-08-13 | [Готова ли ваша компания к ИИ-трансформации?](https://dataist.ai/education/auto_1_6/) | — |
-| [1007](https://dataist.ai/1007) | 2026-08-14 | [ИИ-стратегия: три уровня внедрения ИИ-агентов в бизнес](https://dataist.ai/education/auto_1_7/) | — |
-| [1008](https://dataist.ai/1008) | 2026-08-17 | [AgentOps: шесть шагов от идеи до работающего ИИ-агента](https://dataist.ai/education/auto_1_8/) | — |
-| [1009](https://dataist.ai/1009) | 2026-08-18 | [AI-First-компания: новые роли и новая оргструктура](https://dataist.ai/education/auto_1_9/) | — |
-| [1010](https://dataist.ai/1010) | 2026-08-26 | [Бизнес как система процессов: как потоки данных создают ценность](https://dataist.ai/education/auto_2_1/) | — |
-| [1011](https://dataist.ai/1011) | 2026-08-28 | [От механизации до ИИ-агентов: как эволюционировала автоматизация](https://dataist.ai/education/auto_2_2/) | — |
-| [1012](https://dataist.ai/1012) | 2026-08-30 | [Как выбрать правильный процесс для автоматизации](https://dataist.ai/education/auto_2_3/) | — |
-| [1013](https://dataist.ai/1013) | 2026-08-31 | [Как провести рентген бизнеса и извлечь знания экспертов](https://dataist.ai/education/auto_2_4/) | — |
-| [1014](https://dataist.ai/1014) | 2026-09-02 | [Как увидеть бизнес-процесс таким, какой он есть на самом деле](https://dataist.ai/education/auto_2_5/) | — |
-| [1015](https://dataist.ai/1015) | 2026-09-03 | [Как найти точки автоматизации с максимальной отдачей](https://dataist.ai/education/auto_2_6/) | — |
-| [1016](https://dataist.ai/1016) | 2026-09-07 | [Как перестроить процесс под ИИ-агентов и не потерять контроль](https://dataist.ai/education/auto_2_7/) | — |
-| [1017](https://dataist.ai/1017) | 2026-09-09 | [AI-First компания: какая работа остаётся человеку в мире ИИ-агентов](https://dataist.ai/education/auto_2_8/) | — |
-| [1018](https://dataist.ai/1018) | 2026-09-10 | [Как превратить человеческое мышление в работающего ИИ-агента](https://dataist.ai/education/auto_2_9/) | — |
-| [1019](https://dataist.ai/1019) | 2026-09-11 | [Что нужно, чтобы ИИ-автоматизация реально заработала](https://dataist.ai/education/auto_2_10/) | — |
-| [1020](https://dataist.ai/1020) | 2026-09-29 | [Где процессу нужен ИИ-агент, а где хватит правила](https://dataist.ai/education/auto_3_1/) | — |
-| [1021](https://dataist.ai/1021) | 2026-09-30 | [ИИ-платформа: как собрать агентов в единую систему](https://dataist.ai/education/auto_3_2/) | — |
-| [1022](https://dataist.ai/1022) | 2026-10-01 | [Архитектура ИИ-агента: от LLM-функции до графа навыков](https://dataist.ai/education/auto_3_3/) | — |
-| [1023](https://dataist.ai/1023) | 2026-10-02 | [ИИ-операции и инструменты: как решение модели становится действием](https://dataist.ai/education/auto_3_4/) | — |
+| Раздел | Номера | Выдано | Последний | Осталось | Список |
+|---|---|---|---|---|---|
+| Исследования | 1–999 | 43 | 43 | 956 из 999 | [research.md](research.md) |
+| Обучение | 1001–1999 | 23 | 1023 | 976 из 999 | [education.md](education.md) |
+| Новости | 10001–99999 | 239 | 10239 | 89760 из 89999 | [news.md](news.md) |

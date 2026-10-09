@@ -6,67 +6,81 @@
 
 Как устроено
 ------------
-* shortlinks/registry.json — реестр: диапазоны номеров по разделам и выданные
-  номера. Номер выдаётся ОДИН РАЗ и навсегда: его уже могли назвать вслух,
-  напечатать, вставить в видео. Ничего не перенумеровывается.
-* <номер>/index.html — страница-переадресация. В <head> — превью статьи
-  (og/twitter берутся у русской версии, иначе у английской), поэтому ссылка
-  в Telegram выглядит как сама статья. Страница закрыта от индексации.
-  Приложение сайта такие папки статьями не считает: в ленты, sitemap и RSS
-  они не попадают.
-* shortlinks/README.md — таблица «номер → статья» и остаток номеров.
+* shortlinks/registry.json — реестр: диапазон номеров каждого раздела и
+  выданные номера. Номер выдаётся ОДИН РАЗ и навсегда: его уже могли назвать
+  вслух, напечатать, вставить в видео. Ничего не перенумеровывается.
+* shortlinks/pages/<номер>.html — страница-переадресация. В <head> — превью
+  статьи (og/twitter русской версии, иначе английской), поэтому ссылка в
+  Telegram выглядит как сама статья; закрыта от индексации. По короткому
+  адресу её отдаёт приложение сайта (маршрут /<число> в dataist-ai).
+* <номер>/index.html — та же страница в папке, по-старому: так ссылки
+  работают, пока приложение без этого маршрута. Пишется только для разделов
+  из legacy_folders; новостям папки не делаются вовсе (их тысячи).
+* shortlinks/README.md — сводка по разделам, shortlinks/<раздел>.md — списки
+  «номер → статья».
 
-Новые статьи получают номера по порядку выхода. Кончился диапазон раздела —
-номера идут из запасного, ссылки не перестают появляться. О том, что номера
-заканчиваются (осталось меньше доли warn_left_share), о переходе на запасной
-диапазон и о том, что номеров не осталось совсем, сообщается один раз:
-с --notify — issue в репозитории с упоминанием владельца.
+Новые статьи получают номера по порядку выхода. Диапазон раздела кончился —
+номера больше не выдаются (+1 дальше не идёт: залезли бы в номера соседнего
+раздела). Об этом и заранее — когда остаётся меньше доли warn_left_share —
+сообщается один раз: с --notify — issue в репозитории с упоминанием
+владельца и, если есть секреты, сообщение в Telegram.
+
+Новости ищутся по news/index.json, а читаются только новые: в автоматике
+репозиторий скачан без статей, и нужная страница докачивается по одной.
 
 Запуск: python3 scripts/shortlinks.py            — показать, что изменится
         python3 scripts/shortlinks.py --apply    — записать
-        python3 scripts/shortlinks.py --apply --notify   — то же + issue
+        python3 scripts/shortlinks.py --apply --notify   — то же + оповещения
                                                     (нужны GH_TOKEN и GITHUB_REPOSITORY)
 """
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import glob
 import html
 import json
 import math
 import os
 import re
+import subprocess
 import sys
 import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 REGISTRY = ROOT / "shortlinks" / "registry.json"
+PAGES = ROOT / "shortlinks" / "pages"
 README = ROOT / "shortlinks" / "README.md"
 SITE = "https://dataist.ai"
 MARKER = "dataist-shortlink"
 FALLBACK_IMAGE = SITE + "/cover.png"
 
-# Где лежат статьи раздела. Пары RU/EN связаны через hreflang в <head>.
-SECTION_GLOBS = {
+# Разделы, которые читаются целиком на каждом запуске (статей немного): у них
+# страницы пересобираются всегда — вдруг сменились заголовок или обложка.
+FULL_SECTIONS = {
     "research": ["20*/index.html", "research/*/index.html", "research/ru/*/index.html"],
     "education": ["education/*/index.html"],
-    "news": ["news/*/index.html", "news/en/*/index.html"],
 }
+NEWS_INDEX = "news/index.json"
+NEWS_TWIN_DAYS = 14   # сколько дней ждать английскую версию новости
 DATE_DIR_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})(?:_\d+)?/index\.html$")
 
 DEFAULT_REGISTRY = {
     "about": "Короткие ссылки dataist.ai/<номер>. Номер выдаётся один раз и навсегда. "
-             "Файл ведёт scripts/shortlinks.py — руками правятся только sections и warn_left_share.",
+             "Файл ведёт scripts/shortlinks.py — руками правятся только sections, "
+             "warn_left_share и legacy_folders.",
     "notify": "@andre-kuzminykh",
     "warn_left_share": 0.1,
+    "legacy_folders": ["research", "education"],
+    "test_alert_request": "",
     "sections": {
         "research": {"title": "Исследования", "enabled": True, "since": "2026-08-01",
-                     "ranges": [[1, 999], [2000, 4999]]},
-        "education": {"title": "Обучение", "enabled": False, "since": None,
-                      "ranges": [[1001, 1999], [5000, 9999]]},
-        "news": {"title": "Новости", "enabled": False, "since": "2026-10-01",
-                 "ranges": [[10001, 99999], [100000, 999999]]},
+                     "ranges": [[1, 999]]},
+        "education": {"title": "Обучение", "enabled": True, "since": None,
+                      "ranges": [[1001, 1999]]},
+        "news": {"title": "Новости", "enabled": True, "since": "2026-10-01",
+                 "ranges": [[10001, 99999]]},
     },
     "links": {},
     "alerts_sent": [],
@@ -74,6 +88,22 @@ DEFAULT_REGISTRY = {
 
 
 # ---------------------------------------------------------------- чтение статей
+def read_text(rel: str) -> str | None:
+    """Файл из рабочей копии, а если его там нет — из git (докачается по одному)."""
+    path = ROOT / rel
+    if path.is_file():
+        try:
+            return path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            return None
+    try:
+        out = subprocess.run(["git", "-C", str(ROOT), "show", f"HEAD:{rel}"],
+                             capture_output=True, timeout=120, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return out.stdout.decode("utf-8", errors="replace") if out.returncode == 0 else None
+
+
 def _head(src: str) -> str:
     end = src.find("</head>")
     return src[:end] if end >= 0 else src[:20000]
@@ -84,12 +114,14 @@ def _meta(head: str, key: str) -> str | None:
     return m.group(1) if m else None
 
 
+def _rel(url: str) -> str:
+    return url.strip("/") + "/index.html"
+
+
 def read_page(rel: str) -> dict | None:
     """Всё, что нужно о странице статьи; None — если это не опубликованная статья."""
-    path = ROOT / rel
-    try:
-        src = path.read_text(encoding="utf-8", errors="replace")
-    except OSError:
+    src = read_text(rel)
+    if src is None:
         return None
     head = _head(src)
     lang = re.search(r'<html[^>]*\blang="([a-zA-Z]{2})', src[:1000])
@@ -122,33 +154,99 @@ def read_page(rel: str) -> dict | None:
     }
 
 
-def discover(section: str) -> tuple[list[dict], dict[str, dict]]:
-    """Статьи раздела парами {ru, en, date, stamp}; второй результат — все страницы."""
-    pages: dict[str, dict] = {}
-    for pattern in SECTION_GLOBS[section]:
-        for p in glob.glob(str(ROOT / pattern)):
-            rel = os.path.relpath(p, ROOT).replace(os.sep, "/")
-            info = read_page(rel)
-            if info and info["lang"] in ("ru", "en"):
-                pages[info["url"]] = info
+def prefetch(rels: list[str]) -> None:
+    """Файлы, которых нет в рабочей копии, — из git одним запросом.
+
+    В автоматике репозиторий скачан без содержимого файлов, и каждый
+    `git show` докачивал бы свой файл отдельным запросом — по нескольку
+    секунд на новость. Так докачивается вся пачка разом; в обычной копии,
+    где файлы на месте, ничего не происходит.
+    """
+    missing = [r for r in dict.fromkeys(rels) if r and not (ROOT / r).is_file()]
+    if not missing:
+        return
+    try:
+        tree = subprocess.run(["git", "-C", str(ROOT), "ls-tree", "HEAD", "--", *missing],
+                              capture_output=True, text=True, timeout=120, check=False).stdout
+        oids = [ln.split()[2] for ln in tree.splitlines() if len(ln.split()) >= 3 and ln.split()[1] == "blob"]
+        if oids:
+            subprocess.run(["git", "-C", str(ROOT), "-c", "fetch.negotiationAlgorithm=noop", "fetch",
+                            "--no-tags", "--no-write-fetch-head", "--recurse-submodules=no",
+                            "--filter=blob:none", "--stdin", "origin"],
+                           input="\n".join(oids) + "\n", capture_output=True, text=True,
+                           timeout=600, check=False)
+    except (OSError, subprocess.TimeoutExpired):
+        pass  # не вышло пачкой — read_text докачает по одному
+
+
+class Pages(dict):
+    """Прочитанные страницы по адресу; недостающие дочитываются по запросу."""
+
+    def get_page(self, url: str | None) -> dict | None:
+        if not url:
+            return None
+        if url not in self:
+            self[url] = read_page(_rel(url))
+        return self[url]
+
+    def warm(self, urls: list[str]) -> None:
+        """Страницы и их двойники — двумя пачками вместо запроса на каждую."""
+        urls = [u for u in urls if u and u not in self]
+        prefetch([_rel(u) for u in urls])
+        twins = []
+        for u in urls:
+            info = self.get_page(u)
+            if info:
+                twins += [t for t in info["hreflang"].values() if t != u and t not in self]
+        prefetch([_rel(t) for t in twins])
+
+
+def pair_items(urls: list[str], pages: Pages) -> list[dict]:
+    """Статьи парами {ru, en, date, stamp}: якорь — русская страница."""
     items, used = [], set()
-    # Якорь пары — русская страница; английская без русской — отдельная статья.
-    for url, info in sorted(pages.items(), key=lambda kv: (kv[1]["lang"] != "ru", kv[0])):
+    infos = [pages.get_page(u) for u in urls]
+    infos = [i for i in infos if i and i["lang"] in ("ru", "en")]
+    for info in sorted(infos, key=lambda i: (i["lang"] != "ru", i["url"])):
+        url = info["url"]
         if url in used:
             continue
         twin_lang = "en" if info["lang"] == "ru" else "ru"
         twin = info["hreflang"].get(twin_lang)
-        if twin and (twin not in pages or pages[twin]["hreflang"].get(info["lang"]) != url):
-            twin = None  # пара не взаимная или двойника нет на диске
-        if twin in used:
-            twin = None
+        tw = pages.get_page(twin) if twin else None
+        if not tw or tw["hreflang"].get(info["lang"]) != url or twin in used:
+            twin = None  # пары нет, она не взаимная или двойник уже занят
         ru, en = (url, twin) if info["lang"] == "ru" else (twin, url)
-        anchor = pages[ru] if ru else pages[en]
         used.update(u for u in (ru, en) if u)
-        if not anchor["date"]:
-            continue
-        items.append({"ru": ru, "en": en, "date": anchor["date"], "stamp": anchor["stamp"]})
-    return items, pages
+        if info["date"]:
+            items.append({"ru": ru, "en": en, "date": info["date"], "stamp": info["stamp"]})
+    return items
+
+
+def discover_full(section: str, pages: Pages) -> list[dict]:
+    urls = []
+    for pattern in FULL_SECTIONS[section]:
+        for p in glob.glob(str(ROOT / pattern)):
+            rel = os.path.relpath(p, ROOT).replace(os.sep, "/")
+            urls.append("/" + rel[: -len("index.html")])
+    return pair_items(sorted(urls), pages)
+
+
+def discover_news(since: str | None, known: set[str], pages: Pages) -> list[dict]:
+    """Новые новости: кандидаты из news/index.json, читаются только незнакомые."""
+    raw = read_text(NEWS_INDEX)
+    if not raw:
+        print(f"! нет {NEWS_INDEX} — новости пропущены", file=sys.stderr)
+        return []
+    floor = ""
+    if since:  # дата в индексе по UTC, у страницы — по Москве: берём с запасом в день
+        floor = (dt.date.fromisoformat(since) - dt.timedelta(days=1)).isoformat()
+    urls = []
+    for e in json.loads(raw):
+        url = (e.get("url") or "").replace(SITE, "")
+        if url and url not in known and str(e.get("date") or "") >= floor:
+            urls.append(url)
+    pages.warm(urls)
+    return pair_items(urls, pages)
 
 
 # ---------------------------------------------------------------- номера
@@ -170,7 +268,7 @@ def check_config(reg: dict) -> None:
 
 
 def next_number(cfg: dict, last: int | None) -> int | None:
-    """Следующий свободный номер раздела: после последнего выданного, по диапазонам."""
+    """Следующий номер раздела после последнего выданного; None — диапазон кончился."""
     for a, b in ranges_of(cfg):
         if last is None or last < a:
             return a
@@ -184,16 +282,9 @@ def section_state(reg: dict, section: str) -> dict:
     nums = sorted(int(n) for n, e in reg["links"].items() if e["section"] == section)
     last = nums[-1] if nums else None
     rngs = ranges_of(cfg)
-    idx = 0
-    for i, (a, b) in enumerate(rngs):
-        if last is not None and a <= last <= b:
-            idx = i
-    a, b = rngs[idx]
-    used_in = sum(1 for n in nums if a <= n <= b)
-    left_total = sum(b2 - max(a2 - 1, last or 0) for a2, b2 in rngs if b2 > (last or 0))
-    return {"count": len(nums), "last": last, "range": (a, b), "range_index": idx,
-            "used_in_range": used_in, "left_in_range": b - (last if last and last >= a else a - 1),
-            "left_total": left_total}
+    total = sum(b - a + 1 for a, b in rngs)
+    left = sum(b - max(a - 1, last or 0) for a, b in rngs if b > (last or 0))
+    return {"count": len(nums), "last": last, "total": total, "left": left}
 
 
 # ---------------------------------------------------------------- страница-переадресация
@@ -210,8 +301,8 @@ def _text(raw: str) -> str:
 
 
 def render(n: int, entry: dict, pages: dict[str, dict]) -> str:
-    ru = entry.get("ru") if entry.get("ru") in pages else None
-    en = entry.get("en") if entry.get("en") in pages else None
+    ru = entry.get("ru") if pages.get(entry.get("ru")) else None
+    en = entry.get("en") if pages.get(entry.get("en")) else None
     src = pages[ru] if ru else pages[en]
     ru_to, en_to = ru or en, en or ru
     title, desc = src["title"], src["description"]
@@ -281,39 +372,44 @@ main{{padding:24px;text-align:center}}a{{color:#111}}
 """
 
 
-# ---------------------------------------------------------------- README
-def write_readme(reg: dict, pages_by_section: dict[str, dict]) -> str:
+# ---------------------------------------------------------------- списки
+def _md(text: str) -> str:
+    return (text or "").replace("|", "\\|").replace("[", "\\[").replace("]", "\\]")
+
+
+def write_lists(reg: dict) -> dict[Path, str]:
+    """README со сводкой и по списку «номер → статья» на раздел."""
+    files: dict[Path, str] = {}
     out = ["# Короткие ссылки dataist.ai", "",
            "Человек вбивает `dataist.ai/<номер>` и попадает на статью: на русскую, если первый "
            "язык браузера русский (на телефоне — язык телефона), иначе на английскую. "
-           "Номер выдаётся один раз и навсегда.", "",
-           "Файл обновляется сам (`scripts/shortlinks.py`), руками его не правят.", "",
-           "| Раздел | Номера | Выдано | Последний | Осталось в диапазоне |", "|---|---|---|---|---|"]
+           "Номер выдаётся один раз и навсегда; кончился диапазон раздела — номера больше "
+           "не выдаются, владельцу приходит оповещение.", "",
+           "Файлы обновляются сами (`scripts/shortlinks.py`), руками их не правят.", "",
+           "| Раздел | Номера | Выдано | Последний | Осталось | Список |", "|---|---|---|---|---|---|"]
     for name, cfg in reg["sections"].items():
         st = section_state(reg, name)
-        rng = ", ".join(f"{a}–{b}" + (" (запас)" if i else "") for i, (a, b) in enumerate(ranges_of(cfg)))
-        status = "" if cfg.get("enabled") else " — пока выключен"
+        rng = ", ".join(f"{a}–{b}" for a, b in ranges_of(cfg))
+        status = "" if cfg.get("enabled") else " — выключен"
+        if cfg.get("enabled") and st["count"] and not st["left"]:
+            status = " — **номера закончились**"
         out.append(f"| {cfg['title']}{status} | {rng} | {st['count']} | {st['last'] or '—'} | "
-                   f"{st['left_in_range']} из {st['range'][1] - st['range'][0] + 1} |")
-    for name, cfg in reg["sections"].items():
-        rows = sorted(((int(n), e) for n, e in reg["links"].items() if e["section"] == name), key=lambda x: x[0])
-        if not rows:
-            continue
-        pages = pages_by_section.get(name, {})
-        out += ["", f"## {cfg['title']}", "", "| № | Дата | Статья | English |", "|---|---|---|---|"]
+                   f"{st['left']} из {st['total']} | [{name}.md]({name}.md) |")
+        rows = sorted(((int(n), e) for n, e in reg["links"].items() if e["section"] == name),
+                      key=lambda x: x[0])
+        sec = [f"# Короткие ссылки — {cfg['title']}", "", "[← сводка](README.md)", "",
+               "| № | Дата | Статья | Русская | English |", "|---|---|---|---|---|"]
         for n, e in rows:
-            def cell(url):
-                if not url:
-                    return "—"
-                t = html.unescape(pages[url]["title"]) if url in pages else url
-                t = t.replace("|", "\\|").replace("[", "\\[").replace("]", "\\]")
-                return f"[{t}]({SITE}{url})"
-            out.append(f"| [{n}]({SITE}/{n}) | {e['date']} | {cell(e.get('ru'))} | {cell(e.get('en'))} |")
-    return "\n".join(out) + "\n"
+            ru = f"[открыть]({SITE}{e['ru']})" if e.get("ru") else "—"
+            en = f"[open]({SITE}{e['en']})" if e.get("en") else "—"
+            sec.append(f"| [{n}]({SITE}/{n}) | {e['date']} | {_md(e.get('title', ''))} | {ru} | {en} |")
+        files[ROOT / "shortlinks" / f"{name}.md"] = "\n".join(sec) + "\n"
+    files[README] = "\n".join(out) + "\n"
+    return files
 
 
 # ---------------------------------------------------------------- оповещения
-def pending_alerts(reg: dict, exhausted: set[str]) -> list[dict]:
+def pending_alerts(reg: dict, exhausted: dict[str, int]) -> list[dict]:
     alerts = []
     share = float(reg.get("warn_left_share", 0.1))
     who = reg.get("notify", "")
@@ -321,33 +417,29 @@ def pending_alerts(reg: dict, exhausted: set[str]) -> list[dict]:
         if not cfg.get("enabled"):
             continue
         st = section_state(reg, name)
-        a, b = st["range"]
-        rngs = ranges_of(cfg)
         title = cfg["title"]
-        if name in exhausted:
-            alerts.append({"id": f"exhausted:{name}:{rngs[-1][0]}-{rngs[-1][1]}",
+        rng = ", ".join(f"{a}–{b}" for a, b in ranges_of(cfg))
+        key = rng.replace(", ", "+")
+        if st["count"] and not st["left"]:   # выдан последний номер — дошли до конца
+            alerts.append({"id": f"exhausted:{name}:{key}",
                            "title": f"Короткие ссылки: в разделе «{title}» номера закончились",
-                           "body": f"{who} Все диапазоны раздела «{title}» ({cfg['ranges']}) заняты, "
-                                   f"новые статьи остаются без короткой ссылки. Добавьте диапазон в "
-                                   f"`shortlinks/registry.json` → `sections.{name}.ranges` — следующий "
+                           "body": f"{who} Номера раздела «{title}» ({rng}) закончились — последний "
+                                   f"выданный {st['last']}. Новые статьи раздела остаются без короткой "
+                                   f"ссылки (дальше +1 не идёт, чтобы не залезть в номера соседнего "
+                                   f"раздела); сейчас таких {exhausted.get(name, 0)}. Чтобы продолжить, "
+                                   f"добавьте в `shortlinks/registry.json` → `sections.{name}.ranges` "
+                                   f"свободный диапазон, например [[…], [2000, 4999]], — следующий "
                                    f"запуск сам выдаст номера всем, кто ждёт."})
             continue
-        if st["range_index"] > 0 and st["count"]:
-            alerts.append({"id": f"switch:{name}:{a}-{b}",
-                           "title": f"Короткие ссылки: «{title}» перешли на запасной диапазон {a}–{b}",
-                           "body": f"{who} Основной диапазон раздела «{title}» закончился, новые статьи "
-                                   f"получают номера из запасного {a}–{b}. Ссылки продолжают появляться "
-                                   f"сами, делать ничего не нужно. Последний номер: {st['last']}."})
-        size = b - a + 1
-        if st["count"] and st["left_in_range"] <= max(1, math.ceil(size * share)):
-            nxt = next((f"{a2}–{b2}" for a2, b2 in rngs if a2 > b), None)
-            then = (f"Когда закончится, номера автоматически пойдут из запасного диапазона {nxt}."
-                    if nxt else "Запасного диапазона нет — добавьте его в `shortlinks/registry.json`.")
-            alerts.append({"id": f"low:{name}:{a}-{b}",
-                           "title": f"Короткие ссылки: в разделе «{title}» заканчиваются номера {a}–{b}",
-                           "body": f"{who} В диапазоне {a}–{b} раздела «{title}» осталось "
-                                   f"{st['left_in_range']} номеров из {size} (последний выданный — "
-                                   f"{st['last']}). {then}"})
+        if st["count"] and st["left"] <= max(1, math.ceil(st["total"] * share)):
+            alerts.append({"id": f"low:{name}:{key}",
+                           "title": f"Короткие ссылки: в разделе «{title}» заканчиваются номера",
+                           "body": f"{who} В разделе «{title}» ({rng}) осталось {st['left']} номеров "
+                                   f"из {st['total']}, последний выданный — {st['last']}. Когда "
+                                   f"закончатся, новые статьи раздела останутся без короткой ссылки: "
+                                   f"дальше +1 не пойдёт. Чтобы продолжить, добавьте в "
+                                   f"`shortlinks/registry.json` → `sections.{name}.ranges` свободный "
+                                   f"диапазон."})
     sent = set(reg.get("alerts_sent", []))
     return [x for x in alerts if x["id"] not in sent]
 
@@ -364,6 +456,14 @@ def _github(method: str, path: str, payload: dict | None = None):
         method=method)
     with urllib.request.urlopen(req, timeout=30) as r:
         return json.loads(r.read() or b"null")
+
+
+TEST_ALERT = {
+    "title": "Короткие ссылки: проверка оповещений",
+    "body": f"{DEFAULT_REGISTRY['notify']} Это пробное сообщение: так придёт весть, когда номера "
+            "раздела начнут заканчиваться и когда закончатся совсем. Закройте issue — больше "
+            "не появится.",
+}
 
 
 def open_issue(alert: dict) -> None:
@@ -400,14 +500,6 @@ def notify(alert: dict) -> None:
         print(f"! Telegram не принял «{alert['title']}»: {exc}", file=sys.stderr)
 
 
-TEST_ALERT = {
-    "title": "Короткие ссылки: проверка оповещений",
-    "body": f"{DEFAULT_REGISTRY['notify']} Это пробное сообщение: так придёт весть, когда номера "
-            "раздела начнут заканчиваться, когда раздел перейдёт на запасной диапазон и если номера "
-            "кончатся совсем. Закройте issue — больше не появится.",
-}
-
-
 # ---------------------------------------------------------------- главное
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -426,68 +518,94 @@ def main() -> int:
         else json.loads(json.dumps(DEFAULT_REGISTRY))
     check_config(reg)
     links: dict[str, dict] = reg["links"]
+    legacy = set(reg.get("legacy_folders", []))
+    pages = Pages()
+    today = dt.date.today().isoformat()
 
-    new, updated, exhausted = [], [], set()
-    pages_by_section: dict[str, dict] = {}
+    new, touched, exhausted = [], set(), {}
     for name, cfg in reg["sections"].items():
         if not cfg.get("enabled"):
             continue
-        items, pages = discover(name)
-        pages_by_section[name] = pages
-        by_ru = {e["ru"]: n for n, e in links.items() if e["section"] == name and e.get("ru")}
-        by_en = {e["en"]: n for n, e in links.items() if e["section"] == name and e.get("en")}
+        mine = {n: e for n, e in links.items() if e["section"] == name}
+        known = {e[k] for e in mine.values() for k in ("ru", "en") if e.get(k)}
+        if name in FULL_SECTIONS:
+            items = discover_full(name, pages)
+        elif name == "news":
+            items = discover_news(cfg.get("since"), known, pages)
+            # Английская версия новости может выйти позже русской — ждём её
+            # две недели, перечитывая только такие русские страницы.
+            horizon = (dt.date.fromisoformat(today) - dt.timedelta(days=NEWS_TWIN_DAYS)).isoformat()
+            waiting = [e["ru"] for e in mine.values() if e.get("ru") and not e.get("en")
+                       and e["date"] >= horizon]
+            pages.warm(waiting)
+            items += pair_items(waiting, pages)
+        else:
+            continue
+        by_url = {e[k]: n for n, e in mine.items() for k in ("ru", "en") if e.get(k)}
         fresh = []
         for it in items:
-            n = by_ru.get(it["ru"]) if it["ru"] else None
-            n = n or (by_en.get(it["en"]) if it["en"] else None)
+            n = by_url.get(it["ru"]) or by_url.get(it["en"])
             if n:
                 e = links[n]
                 # Двойник появился позже — дописываем; выданный номер не трогаем.
                 for k in ("ru", "en"):
                     if it[k] and not e.get(k):
                         e[k] = it[k]
-                        updated.append(n)
+                        touched.add(n)
                 continue
             if cfg.get("since") and it["date"] < cfg["since"]:
                 continue
             fresh.append(it)
         fresh.sort(key=lambda it: (it["date"], it["stamp"], _natural(it["ru"] or it["en"])))
         last = section_state(reg, name)["last"]
-        for it in fresh:
+        for i, it in enumerate(fresh):
             n = next_number(cfg, last)
             while n is not None and (ROOT / str(n)).exists() and not _is_ours(n):
                 print(f"! {n}: папка уже занята чужим содержимым — номер пропущен", file=sys.stderr)
                 last = n
                 n = next_number(cfg, last)
             if n is None:
-                exhausted.add(name)
+                exhausted[name] = len(fresh) - i   # стоп: дальше +1 не идёт
                 break
             links[str(n)] = {"section": name, "date": it["date"], "ru": it["ru"], "en": it["en"]}
             new.append(n)
+            touched.add(str(n))
             last = n
 
     reg["links"] = {k: links[k] for k in sorted(links, key=int)}
 
-    # Страницы: пересобираются все — двойник, заголовок или обложка статьи могли поменяться.
+    # Страницы. Полные разделы пересобираются всегда; новости — новые, с
+    # дописанным двойником и те, чьей страницы ещё нет.
     writes: dict[Path, str] = {}
     for n, e in reg["links"].items():
-        pages = pages_by_section.get(e["section"])
-        if pages is None:
-            continue  # раздел выключен — его страницы не трогаем
-        if not ((e.get("ru") in pages) or (e.get("en") in pages)):
-            print(f"! {n}: статьи {e.get('ru') or e.get('en')} больше нет — страницу не трогаем", file=sys.stderr)
+        cfg = reg["sections"].get(e["section"], {})
+        if not cfg.get("enabled"):
             continue
-        page = render(int(n), e, pages)
-        target = ROOT / n / "index.html"
-        if not target.exists() or target.read_text(encoding="utf-8") != page:
-            writes[target] = page
+        target = PAGES / f"{n}.html"
+        if e["section"] not in FULL_SECTIONS and n not in touched and target.exists():
+            continue
+        got = {u: pages.get_page(u) for u in (e.get("ru"), e.get("en")) if u}
+        got = {u: p for u, p in got.items() if p}
+        if not got:
+            print(f"! {n}: статьи {e.get('ru') or e.get('en')} больше нет — страницу не трогаем",
+                  file=sys.stderr)
+            continue
+        page = render(int(n), e, got)
+        src = got.get(e.get("ru")) or got.get(e.get("en"))
+        e["title"] = _clean(src["title"])
+        outs = [target] + ([ROOT / n / "index.html"] if e["section"] in legacy else [])
+        for t in outs:
+            if not t.exists() or t.read_text(encoding="utf-8") != page:
+                writes[t] = page
 
     alerts = pending_alerts(reg, exhausted)
-    readme = write_readme(reg, pages_by_section)
+    lists = write_lists(reg)
 
     print(f"новых номеров: {len(new)}" + (f" ({new[0]}–{new[-1]})" if new else "")
-          + f" | дописан двойник: {len(set(updated))} | страниц к записи: {len(writes)}"
+          + f" | дописан двойник: {len(touched) - len(new)} | файлов страниц к записи: {len(writes)}"
           + f" | оповещений: {len(alerts)}")
+    for name, waiting in exhausted.items():
+        print(f"  ⛔ {reg['sections'][name]['title']}: номера закончились, без ссылки {waiting}")
     for a in alerts:
         print(f"  ⚑ {a['title']}")
     if not args.apply:
@@ -520,8 +638,9 @@ def main() -> int:
         target.write_text(page, encoding="utf-8")
     REGISTRY.parent.mkdir(parents=True, exist_ok=True)
     REGISTRY.write_text(json.dumps(reg, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    if not README.exists() or README.read_text(encoding="utf-8") != readme:
-        README.write_text(readme, encoding="utf-8")
+    for path, text in lists.items():
+        if not path.exists() or path.read_text(encoding="utf-8") != text:
+            path.write_text(text, encoding="utf-8")
     print("записано")
     return 1 if failed else 0
 
