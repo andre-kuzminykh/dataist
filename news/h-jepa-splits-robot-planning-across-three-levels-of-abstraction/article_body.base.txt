@@ -1,0 +1,33 @@
+## Why one representation can get in the way
+
+A JEPA turns images and video into compact representations of a scene rather than predicting every visual detail, as a generative model might. In action-conditioned versions, it also takes actions as input and predicts their effects, allowing a planner to compare possible outcomes with a goal.
+
+The challenge is that a long-horizon plan may require many small predictions. That costs compute, and errors can accumulate. A single representation must also serve two different purposes: track fine physical changes for the next movement and assess progress toward a distant goal.
+
+A quadruped crossing a maze illustrates the mismatch. Its joint configuration matters for controlling its next steps; its location matters more for choosing a route. H-JEPA learns separate representations at different levels so the planner need not carry every movement detail into long-term decisions.
+
+## Planning from coarse goals to movements
+
+H-JEPA learns from sequences of observations linked by actions. The lowest level predicts the next hidden state from recent states and actions. Higher levels use lower-level representations to predict transitions across longer intervals.
+
+Each level has its own state encoder, action encoder and predictor. The action encoder compresses the actions over that level’s time span; the predictor models how the represented state changes. Researchers train the hierarchy jointly, comparing each predicted representation with one derived from a future observation. Regularization prevents the model from producing the same representation for every observation, while training signals from higher levels also pass through the lower-level encoders.
+
+The time intervals between levels are set in advance, but the model learns what information to preserve. Features that change slowly can remain useful at higher levels, while fast-changing details can be discarded.
+
+At planning time, H-JEPA encodes the current and goal observations at every level. The top-level planner searches for actions whose predicted outcomes approach the goal in its hidden space. Those predicted states become subgoals for the level below, which finds actions to reach them. The process continues until the lowest level produces simple actions to execute. After a short sequence, the system observes the result and updates its plan.
+
+[INFO:steps] Encode goal | Set subgoals | Refine actions | Update plan
+
+## What the tests show
+
+The researchers evaluated H-JEPA in four simulated navigation and manipulation environments: FourRoom Distractors, Visual AntMaze, Push-T and OGBench Cube. They compared it with LeWM, a single-level JEPA, and HWM, another world model that builds hierarchical plans in a shared latent space.
+
+In FourRoom, AntMaze and Cube, adding levels—up to a three-level hierarchy—generally improved success rates and reduced planning compute. The clearest advantage for separate representations appeared in AntMaze, where three-level H-JEPA succeeded almost twice as often as HWM.
+
+In that maze, the robot’s location remained distinguishable in upper-level representations, while information about its leg configuration faded. Higher levels also produced a smoother estimate of distance to the goal along the corridors, helping the planner route around walls.
+
+The team also tested H-JEPA on DROID, a dataset of real-robot manipulation videos featuring varied objects, lighting and backgrounds. Training only on prediction tended to preserve static scene details while losing information about the moving robot. Adding an inverse-dynamics objective—predicting the action that connects two observed states—helped retain information relevant to action. In offline planning, H-JEPA was more accurate than the baseline models and required less planning compute.
+
+<strong>The gains are conditional, not automatic.</strong> The experiments do not show that more levels always help; the benefit depends on how well the training data covers the task. I think that caveat matters more than the hierarchy itself: a planner can divide its work neatly and still lack the experience needed to choose the right route.
+
+The researchers propose connecting upper-level representations to language, so agents could receive goals as instructions rather than target images. That is a plausible next step, but the present results establish something narrower: different representations can serve near-term control and long-horizon planning. Whether those abstractions remain useful beyond the tested environments will depend on what the models see during training.
