@@ -1,0 +1,51 @@
+## A second process for choosing the next step
+
+A coding agent may have implemented most of a component and passed several tests while leaving rare cases unresolved. It still has to choose whether to inspect failures, rewrite code, run more tests, try another approach or stop. Each choice costs compute, and a bad one can waste the remaining budget or damage working code.
+
+Meta calls this kind of decision metacognitive control: assessing progress and using that assessment to choose what to do next. In many existing agents, deciding and acting happen together. The agent selects its next move based on an accumulating history of actions and tool interactions, where useful details can get buried among previous attempts and errors.
+
+Common ways to spend more compute at inference time have their own limits. Generating several candidates, running critique-and-revision loops or searching a predefined tree usually means setting the structure of the computation before the task begins. The number of attempts and checks is fixed before the agent knows which ones will help.
+
+Meta’s proposal is to give the decision about additional computation its own reasoning process. The controller gathers results from the current run, considers possible next steps and estimates their value.
+
+## Executors do the work; a controller allocates it
+
+Meta implemented the approach in an inference system called Meta-Reasoning Agent. It separates task execution from decisions about what work to assign next.
+
+- An **executor** can be a single large language model call or a coding agent with tools to inspect files, change code and run tests.
+- A **controller** reviews executor results, records its findings, gives new executors precise instructions and decides when to stop.
+
+The controller works through four stages:
+
+- **Assess:** Review new results and update the picture of the task. For a coding problem, that might mean noting which features work, which tests fail and whether error handling has been checked.
+- **Propose:** Generate possible next actions, such as investigating failed tests, adding missing functionality or independently reviewing the code. At this point, the controller considers options without restricting them to the remaining budget.
+- **Evaluate:** Compare those options against the available compute. Fixing a known bug may be more valuable than rewriting a component that already works.
+- **Allocate:** Give executors their instructions and pass along relevant results from previous attempts—or stop and return the completed work.
+
+Each stage can involve separate model calls and memory operations, so the controller can gather more information before deciding.
+
+The framework also keeps a persistent store of artifacts: executor outputs and controller notes, each with a unique identifier. The controller maintains a brief status assessment and retrieves detailed records only when needed. When it uses an earlier artifact to guide new work, the system records the connection, forming a graph of the agent’s computation. A test report, for example, can lead to a targeted fix that another executor checks.
+
+That graph makes it possible to inspect whether the agent is building on prior work or producing disconnected attempts. The benchmark results suggest the distinction matters when more compute is available.
+
+## Better scores at the largest budgets
+
+Meta tested the framework on four benchmarks: IMO ProofBench-Advanced for mathematical proofs, ARC-AGI-2 for abstract visual reasoning, LongCoT-mini for long tasks across several fields and ProgramBench for recovering programs from documentation and executable examples.
+
+The tests used Gemini 3.1 Pro, GPT-5.5 and Opus 4.8. The main baseline was Direct Control Agent, a version of Meta-Reasoning Agent that chooses what to do in a single step from its accumulated history, without a separate controller. Meta also compared the framework with research systems and coding agents, including Codex, Claude Code and recursive language models (RLM).
+
+At the highest tested compute budgets, Meta-Reasoning Agent scored higher in all 12 comparable comparisons. On ProgramBench with GPT-5.5, raising the limit from 400 to 1,200 model calls lifted its score from 64.1% to 71.5%. Direct Control Agent stayed at roughly 64% and used only about 18% of the available calls at the largest limit.
+
+The artifact graphs offer a clue to the difference. With metareasoning, agents produced more intermediate results and links between them. In one ARC-AGI-2 example, Direct Control Agent made six independent attempts and four short continuations; the metareasoning system explored more alternatives and connected later work to earlier results.
+
+The system was not better at every budget: Meta says it sometimes trailed Direct Control Agent when compute was limited. The gains came when there was enough budget for the controller’s extra model calls and coordination to pay off.
+
+## What the paper leaves open
+
+Meta did not release an official, ready-to-run implementation. The paper does describe controller prompts, executor instructions, memory interfaces and tools, giving developers material to experiment with by adding a separate control loop to existing agents.
+
+Its ProgramBench setup also offers practical patterns for coding agents: executors record changes in Git; the controller can check their claims through a read-only repository interface; and its status notes distinguish functionality that is implemented, broken, untested or unexplored. The framework limits parallel code changes in a shared workspace to reduce the risk of executors overwriting one another’s work.
+
+I think the more important question is not whether a controller can spend a larger budget more effectively on these benchmarks, but when its own overhead is worth paying. Meta’s results show a trade-off: the added reasoning can help agents use a large budget, but can hurt when compute is scarce. For teams evaluating agents, allocating compute may need to be measured separately from the quality of the model doing the task.
+
+As agent workflows grow longer, the ability to decide what deserves more work becomes part of the system’s performance—not just a way to get more out of the model.
