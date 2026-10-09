@@ -7,7 +7,7 @@
 | Раздел | Номера | Выдано | Последний | Осталось в диапазоне |
 |---|---|---|---|---|
 | Исследования | 1–999, 2000–4999 (запас) | 43 | 43 | 956 из 999 |
-| Обучение — пока выключен | 1001–1999, 5000–9999 (запас) | 0 | — | 999 из 999 |
+| Обучение | 1001–1999, 5000–9999 (запас) | 23 | 1023 | 976 из 999 |
 | Новости — пока выключен | 10001–99999, 100000–999999 (запас) | 0 | — | 89999 из 89999 |
 
 ## Исследования
@@ -57,3 +57,31 @@
 | [41](https://dataist.ai/41) | 2026-10-06 | [Как собрать видео из таблицы без долгого монтажа](https://dataist.ai/research/ru/kak-sobrat-video-iz-tablitsy-bez-dolgogo-montazha_ru/) | [How to create a video from a spreadsheet without spending hours editing it](https://dataist.ai/research/how-to-create-a-video-from-a-spreadsheet-without-spending-hours-editing-it/) |
 | [42](https://dataist.ai/42) | 2026-10-07 | [Как ИИ-агент учится решать задачи на чужом опыте](https://dataist.ai/research/ru/kak-ii-agent-uchitsia-reshat-zadachi-na-chuzhom-opyte_ru/) | [How an AI agent learns to solve problems from others’ experience](https://dataist.ai/research/how-an-ai-agent-learns-to-solve-problems-from-others-experience/) |
 | [43](https://dataist.ai/43) | 2026-10-08 | [Как виртуальная компания учит агентов учитывать реакцию рынка](https://dataist.ai/research/ru/kak-virtualnaia-kompaniia-uchit-agentov-uchityvat-reaktsiiu-rynka_ru/) | [How a virtual company teaches agents to take market reactions into account](https://dataist.ai/research/how-a-virtual-company-teaches-agents-to-take-market-reactions-into-account/) |
+
+## Обучение
+
+| № | Дата | Статья | English |
+|---|---|---|---|
+| [1001](https://dataist.ai/1001) | 2026-08-06 | [Что такое AI-First-компания и как она работает](https://dataist.ai/education/auto_1_1/) | — |
+| [1002](https://dataist.ai/1002) | 2026-08-08 | [Кто такой ИИ-агент и почему он меняет устройство компании](https://dataist.ai/education/auto_1_2/) | — |
+| [1003](https://dataist.ai/1003) | 2026-08-09 | [Пять уровней эволюции ИИ-агентов](https://dataist.ai/education/auto_1_3/) | — |
+| [1004](https://dataist.ai/1004) | 2026-08-10 | [Где ИИ-агенты создают бизнесу максимум ценности](https://dataist.ai/education/auto_1_4/) | — |
+| [1005](https://dataist.ai/1005) | 2026-08-11 | [Три трансформации, которые полностью изменили бизнес](https://dataist.ai/education/auto_1_5/) | — |
+| [1006](https://dataist.ai/1006) | 2026-08-13 | [Готова ли ваша компания к ИИ-трансформации?](https://dataist.ai/education/auto_1_6/) | — |
+| [1007](https://dataist.ai/1007) | 2026-08-14 | [ИИ-стратегия: три уровня внедрения ИИ-агентов в бизнес](https://dataist.ai/education/auto_1_7/) | — |
+| [1008](https://dataist.ai/1008) | 2026-08-17 | [AgentOps: шесть шагов от идеи до работающего ИИ-агента](https://dataist.ai/education/auto_1_8/) | — |
+| [1009](https://dataist.ai/1009) | 2026-08-18 | [AI-First-компания: новые роли и новая оргструктура](https://dataist.ai/education/auto_1_9/) | — |
+| [1010](https://dataist.ai/1010) | 2026-08-26 | [Бизнес как система процессов: как потоки данных создают ценность](https://dataist.ai/education/auto_2_1/) | — |
+| [1011](https://dataist.ai/1011) | 2026-08-28 | [От механизации до ИИ-агентов: как эволюционировала автоматизация](https://dataist.ai/education/auto_2_2/) | — |
+| [1012](https://dataist.ai/1012) | 2026-08-30 | [Как выбрать правильный процесс для автоматизации](https://dataist.ai/education/auto_2_3/) | — |
+| [1013](https://dataist.ai/1013) | 2026-08-31 | [Как провести рентген бизнеса и извлечь знания экспертов](https://dataist.ai/education/auto_2_4/) | — |
+| [1014](https://dataist.ai/1014) | 2026-09-02 | [Как увидеть бизнес-процесс таким, какой он есть на самом деле](https://dataist.ai/education/auto_2_5/) | — |
+| [1015](https://dataist.ai/1015) | 2026-09-03 | [Как найти точки автоматизации с максимальной отдачей](https://dataist.ai/education/auto_2_6/) | — |
+| [1016](https://dataist.ai/1016) | 2026-09-07 | [Как перестроить процесс под ИИ-агентов и не потерять контроль](https://dataist.ai/education/auto_2_7/) | — |
+| [1017](https://dataist.ai/1017) | 2026-09-09 | [AI-First компания: какая работа остаётся человеку в мире ИИ-агентов](https://dataist.ai/education/auto_2_8/) | — |
+| [1018](https://dataist.ai/1018) | 2026-09-10 | [Как превратить человеческое мышление в работающего ИИ-агента](https://dataist.ai/education/auto_2_9/) | — |
+| [1019](https://dataist.ai/1019) | 2026-09-11 | [Что нужно, чтобы ИИ-автоматизация реально заработала](https://dataist.ai/education/auto_2_10/) | — |
+| [1020](https://dataist.ai/1020) | 2026-09-29 | [Где процессу нужен ИИ-агент, а где хватит правила](https://dataist.ai/education/auto_3_1/) | — |
+| [1021](https://dataist.ai/1021) | 2026-09-30 | [ИИ-платформа: как собрать агентов в единую систему](https://dataist.ai/education/auto_3_2/) | — |
+| [1022](https://dataist.ai/1022) | 2026-10-01 | [Архитектура ИИ-агента: от LLM-функции до графа навыков](https://dataist.ai/education/auto_3_3/) | — |
+| [1023](https://dataist.ai/1023) | 2026-10-02 | [ИИ-операции и инструменты: как решение модели становится действием](https://dataist.ai/education/auto_3_4/) | — |

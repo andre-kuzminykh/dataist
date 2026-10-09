@@ -368,10 +368,12 @@ def _github(method: str, path: str, payload: dict | None = None):
 
 def open_issue(alert: dict) -> None:
     # Такое оповещение уже могло уйти, а запись об этом — не доехать до main
-    # (пуш не прошёл): второй раз то же самое не пишем.
-    for issue in _github("GET", "/issues?state=all&per_page=100") or []:
-        if issue.get("title") == alert["title"]:
-            return
+    # (пуш не прошёл): второй раз то же самое не пишем. Пробное — исключение:
+    # его заказывают нарочно, и каждый заказ должен дойти.
+    if alert is not TEST_ALERT:
+        for issue in _github("GET", "/issues?state=all&per_page=100") or []:
+            if issue.get("title") == alert["title"]:
+                return
     _github("POST", "/issues", {"title": alert["title"], "body": alert["body"]})
 
 
@@ -398,6 +400,14 @@ def notify(alert: dict) -> None:
         print(f"! Telegram не принял «{alert['title']}»: {exc}", file=sys.stderr)
 
 
+TEST_ALERT = {
+    "title": "Короткие ссылки: проверка оповещений",
+    "body": f"{DEFAULT_REGISTRY['notify']} Это пробное сообщение: так придёт весть, когда номера "
+            "раздела начнут заканчиваться, когда раздел перейдёт на запасной диапазон и если номера "
+            "кончатся совсем. Закройте issue — больше не появится.",
+}
+
+
 # ---------------------------------------------------------------- главное
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -408,10 +418,7 @@ def main() -> int:
     args = ap.parse_args()
 
     if args.test_alert:
-        notify({"title": "Короткие ссылки: проверка оповещений",
-                "body": f"{DEFAULT_REGISTRY['notify']} Это пробное сообщение: так придёт весть, когда "
-                        "номера раздела начнут заканчиваться, когда раздел перейдёт на запасной "
-                        "диапазон и если номера кончатся совсем. Закройте issue — больше не появится."})
+        notify(TEST_ALERT)
         print("пробное оповещение отправлено")
         return 0
 
@@ -444,7 +451,7 @@ def main() -> int:
             if cfg.get("since") and it["date"] < cfg["since"]:
                 continue
             fresh.append(it)
-        fresh.sort(key=lambda it: (it["date"], it["stamp"], it["ru"] or it["en"]))
+        fresh.sort(key=lambda it: (it["date"], it["stamp"], _natural(it["ru"] or it["en"])))
         last = section_state(reg, name)["last"]
         for it in fresh:
             n = next_number(cfg, last)
@@ -488,6 +495,17 @@ def main() -> int:
         return 0
 
     failed = False
+    if args.notify and reg.get("test_alert_request"):
+        # Пробное оповещение по запросу из реестра: так его можно заказать
+        # обычным коммитом, без ручного запуска. Запрос снимается, только
+        # если оповещение ушло, — иначе повторится в следующий раз.
+        try:
+            notify(TEST_ALERT)
+            reg["test_alert_request"] = ""
+            print("пробное оповещение отправлено")
+        except Exception as exc:
+            failed = True
+            print(f"! пробное оповещение не ушло: {exc}", file=sys.stderr)
     if args.notify:
         for a in alerts:
             try:
@@ -506,6 +524,11 @@ def main() -> int:
         README.write_text(readme, encoding="utf-8")
     print("записано")
     return 1 if failed else 0
+
+
+def _natural(s: str) -> list:
+    """auto_2_9 раньше auto_2_10: числа в адресе сравниваются как числа."""
+    return [int(t) if t.isdigit() else t for t in re.split(r"(\d+)", s or "")]
 
 
 def _is_ours(n: int) -> bool:
