@@ -1,0 +1,49 @@
+## Scarcity was distorting the queue
+
+About 150 researchers use Ai2’s clusters, which range from 88 to 1,024 GPUs. At any given time, submitted jobs demand two to three times the available capacity.
+
+Under the old priority-based system, teams could protect jobs from interruption or let them run opportunistically on spare GPUs. The incentives produced familiar failures:
+
+- Researchers reserved GPUs with dummy jobs so they could attach real work later.
+- Priority inflation made high priority the norm, leaving lower-priority jobs waiting.
+- On-call engineers spent much of their time negotiating with owners to stop protected jobs on nodes that needed maintenance.
+
+Ai2 initially responded with tighter priority controls, then gave some important projects exclusive access to GPUs. That protected selected work, but research demand varies over time: one team’s allocation could sit idle while another waited.
+
+The deeper problem, the team concluded, was not how to rank jobs. It was how to allocate a shared resource when users know more than the institution about the value of their work and have reasons to hold onto capacity.
+
+## Budgets replace GPU ownership
+
+Ai2 now allocates shares of GPU time rather than fixed groups of GPUs. Leaders set budgets across a hierarchy of programs, projects and researchers, translating research priorities into a share of compute before specific jobs arrive. Project A1, for example, is entitled to 35% of total capacity regardless of how many other projects are queued.
+
+Every request for GPU time must draw on a budget to be protected from interruption. That makes holding a GPU costly to the team that benefits from it, including when the job is doing no useful work. The intended alternative to gaming the scheduler is to make the case for a larger budget through a regular review process.
+
+A fair-share scheduler then governs actual usage across the hierarchy. It tracks consumption over a rolling period—seven days by default—and favors groups that have used less than their share over those that have used more. Unlike fixed quotas, the weights come from leaders’ budgets and the hierarchy follows Ai2’s research programs.
+
+The system also distinguishes budgeted work from opportunistic use. Budgeted jobs count against their owner’s share and receive a minimum protected runtime. Unbudgeted jobs cost no budget, can be interrupted at any time and help keep GPUs busy when funded work is not ready to run.
+
+A job’s minimum runtime is part of a new launch agreement. Researchers specify the shortest time needed to make meaningful progress; after that period, the scheduler can interrupt and requeue resumable work. Setting the minimum to zero means the job uses no budget and has no protection.
+
+This gives jobs a way to run without making every request an open-ended claim on a GPU. It also lets Ai2 remove work from unhealthy nodes automatically once the protected period ends. Human-involved repairs fell by 74%.
+
+## The debugging result is the sharper test
+
+Before deploying the budget system, Ai2 built a simulator to test queue waits, interruptions and GPU allocation across many simulated days in seconds. The team varied settings including the observation window and maximum protected runtime; the cap was set at eight hours. Historical data and constructed scenarios both went into testing.
+
+For debugging jobs, the simulator predicted that the 90th-percentile wait would fall from about six hours to five minutes. These jobs need few GPUs and no more than 15 minutes of protected time: enough to see whether a run starts or fails because of an error or misconfiguration. In the live system, their 90th-percentile wait fell from two hours to 30 seconds.
+
+Across a 30-day period, teams received 98% of the GPU-hours owed to them based on hourly demand. Thirteen of 15 teams received at least 95%; the lowest share was 90%. Cluster utilization held at 98% before and after the change, while demand remained two to three times capacity. Eighteen percent of allocated GPU time did not count against budgets, helping keep the clusters busy when funded jobs were not ready.
+
+Queue times also fell on the largest H100 cluster: median wait dropped from five minutes to 24 seconds, while the 90th percentile declined by about a third, from 2.8 hours to 1.8 hours.
+
+I think the most revealing result is not the headline debugging number but the combination of faster access and unchanged utilization under persistent oversubscription. The system appears to have made the queue more responsive without buying that improvement by leaving GPUs idle. But the gains have a boundary: a protected runtime can also make it harder to gather enough GPUs at once for a large job.
+
+## The cost of making allocation explicit
+
+The transition exposed a weakness in Ai2’s interactive research sessions. Under the old system, a session could be held for up to a week. Now its protected period is capped at eight hours, after which it may be interrupted if it has exceeded its budget. Researchers who lost a session had to wait for another and manually restore their work.
+
+Ai2 plans two projects to address that tradeoff: a CPU-only cluster near local storage for development and data preparation, and resumable sessions on a CPU cluster that can move to another node without manual recovery.
+
+The team is also investigating resource fragmentation. Minimum protected runtimes may leave the scheduler less able to interrupt many jobs at once and free enough GPUs for a large queued job. Ai2 is reproducing the problem in simulation while measuring it in production.
+
+Next, the team wants to improve GPU utilization itself, including the efficiency of setup, checkpointing and training. The budget system has made it clearer who gets compute and when; the harder question is whether the work done with that time is worth the allocation.
