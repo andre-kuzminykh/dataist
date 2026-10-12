@@ -1,0 +1,55 @@
+# Multi-agent reliability depends on controlling the handoffs
+
+## Where failures spread
+
+In a retrieval-augmented generation (RAG) system, teams can evaluate retrieval and generation separately to locate a problem. Multi-agent workflows add more boundaries to inspect:
+
+[INFO:steps] Agent A | Handoff | Agent B | Shared state | Agent C
+
+The same logic applies: trace what each step received and produced. LangSmith, for example, can record prompts, retrieved documents, tool calls, and model responses in a RAG application. For multi-agent systems, a useful trace also captures:
+
+- Which agents ran, and in what order
+- Each agent’s inputs and outputs
+- Data passed between agents
+- Routing and delegation decisions
+- Reads and updates to shared state
+- Tool calls and their results
+- Retries, loops, and termination decisions
+- Latency, token use, and cost at each step
+
+Without this record, a team may know the final result was wrong but not where the workflow broke down.
+
+## The workflow can fail even when its agents look fine
+
+Agents depend on one another and jointly determine what happens next. A coordinator may wait for a worker’s result while the worker waits for approval or instructions. That is a deadlock. Or agents may keep exchanging requests without moving closer to a decision, action, or terminal state: an infinite loop.
+
+These are failures of the execution graph, not necessarily of any one agent. Useful measures include completion rate, runtime, average iterations, deadlock and loop rates, handoffs per workflow, correct completion rate, maximum iterations reached, and abandoned workflows.
+
+Handoffs need their own checks, too. The next agent may not receive all the relevant information, may get irrelevant context, or may misread what it did receive. Evaluation therefore has three parts:
+
+- **Context quality:** Did the next agent get the information it needed, without losing important details or adding noise?
+- **Interpretation:** Is its output supported by the previous agent’s result, and did it make the right decision from that information?
+- **Interface integrity:** Did the handoff follow the expected structure, include required fields, and use the right types?
+
+Structured formats such as JSON schemas and Pydantic models make some of these checks deterministic before the next agent runs. Semantic checks can use an LLM-as-a-judge to compare the previous output, the context passed forward, and the next agent’s result.
+
+Shared state creates another boundary to monitor. It can become stale, contradictory, incomplete, or noisy as agents update it. A state manager can compare the state before and after each agent’s work, applying fixed checks to schemas, protected fields, consistency, freshness, and context size. Semantic evaluation can then look for lost facts, distorted summaries, unsupported additions, or accumulated clutter.
+
+[INFO:steps] Previous state | Agent work | Updated state | State check | Next agent
+
+## Independence matters more than different wording
+
+Specialized agents can check one another’s reasoning, but agents built on the same base model may share blind spots. A reviewer might reinforce a planner’s plausible but incorrect conclusion instead of catching it. Different answers or reasoning paths do not, by themselves, prove that the agents are independent: the stronger test is whether they fail on the same cases.
+
+Teams can measure similarity in outputs, reasoning, tool use, retrieved evidence, and decisions. They can also track error correlation across agents. That last measure matters most: if agents repeatedly fail on the same benchmark examples, their apparent diversity adds little reliability.
+
+I think this is the central engineering point: a multi-agent system is not made reliable simply by adding agents. Reliability depends on whether their failures are observable, whether the handoffs preserve meaning, and whether the workflow can recover when something goes wrong.
+
+That points to a design in which deterministic code controls the parts that should not depend on an LLM’s next decision:
+
+- **Data handoffs:** Validate required fields, types, and business rules before passing results onward. If a check fails, reject the data, retry the previous agent, or route the workflow elsewhere.
+- **Workflow execution:** Track agents, routing, handoffs, iterations, runtime, and terminal states. LangGraph can represent workflows as stateful graphs with explicit nodes, edges, branches, and checkpoints. Iteration limits, timeouts, and termination conditions help prevent deadlocks and loops; LangSmith can record the execution for evaluation and diagnosis.
+- **Shared state:** Use a state manager to control context size and updates. When a threshold is reached, a lightweight agent can summarize the conversation; deterministic code then replaces older messages with that summary while preserving recent context.
+- **Model selection:** Assign models to agents based on tested performance for their responsibilities, not reputation. In a SaaS customer-support system, for example, routing might use a fast, inexpensive model; knowledge and RAG need strong context handling; transactions may need a stronger model for rules; and a reviewer could use a different model family to reduce shared blind spots.
+
+The system’s reliability ultimately rests on boundaries that can be inspected, measured, and governed. If those boundaries remain under the control of probabilistic decisions alone, adding agents can multiply uncertainty instead of containing it.
