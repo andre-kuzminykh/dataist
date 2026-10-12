@@ -1,0 +1,33 @@
+## Agents settle into idea pools
+
+The study examined “agents for authorial research”: systems that repeatedly propose solutions, evaluate them and revise them in response to feedback. Eight independent runs of one agent on the same task ended with scores ranging from 68.3 to 100.0. The gap persisted even when the researchers substantially increased the compute budget.
+
+To understand why, the researchers mapped the runs’ solutions in two dimensions, placing similar approaches near one another. Solutions from a given run usually stayed within a small region of the map, which the authors call an “idea pool.”
+
+Agents can spend much of their remaining compute improving an approach in a less productive pool rather than exploring one found in another run. Occasional compression of the chat history did not prevent this pattern.
+
+[FIGURE:0]
+
+## Fork the work, flush the context
+
+Fork-and-Flush combines two operations. In a fork, the agent starts K parallel branches, each inheriting the working environment and all created files. In a flush, a branch loses its chat history but keeps that workspace. It starts a new conversation with the work already done still available.
+
+A branch that retains its parent’s chat history tends to return to the same idea pool: the earlier reasoning steers what it tries next. A fresh context can broaden the search without throwing away code, files or saved results.
+
+The researchers tested the method on 13 long-running tasks, including polyomino packing, job-shop scheduling and cryptanalysis. The set also included CIFAR classifier compression and VLIW kernel optimization. Individual runs lasted from several hours to more than 100 hours. The agents used GPT-5.6-terra and GPT-5.5 through the GitHub Copilot command-line interface.
+
+At equal compute budgets, Fork-and-Flush achieved an average normalized score of 0.78, compared with 0.47 for single runs and 0.54 for choosing the best of four runs. The paper reports relative improvements of 66.0% and 44.4%, respectively. Fork-and-Flush had the highest average score on 12 of the 13 tasks.
+
+[INFO:facts] 13 :: long-running tasks | 66% :: relative improvement | 12 of 13 :: tasks won | 0.16 :: normalized standard deviation
+
+The method also reduced variation between runs: normalized standard deviation fell to 0.16, from 0.26 for single runs. Clearing chat context without branching improved results by 22%.
+
+## A reset may matter even with stronger models
+
+The researchers also tested MAX-3-SAT tasks with Qwen3.5-4B, 9B and 27B. Variation between runs followed an inverted U-shaped curve, peaking on tasks near each model’s capability boundary—roughly halfway between random guessing and the reference solver’s result.
+
+The authors argue that open-ended research tasks are inherently near the edge of what models can do. As models improve, they expect the differences between runs that Fork-and-Flush exploits to persist, with the boundary shifting toward harder tasks.
+
+I think the key finding is not that wiping chat history makes an agent smarter. It is that accumulated reasoning can become a constraint: a branch keeps the work but drops the narrative that may be steering it back toward familiar answers. The study reports gains across its test set, but it does not establish how often this trade-off helps outside those tasks. That leaves a practical tension for agent builders: preserving context is useful for continuity, yet sometimes the way to make progress is to forget how the search began.
+
+[FIGURE:1]
