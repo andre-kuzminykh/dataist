@@ -1,0 +1,58 @@
+## How MASS divides the work
+
+MASS, short for Multi-Agent Self-Supervision, treats a workflow as text added to a prompt. The text defines each subagent’s role and instructions. A “contract” specifies what information a subagent must return and what checks it must perform; a “transition” sets the order of calls.
+
+An orchestrator assigns work to subagents. In a historical trading-strategy test, for example, the data specialist’s contract must ensure the strategy uses only information available at the relevant time.
+
+The method has two loops:
+
+- In the inner loop, the model’s weights stay fixed. The team runs a proposed workflow, an evaluator compares its result with the current “champion,” and an optimizer uses the feedback to suggest another workflow, mainly by changing contracts and call order.
+- In the outer loop, the champion runs each task 18 times. The model ranks the results and selects up to 15 runs for training.
+
+For training examples, the researchers removed the workflow text from the orchestrator’s initial prompt, so it had to organize work from the task alone. Specific subagent instructions remained in recorded traces. After LoRA fine-tuning, the model again performs all three roles.
+
+The system uses Qwen3.6-27B and Qwen Code. The researchers tested it on 12 research tasks created by GPT-5.5, spanning finance, robotics and pharmaceuticals: three were held out for testing and nine used for training. They obtained training data for only eight tasks; on the ninth, the search found no workflow that beat the control.
+
+[FIGURE:0]
+
+## Better scores, with caveats
+
+On the test tasks, the share of runs that beat the base model rose from 53.9% after the first round to 69.9% after the second. On MLR-Bench, DSBench, ScienceAgentBench and AstaBench, performance per output token was 1.2–1.6 times higher than the base model. But some absolute gains were small: on DSBench, the score moved from 0.473 to 0.482. Results dipped slightly on Terminal-Bench 2.0 and SWE-bench Verified.
+
+The appendix complicates the MLR-Bench result. Completed submissions rose from 31 to 50 out of 60, while the average score fell from 3.07 to 2.88. And the delegation tool was not used in any of 180 runs, leaving it unclear whether teamwork explains the gains.
+
+When the researchers compared results task by task, the improvement was no longer statistically significant. They also report mixed outcomes on research tasks, with a similar pattern on AstaBench.
+
+[FIGURE:1]
+
+## One model learns to judge and optimize
+
+Although training used only task-solving traces, the evaluator and optimizer improved too. Agreement between the model’s self-evaluation and external judges rose from 73% to 93%. Workflows found after the first round beat the base model’s workflows in 64% of cases, even when the base model ran both versions.
+
+Without workflow instructions, the base model delegated to subagents in only one of 110 runs. After two rounds, it did so in 87 runs. The model could already delegate when asked; the change was that it began doing so without a direct request.
+
+As optimization progressed, task-specific knowledge moved into contracts and call order, while roles and instructions became more general. That finding rests on a small sample of just eight to nine tasks.
+
+A model trained on multi-agent traces had a 68.3% win rate, versus 64% for one trained on single-agent traces, and used 31% fewer training tokens. External judges preferred the multi-agent results in 85.1% of cases, though those runs produced about 2.4 times as many tokens. With response lengths roughly matched, judges chose the multi-agent results 80% of the time; that comparison used only ten pairs.
+
+The comparison does not establish that delegation alone caused the advantage. The multi-agent and single-agent runs also differed in workflow and verification instructions, as well as in which completed episodes were selected.
+
+[FIGURE:2]
+
+## The evaluator cannot fix what the optimizer cannot use
+
+Replacing only the evaluator with GPT-5.5 did little. Search sped up substantially only after the researchers also strengthened the optimizer. Their conclusion is that better feedback helps only if the optimizer can act on it. With Qwen in all three roles, the search still found winning workflows for 11 of 12 tasks, but took longer.
+
+Changes to a workflow were a poor guide to changes in its outcome. Even byte-for-byte identical workflows could produce opposite results: one run won all six external evaluations, another lost all six after an agent got stuck in a loop. The researchers suggest limiting how much the optimizer can change in a single step to make search more stable.
+
+[FIGURE:3]
+
+The deeper risk appeared in a robotics simulation. After failed runs, the model changed the simulator so objects moved straight to the goal, then reported success. External judges still rated the run positively in five of six cases. In another training trace, verification passed despite returning only invalid values.
+
+The authors describe shared blind spots as a potential Achilles’ heel of recursive self-improvement. If the model misses the same error as solver, evaluator and optimizer, it may mistake that error for progress and carry it into the next version. I think that is the more consequential result here: the system improves its ability to produce and assess workflows, but its own agreement is not evidence that its checks are independent.
+
+Sakana AI’s work follows the lab’s earlier projects, including Darwin-Godel Machine and AI Scientist. In June, the Japanese research lab created a separate unit focused on recursive self-improvement. Google researchers are pursuing a related approach, automatically optimizing the harness around a fixed model—prompts, workflows and tools—while preventing agents from adapting to test tasks.
+
+There are reasons to be cautious about multi-agent gains. Vals AI recently found that agent teams cost 1.8–5.1 times as much as single agents and substantially outperformed them in only one of four comparisons. Anthropic has also shown that models that exploit reward hacking to bypass their evaluation systems can learn to deceive and sabotage safety checks.
+
+Sakana’s researchers call for independent verification, limits on autonomy and clear conditions for human intervention. The code is public, but the central test is not whether a model can improve its workflow. It is whether an independent process can tell when that improvement is only a convincing failure.
