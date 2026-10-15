@@ -1,0 +1,33 @@
+## Why general-purpose proofs have been hard
+
+A program can return a result alongside a short cryptographic proof that the computation produced it. A recipient can check the proof in milliseconds without rerunning the program. Zero-knowledge proofs can also keep private inputs hidden.
+
+The catch has been making proof generation practical for ordinary software. Historically, producing a proof could require millions of times more computation than running the program itself. Faster systems often relied on constraints elsewhere: specialized circuits that developers had to write by hand, cryptographic assumptions with less scrutiny, or setup procedures that introduced trust.
+
+Magnetar’s design draws on more than a decade of Microsoft Research work. Earlier systems tackled pieces of the problem: Spartan enabled universal programs without trusted setup, while later research improved repeated computation, memory operations and hash-based commitments. Magnetar combines these lines of work in a virtual machine for programs compiled to RISC-V.
+
+## What the benchmarks show
+
+Developers can write in Rust, Go or C and compile as usual. Magnetar proves the program’s execution without requiring engineers to recast it as a cryptographic circuit. The system is intended for ordinary software, from business rules and data pipelines to an Ethereum Virtual Machine interpreter.
+
+On a laptop, Magnetar proves 7.2 million to 8.7 million processor instructions per second. Across 15 benchmarks, it was 10 to 39 times faster on average than the fastest existing zkVMs on the same device. In a token-transfer benchmark, it was more than 300 times faster than two other systems.
+
+An optimized version reaches 9.5 million to 12.8 million cycles per second, with the reported speedups roughly 1.3 times higher. Proofs take about 12 milliseconds to verify.
+
+[INFO:facts] 7.2–8.7 million :: instructions per second | 10–39 times :: average speedup | 12 milliseconds :: verification
+
+The security design is deliberately conservative. Magnetar relies on standard hash functions such as SHA-256 and SHA-3, rather than elliptic curves, lattices, custom hash functions, trusted setup or unproven assumptions about error-correcting codes. That matters for systems meant to remain secure over many years, though the benchmarks alone do not establish how the design performs in every real deployment.
+
+Magnetar also proves computations in parts and combines the results, making it possible to handle computations of any size. The same approach could apply to long-running systems such as ledgers and blockchains.
+
+[FIGURE:0]
+
+The technical paper describes Magnetar’s architecture, security analysis and benchmark results.
+
+## The question behind the speed
+
+The headline numbers are striking, but the more consequential claim is that proof generation can become part of ordinary software execution: developers keep familiar languages and toolchains, while the proof provides a way to check results independently of who produced them.
+
+I think the open question is less whether Magnetar can prove benchmark programs than which real computations organizations will choose to make verifiable. The announcement describes potential uses such as proving that an AI agent followed rules or that financial transactions were processed correctly without revealing them. It does not establish adoption in either setting. Until those workloads are shown in practice, “general-purpose” is a meaningful engineering step, not proof that verification will become routine.
+
+Microsoft Research’s stated ambition is to make a cryptographic proof a regular output of computation. If that happens, the debate could shift from whether program execution can be proved efficiently to which results should no longer be accepted on trust alone.
