@@ -1,0 +1,50 @@
+## The coordination problem
+
+AI agents can have complementary strengths even when each one makes mistakes alone. In an example from the February 2026 Harvard-MIT Mathematics Tournament, o3-mini, DeepSeek-V3 and Claude Sonnet 4 all initially answered incorrectly. Together, they assembled a correct solution: o3-mini found the right invariant and factoring method but miscounted primes; DeepSeek-V3 corrected the count from five to six; Claude Sonnet 4 checked the revised calculation and gave the right answer.
+
+Most existing ways to coordinate agents impose a structure before the work begins. Debate systems treat each agent’s complete answer as the unit of work, then use revisions or majority voting to choose among answers. That can discard a correct minority answer in favor of a mistaken consensus. Mixture of Agents passes independent answers through a one-way pipeline, leaving models unable to discuss and repair specific errors in one another’s reasoning.
+
+Other systems divide a task into subproblems in advance and assign them through routing or graph optimization. That works when the task’s structure is predictable. It is less useful when the problem is too difficult for any one agent to know how to divide it.
+
+SAT takes a different approach: the team learns a format for working together, while the division of labor emerges during the conversation.
+
+## Learning a reusable playbook
+
+SAT keeps the team fixed rather than creating new agents or choosing models from a changing pool. It represents each collaboration strategy as a structured conversation plan: shared rules, persistent roles, discussion stages, and instructions for who participates and how information moves between stages.
+
+The system develops and uses its strategies in three stages:
+
+- **Analyze teamwork:** A team starts with a default process in which agents solve independently, debate for two rounds, then vote. An optimizer model reviews transcripts over six cycles per task, identifies why the team failed, and revises roles, discussion stages and answer-combination rules. The initial training set can be as small as 15 math problems or 25 graduate-level science questions.
+- **Build a strategy bank:** A separate analyst model rejects strategies that encode a task’s specific answers, facts or solution methods. A strategy that solves a training task must also pass five additional training examples. The system scores strategies that transfer and freezes a final bank of up to 10 complementary approaches.
+- **Apply the bank:** On a new task, the team runs all 10 strategies unchanged. Each produces a short, self-contained reasoning chain, and a judge model selects the final answer.
+
+In a GPQA science experiment, Gemini-2.5-Flash noticed that the team often lost correct individual answers by rushing toward agreement. It developed strategies that made agents revisit missed arguments and check one another’s specific reasoning steps. Those strategies passed the leakage checks and solved all five validation tasks.
+
+On a new organic chemistry problem, all three models initially failed on their own. Using the learned cross-checking strategy, Gemini challenged an argument from Llama, caught its own mistake and prompted Llama to revisit its reasoning. The team reached an answer none of the models had found independently.
+
+## The gains depend on the task
+
+The researchers trained two separate three-model teams and tested them on benchmarks that were not part of training. The math and physics team—o3-mini, Claude Sonnet 4 and DeepSeek-V3—learned from 15 AIME 2024 problems. The knowledge and logic team—Gemini-2.5-Flash, Llama-4-Maverick and GPT-4.1—learned from 25 GPQA Diamond problems, then transferred its strategies to 100 new questions from GPQA, MMLU-Pro and BIG-Bench Extra Hard.
+
+The comparisons included single-agent methods, such as independent attempts and repeated self-checking, as well as multi-agent methods including majority voting, debate and Mixture of Agents. They also included a single strong model performing the SAT roles in sequence at a similar token budget, and an “ideal router” that always picks the right answer if any agent solves a problem alone.
+
+That comparison matters in light of the “swarm tax”: communication between agents consumes tokens and can degrade their context, so a multi-agent system may not beat a single model at equal compute. SAT’s results show both sides of that trade-off. Three identical copies of o3-mini using SAT strategies reached 56.0% average accuracy on math and physics, below the 58.7% score of one o3-mini performing the roles sequentially.
+
+A diverse team did better. SAT reached 66.7% on math and physics, ahead of sequential execution at 58.7%, Mixture of Agents at 57.3%, independent-answer consensus at 55.4% and debate at 52.7%. On AIME 2026, SAT scored 71.2%—29 percentage points above the strongest individual team member and 13.4 points above the ideal router.
+
+One learned strategy, `divergence_reconciliation`, assigned DeepSeek-V3 to find unusual approaches and edge cases, while o3-mini and Claude Sonnet 4 independently checked its disputed steps. The arrangement reflected a pattern the researchers had observed during training: DeepSeek-V3 often found alternatives others missed, but made calculation errors.
+
+The knowledge-and-logic results were less decisive. SAT had the best average accuracy across GPQA, MMLU-Pro and BBEH at 72.8%, but only narrowly beat sequential execution at 72.1% and fell short of the ideal router at 79.6%. The team produced at least one correct reasoning path for 87.9% of these tasks, exceeding the ideal router on each benchmark. Its weaker point was choosing the right path: plausible but incorrect explanations were difficult for the judge to distinguish from sound ones.
+
+<strong>I think that gap is the more important result for teams considering deployment.</strong> SAT appears most useful when reasoning can be checked step by step, as in math, physics or programming. In open-ended knowledge tasks, generating a good answer is not enough if the final judge cannot reliably separate it from a confident error.
+
+## What teams can use now
+
+The researchers have not released an official code repository. The paper’s appendices do include prompts, role definitions and stage instructions for all 20 learned strategies, along with two system prompts for the judge model.
+
+For teams building their own multi-agent systems, the researchers offer two practical guidelines:
+
+- Mask model names during analysis so roles are assigned based on observed strengths, not assumptions about model brands.
+- Match inference cost to how verifiable the task is. Running all 10 strategies with multiple rounds is expensive; reserve the full ensemble for high-stakes tasks with checkable outcomes, such as automated vulnerability analysis or formal systems design. For routine work, adapt one or two targeted checks.
+
+<strong>What I’d want to know next is whether the judge can be made reliable enough to preserve SAT’s gains outside tasks with crisp right answers.</strong> The framework shows that coordination itself can be learned. But as long as a team can find the right reasoning more often than it can recognize it, the judge—not the agents’ collaboration—sets the ceiling.
