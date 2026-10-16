@@ -1,0 +1,36 @@
+## The bottleneck is not one thing
+
+Most of the work targets BPE, used by eight of the ten model families measured. BPE repeatedly merges the highest-ranked adjacent pair within each pre-token. In v1, several changes reduce the cost of that process:
+
+- For supported patterns, bitcannon replaces general-purpose regular-expression processing with a hand-written splitter that can use SIMD operations. Other patterns still use regular expressions.
+- A streaming word cache reuses token IDs for pre-tokens it has already seen.
+- The merge loop reuses temporary memory, stores symbols in a flat array and handles a batch of pre-tokens in one model call.
+- Each candidate pair is packed into a 64-bit value, making priorities cheaper to compare.
+
+The approach does not specialize the library to BPE. v1 keeps the same API, vocabulary, merge ranks and outputs as v0.23, while continuing to support the model families the older version could load, including WordPiece and Unigram.
+
+[INFO:facts] 3–30 :: single-thread speedup | 76% :: eight-thread scaling
+
+## Read the benchmark carefully
+
+The 3–30x result is measured on an Apple M4 Max. The lower end is t5-base; the upper end is gpt2. With eight worker threads, v1 reaches 76% of linear scaling.
+
+The benchmark uses different documents, with a corpus too large to fit in the cache. That is not the same workload as repeatedly encoding one document that is already cached. Both can be described as “warm” runs, but they measure different things: one tests new inputs while reusing previously seen pre-tokens; the other can benefit from having the entire document in cache.
+
+The authors provide tokbench results and a command to reproduce measurements on your own hardware. That matters here: cache hit rates and supported pre-tokenization patterns can change how much of the reported gain a workload sees.
+
+## What the numbers leave open
+
+I think the most useful claim is not the 30x peak but the preserved output: v1 accelerates the path without changing token IDs. That makes the speedup easier to evaluate as an engineering improvement rather than a trade-off against different tokenization.
+
+The more important caveat is how uneven the gains are. A model whose pattern bitcannon recognizes can benefit from the hand-written splitter; one outside the supported set continues through regular expressions. Repeated pre-tokens also help the cache, while low repetition can make cache lookups less worthwhile. The headline range therefore describes a set of models and workloads, not a single expected improvement for every application.
+
+What I’d want to know next is how those gains hold across real production traffic, especially where inputs are diverse and cache reuse is limited. The article reports decoding benchmarks too, but the headline speedup is about encoding; the next major work is broader model support and, later, exploration of GPU encoding and batch decoding.
+
+## A release candidate, not the end state
+
+The Rust release candidate is available on crates.io, and the API remains unchanged. Before 1.0.0, the team plans to move additional models to the new merge loop, unify encoding used during training and inference, make offsets and masks optional, and simplify the Python bindings. C and C++ inference bindings for ExecuTorch and llama.cpp are also planned.
+
+After 1.0.0, the team intends to investigate optional GPU support for large batches. That work depends on further prototyping and measurement.
+
+The current result is a faster encoder with identical token IDs, but its benefit depends on the model pattern and the shape of the input. The next test is whether broader support can make the improvement less workload-dependent.
