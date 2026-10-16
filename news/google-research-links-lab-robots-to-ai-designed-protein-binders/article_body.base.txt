@@ -1,0 +1,45 @@
+## A lab robot needs more than a valid command
+
+VERID, short for VERified Infrastructure for Discovery Laboratories, models a lab workspace in 3D and tracks its changing state: equipment geometry, liquid volumes, reagents and pipette tips. An agent can plan a protocol, test it in simulation and check it against that model before sending instructions to a robot.
+
+That matters because syntactically correct code can still describe a physical impossibility. An eight-channel pipette cannot fit into a narrow reservoir; a well may not contain enough reagent; and unmodelled liquid movement can distort a result. VERID is built on the open-source PyLabRobot framework and combines state tracking, simulated trial runs, equipment safety checks, and synchronized video and action logs.
+
+The system also helped diagnose failures rather than merely prevent them. Video and execution logs showed that a dispenser positioned too low distributed dye unevenly, prompting the agent to change its mixing strategy. When a plate reader failed, the saved digital-twin state let the experiment resume without repeating the dispensing step.
+
+In another test, the simulator rejected an eight-channel pipette that would not fit in a reservoir. The agent revised the plan and designed a targeted factorial experiment that exposed a subtle measurement bias caused by liquid transfer between the pipette tip and the reservoir wall. Simply repeating the experiment would not have revealed it.
+
+Across repeated robotic experiments to infer hidden dye mixtures from overhead images, the agent identified its own optical and fluid-dynamics errors and improved its accuracy by more than five times.
+
+[FIGURE:0]
+
+## Aptamers expose the cost of optimizing the wrong thing
+
+The team used DNA aptamers—molecules that bind proteins—to test a three-cycle loop of design, experiment and revision. Each cycle takes 7–10 days: the sequences can be chemically synthesized in pooled libraries, tested against target proteins on magnetic particles, and read out through sequencing.
+
+Across three rounds, the team tested designs against myoglobin and α-thrombin. AI-assisted rational design and de novo search raised the share of confirmed binders to 33.5% for myoglobin and 42.1% for α-thrombin. The routes to those results were not smooth.
+
+[FIGURE:1]
+
+For α-thrombin, the first round produced no binders. Fixed primer regions disrupted folding in 48% of the sequences. The agents added stabilizing stems at the ends of sequences in round two, then diversified them in round three. The success rate rose to 26.0% and then 42.1%, with 98.5% specificity.
+
+For myoglobin, the second-round designs favored high overall binding affinity and produced many G-quadruplex motifs, which made up 63% of variants. Overall binding rose, but experiments showed that most of those motifs also bound unintended proteins and the magnetic particles themselves. Target specificity fell from 75.0% to 19.1%, while the particle-adjusted share of binders dropped from 10.2% to 3.7%.
+
+After seeing those results, the agents changed their design rules: they restricted common nonspecific motifs, excluded sequences that bound particles, and shifted to other structural variants. In the third round, specificity recovered to 72.4%, and the share of target binders rose ninefold to 33.5%.
+
+## Protein design is a harder test
+
+A protein-binder loop adds expression, folding and selection to the workflow. It also searches a larger sequence space, creating bottlenecks in both computation and lab work.
+
+In a project targeting FAP, or fibroblast activation protein alpha, the team found binders with affinities in the single-digit nanomolar range after only a few experimental runs. FAP is a large, complex receptor that is overexpressed in solid tumors. The team’s computational workflow creates candidate scaffolds, selects sequences and repeatedly folds the resulting complexes to predict binding. That final step consumes most of the GPU resources, with cost scaling in proportion to the square of the target protein’s length.
+
+The team cut each cycle’s compute time by more than eight times by folding only the local binding pocket, without reducing structural accuracy. In a direct comparison using the same computational resources, scientist-and-agent collaboration nearly doubled the share of successful designs compared with a scientist working alone. The human set the broad strategy; the agent handled specific tasks. Together, they also found viable designs across a wider range of target sites.
+
+[FIGURE:2]
+
+The more revealing result, to me, is the myoglobin setback. The agent improved a broad binding metric while making the designs less specific to the intended target. That is not just a design problem; it is a reminder that a closed loop learns from the measurements it is given, and those measurements may reward the wrong behavior.
+
+[FIGURE:3]
+
+The announcement is quieter about how reliably these systems will hold up across more complex protocols and less forgiving experiments. Google says people still approve and review designed sequences, check protocols and oversee robot runs. The team also screens sequences for biological safety, uses controlled non-infectious test systems, and simulates protocols before they reach lab equipment.
+
+The next step is to combine VERID’s tracked automation with learning from closed-loop protein-design experiments. That could let agents take on more of the search, but the work’s own examples point to the constraint: autonomy depends not only on whether an agent can run an experiment, but whether people can tell when it has learned to chase the wrong signal.
