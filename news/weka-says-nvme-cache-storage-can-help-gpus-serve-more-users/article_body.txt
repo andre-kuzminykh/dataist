@@ -1,0 +1,29 @@
+## The cost of losing context
+
+GPUs keep processed conversation history in a KV cache so they can continue a session without recalculating it after every exchange. But GPU memory is limited. When older context is evicted, the model may have to process the same history again when the session resumes.
+
+McSeveney said GPU utilization on new tasks can fall to 30% without a cache strategy. With a well-managed cache, it can exceed 90% and reach 95% in the best case. He also said GPUs account for more than 80% of the budget when companies build their own infrastructure for AI workloads, making repeated computation an expensive form of lost capacity.
+
+The industry is exploring ways to reuse KV caches and move them out of GPU memory. McSeveney cited Mooncake, recent DeepSeek methods and Nvidia’s CMX context-memory platform, part of the Vera Rubin system. His argument for NVMe flash is economic: it costs less than expanding server DRAM, scales better and, he said, is no worse for storing KV cache.
+
+The operating principle is to move data off the GPU quickly, free the processor for another task, and restore the cache when needed. If that transfer is fast enough, one GPU could support four to five times more users. Companies short on capacity could use existing servers for more users or AI agents before ordering another GPU.
+
+## What WEKA says it measured
+
+WEKA’s Augmented Memory Grid runs on its NeuralMesh data-storage software. It collects KV caches from GPU servers, stores them centrally and can load them onto any node in a data center. A session can therefore stop on one server and continue on another without making the second GPU recalculate its history.
+
+McSeveney said centralized KV-cache loading let the same GPUs serve seven times more users. Over the same period, generation rose from 200,000 to 2 million tokens, compared with offloading the cache to DRAM.
+
+[INFO:compare] 200,000 :: tokens generated | 2 million :: tokens generated
+
+Those figures are the sharpest part of the pitch, but they do not settle how much capacity a typical customer can recover. McSeveney said companies still need to optimize their applications, workflows and pipelines. Which work comes first—quantizing or fine-tuning model weights, or optimizing the software around the model—depends on the customer. He said many teams with substantial LLM experience already know how to reduce hallucinations and unnecessary computation and verify results; infrastructure capacity is where he sees a bigger knowledge gap.
+
+I think that distinction matters: cache storage can reduce repeated work, but it does not by itself show how much extra useful demand a system can handle. What I’d want to know is how the reported gains hold up across different workloads and transfer speeds. The announcement gives headline capacity figures, but not those details.
+
+## Who captures the savings
+
+The economics depend on who controls the GPU, McSeveney said. That can be a company running its own hardware or one renting dedicated GPUs and running its own software. When a company pays a base-model provider per token, McSeveney said, the provider—not the customer—gets most of the benefit from caching on the provider’s side.
+
+That question of control becomes more pressing as GPU supply tightens. McSeveney cited a message from Google to customers: every GPU ordered for Google Cloud but not yet installed already had a buyer for its entire service life. Customers without reservations should not expect on-demand compute availability by December. Providers buying from the same constrained supply face the same shortage.
+
+Owning infrastructure may not be a company’s first choice, McSeveney said, but it could become necessary. If cache reuse makes existing GPUs serve more users, it can postpone that decision; it cannot remove the underlying contest over who controls scarce compute.
