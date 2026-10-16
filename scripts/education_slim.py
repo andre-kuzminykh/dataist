@@ -37,8 +37,10 @@ TW_LINK = '<link rel="stylesheet" href="/static/css/tailwind.css">'
 LUCIDE_TAG = '<script src="https://unpkg.com/lucide@latest"></script>'
 TG_TAG = '<script src="https://telegram.org/js/telegram-web-app.js"></script>'
 
-TW_RE = re.compile(r'(<!-- Tailwind CSS -->\n[ \t]*)<style>(.*?)</style>', re.S)
-LUCIDE_RE = re.compile(r'<script>/\*\*\n \* @license lucide v[\d.]+ - ISC\n.*?</script>', re.S)
+# С 3.6 генератор помечает вшитое: <style data-embedded="tailwind">,
+# <script data-embedded="lucide">.
+TW_RE = re.compile(r'(<!-- Tailwind CSS -->\n[ \t]*)<style(?: data-embedded="tailwind")?>(.*?)</style>', re.S)
+LUCIDE_RE = re.compile(r'<script(?: data-embedded="lucide")?>/\*\*\n \* @license lucide v[\d.]+ - ISC\n.*?</script>', re.S)
 TG_RE = re.compile(r'(<!-- Telegram Web App Script -->\n([ \t]*))\n')
 ICON_RE = re.compile(r'data-lucide="([a-z0-9-]+)"')
 KEEP_RE = re.compile(r'<meta\b[^>]*>|<link\s+rel="(?:canonical|alternate)"[^>]*>')
@@ -65,6 +67,12 @@ def main() -> int:
     heavy = {s: src for s, src in pages.items()
              if TW_RE.search(src.split("</head>", 1)[0]) or LUCIDE_RE.search(src.split("</head>", 1)[0])
              or TG_RE.search(src.split("</head>", 1)[0])}
+    # Тяжёлый урок, который скрипт не узнал (генератор снова поменял
+    # разметку), — предупреждение в журнале запуска, а не тишина.
+    for s, src in pages.items():
+        if s not in heavy and len(src.encode()) > 400_000:
+            print(f"::warning::урок {s} весит {len(src.encode()) // 1024} КБ, а вшитых библиотек "
+                  f"в известном виде в нём нет — посмотрите разметку")
     if not heavy:
         print("уроков с вшитыми библиотеками нет")
         return 0
