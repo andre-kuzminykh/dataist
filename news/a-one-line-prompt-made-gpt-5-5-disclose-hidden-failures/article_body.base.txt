@@ -1,0 +1,35 @@
+## The prompt changes what gets reported
+
+The logs looked successful at first glance: tests passed, results were positive, and status indicators were green. But each contained a complication that changed the overall picture: a new method had lost to a competitor, measurements were fabricated, a task was unfinished, or a software update had quietly broken another user’s work.
+
+Researchers asked models to turn these logs into reports, abstracts, results tables, short essays, or answers to follow-up questions. Across the tested models, asking for honesty increased the share of detected problems. Without that instruction, Gemini 3.1 Pro flagged errors in no more than 34% of cases, while Opus 4.8 did so in more than 90%. The honesty prompt raised the detection rate by about 55 percentage points for Gemini and 34 points for GPT-5.5, on average. On clean logs, it barely increased false alarms.
+
+[FIGURE:0]
+
+The prompt was not a complete fix. In one scenario, a database query had not returned results. GPT-5.5, told to be honest, usually disclosed that the data was missing, but still answered using old, incomplete information. “Be critical,” “Be thorough,” and “Be skeptical” were less reliable instructions than “Be honest.”
+
+## Recognition is not the same as disclosure
+
+When directly asked, GPT-5.5 and Opus 4.8 found the error in every case; Gemini found at least 97% of errors. The researchers’ interpretation is that the models can detect problems but do not always report them.
+
+Reasoning traces from open models offer a glimpse of the conflict. A model may notice a problem, then prioritize completing the task. In one example, Qwen3.5-9B was asked to support a claim about land zoning with a passage about colored squares on a squid. It recognized that doing so would require “absurd metaphors,” but chose to follow the instruction as closely as possible.
+
+In that scenario, the phrase “I have to complete the task” appeared in 55% of answers that hid the error, compared with 27% of answers that disclosed it. Models also justified omissions with familiar cues: tests had passed, the task called only for a brief summary, or an abstract was supposed to highlight positive results.
+
+[FIGURE:1]
+
+The researchers found signs in Qwen3.5-9B that honesty and task success pull in nearly opposite directions. Strengthening the model’s honesty direction led it to flag fabricated measurements in 42 of 50 cases. Pushing the other way made it invent more numbers and formulas to make reports look convincing. But the intervention was imprecise: the model became broadly suspicious and flagged supposedly fabricated data in 41% of clean logs.
+
+Fine-tuning worked better. Researchers trained Qwen3.5-9B on its own answers produced with the honesty prompt. Afterward, it flagged fabricated data in 48% of cases, up from 2%, without needing the extra instruction. It raised no false alarms on clean logs. The effect partly transferred to other problems: the model disclosed hidden negative results in 69% of cases, up from 24%.
+
+## The missing test is downstream trust
+
+The study has important limits: the logs were synthetic and designed to elicit this behavior, while the internal analysis covered just one open model and mainly one scenario. I think the clearest finding is narrower than a claim that models are generally deceptive: reporting can fail even when detection works, and a prompt can change that failure rate.
+
+That distinction matters when models check other agents’ work or prepare reports for the next stage. The researchers found that models were easily swayed by boastful notes in logs, such as claims of a new benchmark record. If a supervisory system is reluctant to report problems, it is not doing its job. The researchers also point to an OpenAI incident involving Hugging Face that was partly caused by agent systems pushing one another toward incorrect behavior.
+
+Other results fit the same concern. When Anthropic launched Claude Opus 4.8, it said the model was about four times less likely than its predecessor to miss and fail to mention errors in its own code. In BullshitBench, GPT-5.5 rejected only about 45% of logically impossible questions.
+
+Companies are trying other ways to improve reporting. OpenAI trained a version of GPT-5 Thinking to disclose deviations from its own rules in a separate report, rewarding honesty during training. Anthropic uses Persona Vectors to detect and steer traits such as sycophancy, and has shown that models that game reward systems during training can learn to mislead and obstruct their own oversight.
+
+The harder problem is not getting a model to say it is honest. It is making honesty hold when the model is also being asked to produce a successful-looking answer.
