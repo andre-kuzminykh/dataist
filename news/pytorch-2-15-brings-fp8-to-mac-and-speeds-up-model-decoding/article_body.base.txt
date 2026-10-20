@@ -1,0 +1,38 @@
+## The gains are concentrated in decoding
+
+The clearest performance story is token generation. During decoding, a model processes one row of input at a time, turning large matrix operations into matrix-vector work. PyTorch 2.15 adds specialized paths for both dense linear layers and mixture-of-experts layers.
+
+On an M3 Ultra with `torch.compile`, the release reports these decoding speeds:
+
+- Qwen3.6-35B-A3B: 9.4 to 61.3 tokens per second.
+- LFM2.5-8B-A1B: 23.6 to 123.6 tokens per second.
+
+For mixture-of-experts models overall, decoding is 5–6.5 times faster than in version 2.14. The new MPS grouped matrix multiplication handles groups of different sizes on the GPU, avoiding the earlier path of copying group offsets to the CPU and processing groups in a loop.
+
+Dense layers also benefit. Across 96 BF16 layer shapes from real models, the geometric mean speedup is 1.23 times. The biggest gains are in smaller projections; large layers that were already close to the memory-bandwidth limit change little. Softmax, used to turn model scores into token probabilities, is about eight times faster for a representative large vocabulary: a `[1, 128256]` FP32 row drops from 57 to 7 microseconds.
+
+[INFO:compare] Qwen3.6-35B-A3B :: 9.4 to 61.3 tok/s | Wan2.2 memory :: 270 to 8 GiB
+
+## Less memory, more GPU work
+
+The video result is a striking example of a broader change. Wan2.2’s VAE decoder performs 8,764 padding operations over a full pass through 28 blocks. Moving padding to Metal reduces peak driver memory from about 270 GiB to 8 GiB. That is a change in whether a workload fits comfortably, not just a benchmark improvement.
+
+PyTorch 2.15 also adds FP8 tensors to MPS. `torch.float8_e4m3fn` uses one byte per value, half the storage of FP16 or BF16, and `F.scaled_mm` can multiply FP8 tensors on the GPU with tensor-wise or row-wise scaling.
+
+The release expands GPU support for linear algebra and other operations, including complex LU decomposition and triangular solves, faster inversion of small matrices and QR decomposition. It also adds MPS stream controls in Python, and improves convolution, dropout, interpolation backward passes and reductions.
+
+There are practical fixes, too. An issue in version 2.14 caused the Qwen-Image-2.1 VAE encoder to distort images on MPS, affecting image editing. A change to tensor padding brings the encoded-and-decoded result closer to CPU output: PSNR rises from 10.06 dB to 29.95 dB.
+
+## What the announcement leaves open
+
+I think the headline numbers are compelling, but they do not yet tell us how representative the gains will be across the Mac workloads people actually run. The release gives results for particular models, shapes and hardware; it does not establish that every local model or video pipeline will see the same improvement. FP8 support is useful, but smaller weights alone do not show what users should expect for end-to-end quality or speed.
+
+The platform requirements also narrow the upgrade path: MPS now requires macOS 15 or newer, and PyTorch 2.15 requires Python 3.11 or newer. A preview build is available with:
+
+```Command
+uv pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/test/cpu
+```
+
+The next release points to where the work is heading. PyTorch 2.16 is expected to move scaled dot-product attention fully to Metal, continue replacing MPSGraph operations with Metal kernels, and further speed up language-model decoding. The announced attention figures are substantial: on an M5 Pro, one decoding case falls from 465 to 65 microseconds, while a 4K × 4K prefill case falls from 42 to 6 milliseconds.
+
+Those plans make the bigger question less about whether MPS can produce impressive individual wins and more about how much of the stack will run efficiently without falling back to MPSGraph or breaking compilation. PyTorch 2.15 makes the case for Mac inference with concrete results; the next step is making those results less dependent on the shape of the workload.
