@@ -1,0 +1,33 @@
+## Why simple defenses failed
+
+Distillation lets a company train a model to imitate a stronger one by collecting its responses at scale. Anthropic says the most useful material is Claude’s reasoning traces: the steps formed before a response. Its initial defense shortened those traces, but attackers moved from passively collecting ordinary answers to actively trying to make Claude reveal its full reasoning.
+
+One test shows why the distinction matters. A pretrained Claude model scored 80.4% on SWE-bench Verified after training on full Claude Opus 4.8 traces, compared with 71.8% after training on shortened traces.
+
+Attackers then tried to work around the restrictions with prompts designed to extract hidden reasoning. One lab tested 12,000 prompts, each intended to trick Claude in a different way. As defenses improved, distillation operators also used proxy networks with hundreds of thousands of fake accounts. Anthropic said one network operated more than 20,000 accounts at once.
+
+The activity went beyond model training. Anthropic says these networks also resold access to Claude in regions where it was unavailable and created accounts using false information and stolen payment details.
+
+## A layered defense
+
+Anthropic says its latest measures address three parts of the problem:
+
+- <strong>Restricting access to reasoning.</strong> Claude Fable 5.1 and Claude Opus 5.5 preserve reasoning context, preventing new API accounts created on or after August 31, 2026 from editing Claude’s previous context. Those models also do not pass their reasoning to older models with weaker protections. In Claude Sonnet 5.5, reasoning traces are available only to the organization whose request produced them.
+- <strong>Blocking extraction attempts.</strong> A two-stage classifier is designed to identify prompts that try to obtain hidden reasoning. Anthropic says it tested the system internally and externally, then fixed weaknesses it found. The company puts its false-positive rate below 0.1%.
+- <strong>Making repeated attempts harder.</strong> Accounts that repeatedly try to extract reasoning can face tighter limits or be blocked. Since September 24, Anthropic has also charged for requests blocked before Claude responds in areas where the false-positive rate is below 0.1%, including distillation.
+
+The classifier currently runs on Anthropic’s most capable publicly available models: Claude Sonnet 5.5, Claude Opus 5 and 5.5, and Claude Fable 5 and 5.1. The company plans to use it on future models that are similarly attractive for distillation. It says the system has already been updated to catch tactics such as asking Claude to translate earlier reasoning or reproduce it in tags alongside an answer.
+
+[INFO:compare] Full traces :: 80.4% | Shortened traces :: 71.8%
+
+## What the reduction does—and does not—show
+
+Anthropic measures the defenses by counting reasoning tokens extracted through its platform. After introducing the classifier, the number fell by 10–100 times compared with before, on top of the effect from preserving reasoning context. The company says it used the defenses to block tens of thousands of accounts linked to distillation, often within two hours of a campaign starting.
+
+[FIGURE:1]
+
+That is a meaningful operational result, but it is not the same as showing that distillation has been stopped. Anthropic says it does not know how long the reduction will last and has not yet faced a highly sophisticated, persistent attempt to bypass the measures. I think that caveat matters more than the impressive range: the reported metric tracks extraction on Anthropic’s platform, while the company also says attackers spread traffic across its API, cloud platforms and other inference providers.
+
+The defenses also impose costs on legitimate users. Some developers had to update integrations to accommodate preserved reasoning context; classifiers can occasionally flag a safe request; and blocked requests are now charged in some cases. Anthropic says those trade-offs are justified by the national-security risks of models built through unauthorized distillation, including capabilities that could be used in biology and cybersecurity.
+
+The burden, though, cannot sit with one model provider. Anthropic says the protections lose much of their value if attackers can obtain comparable capabilities from models with weaker defenses, such as GLM-5.3 from Zhipu. It is also asking platforms and inference providers to identify abuse and shut down fake accounts. The hard part is that those measures cost money, while distillation traffic can still generate revenue. Anthropic’s numbers make a case for stronger defenses; whether the rest of the supply chain will accept the same trade-off remains unresolved.
