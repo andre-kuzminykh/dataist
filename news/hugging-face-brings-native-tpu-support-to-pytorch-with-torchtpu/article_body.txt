@@ -1,0 +1,47 @@
+## The software gap
+
+Google has developed TPUs for about a decade and uses them to train and run models including Gemini. Available through Google Cloud, they range from single chips to pods with thousands. But the software ecosystem grew around TensorFlow and JAX, leaving PyTorch users with an extra layer to manage.
+
+That layer was PyTorch/XLA, or `torch_xla`. It worked, but lazy tensor execution could make it hard to tell when code would run; small changes could trigger graph recompilation, and debugging was difficult. Hugging Face built Optimum TPU to run and train its models on TPU. With TorchTPU, Optimum TPU is no longer needed for Hugging Face models in Transformers and Diffusers.
+
+TorchTPU adds TPU as a PyTorch backend. Developers can keep writing ordinary PyTorch while using TPU-optimized Pallas kernels, distributed training and integration with `torch.compile`.
+
+```Install command
+pip install torch-tpu --extra-index-url https://download.pytorch.org/whl/cpu
+```
+
+The extra package index installs the CPU version of `torch`. Without it, pip downloads the much larger CUDA build, which is not needed for TPU.
+
+## Existing model code, new device
+
+Transformers v5 was designed to make the library a central source of model definitions that can run across hardware. TPU now joins that list: models can be loaded with `device_map="tpu"`.
+
+Diffusers treats TPU as a full device, too. For prototyping and debugging, a pipeline can be moved with `pipe.to("tpu")`; compiled execution adds a call to `torch.compile`. The pipeline and model code stay the same, so there is no separate TPU version of Diffusers to maintain. The first call compiles the graph; later calls reuse it for the same image size.
+
+Models that do not fit on one chip can be split across several using `TensorParallelConfig` at load time. Many popular pipelines support this directly; others need a tensor-parallel plan.
+
+The reported examples were run on Cloud TPU v6e-4 with TP=4, meaning each model was distributed across four chips, in bf16 with a batch size of 1.
+
+Kernels Hub also offers ready-made TPU kernels through the Kernels library. TPU kernels can be written in Pallas, which provides low-level access to hardware, or drawn from Tokamax. For example, a Tokamax ragged-dot kernel can be registered for a mixture-of-experts model.
+
+At batch size 64, decoding on Qwen3-30B-A3B was 21.5 times faster, while Gemma 4 26B-A4B was 12.8 times faster.
+
+[FIGURE:0]
+
+The charts compare decoding throughput on TPU v6e-8 using a Hub kernel against the default implementation.
+
+## The support is still being tested
+
+Hugging Face is running daily TPU checks for Transformers and plans to publish the results on a dashboard.
+
+[FIGURE:1]
+
+The Transformers CI dashboard shows TPU results alongside those for other accelerators; work on it is ongoing.
+
+Currently, 96.5% of tests run on TPU pass. The team has reported 34 issues in TorchTPU, 19 of which have been fixed. TPU runs have also surfaced bugs in Transformers itself, including issues with StaticCache and tensor-parallel plans for Qwen3; those were fixed in the main project.
+
+I think the test results are as important as the convenience of `device_map="tpu"`. Native support makes TPU easier to try, but a 96.5% pass rate also means some failures remain. Hugging Face wants to find those before users do.
+
+What the announcement does not establish is how the reported speedups translate beyond the specific batch size, models and hardware used. The headline numbers are useful evidence that optimized kernels can matter, not a general performance promise.
+
+For PyTorch users, getting started is now straightforward: install TorchTPU, choose a model from the Hub and send it to `"tpu"`. The real test is whether the growing set of passing checks keeps the simpler interface from becoming a simpler way to encounter old edge cases.
