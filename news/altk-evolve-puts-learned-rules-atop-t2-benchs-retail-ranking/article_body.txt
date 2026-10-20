@@ -1,0 +1,57 @@
+## A memory made of rules
+
+ALTK-Evolve analyzes an agent’s attempts on training tasks and uses GPT-4.1 to turn successful and failed decisions into short behavioral rules. The rules cover actions such as verifying a customer’s identity, confirming a transaction and processing a refund. They are added to the prompt for later conversations. The same model extracts the rules and performs the tasks.
+
+The authors had previously tested the approach on coding agents. Customer support is a different test: an agent has to understand what a person wants, follow domain-specific policies and use the right tools.
+
+τ²-bench tests those abilities in retail and air-travel scenarios. A simulated customer has a goal; the agent has access to tools such as order lookup, refunds and flight changes. A task counts as successful only if the agent follows the written policy, takes the correct actions and leaves the database in the expected final state. Scoring is binary.
+
+For the main experiment, the authors used τ²-bench’s standard ReAct agent, with gpt-4.1 as the agent and gpt-5.5 as the customer simulator. Each task ran four times. The only change was a block of learned rules in the system prompt; the rules, tools and framework otherwise stayed the same. The authors extracted rules from training trajectories and applied them unchanged to a held-out test set.
+
+[FIGURE:1]
+
+They compared the base agent with two rule sets: sup3, which includes only rules supported by at least three distinct training tasks, and lossless, which keeps all rules remaining after consolidation, including those with support of one.
+
+With rules, gpt-4.1’s average accuracy rose from 78.1% to 82.5% in retail and from 57.5% to 65.0% in air travel. Pass⁴—the share of tasks solved in all four runs, and the measure used in the τ²-bench rankings—rose from 57.5% to 67.5% in retail and from 35.0% to 45.0% in air travel.
+
+The size of the rule set mattered differently by domain. In retail, the full lossless set improved every metric, while sup3 offered only a modest accuracy gain. In air travel, lossless reached higher accuracy than sup3, 65% versus 60%, but sup3’s 14 rules achieved a higher Pass⁴ score: 45% versus 40%. More rules helped in one setting; a smaller set proved more reliable in the other.
+
+## Better results, not longer conversations
+
+The rules add input tokens to the prompt, but the agent did not need more conversational turns. The authors compared runs where both the base agent and the rule-equipped version solved the same task, under identical scenarios and starting conditions.
+
+[FIGURE:2]
+
+On those matched runs, lossless shortened conversations by about 0.3–0.4 turns in both domains: from 10.59 to 10.16 in retail and from 9.15 to 8.82 in air travel. Fewer turns can reduce both cost and execution time, since each turn requires another sequential model request.
+
+The longer system prompt still has a cost. In retail, a prompt containing 292 rules raised the estimated cost per conversation from $0.084 to $0.139. The air-travel rule set was smaller and cheaper. Prompt caching could reduce some of the added expense because the rules block is the same on each call.
+
+I think this is the more useful result than the leaderboard position: the authors report a trade-off between a pricier input and better accuracy, reliability and task time, rather than presenting the memory as free. But the evidence here is specific to two τ²-bench domains; the announcement does not establish how the same approach behaves in other kinds of support work.
+
+## The leaderboard result—and its limits
+
+The ranking uses the full base dataset, combining training and test tasks, and reports Pass⁴. Those scores are therefore not directly comparable to the test-only figures above.
+
+On retail, the rule-equipped gpt-4.1 agent scored 67.5% Pass⁴, 6.1 percentage points ahead of RAFT-30B-A3B at 61.4%. RAFT-30B-A3B had been fine-tuned on synthetic τ²-bench retail data. The standard gpt-4.1 agent with prompt-level rules placed ahead of that system and all frontier models in the retail ranking.
+
+In air travel, the ranking entry using sup3 gave gpt-4.1 a Pass⁴ score of 44% and eighth place, ahead of non-reasoning GPT-5.2 and close to Claude Sonnet 4.5. With gpt-5.5, the approach ranked first at 82.0%, ahead of frontier entrants scoring 66–72%.
+
+[FIGURE:3]
+
+The authors also repeated the air-travel experiment using gpt-5.5 both to extract rules and to act as the agent. No rule had support of three or more, so the compact set was called sup2. On the same held-out tasks, adding rules raised accuracy from 72.5% to 82.5% and Pass⁴ from 55% to 70%. The reliability gain was 15 percentage points, compared with 10 points for gpt-4.1 on those tasks. The authors say the base gpt-5.5 score fluctuated across repeated runs, while lossless produced the same result each time.
+
+The distinction worth keeping in view is between a strong benchmark result and a general claim about agent memory. These results show that rules extracted from an agent’s own training attempts can improve performance across two model generations and two task domains, without changing model weights or using human-labeled data. They do not show how much of the gain survives outside this benchmark—or how often a growing rule set becomes a liability rather than useful memory.
+
+## The model stays the same
+
+Fine-tuning on a benchmark can be expensive and unstable, and does not guarantee that gains transfer to another domain. ALTK-Evolve offers a different route: automatically extract prompt-level rules from the agent’s own runs, then apply them without test-data leakage. In retail, that was enough to match or beat a fine-tuned system; in both domains, it improved the standard agent.
+
+The open question is whether this remains a practical advantage as tasks and policies change. A prompt can be edited more easily than model weights, but the retail result also came with 292 rules and a higher per-conversation input cost. The method’s promise depends not just on learning useful rules, but on keeping that memory worth carrying.
+
+### Links
+
+- Earlier publications: “Thinking about ACE? You can get by with fewer tokens”; “How much memory does your agent really need?”
+- ALTK-Evolve library: https://github.com/AgentToolkit/altk-evolve
+- τ²-bench: https://github.com/sierra-research/tau2-bench
+- Retail ranking submission: pull request No. 542 in τ²-bench
+- Air-travel ranking submission: pull request No. 551 in τ²-bench
