@@ -1,0 +1,42 @@
+## Why failure logs reach a limit
+
+Many agent optimizers learn from execution traces. Some, including WikiSkill from Google, SkillOpt from Microsoft, and Memento-Skills, improve a single component such as a skill library or memory store. Others, including Salesforce’s DarwinX, Xiaomi’s HarnessX, Self-Harness, and Stanford’s Meta-Harness, use a meta-agent to rewrite code or operating rules after examining failed runs.
+
+The researchers argue that trace-driven systems are limited by what their base model already knows. A failure may reveal that an agent cannot handle a particular problem, but not how to fix that weakness. In one example, repeated search and Python-tool errors prompted a system to add a checker for every action. It caught invalid calls, but became so cautious that it blocked valid API requests.
+
+There is a timing problem, too: an optimizer needs failures to accumulate before it can learn from them. In a live system, users may encounter a weakness before the agent has collected enough evidence to improve.
+
+## Turning papers into modules
+
+ScholarEvolve separates an agent’s harness into five modules: tool interfaces, context management, skills, memory, and workflows. It then searches for research relevant to weaknesses found in training tasks, implements candidate changes in one module at a time, and tests the resulting combinations.
+
+The process has four stages:
+
+1. An auditor identifies recurring capability gaps in failed tasks and searches arXiv for relevant papers and abstracts.
+2. TopicGPT groups papers by mechanism within each module, helping the system explore different engineering ideas rather than repeatedly finding similar work.
+3. A research agent reads each selected paper and available official code, then plans a change. A coding agent implements it in Python, while the other four modules stay unchanged. Automated checks test imports, interface contracts, and valid actions before full evaluation.
+4. ScholarEvolve evaluates individual updates, combines stronger modules through genetic crossover, and runs regression tests. A statistical check is required before a new combination replaces the current best.
+
+On Qwen3.5-27B in AppWorld, the researchers report three kinds of changes: an abstract syntax tree check for Python calls and an API-documentation macro based on ToolACE-R; a query-aware context budget that scores conversation history by relevance and recency; and typed pseudocode templates that reuse successful API sequences, drawing on Skill-as-Pseudocode.
+
+[INFO:chips] tool interfaces | context management | skills | memory | workflows
+
+## What the scores show
+
+ScholarEvolve improved both base models across all reported measures. In AppWorld, Qwen3.5-27B’s task goal completion (TGC) rose by 12.4 percentage points, and scenario goal completion (SGC) rose by 20.2 points. SGC requires an agent to complete three variants of the same scenario. In Telecom, GPT-5.4-mini improved from 72.7% to 81.9%.
+
+The results also suggest that a harness can change how much of a model’s capability shows up in practice:
+
+- In AppWorld Challenge, which tests Amazon and Gmail APIs absent from the optimizer’s training and validation sets, Qwen3.5-27B rose from 49.6% to 63.6%, 14 points above its original result and 9 points above Meta-Harness.
+- A standalone skill module scored 75.4%, while the Skill-as-Pseudocode module scored 73.7%. But when combined with improvements to the other modules, Skill-as-Pseudocode produced an 84.8% task completion rate, versus 80.7% for the other combination.
+- Among AppWorld Challenge runs with an intermediate Python execution error, the improved harness completed the task 59.9% of the time, compared with 44.9% for the original. The researchers’ point is that an error message can help an agent choose what to do next; simply avoiding errors is not the same as recovering from them.
+
+I think the module-combination result is the most useful finding for teams considering this approach. A component that looks weaker on its own can produce the stronger system once paired with other changes. That makes isolated module scores a poor guide to what should ship.
+
+## The missing security gate
+
+The paper’s automated checks cover whether code imports, fits the interfaces, creates artifacts, and produces valid actions. They do not describe checks for malicious dependencies, unsafe execution, or prompt-injection vulnerabilities in papers and third-party code. The authors point to a GitHub repository, but it was empty at publication; the paper’s appendices include code excerpts for five selected modules.
+
+My guess is that this is the harder engineering problem than finding promising papers. A team could direct the framework to a curated internal repository or put a security review gate between generated code and deployment. Either way, the reported results do not establish that ScholarEvolve can safely update a production agent without human review.
+
+The researchers ran three successive literature-based update rounds on AppWorld Normal without changing Qwen’s weights or the task data already collected. Performance improved after each round, but the experiments did not test continuous adaptation in production. The framework may help teams prepare for failures before users encounter them; whether that advantage survives a security review and real deployment remains unproven.
