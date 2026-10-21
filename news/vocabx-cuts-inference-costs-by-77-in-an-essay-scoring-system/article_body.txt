@@ -1,0 +1,35 @@
+## The cost of a general-purpose vocabulary
+
+The essay scorer handles Portuguese text and returns a fixed JSON format: a score and comment for each competency. Yet it kept Qwen3-4B’s original tokenizer, designed for many languages and kinds of text. Its vocabulary had 151,669 entries, including many that almost never appeared in this task.
+
+That mismatch created two costs. Repeated pieces of the output, including JSON structure and competency names, were split into more tokens than necessary. And at each generation step, the model calculated scores across the full vocabulary, including entries irrelevant to essay scoring.
+
+VocabX rebuilt the vocabulary while keeping the base model and training setup unchanged. In the current version of the work, the output layer shrank from about 152,000 rows to 65,000.
+
+The reason vocabulary size matters is that generating a token costs more than reading one. In the authors’ measurements, a generated token cost 7.4 times as much as an input token in this system. The ratio varies with hardware, batch size and context length, but generation is generally more expensive: decoding proceeds one token at a time and repeatedly reads model parameters from memory.
+
+The vocabulary adds to that burden. The model’s language head contains a row of parameters for every entry, and reads the entire matrix when generating each token. For a model the size of Qwen3-4B, that matrix accounts for almost 10% of the parameters. A smaller vocabulary can therefore reduce both unnecessary output tokens and the data moved during decoding.
+
+## Choosing tokens by cost
+
+Existing vocabulary adaptation methods tend to select tokens by frequency. VocabX instead estimates the time and money saved, giving more weight to tokens removed from model outputs than to tokens removed from inputs. In the essay scorer, that reflects the measured 7.4-to-1 cost difference.
+
+It also works at two levels: changing how domain-specific words are split, and combining repeated multiword fragments into single “macrotokens.” Those fragments can include whole lines or JSON structures, not just words. Five automated tools look for different patterns, from long words and phrases to sentences and punctuation-heavy structures. Across eight corpora, the tool targeting structures such as JSON contributed the most on average. On code alone, it produced a 17.5-percentage-point reduction.
+
+The method also estimates the value of candidates that do not appear in a sample of documents. In a contracts corpus, only 16.6% of candidates appeared in a 400-document sample. Treating the rest as worthless would exclude useful tokens, so VocabX estimates their likely savings from the candidates it can observe. With the same sample and vocabulary budget, that change raised the token reduction on contracts from 44.7% to 52.8%.
+
+## The measured result
+
+The authors trained seven versions of the essay-scoring system, varying only the tokenizer. Each processed the same 500 requests on an RTX 5090 test machine using vLLM; cost was calculated from measured runtime.
+
+- Average response length fell from 350 tokens to 101.
+- Measured inference cost fell by 77.0%.
+- The benchmark score rose from 0.703 to 0.810.
+
+The benchmark measures both scoring accuracy and detection of essays that are off-topic or violate rules. One design choice shows why simply compressing the output is not enough. An early version combined each score with surrounding JSON into one macrotoken. It was more compact, but the benchmark score fell to 0.689. Separating the score into its own token added two tokens to the answer, improved the score to 0.810 and cut cost by 77.0%, compared with 73.3% for the combined-token version.
+
+VocabX also outperformed the best of three comparison methods across 15 combinations of five domains and three model families: Qwen3, Llama-3.1 and Gemma-3. Its trimmed version had the lowest estimated inference cost in all 15. On contracts, it cut token count by 62.6% with a vocabulary of 113,426 entries; in-place BPE reached 61.8% with 207,803.
+
+I think the important result is not that one tokenizer produced a 77% saving in one application. It is that the best compression target may be the model’s decisions, not just its input length. The authors’ early version saved tokens but merged a score the model needed to choose with the surrounding format. The cheaper design was the one that preserved that choice.
+
+What I’d want to know next is how often this holds across deployed systems, where output formats and quality requirements differ. The reported comparisons cover several domains and model families, but the 77% cost reduction comes from one production system, and the work is still under review. Vocabulary design looks like a practical lever for smaller specialized models; the hard part is finding the savings that do not erase a decision the model must make.
