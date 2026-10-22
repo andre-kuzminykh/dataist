@@ -61,3 +61,4 @@
 | [55](https://dataist.ai/55) | 2026-10-22 | ssrf | [открыть](https://dataist.ai/research/ru/ssrf_ru/) | — |
 | [56](https://dataist.ai/56) | 2026-10-22 | ssrf2 | [открыть](https://dataist.ai/research/ru/ssrf2_ru/) | — |
 | [57](https://dataist.ai/57) | 2026-10-22 | SSTI-TEST-2 | [открыть](https://dataist.ai/research/ru/ssti-test-2_ru/) | — |
+| [58](https://dataist.ai/58) | 2026-10-22 | RQT | [открыть](https://dataist.ai/research/ru/rqt_ru/) | — |
