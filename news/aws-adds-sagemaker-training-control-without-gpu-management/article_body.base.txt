@@ -1,0 +1,53 @@
+## Control over the training loop
+
+SageMaker has supported fine-tuning for years. In September 2023, AWS described tuning Llama 2 through JumpStart, using either a visual interface or Python tools. Customers could also run their own training scripts in SageMaker Training Jobs, while choosing instance types and configuring the environment and distributed training themselves.
+
+AWS added serverless fine-tuning in December 2025. Teams chose supported models and training methods, while AWS selected the compute resources. The company says managed multi-step reinforcement learning was also available before this launch.
+
+Training Sessions combines serverless infrastructure with more direct control over the program. Through an API, developers can call separate operations to generate responses, calculate updates and apply them. Their code can change the order of operations, define custom training objectives and combine steps.
+
+That could suit an agent whose success depends on several actions. A support agent, for example, might search documentation, check an account and decide whether to pass a case to a human. Training could reward resolving the issue and penalize unauthorized actions.
+
+AWS names two approaches within the service: Low-Rank Adaptation (LoRA), which trains relatively small additions to a model, and full fine-tuning, which updates all its parameters. The published examples show LoRA, but AWS’s blog does not explain how both methods pair with each supported model.
+
+[INFO:steps] Generate responses | Score responses | Update model
+
+AWS uses Group Relative Policy Optimization (GRPO) to illustrate the loop: a model generates several responses to a prompt, the customer’s scoring function evaluates them, and the service uses the relative scores to guide an update. The process then repeats with the updated model.
+
+According to AWS’s example collection, the model stays in GPU memory between operations. Developers can pause the process, inspect results and change the procedure. Reinforcement-learning experiments can also generate responses without a separately deployed inference endpoint.
+
+The examples cover chat, math, coding and preference training. AWS also offers skills for AI agents to help coding assistants prepare, train, evaluate and deploy models. Supported tools include Kiro, Claude Code, Codex and GitHub Copilot.
+
+## Early examples, limited evidence
+
+AWS names ImagineSoftware and Karini AI as early users. ImagineSoftware used the service to train a model to sort denied medical insurance claims. Its senior vice president of data science, Rob Gontarek, said Training Sessions provides the basic operations the company needs to reach quality suitable for production.
+
+Karini AI fine-tuned gpt-oss-20b for an agent that performs a sequence of actions on an Amazon Neptune knowledge graph. CEO Nitin Wagh highlighted reduced setup work and the ability to resume training from a saved checkpoint. He wrote that developers gained flexibility while taking on less operational work.
+
+These examples make the intended use case concrete, but they do not establish business value. AWS’s announcement includes no customer comparisons for accuracy, total cost or deployment speed.
+
+I think that absence matters more than the early customer names. The service lowers the infrastructure burden of an experiment; it does not show that the experiment produces a better model or pays for itself.
+
+## Token billing is not a cost comparison
+
+AWS charges for model tokens processed rather than reserved GPU capacity. The Training Sessions meter pauses while a customer’s own code evaluates a batch of responses. That may help when evaluation takes a long time between model updates.
+
+But pausing the training meter does not make the rest of an application free. Teams still need to account for separately used compute, storage, evaluation services and production inference. AWS’s technical documentation splits charges across input processing, response generation and training, so a meaningful comparison would have to measure all three over multiple experiments.
+
+The launch announcement gives no dollar rates or typical total training cost. AWS points customers to SageMaker’s pricing page. Token-based billing, on its own, does not show that the service costs less than comparable work on dedicated infrastructure.
+
+AWS confirms support for four models: gpt-oss-20b, gemma-4-31B-it, Qwen3.6-27B and Qwen3.8-27B. VentureBeat found regions listed for the first three in AWS’s public-model table, but no availability location for Qwen3.8-27B.
+
+The examples collection lists Northern Virginia, Oregon and Mumbai as supported regions. Its table shows GPT-OSS-20B in all three, while Gemma-4-31B-it and Qwen-3.6-27B are listed in Oregon and Mumbai. AWS documentation gives a default adjustable quota of two concurrent fine-tuning sessions.
+
+Developers can use the SageMaker Python toolkit and examples in their own development environment, or work in SageMaker Studio. For the toolkit, AWS specifies Linux and macOS with Python versions 3.10 to 3.12.
+
+## A narrower claim than “managed training”
+
+AWS is entering an established market for services that separate algorithm development from GPU operations. Tinker, from Thinking Machines Lab, also lets users generate responses, update models and save progress; its published pricing separately counts input processing, response sampling and training.
+
+For customers already on AWS, the potential advantage is how training fits into their existing infrastructure and controls. AWS says sessions use customer-defined access roles and support customer-managed encryption keys and private-network configurations. Training data and saved model checkpoints remain in customers’ S3 storage in their chosen region. The company says it does not use customer data or tuned model weights to train another model.
+
+AWS also points to evaluation before deployment, and guardrails and CloudWatch monitoring after deployment. These are controls teams can use, not evidence that a tuned model automatically meets their accuracy or safety requirements. AWS says tuned models can run inference in SageMaker, while some models can be imported into Amazon Bedrock; the announcement does not establish that every supported model has the same deployment options.
+
+<strong>What I’d want to know is whether the added control changes outcomes enough to justify its cost.</strong> A useful pilot would compare a tuned model with the current system on task completion, error rates and total operating expense. Training Sessions makes that experiment easier to run. It leaves teams with the harder job: defining success, then showing the model has learned it.
