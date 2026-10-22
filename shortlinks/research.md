@@ -59,3 +59,4 @@
 | [53](https://dataist.ai/53) | 2026-10-20 | ИИ-агенту не нужны готовые ответы, чтобы становиться лучше | [открыть](https://dataist.ai/research/ru/ii-agentu-ne-nuzhny-gotovye-otvety-chtoby-stanovitsia-luchshe_ru/) | [open](https://dataist.ai/research/an-ai-agent-doesnt-need-ready-made-answers-to-get-better/) |
 | [54](https://dataist.ai/54) | 2026-10-21 | Как ИИ предсказывает мозговую активность | [открыть](https://dataist.ai/research/ru/kak-ii-predskazyvaet-mozgovuiu-aktivnost_ru/) | [open](https://dataist.ai/research/how-ai-predicts-brain-activity/) |
 | [55](https://dataist.ai/55) | 2026-10-22 | ssrf | [открыть](https://dataist.ai/research/ru/ssrf_ru/) | — |
+| [56](https://dataist.ai/56) | 2026-10-22 | ssrf2 | [открыть](https://dataist.ai/research/ru/ssrf2_ru/) | — |
