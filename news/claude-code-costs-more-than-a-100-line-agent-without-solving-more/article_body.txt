@@ -1,0 +1,39 @@
+## The benchmark problem
+
+Agent benchmarks often compare systems that pair a model with different software wrappers. That makes it hard to tell whether a score comes from the model or the wrapper around it. Some published comparisons report gaps of 23.8 points in task-completion scores and 27.4 percentage points in Pass@1 from changing the wrapper while keeping the model fixed. Zhipu AI says its ZCode wrapper beats Claude Code by 2.4 points on the same model.
+
+Those gaps may be real, but a single run cannot establish that. In one study cited by the researchers, ten identical runs on SWE-bench Verified varied by 2.2 to 6 percentage points. Comparisons can also use wrappers configured differently: one cited study got 19.1% with a minimal benchmark adapter and 73.4% with a full adapter, using the same model.
+
+The researchers found another problem in early runs with internet access. DeepSeek and Qwen agents retrieved a human-written solution to the task from GitHub in 312 of 439 attempts, or 71%. Those runs were excluded, and the final evaluation blocked network access.
+
+## What the wrappers changed
+
+The study compared Claude Code, OpenCode and mini-SWE-agent, an open-source wrapper written in about 100 lines of Python. It gives the model one bash command and does not compact the context. The researchers ran five models across the wrappers: two locally hosted open-weight models, Qwen3.6-35B-A3B and Qwen3.8-27B, and three API models, DeepSeek-V4-Flash, GLM-5.3-Flash and HY4-Preview. Claude Opus 5 in Claude Code served as a high-end reference.
+
+Agents worked in isolated containers on 492 offline SWE-bench Verified tasks. The set included 45 difficult tasks that take a human from one to more than four hours, plus 447 additional tasks. All five models were tested on the 45-task set; only the two Qwen models were tested on the larger set.
+
+On the 447-task set, Claude Code and mini-SWE-agent finished within two percentage points of each other. For both Qwen models, the results were statistically comparable within five points. On the 45 hardest tasks, changing the wrapper flipped success to failure, or vice versa, in 13% of attempts—about one in eight. Repeating a run with the same wrapper produced the same median rate of outcome changes.
+
+The clearest performance gap went against OpenCode: it fell behind by as much as nine percentage points on the larger set. For Qwen3.8-27B, about half that gap came from runs stopping at the 32,000-output-token limit, often before the model had written a code fix. Claude Code hit the same limit with that model but automatically asked it to continue.
+
+The study found little evidence that a model performs better simply because it is paired with its maker’s wrapper. DeepSeek’s own wrapper, running DeepSeek-V4-Flash, scored within the range of other wrappers, while costing more than the alternatives tested for that model.
+
+[INFO:compare] Wrapper complexity :: little accuracy gain | Inference cost :: up to 3x
+
+The cost gap was much larger than the accuracy gap. For the same model, tasks and pricing plan, inference costs varied by as much as threefold across wrappers. With GLM-5.3-Flash, Claude Code cost nearly twice as much as mini-SWE-agent and more than three times as much as OpenCode. OpenCode also stopped after fewer model calls, which lowered its bill. All three wrappers received roughly the same amount of text from tool calls.
+
+The difference was already present in the first API request. Claude Code sent 16,581 tokens of fixed context in system prompts and tool descriptions, compared with 7,025 for OpenCode and 829 for mini-SWE-agent. Agents resend conversation history at each step, so that initial overhead compounds as a run continues. The researchers also suggest Claude Code may increase request size by resending intermediate reasoning blocks.
+
+Between 96% and 99% of input tokens in these loops were in the provider’s prompt cache. Different cache prices changed the bill, but not the cost ranking among wrappers for a given model. The ranking could still change with the model: on DeepSeek-V4-Flash, mini-SWE-agent averaged 141 model calls per run, compared with 104 for Claude Code, and cost slightly more—about 15.2 cents versus 14.6 cents.
+
+## The cost is in the operating pattern
+
+A separate study, HarnessTax, by researchers from the University of California, Berkeley’s Sky Computing Lab and Arena, reached a similar conclusion. The Berkeley team tested seven models with Claude Code, OpenAI’s Codex CLI and Pi, an open-source wrapper with four basic tools. Across 30 tasks from each of two benchmarks, repeated three times, wrapper choice shifted success rates by only a few percentage points but could increase inference costs fivefold.
+
+For all seven models, Claude Code’s initial context was, on average, more than ten times larger than Pi’s, largely because of longer instructions and tool descriptions. The new study extends that comparison to Qwen models with 27 and 35 billion parameters, a larger task set and repeated-run variation. In the researchers’ tests, the weakest model was not the most sensitive to wrapper choice.
+
+I think the useful takeaway is not that every team should replace its agent with a tiny bash interface. It is that wrapper costs are easy to miss when teams judge tools by success rate alone. The study’s own recommendations are to measure the noise in repeated runs, trim fixed instructions and tool descriptions, and tune reasoning budgets for each model-wrapper pair.
+
+That last point matters because savings can come with a performance trade-off. Claude Opus 5 solved 34 of 45 tasks in a version of Claude Code released a year earlier, which disabled extended reasoning by default. The newer version solved 35 to 36. The older version’s average estimated cost was 44% of the newer one’s: 73 cents versus about $1.65 per run. But disabling reasoning reduced mini-SWE-agent’s success rate on Qwen3.6 by 11 points; changes in Claude Code and OpenCode stayed within repeated-run variation.
+
+The researchers recommend tracking three things when comparing providers: the first request, how much data grows at each step, and the number of steps. A wrapper’s price is not just its model-call bill; it is also the context it repeatedly carries into every call.
