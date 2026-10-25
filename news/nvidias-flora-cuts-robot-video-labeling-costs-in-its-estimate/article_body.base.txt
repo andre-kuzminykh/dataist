@@ -1,0 +1,43 @@
+## Three models, three labeling jobs
+
+Flora is built from three Qwen3.5 models fine-tuned for different tasks:
+
+- The 9-billion-parameter model divides video into action segments.
+- One 27-billion-parameter model describes each action in context, using what happened before and after it.
+- Flora-Rewarder, also with 27 billion parameters, can score an episode from 1 to 5, classify each half-second step as normal, suboptimal or failed, and rate performance against criteria supplied in the prompt.
+
+That combination is the point: most existing tools support only one type of label, while large language models can produce several but may be too expensive to apply across large video collections. Nvidia says Flora is available on Hugging Face.
+
+The performance picture is mixed. On a test of 50 videos, Nvidia says Flora scored slightly better than GPT-6 Astra, even though Astra had access to all its reasoning capabilities. Claude Opus 5 did substantially worse in the same test. The cost figures, however, are forecasts based on an assumed GPU rental price of $10 per hour, not measurements from production use.
+
+[INFO:compare] Flora :: $0.72 per hour | GPT-6 Astra :: $88.50 per hour
+
+## Stronger at timing than description
+
+On the public WGO-Bench, Flora is better at finding action boundaries, but trails Astra on the overall score and Gemini 3.8 Flash on description accuracy. The researchers say Flora’s advantage comes mainly from locating actions precisely in time.
+
+Nvidia’s own DenseCaptionBench gives Flora the lead across all metrics on videos of people. On robot videos, it ranks second to Astra. The researchers also point out a limitation in the method: GPT-6 Astra evaluates descriptions despite being one of the models under evaluation.
+
+[FIGURE:0]
+
+For judging failures inside an episode, Flora has a clearer edge. On RoboRewardBench, its error rate is 27.8% lower than Astra’s. The paper attributes the difference to partially completed tasks: when a robot tips a bottle but does not knock it off the table, Flora gives it 3 out of 5, matching the human rating, while Astra gives it 1.
+
+Flora-Rewarder identifies 53.3% of failed steps within episodes. No competitor exceeds 11.7%, and Astra identifies none. The trade-off is that Flora incorrectly marks about 11% of normal steps as errors. Astra leads instead on criterion-based evaluation and trajectory ranking.
+
+[FIGURE:1]
+
+In videos with many short hand movements, Flora identifies 34 of 37 individual actions; Astra finds only four. But Flora can split a long action into too many small steps and describe it incorrectly. In one clip, a robot hand wipes a plate with a cloth, and Flora calls it folding a napkin.
+
+[FIGURE:2]
+
+## The strategic value is in the data pipeline
+
+Nvidia presents Flora as an open alternative to commercial services such as Scale AI’s Physical AI Data Engine. Researchers can use it to scale their own robotics datasets and test approaches such as transferring human demonstrations to robots.
+
+The release also extends work Nvidia has already shown on reducing the data bottleneck. At GTC earlier this year, the company demonstrated a data pipeline that automatically prepares, multiplies and evaluates training material. Flora adds detailed labels and reward signals extracted from video. It fits Nvidia’s broader push across robotics hardware, training data, simulation and AI models; Google’s recently announced Gemini 4 Argon targets a similar part of the training process by identifying stages in training videos and marking failed actions.
+
+[FIGURE:3]
+
+[FIGURE:4]
+
+I think the price comparison is the headline, but not yet the strongest evidence. The estimates depend on Nvidia’s assumed rental cost, and the results vary by task: Flora is unusually good at finding failures and action boundaries, but Astra still leads in some evaluations. What I’d want to know is how often those false alarms and over-segmented actions force people to correct the labels. If that work is substantial, the cheap pass through video may be only one part of the cost—and the more consequential test of Flora will be whether open tooling makes Nvidia’s training pipeline easier to adopt.
