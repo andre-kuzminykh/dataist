@@ -58,8 +58,3 @@
 | [52](https://dataist.ai/52) | 2026-10-19 | Как ИИ-агент меняется без переобучения модели | [открыть](https://dataist.ai/research/ru/kak-ii-agent-meniaetsia-bez-pereobucheniia-modeli_ru/) | [open](https://dataist.ai/research/how-an-ai-agent-changes-without-retraining-the-model/) |
 | [53](https://dataist.ai/53) | 2026-10-20 | ИИ-агенту не нужны готовые ответы, чтобы становиться лучше | [открыть](https://dataist.ai/research/ru/ii-agentu-ne-nuzhny-gotovye-otvety-chtoby-stanovitsia-luchshe_ru/) | [open](https://dataist.ai/research/an-ai-agent-doesnt-need-ready-made-answers-to-get-better/) |
 | [54](https://dataist.ai/54) | 2026-10-21 | Как ИИ предсказывает мозговую активность | [открыть](https://dataist.ai/research/ru/kak-ii-predskazyvaet-mozgovuiu-aktivnost_ru/) | [open](https://dataist.ai/research/how-ai-predicts-brain-activity/) |
-| [55](https://dataist.ai/55) | 2026-10-22 | ssrf | [открыть](https://dataist.ai/research/ru/ssrf_ru/) | — |
-| [56](https://dataist.ai/56) | 2026-10-22 | ssrf2 | [открыть](https://dataist.ai/research/ru/ssrf2_ru/) | — |
-| [57](https://dataist.ai/57) | 2026-10-22 | SSTI-TEST-2 | [открыть](https://dataist.ai/research/ru/ssti-test-2_ru/) | — |
-| [58](https://dataist.ai/58) | 2026-10-22 | RQT | [открыть](https://dataist.ai/research/ru/rqt_ru/) | — |
-| [59](https://dataist.ai/59) | 2026-10-22 | FOLDERTEST | [открыть](https://dataist.ai/research/ru/foldertest_ru/) | — |
