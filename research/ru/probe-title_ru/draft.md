@@ -1,3 +1,0 @@
-# Probe Title
-
-Body probe
