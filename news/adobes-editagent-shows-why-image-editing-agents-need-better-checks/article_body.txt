@@ -1,0 +1,37 @@
+## Why one editor falls short
+
+In a test of 600 edits, five specialists rated the results without knowing which system produced them. The general-purpose Flux-2-Klein-9B failed to produce a usable image in 42.7% of cases. Specialized tools fixed about two-thirds of those failures, particularly in sharpening, rotation and scaling. Repeating the same edit with the same tool rarely helped.
+
+The researchers also compared editing an image in successive stages with generating several alternatives from the original. Small errors can compound when each step builds on an already altered image. When specialists chose among alternatives, they preferred versions generated in parallel in 78.5% of cases. The agent also needed half as many evaluation passes.
+
+[FIGURE:0]
+
+## Give the judge measurements, not just pixels
+
+EditAgent breaks a request into steps. At each one, it compares a general-purpose editor with specialized tools suited to the task. A standard language model then evaluates all the options in a single pass.
+
+For each option, the model gets a record containing an enlarged crop of the edited area, a change map, and measured brightness and color values. In one example, the request was to brighten a photograph slightly. The measurements showed that the general-purpose editor had overexposed the image and warmed its colors, while a specialized tool stayed within the requested limits.
+
+[FIGURE:1]
+
+The team tested whether this record could help a model judge edits against specialist ratings of usability. Without it, none of seven language models matched the best models fine-tuned on human ratings. With the record, all seven outperformed every fine-tuned model. Qwen3.8-27B selected a usable result in 81.3% of cases, compared with 74.8% for EditScore-72B. The researchers argue that the information available to a judging model may matter more than how it was trained.
+
+After each round, EditAgent also checks whether a later change has undone an earlier one. In the paper’s example, a request to “let in more daylight” accidentally made a previously frosted window transparent. The agent detected the conflict and corrected it.
+
+[FIGURE:2]
+
+The system improved the open-weight Qwen-Image-Edit-2511 and Flux-2-Klein-9B across three benchmarks, outperforming seven other AI agents. On EdiVal, the Qwen version edged past the commercial Seedream 4.0 and GPT-Image-1.5 after its third editing round. But those gains come at a cost: EditAgent needs roughly ten times the compute of a single editor, and its results depend on which tools are connected.
+
+[FIGURE:3]
+
+[FIGURE:4]
+
+## A research system with a product-shaped problem
+
+EditAgent also produces training data. Because it keeps only results that pass its checks, it generated about 26,000 training examples. Editors fine-tuned on that data performed better across all three benchmarks; training on data generated directly by FLUX, by contrast, made FLUX’s results worse.
+
+In June, Adobe added AI agents to Photoshop, Premiere and other Creative Cloud apps, starting with a public beta. Users describe the desired outcome, and the agent carries out individual steps. Choosing the right tool and checking its own work are therefore directly relevant to Adobe’s products, not just to a benchmark.
+
+My read is that the paper’s strongest claim is not that an agent can edit like a professional, but that a model’s judgment improves when it gets concrete evidence about what changed. The open question is how much of that advantage survives outside the tested tool set: EditAgent’s performance depends on its connected editors, and the reported gains require substantially more compute.
+
+The benchmark’s general-purpose baseline has also changed since the research was conducted. Black Forest Labs later replaced the model tested in the paper with Flux 3 Image Klein, which has 5.6 billion parameters, fewer than Flux 2 Klein. The company says its internal tests show the new model outperforming other open-weight models and even the commercial Flux 2 Pro. That makes the paper’s result less a verdict on today’s best editor than a case for building agents that can measure when their tools are getting it wrong.
