@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Andre Kuzminykh — DATAIST</title>
 <meta name="description" content="Andre Kuzminykh, founder of Andre AI Technologies. 10+ years in AI business transformation, 30+ companies transformed, $100M+ economic impact.">
-<meta name="theme-color" content="#000000">
-<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#000000" id="theme-color">
+<meta name="color-scheme" content="dark light">
+<script>try{if(localStorage.getItem('theme')==='light')document.documentElement.setAttribute('data-theme','light')}catch(e){}</script>
 <link rel="canonical" href="https://dataist.ai/about/">
 <!-- превью ссылки в Telegram, WhatsApp, X, LinkedIn, iMessage — на английском -->
 <meta property="og:site_name" content="DATAIST">
@@ -38,7 +39,18 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
 <style>
 :root{
+  color-scheme:dark;
   --bg:#000;
+  --fg:#fff;
+  --on-fg:#000;
+  --avatar-bg:#111;
+  --field-bg:#0c0c0e;
+  --done-bg:#0b130d;
+  --d-hover:#c7c7cc;
+  --cta-glow:rgba(255,255,255,.45);
+  --cta-glow-2:rgba(255,255,255,.6);
+  --toast-bg:rgba(28,28,30,.95);
+  --toast-shadow:rgba(0,0,0,.9);
   --glass:rgba(255,255,255,.045);
   --glass-2:rgba(255,255,255,.08);
   --line:rgba(255,255,255,.09);
@@ -59,28 +71,59 @@
   --cta:clamp(46px,6.6svh,56px);
   --top:clamp(44px,6svh,56px);
 }
+/* светлая тема: что было белым — чёрное, что было чёрным — белое */
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#fff;
+  --fg:#000;
+  --on-fg:#fff;
+  --avatar-bg:#eee;
+  --field-bg:#f5f5f7;
+  --done-bg:#eefaf1;
+  --d-hover:#3a3a3c;
+  --cta-glow:rgba(0,0,0,.22);
+  --cta-glow-2:rgba(0,0,0,.32);
+  --toast-bg:rgba(250,250,252,.96);
+  --toast-shadow:rgba(0,0,0,.18);
+  --glass:rgba(0,0,0,.035);
+  --glass-2:rgba(0,0,0,.06);
+  --line:rgba(0,0,0,.08);
+  --line-2:rgba(0,0,0,.14);
+  --text:#0a0a0a;
+  --muted:#6e6e73;
+  --dim:#a1a1a6;
+}
 *{box-sizing:border-box;margin:0;padding:0}
 html{background:var(--bg);-webkit-text-size-adjust:100%}
 body{min-height:100vh;min-height:100svh;display:flex;flex-direction:column;background:var(--bg);color:var(--text);
   font-family:var(--sans);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   overflow-x:hidden;-webkit-tap-highlight-color:transparent}
-::selection{background:#fff;color:#000}
+::selection{background:var(--fg);color:var(--on-fg)}
 a{color:inherit;text-decoration:none}
 button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
 svg{display:block}
-:focus-visible{outline:2px solid #fff;outline-offset:3px}
+:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
 
 /* ── верх ── */
 .top{flex-shrink:0;height:var(--top);display:flex;align-items:center;justify-content:space-between;padding:env(safe-area-inset-top) 18px 0}
 .brand{display:flex;align-items:center;gap:10px}
-.mark{width:26px;height:26px;border-radius:50%;background:#fff;color:#000;display:grid;place-items:center;
+.mark{width:26px;height:26px;border-radius:50%;background:var(--fg);color:var(--on-fg);display:grid;place-items:center;
   font:700 12px/1 var(--mono);transition:transform .4s var(--ease)}
 .brand:hover .mark{transform:rotate(-12deg) scale(1.08)}
 .brand-name{font-weight:600;font-size:17px;letter-spacing:-.02em;line-height:1;margin-top:2px}
 .lang{display:flex;align-items:center;gap:7px;font:700 11px/1 var(--mono);letter-spacing:.2em;user-select:none}
 .lang button{padding:10px 1px;color:var(--muted);transition:color .2s}
-.lang button[aria-pressed="true"]{color:#fff;cursor:default}
+.lang button[aria-pressed="true"]{color:var(--fg);cursor:default}
 .lang .sep{color:var(--muted);opacity:.4}
+.top-r{display:flex;align-items:center;gap:12px}
+.theme{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:var(--text);transition:background .2s,transform .3s var(--ease)}
+.theme svg{width:18px;height:18px}
+.theme .i-moon{display:none}
+:root[data-theme="light"] .theme .i-sun{display:none}
+:root[data-theme="light"] .theme .i-moon{display:block}
+.theme:active{transform:scale(.9)}
+@media (hover:hover){.theme:hover{background:var(--glass-2)}}
+body{transition:background-color .3s,color .3s}
 
 /* ── колонка ── */
 main{flex:1;width:100%;max-width:440px;margin:0 auto;display:flex;flex-direction:column;justify-content:center;gap:var(--gap);
@@ -90,8 +133,8 @@ main.swap{opacity:0}
 .col{display:contents}
 .hero{order:1}.sub{order:2}.links{order:3}.cta{order:4}
 .hero{display:flex;flex-direction:column;align-items:center;text-align:center}
-.avatar{width:var(--av);height:var(--av);margin-bottom:calc(var(--gap) * .8);border-radius:50%;object-fit:cover;background:#111;
-  box-shadow:0 0 0 1px rgba(255,255,255,.14)}
+.avatar{width:var(--av);height:var(--av);margin-bottom:calc(var(--gap) * .8);border-radius:50%;object-fit:cover;background:var(--avatar-bg);
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--fg) 14%,transparent)}
 .name{font-size:clamp(19px,2.9svh,24px);font-weight:700;letter-spacing:-.03em;line-height:1.15}
 .role{margin-top:3px;font-size:clamp(13px,1.8svh,14.5px);line-height:1.35;color:var(--muted)}
 
@@ -104,21 +147,21 @@ main.swap{opacity:0}
 
 /* ── email: спокойная кнопка ── */
 .sub{position:relative;display:flex;align-items:center;gap:6px;height:var(--field);padding:4px 4px 4px 15px;border-radius:999px;
-  background:#0c0c0e;border:1px solid var(--line-2);overflow:hidden;transition:border-color .25s,box-shadow .25s}
-.sub:focus-within{border-color:rgba(255,255,255,.4);box-shadow:0 0 0 4px rgba(255,255,255,.06)}
+  background:var(--field-bg);border:1px solid var(--line-2);overflow:hidden;transition:border-color .25s,box-shadow .25s}
+.sub:focus-within{border-color:color-mix(in srgb,var(--fg) 40%,transparent);box-shadow:0 0 0 4px color-mix(in srgb,var(--fg) 6%,transparent)}
 .sub.err{border-color:var(--err)}
 .sub>svg{width:16px;height:16px;flex-shrink:0;color:var(--dim)}
-.sub input{flex:1;min-width:0;height:100%;background:transparent;border:0;outline:0;color:#fff;font:500 16px var(--sans);padding-left:4px}
+.sub input{flex:1;min-width:0;height:100%;background:transparent;border:0;outline:0;color:var(--fg);font:500 16px var(--sans);padding-left:4px}
 .sub input::placeholder{color:var(--dim)}
 .btn{flex-shrink:0;height:100%;display:inline-flex;align-items:center;gap:6px;padding:0 16px;border-radius:999px;
   background:var(--glass-2);border:1px solid var(--line);color:var(--text);font-weight:500;font-size:14px;white-space:nowrap;
   transition:background .25s,transform .25s var(--ease)}
 .btn:active{transform:scale(.96)}
-@media (hover:hover){.btn:hover{background:rgba(255,255,255,.14)}}
-.btn .spin{display:none;width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;animation:spin .8s linear infinite}
+@media (hover:hover){.btn:hover{background:color-mix(in srgb,var(--fg) 14%,transparent)}}
+.btn .spin{display:none;width:16px;height:16px;border-radius:50%;border:2px solid color-mix(in srgb,var(--fg) 20%,transparent);border-top-color:var(--fg);animation:spin .8s linear infinite}
 .sub.busy .btn .spin{display:block}.sub.busy .btn span{display:none}
 @keyframes spin{to{rotate:360deg}}
-.sub .done{position:absolute;inset:0;display:none;align-items:center;justify-content:center;gap:10px;font-weight:600;font-size:14.5px;background:#0b130d}
+.sub .done{position:absolute;inset:0;display:none;align-items:center;justify-content:center;gap:10px;font-weight:600;font-size:14.5px;background:var(--done-bg)}
 .sub .done svg{width:20px;height:20px;color:var(--ok)}
 .sub .done circle,.sub .done path{stroke-dasharray:80;stroke-dashoffset:80}
 .sub.ok{border-color:rgba(48,209,88,.45)}
@@ -136,7 +179,7 @@ main.swap{opacity:0}
   background:var(--glass);border:1px solid var(--line);overflow:hidden;isolation:isolate;
   transition:background .3s,border-color .3s,transform .4s var(--ease),color .3s}
 .row::before{content:"";position:absolute;inset:0;z-index:-1;opacity:0;transition:opacity .3s;
-  background:radial-gradient(240px circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.12),transparent 50%)}
+  background:radial-gradient(240px circle at var(--mx,50%) var(--my,50%),color-mix(in srgb,var(--fg) 12%,transparent),transparent 50%)}
 .ic{width:calc(var(--row) - 12px);height:calc(var(--row) - 12px);max-width:42px;max-height:42px;flex-shrink:0;border-radius:11px;
   display:grid;place-items:center;background:var(--glass-2);border:1px solid var(--line);transition:background .3s,color .3s,border-color .3s}
 .ic svg{width:17px;height:17px}
@@ -146,38 +189,38 @@ main.swap{opacity:0}
 .go{width:26px;height:26px;flex-shrink:0;border-radius:50%;display:grid;place-items:center;color:var(--dim);transition:transform .4s var(--ease),color .3s,background .3s}
 .go svg{width:14px;height:14px}
 .row:active{transform:scale(.98);background:var(--glass-2);border-color:var(--line-2)}
-.row:active .ic{background:#fff;color:#000;border-color:#fff}.row:active .go{color:var(--text)}
+.row:active .ic{background:var(--fg);color:var(--on-fg);border-color:var(--fg)}.row:active .go{color:var(--text)}
 @media (hover:hover){
   .row:hover{transform:translateY(-2px);border-color:var(--line-2);background:var(--glass-2)}
   .row:hover::before{opacity:1}
-  .row:hover .ic{background:#fff;color:#000;border-color:#fff}
-  .row:hover .d{color:#c7c7cc}
+  .row:hover .ic{background:var(--fg);color:var(--on-fg);border-color:var(--fg)}
+  .row:hover .d{color:var(--d-hover)}
   .row:hover .go{color:var(--text);transform:rotate(45deg)}
 }
 
 /* ── акцент: трансформировать бизнес ── */
 .cta{display:flex;align-items:center;justify-content:center;gap:10px;height:var(--cta);border-radius:999px;
-  background:#fff;color:#000;font-weight:650;font-size:16px;letter-spacing:-.015em;white-space:nowrap;
-  box-shadow:0 0 0 1px #fff,0 18px 44px -14px rgba(255,255,255,.45);transition:transform .3s var(--ease),box-shadow .3s}
+  background:var(--fg);color:var(--on-fg);font-weight:650;font-size:16px;letter-spacing:-.015em;white-space:nowrap;
+  box-shadow:0 0 0 1px var(--fg),0 18px 44px -14px var(--cta-glow);transition:transform .3s var(--ease),box-shadow .3s}
 .cta svg{width:18px;height:18px;transition:transform .35s var(--ease)}
 .cta:active{transform:scale(.97)}
-@media (hover:hover){.cta:hover{transform:translateY(-2px);box-shadow:0 0 0 1px #fff,0 24px 56px -14px rgba(255,255,255,.6)}.cta:hover svg{transform:translate(3px,-3px)}}
+@media (hover:hover){.cta:hover{transform:translateY(-2px);box-shadow:0 0 0 1px var(--fg),0 24px 56px -14px var(--cta-glow-2)}.cta:hover svg{transform:translate(3px,-3px)}}
 
 /* ── подпись внизу: элемент Nr ── */
 .made{flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:8px;
   padding:clamp(6px,1.2svh,14px) 16px calc(clamp(10px,1.8svh,22px) + env(safe-area-inset-bottom));color:var(--text)}
-.el{--s:26px;width:var(--s);height:var(--s);flex-shrink:0;border-radius:6px;border:1px solid rgba(255,255,255,.32);background:#000;
+.el{--s:26px;width:var(--s);height:var(--s);flex-shrink:0;border-radius:6px;border:1px solid color-mix(in srgb,var(--fg) 32%,transparent);background:var(--bg);
   display:grid;place-items:center;transition:background .3s,color .3s,border-color .3s}
 .el{color:var(--text)}
 .el b{font-size:calc(var(--s) * .6);font-weight:700;letter-spacing:-.06em;line-height:1;margin-left:-.06em}
 .made{font-size:13px;line-height:1;color:var(--muted);white-space:nowrap}
 .made strong{color:var(--text);font-weight:600}
-@media (hover:hover){.made:hover .el{background:#fff;color:#000;border-color:#fff}}
+@media (hover:hover){.made:hover .el{background:var(--fg);color:var(--on-fg);border-color:var(--fg)}}
 
 /* ── всплывашка ── */
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));z-index:10;width:max-content;max-width:calc(100% - 32px);
-  translate:-50% 140%;opacity:0;padding:12px 16px;border-radius:16px;background:rgba(28,28,30,.95);border:1px solid var(--line-2);
-  box-shadow:0 20px 50px -15px rgba(0,0,0,.9);font-size:13.5px;line-height:1.4;text-align:center;transition:translate .5s var(--ease),opacity .3s}
+  translate:-50% 140%;opacity:0;padding:12px 16px;border-radius:16px;background:var(--toast-bg);border:1px solid var(--line-2);
+  box-shadow:0 20px 50px -15px var(--toast-shadow);font-size:13.5px;line-height:1.4;text-align:center;transition:translate .5s var(--ease),opacity .3s}
 .toast.show{translate:-50% 0;opacity:1}
 .toast.err{border-color:rgba(255,105,97,.5)}
 
@@ -242,6 +285,9 @@ main.swap{opacity:0}
   .mark{width:calc(32 * var(--k));height:calc(32 * var(--k));font-size:calc(14 * var(--k))}
   .brand-name{font-size:calc(20 * var(--k))}
   .lang{font-size:calc(13 * var(--k));gap:calc(8 * var(--k))}
+  .top-r{gap:calc(16 * var(--k))}
+  .theme{width:calc(38 * var(--k));height:calc(38 * var(--k))}
+  .theme svg{width:calc(19 * var(--k));height:calc(19 * var(--k))}
 
   main{max-width:calc(1120 * var(--k));display:grid;grid-template-columns:minmax(0,1fr) minmax(0,calc(500 * var(--k)));align-items:center;
     column-gap:calc(104 * var(--k));padding:0 calc(48 * var(--k))}
@@ -285,11 +331,17 @@ main.swap{opacity:0}
 
 <header class="top">
   <a href="https://dataist.ai/" class="brand"><span class="mark">i</span><span class="brand-name" data-t="brand">DATAIST</span></a>
+  <div class="top-r">
+  <button type="button" class="theme" id="theme" aria-label="Theme">
+    <svg class="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>
+    <svg class="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+  </button>
   <nav class="lang" aria-label="Language">
     <button type="button" data-lang="en" aria-pressed="true" lang="en">EN</button>
     <span class="sep" aria-hidden="true">|</span>
     <button type="button" data-lang="ru" aria-pressed="false" lang="ru">RU</button>
   </nav>
+  </div>
 </header>
 
 <main id="main">
@@ -362,10 +414,11 @@ main.swap{opacity:0}
       notYet: 'Email is launching soon. Meanwhile — follow below ↓',
       cta: 'How to run a business with AI',
       madeIn: 'Made in', madeName: 'Neuronium',
+      toLight: 'Switch to light theme', toDark: 'Switch to dark theme',
       links: [
-        { net: 'linkedin', title: 'LinkedIn', desc: 'Cases and thoughts on AI' },
-        { net: 'x', title: 'X', desc: 'AI wonders from scientific research', url: 'https://x.com/andre_dataist' },
-        { net: 'youtube',   title: 'YouTube',   desc: 'Video journal of life in the world of AI' }
+        { net: 'youtube',  title: 'Video Journal', desc: 'Life in the world of AI' },
+        { net: 'x', title: 'Author’s Channel', desc: 'Cases and thoughts on AI', url: 'https://x.com/andre_dataist' },
+        { net: 'linkedin', title: 'Partnerships', desc: 'Collaboration and joint projects' }
       ]
     },
     ru: {
@@ -378,12 +431,13 @@ main.swap{opacity:0}
       notYet: 'Рассылка скоро откроется. А пока — каналы ниже ↓',
       cta: 'Как вести бизнес с ИИ',
       madeIn: 'Создано в', madeName: 'Нейроний',
+      toLight: 'Светлая тема', toDark: 'Тёмная тема',
       links: [
-        { net: 'telegram', title: 'Основной',    desc: 'Кейсы и мысли об ИИ',              url: 'https://t.me/+AXsoJ7OiMG4zMzFi' },
+        { net: 'youtube',  title: 'Видеожурнал', desc: 'О жизни в мире ИИ' },
+        { net: 'telegram', title: 'Авторский канал', desc: 'Кейсы и мысли об ИИ', url: 'https://t.me/+AXsoJ7OiMG4zMzFi' },
         { net: 'telegram', title: 'Лаборатория', desc: 'Об ИИ-чудесах из научных исследований', url: 'https://t.me/+gjvJGFW0iXUwMjky' },
         { net: 'telegram', title: 'Академия',    desc: 'Новые навыки работы с ИИ',                   url: 'https://t.me/dataist_academy' },
-        { net: 'telegram', title: 'Live',        desc: 'Новости из ИИ-индустрии',                  url: 'https://t.me/neuronium_ai' },
-        { net: 'youtube',   title: 'YouTube',   desc: 'Видео-журнал о жизни в мире ИИ' }
+        { net: 'telegram', title: 'Live',        desc: 'Новости из ИИ-индустрии',                  url: 'https://t.me/neuronium_ai' }
       ]
     }
   };
@@ -417,6 +471,7 @@ main.swap{opacity:0}
       return '<div class="stat"><b>' + esc(x[0]) + '</b><span>' + esc(x[1]) + '</span></div>';
     }).join('');
 
+    syncTheme();
     $('#links').innerHTML = t.links.map(function (l, i) {
       var url = l.url || LINKS[lang][l.net] || '#';
       var ext = url !== '#' ? ' target="_blank" rel="noopener"' : '';
@@ -427,6 +482,21 @@ main.swap{opacity:0}
         '<span class="go">' + I.arrow + '</span></a>';
     }).join('');
   }
+
+  function isLight() { return document.documentElement.getAttribute('data-theme') === 'light'; }
+  function syncTheme() {
+    var t = T[lang], light = isLight(), btn = $('#theme');
+    btn.setAttribute('aria-label', light ? t.toDark : t.toLight);
+    btn.title = light ? t.toDark : t.toLight;
+    $('#theme-color').setAttribute('content', light ? '#ffffff' : '#000000');
+  }
+  $('#theme').addEventListener('click', function () {
+    var light = !isLight();
+    if (light) document.documentElement.setAttribute('data-theme', 'light');
+    else document.documentElement.removeAttribute('data-theme');
+    try { localStorage.setItem('theme', light ? 'light' : 'dark'); } catch (e) {}
+    syncTheme();
+  });
 
   function say(text, err) {
     clearTimeout(tt);
