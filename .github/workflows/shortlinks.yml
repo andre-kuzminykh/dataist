@@ -140,6 +140,13 @@ jobs:
               echo "$bot $path → $out ${xr} ${nr}"
             done
           done
+          G="Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)"
+          art=$(curl -s --max-time 30 -A "$G" https://dataist.ai/sitemap.xml | grep -o '<loc>[^<]*</loc>' | sed 's#</\?loc>##g' | grep '/news/' | head -1)
+          echo "--- адреса в sitemap: $(curl -s --max-time 30 -A "$G" https://dataist.ai/sitemap.xml | grep -c '<loc>'), первый новостной: $art"
+          for u in https://dataist.ai/ https://dataist.ai/ru/ "$art"; do
+            curl -s -o page.html -w "  %{http_code} %{time_total}s $u\n" --max-time 30 -A "$G" "$u" || true
+            grep -o '<link rel="canonical"[^>]*>\|<meta name="robots"[^>]*>' page.html | head -3 | sed 's/^/      /'
+          done
           echo "--- robots.txt (Googlebot):"
           curl -s --max-time 20 -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" https://dataist.ai/robots.txt | head -20
           rm -f page.html head.txt
