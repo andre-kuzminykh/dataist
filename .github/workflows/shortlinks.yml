@@ -126,3 +126,20 @@ jobs:
             echo "dataist.ai/$n → HTTP $code, страница короткой ссылки: ${mark:-0}"
           done
           rm -f page.html
+          # Видят ли сайт поисковые роботы — защита сервера не должна их
+          # отсекать: с 26.10 Google почти перестал показывать сайт, хотя
+          # обычным запросам он отвечал.
+          for ua in "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" \
+                    "Mozilla/5.0 (compatible; YandexBot/3.0; +http://yandex.com/bots)" \
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"; do
+            bot=$(printf '%s' "$ua" | grep -oE 'Googlebot|YandexBot|Chrome')
+            for path in /robots.txt / /ru/ /sitemap.xml /news/index.json; do
+              out=$(curl -s -o page.html -D head.txt -w '%{http_code} %{size_download}' --max-time 20 -A "$ua" "https://dataist.ai$path" || true)
+              xr=$(grep -i '^x-robots-tag' head.txt | tr -d '\r' || true)
+              nr=$(grep -oi '<meta name="robots"[^>]*>' page.html | head -1 || true)
+              echo "$bot $path → $out ${xr} ${nr}"
+            done
+          done
+          echo "--- robots.txt (Googlebot):"
+          curl -s --max-time 20 -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" https://dataist.ai/robots.txt | head -20
+          rm -f page.html head.txt
