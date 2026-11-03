@@ -147,6 +147,20 @@ jobs:
             curl -s -o page.html -w "  %{http_code} %{time_total}s $u\n" --max-time 30 -A "$G" "$u" || true
             grep -o '<link rel="canonical"[^>]*>\|<meta name="robots"[^>]*>' page.html | head -3 | sed 's/^/      /'
           done
+          # DNS глазами разных резолверов: Google Public DNS проверяет DNSSEC,
+          # и при сломанной подписи Googlebot не найдёт сайт вовсе, хотя у
+          # большинства читателей он открывается.
+          echo "--- DNS:"
+          for r in 8.8.8.8 1.1.1.1 9.9.9.9; do
+            for t in A AAAA; do
+              echo "  @$r $t: $(dig +time=5 +tries=2 @$r dataist.ai $t +dnssec 2>&1 | grep -E 'status:|^dataist\.ai\.' | grep -v RRSIG | tr -s ' \t' ' ' | tr '\n' '|')"
+            done
+          done
+          echo "  @8.8.8.8 A без проверки DNSSEC (+cd): $(dig +time=5 @8.8.8.8 dataist.ai A +cd 2>&1 | grep -E 'status:' | tr -s ' ')"
+          echo "  NS: $(dig +short dataist.ai NS @1.1.1.1 | tr '\n' ' ')"
+          echo "  DS (подпись у регистратора): $(dig +short dataist.ai DS @1.1.1.1 | tr '\n' ' ')"
+          echo "  DNSKEY: $(dig +short dataist.ai DNSKEY @1.1.1.1 | wc -l) ключ(ей)"
+          echo "  www: $(dig +short www.dataist.ai @8.8.8.8 | tr '\n' ' ')"
           echo "--- robots.txt (Googlebot):"
           curl -s --max-time 20 -A "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)" https://dataist.ai/robots.txt | head -20
           rm -f page.html head.txt
