@@ -147,6 +147,17 @@ jobs:
             curl -s -o page.html -w "  %{http_code} %{time_total}s $u\n" --max-time 30 -A "$G" "$u" || true
             grep -o '<link rel="canonical"[^>]*>\|<meta name="robots"[^>]*>' page.html | head -3 | sed 's/^/      /'
           done
+          # Свежий ли контент на живом сайте: коммит, до которого сайт
+          # подтянул репозиторий, против текущего main, и новейшие статьи
+          # в sitemap и на главной.
+          echo "--- синхронизация: main сейчас $(git rev-parse --short=9 HEAD)"
+          curl -s --max-time 20 https://dataist.ai/api/v1/admin/health; echo
+          curl -s --max-time 30 -A "$G" https://dataist.ai/sitemap.xml -o sm.xml || true
+          echo "  sitemap: новейшие lastmod: $(grep -o '<lastmod>[^<]*' sm.xml | sed 's/<lastmod>//' | cut -c1-10 | sort -r | uniq -c | head -4 | tr -s ' ' | tr '\n' ';')"
+          echo "  новость от 02.11 в sitemap: $(grep -c 'vyruchka-anthropic-vyrosla-v-12-raz' sm.xml)"
+          curl -s --max-time 30 -A "$G" https://dataist.ai/ -o home.html || true
+          echo "  на главной (для Googlebot) ссылок на новости: $(grep -o 'href="[^"]*/news/[^"]*"' home.html | sort -u | wc -l); новейшие даты: $(grep -o '20[0-9][0-9]-[01][0-9]-[0-3][0-9]' home.html | sort -r | uniq | head -3 | tr '\n' ' ')"
+          rm -f sm.xml home.html
           # DNS глазами разных резолверов: Google Public DNS проверяет DNSSEC,
           # и при сломанной подписи Googlebot не найдёт сайт вовсе, хотя у
           # большинства читателей он открывается.
