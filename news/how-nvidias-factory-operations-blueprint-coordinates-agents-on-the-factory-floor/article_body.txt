@@ -1,0 +1,98 @@
+NVIDIA has introduced Factory Operations Blueprint (FOX), an architecture for building an AI agent that connects factory data and equipment, assigns tasks to specialized agents, and determines when an operator needs to review a decision. Using a printed circuit board assembly line as an example, FOX follows a signal indicating a possible defect: it arranges a second inspection, moves the board to repair, and analyzes the likely cause. The system can be deployed on premises, keeping production records, images, prompts, and investigation results inside the factory network.
+
+# NVIDIA unveils an AI agent architecture for investigating factory failures
+
+A typical large factory in the industries covered by a Siemens report loses an average of $253 million a year to unplanned downtime. To investigate a faulty board or handle an urgent order, employees have to gather information from different systems, consult specialists, and agree on what to do next. The data may be available, but turning it into a decision takes time and effort.
+
+FOX proposes connecting a coordinating AI agent to the factory’s existing systems and configuring a set of specialized agents. They can monitor production in real time, identify bottlenecks and the causes of errors and defects, and coordinate robots. Developers connect the system to the enterprise’s data and equipment, then specify which decisions the agent can make independently and which require operator review.
+
+## FOX for production planning and quality control
+
+Two possible applications for these agents are production planning and product inspection. Siemens Electronics Factory in Erlangen produces more than a thousand products a year. Frequent line changeovers for new products and orders make both processes relevant.
+
+For an urgent order, agents built on FOX and running on NVIDIA Nemotron can launch simulations through Siemens Intelligence Center X. They take costs, existing orders, inventory, and line configurations into account, sparing planners from manually requesting data from each system. The estimate is that such a system could reduce costs by up to 20% from end to end.
+
+For new products, Siemens combines product lifecycle management software and Process Preparation X with NVIDIA Cosmos and NVIDIA Omniverse. This makes it possible to create a virtual prototype and synthetic training data, allowing electronics manufacturers to prepare and configure automated optical inspection (AOI) processes before physical production begins. This virtual preparation could cut time to market by up to 40%.
+
+[VIDEO:0]
+
+A video about the super AI agent shows a Siemens production planning example from NVIDIA GTC 2026 Berlin.
+
+Another FOX example focuses on a surface-mount technology (SMT) line for printed circuit board (PCB) production. In it, a coordinating agent connects production data and coordinates the inspection of a suspected defect, sending the board for repair, and investigating the likely cause.
+
+## What makes up the coordinating agent
+
+FOX describes how to use NVIDIA Agent Toolkit to build a long-running Factory Manager Agent. It has three core components:
+
+- <strong>Large language model (LLM)</strong> — understands tasks, connects data from factory systems, creates plans, and evaluates results. Developers can choose a frontier model, such as GPT-6 Astra, or an open model, such as NVIDIA Nemotron, depending on deployment requirements.
+- <strong>AI agent runtime</strong> — connects the coordinating agent to tools, skills, long-term memory, and specialized agents. FOX uses NemoClaw by default but allows other options. The runtime handles background and scheduled tasks while keeping the coordinating agent available to the operator.
+- <strong>NVIDIA OpenShell</strong> — isolates the runtime and restricts access to files, commands, and network addresses. Factory rules define permitted actions and the cases that require operator approval.
+
+Developers connect equipment databases, manufacturing execution systems (MES), and enterprise resource planning (ERP) systems using adapters and data mapping. Manuals and work instructions help the agent interpret information, while an Elasticsearch database stores data for search and investigation context.
+
+The coordinating agent delegates individual tasks to specialized agents based on large language models. Each has its own instructions, context, skills, and tools. For example, agents can use NVIDIA Cosmos for visual inspection and Kumo to detect anomalies in time series. Their results help the coordinating agent choose the next step. Developers can adapt the roles to their enterprise’s processes.
+
+[FIGURE:0]
+
+The FOX diagram shows how the architecture connects factory data, NemoClaw, AI models, and control panels, as well as how it handles context management and operator interactions.
+
+## On-premises deployment
+
+FOX can run on NVIDIA DGX Station, with the agent runtime, required AI models, and data stores hosted on site. For a fully on-premises deployment, all models and service endpoints must be inside the factory network. Production records, images, prompts, and investigation results then remain within the enterprise. If developers use an external model, they need to assess what data is sent to it.
+
+The SMT line example is unrelated to Siemens’ production planning deployment. In it, an AOI signal leads to a second inspection, repair, and root-cause analysis. The same architecture can be applied to other processes by changing the data sources, specialized agents, and equipment connections.
+
+## How an SMT line works
+
+Printed circuit boards are used in many electronic devices. Their assembly using SMT is largely automated, but some operations are still performed manually. If a defect is found at one station, its cause may lie several stages earlier.
+
+A typical SMT line may include the following stations:
+
+1. <strong>Solder paste printer</strong> — applies paste to the components’ contact pads.
+2. <strong>Pick-and-place machine</strong> — places components onto the applied paste.
+3. <strong>Reflow oven</strong> — melts and cools the solder, forming mechanical and electrical connections.
+4. <strong>AOI and in-circuit testing (ICT) stations</strong> — check for visible defects and test electrical characteristics.
+5. <strong>Board integration area</strong> — installs larger components.
+6. <strong>Standard operating procedure (SOP) station</strong> — supports manual assembly based on work instructions.
+7. <strong>Functional test</strong> — checks whether the board works as intended.
+8. <strong>Packaging station</strong> — prepares the board for shipment.
+
+An AOI signal may be a false alarm, but a confirmed defect or failed functional test may require repair. If a soldering defect is suspected, the Factory Manager Agent arranges a second inspection, moves the board if needed, and then investigates the cause.
+
+[FIGURE:1]
+
+The illustration shows a printed circuit board assembly line with several machines and robots.
+
+## From an AOI signal to image inspection
+
+Developers connect the AOI station through a Model Context Protocol (MCP) server or an API that passes inspection records to the coordinating agent’s tools. For a flagged board, the agent retrieves its identifier, information about the affected component, and an image, then requests a further assessment.
+
+The identifier links the board to data from other stations. Adapters preserve identifiers, timestamps, units of measurement, and source references. This lets agents retrieve the board’s production history and the operating conditions of equipment at the stages it passed through.
+
+The Visual Inspection Agent receives an image of the board, comparison examples, and approved criteria for its design. It uses NVIDIA Cosmos, a visual understanding model, and compares the suspected component with the factory manual. With in-context learning, the model uses examples and instructions at inference time, without a separate fine-tuning stage.
+
+The specialized agent returns its findings, supporting evidence, and information about uncertainty. If the deviation is acceptable, it provides grounds for continuing production in accordance with factory rules. A confirmed defect is sent for handling and investigation; an uncertain result is referred to an operator.
+
+## Moving the board for repair
+
+If the defect is confirmed, the coordinating agent asks the Fleet Management Agent to deliver the board to the repair area. In the reference process, this movement is shown in a digital twin using NVIDIA Isaac Sim and ROS 2. Working with physical equipment requires integrations configured for the specific factory, for robot control and autonomous mobile robots (AMRs).
+
+The specialized agent checks its permissions and capabilities, then confirms the outcome after completing the task. In the early stages, an operator must approve the move. Employees repair and retest the board before it is packaged.
+
+## Finding the root cause
+
+The Root Cause Analysis Agent uses the board’s identifier and processing history to retrieve inspection results, component placement records, electrical test results, and equipment measurements. An investigation can begin after a failed functional test, even if visual inspection found no defects.
+
+If a soldering problem is suspected, the times when the board entered and left the reflow oven help identify which equipment readings to check. Kumo Anomaly analyzes those data and looks for unusual patterns. The agent compares the results with other production runs, inspection data, and equipment manuals to determine whether oven conditions could have contributed to the defect.
+
+Elasticsearch provides access to production data, manual versions, and previous investigations. Earlier results help narrow the search, but the agent retrieves current procedures and records again before reaching a conclusion. The output is a PDF report containing source records, suspicious measurements, the likely cause, and a recommended corrective action. The line manager reviews it.
+
+[FIGURE:2]
+
+The example report contains a “ROOT CAUSE” section and details of a production incident.
+
+On the SMT line, FOX coordinates visual inspection, root-cause analysis, and fleet management agents, connecting them to existing databases, factory systems, and machines. Together, they help the operator identify the likely cause of a defect, arrange a repair, and decide how to prevent further failures. AI agent skills also help connect data, configure the system, and deploy it on NVIDIA DGX Station; developers can change skills, tools, and specialized roles for new processes.
+
+To build a factory coordinating agent, NVIDIA recommends requesting early access to FOX Blueprint, exploring NVIDIA Agent Toolkit, and creating specialized agents with VSS.
+
+FOX describes an architecture and an example process, not a ready-made universal system for every factory: connecting physical robots requires integration with the enterprise’s specific equipment. On-premises deployment keeps production data inside the network, but developers using an external model will need to assess separately what data is sent to it.
