@@ -1,0 +1,204 @@
+Microsoft introduced PDD Kit, a research toolkit that turns software requirements into a formal specification and then checks whether an AI agent’s code conforms to it. In the GitHub Next Chopin project, the team applied it to the login logic of a Rust application called Pet Store. The formally verified part covered the path from request data to a token or an error. The system used tests for everything else. Developers reviewed the requirements and specification without reading the generated code line by line.
+
+## Microsoft tested a web app’s login logic with PDD Kit
+
+## Why verify the plan
+
+Coding agents can now build entire features in a single session—sometimes tens or hundreds of thousands of lines. Reviewing changes line by line does not scale well, so teams increasingly agree on a plan and tests with the agent, then hand it the implementation.
+
+But a plan written in natural language does not, by itself, make an agent follow it. The agent might build something slightly different, then write tests that check the code it produced. The result is more checks and lines of test coverage, but a mismatch between the request and the program may surface only after a bug report or in a rare case.
+
+Tests cover only some possible inputs. A formal proof can show that code meets specified requirements for every input covered by the specification. Previously, this approach required specialists, separate languages, and a long time. The authors say AI agents are now getting better at helping write formal specifications and proofs. They call this process Proof-Driven Development (PDD) and built PDD Kit for it.
+
+The work was presented in the context of Microsoft at SOSP 2026, a forum where academic and industry participants discuss the theory and practice of systems software.
+
+## How PDD Kit works
+
+PDD Kit is a formal methods toolkit, structured much like Spec Kit for specification-driven development. It runs inside Chopin, GitHub Next’s real-time collaboration environment, where a team and agents edit a shared document.
+
+First, team members clarify their intent in plain language. PDD Kit asks questions, explains the relevant parts of the code, and records the answers in an intent document. It connects the original requirements to a formal specification and tests. Anything that can be expressed formally becomes part of the specification; the rest is captured as informal requirements to test. The system then prepares proofs for the formal part and tests for the rest. Using PDD Kit does not require experience with formal methods.
+
+Each result indicates how it was checked:
+
+- **Formal verification** — a mathematical proof that the code meets the specification for all possible inputs. PDD Kit currently uses Verus, a proof language for Rust developed with contributions from Microsoft Research, Carnegie Mellon University, VMware Research, ETH Zurich, MPI-SWS, UNSW Sydney, the University of Texas at Austin, the University of Michigan, the University of British Columbia, the University of Wisconsin–Madison, and the Weizmann Institute of Science.
+- **Empirical verification** — running the code and observing its behavior. This is used for things the proof does not cover, such as a third-party cryptography library or the user interface. The toolkit uses unit and end-to-end tests, terminal automation, browser agents, and agents that control a computer. A passing test counts as evidence, not proof: it confirms behavior only for the inputs tested.
+
+The boundary between verified code and code accepted on trust is called the trusted computing base (TCB). PDD Kit marks it explicitly and asks the developer to approve each part separately.
+
+## The Pet Store application
+
+To test the approach on an existing codebase, the team created Pet Store, a web application written entirely in Rust. The backend uses Axum and SQLite and handles inventory, discounts, orders, and checkout. The interface is built with Leptos and compiled to WebAssembly. The application contains about 5,000 lines of Rust.
+
+The authors focused on the login logic, although the same process can be used to verify the functional correctness of the entire application. PDD Kit recommends starting with the most sensitive parts and gradually verifying the rest. A login bug could give an attacker access to a customer account or administrator privileges.
+
+In Chopin, a developer stated the requirements in two points:
+
+1. A token is issued only when the password is correct.
+2. Administrator tokens are issued only to administrator accounts.
+
+The request was deliberately brief: PDD Kit’s job is to clarify the intent and turn it into requirements that can be checked with a proof.
+
+[FIGURE:0]
+
+## From clarifications to a requirements map
+
+Before any code is written, the `pdd-plan` planning stage examines the project and displays questions in the decisions tab. If a question depends on how the program is structured, the system first explains the relevant code: its purpose, its connections to other parts, and the specific function involved.
+
+One clarification concerned the wording “a token is issued only when the password is correct.” It prohibits issuing a token when the password is wrong, but does not by itself require issuing one when the password is right: a program that rejects everyone would also satisfy this condition. To rule that out, the requirement needs a converse: a correct password always yields a token. The first condition means “if a token is issued, the password is correct”; the second means “if the password is correct, a token is issued.” Together, they express “if and only if.” Without clarification, the agent could silently choose one interpretation; the developer confirmed both.
+
+As the discussion progresses, PDD Kit keeps a concise summary at the start of the plan, so the team does not have to search through a long conversation to find decisions. It includes a login diagram, an overview of what will be proved or accepted on trust, and, when needed, a visual model. For the login flow, the system drew a ticket booth.
+
+The intent map links each requirement to the developer’s words and the recorded decision. Entries lead to the corresponding part of the formal specification and to tests; the specification includes annotated Verus contract snippets. A decision card highlights an ambiguity the agent might otherwise have resolved on its own. In one comparison, two interpretations differed by a single cell: the case where a correct password does not result in a token.
+
+[FIGURE:1]
+
+## How the login flow was verified
+
+Before work begins, the team must approve the plan in full. In its first version, PDD Kit proposed proving the core login logic—selecting a table and checking the password—while leaving the surrounding handler trusted and covering it with tests. The developer decided to include the handler in the proof as well: it handles database query results and signs the token, so a code change could accidentally reorder the lines.
+
+A separate asynchronous specification was prepared for the login handler. It covered the path from request fields to a token or an HTTP error. After the change, PDD Kit asked the developer to approve the plan again: matching the intent is not enough if the amount of trusted code also expands.
+
+[FIGURE:2]
+
+## What remains outside the proof
+
+Not everything can be proved. In the login verification, PDD Kit identified several limitations:
+
+- Code the verification system cannot see: bcrypt hashing, sqlx queries, and jsonwebtoken signing are in other packages.
+- Information about the outside world: the current contents of SQLite and clock readings come from outside the program.
+- Termination and performance: the specification describes the result if execution finishes; a request that hangs or runs slowly does not contradict it.
+- Things that require human judgment, such as whether an error message or interface is clear.
+- Requirements no one wrote down: the proof covers the specification, not unstated expectations.
+
+These parts are checked empirically. PDD Kit marks the trust boundary and wraps each unverifiable component in a small function with an assumption contract. In Verus, this uses `#[verifier::external_body]` or `external_fn_specification`. The developer accepts each contract separately, and the plan includes a test for each of its conditions.
+
+In the example, the team approved six parts:
+
+- Two lookups: `Customer::find_by_email` and `Admin::find_by_username`. If a query succeeds, it returns a row from the relevant table for the given email address or username, or reports that no record exists.
+- `check_password`, a wrapper around `bcrypt::verify`. An error occurs only when bcrypt cannot read the stored hash; `Ok(true)` means the password is correct.
+- `generate_token` signs exactly the supplied claims with the configured secret and returns a signing error as a 500.
+- `expiry_from_now` reads the clock and sets the expiration time to exactly 24 hours later.
+- `database_error` converts a lookup error into the existing 500 error with the sqlx message.
+- The login handler wrapper parses the request and passes its fields unchanged to `login_flow`.
+
+For database lookups, the code stays where it was, while an external contract describes what it must return. In the example, the `ex_customer_find_by_email` contract says that a successful query returns the customer record matching the exact email address, or `None` if no such record exists. The query itself runs in sqlx and is not visible to Verus.
+
+The clock is moved into the `expiry_from_now` wrapper, marked `#[verifier::external_body]`. Verus uses its condition but does not check the function body: the expiration time must be exactly 86,400 seconds after the clock is read. The function can still panic if the time falls outside the permitted range; no guarantee is made against that.
+
+[FIGURE:3]
+
+PDD Kit shows exactly what Verus proves, what people accept and check with tests, and what remains without guarantees. Each trust-boundary decision has its own card, listing the accepted conditions and the consequences if an assumption turns out to be wrong. The plan provides an empirical check for each condition in a “Given / When / Then” format. Before it runs, the check is marked as planned; afterward, the command result and the commit on which it was run are saved.
+
+The plan also makes clear what the team does not promise: that an asynchronous login operation will finish, that a clock value outside the permitted range will not cause a panic, that login attempts are rate-limited or time-limited, or that other endpoints handle user roles correctly.
+
+[FIGURE:4]
+
+## The specification and login code
+
+The intent document is a plain-language version of the formal specification that the team reviews. There is no need to read the proof instead of the code: the agent writes it, and Verus mechanically checks every step. The specification’s conditions concern the function’s result and must hold for every possible input. If any condition could be violated, the build fails and Verus points to it.
+
+For the password requirement, it matters that the password check and issued token refer to the same account. For example, a bug might allow the program to check Bob’s password but issue a token for Alice’s account. The individual steps might look correct, but the formal condition would expose the mismatch.
+
+The specification describes SQLite, bcrypt, and JWT without running those components. It does this with abstract functions that have no body: `customer_on_file(email)` and `admin_on_file(username)` represent database records, `bcrypt_verdict(password, hash)` represents the result of the bcrypt check, and `token_claims(token, secret)` represents the token’s contents. Verus knows about their behavior only through what the trusted contracts promise.
+
+The `named_account(email, username)` definition specifies which account matches a request: first, the customer record for the given email address; if no email is provided, the administrator record for the username; otherwise, there is no account. This is Rust-like mathematical code that is not run and exists only in the contracts. It is called ghost code: the verification system uses it, and the compiler removes it from the program.
+
+The developer’s two original requirements became eight conditions for `login_flow`. Among other things, they describe these cases:
+
+- A request with neither an email address nor a username returns 400 with the existing message.
+- A token is issued for the named account only when the password is correct, and contains that account’s ID and the role of its table.
+- A correct password yields a token unless a lookup or signing error occurs; those errors can result in a 500.
+- A nonexistent account and an incorrect password result in a 401, unless a lookup error occurs.
+- If bcrypt cannot read the stored hash, the function returns 500 and does not issue a token.
+- The administrator role appears only for a record in the administrators table found by username, without an email address.
+- For an email login, the token receives the customer role.
+
+The `check_password` contract links the function to the abstract bcrypt result: the call succeeds when bcrypt can read the hash, and its return value determines whether the password is correct. Verus does not check the function body, so every password guarantee in `login_flow` depends on this accepted contract. The proof covers every possible login result, but only one of them contains a token.
+
+The `login_flow` function is asynchronous and waits for a database query. Verus supports contracts for asynchronous functions: `requires` is checked when the task is created, and `ensures` applies to the result after it is awaited. There is no guarantee that the task will finish; a stalled query does not violate the conditions.
+
+The logic is divided into small functions. `lookup_target` selects a table, `login_core` waits for the lookup result and passes control to `decide_login`, which checks the password. `issue_token` signs the token or turns a failure into an existing HTTP error. Each function has its own contract, and Verus uses those contracts to prove the behavior of `login_flow`. If the body of `decide_login` changes, only that function needs to be proved again.
+
+The `lookup_target` contract specifies the table selection: a supplied email address directs the lookup to customers; if there is no email address, a username directs it to administrators; if neither is present, login is rejected because there is no identifier. `decide_login` rejects a missing record, issues claims only when the password matches, and assigns the role based on the table where the record was found.
+
+[FIGURE:5]
+
+The `verified/src/login.rs` specification file has four layers: the required Verus types and imports, an abstract model of the outside world, contracts for trusted components, and five contracts the proof must satisfy. In particular, the connection pool remains opaque to verification, while the customer record’s fields are accessible.
+
+A separate `LoginError` type distinguishes the reason for failure from the HTTP response. This allows `issue_token` to map each failure to an existing status: no email address or username is a 400, no account or an incorrect password is a 401, and a hash-reading or database-query error is a 500.
+
+Before returning the plan, two reviewer agents search the formal specification created from the intent document for errors. They check whether it matches the request and whether it promises more than can be proved. The specification is refined in the background using the user’s answers until the reviewers agree that it is correct.
+
+## Proofs, tests, and requirement checks
+
+After the specification is approved, the developer no longer reviews the implementation line by line: machines check both the code and the proof. The build stage passes the plan to `pdd-prove`, which turns it into a task list. For the login logic, there were seven tasks: prepare `login.rs` to build with Verus inside the backend, prove the decisions, token issuance, and full login flow, then create tests for the trusted wrappers and the end-to-end scenario.
+
+Each task follows the same cycle:
+
+- A coding agent writes the implementation and proof, and Verus checks them against the formal specification.
+- The tests specified in the plan run for each part of the trusted boundary.
+- An AI reviewer compares the plan, specification, and results to find requirements without a proof or a passing check. Any gaps are sent back to the agent. If the specification itself contains a contradiction—for example, if requirements conflict—the question goes to the developer.
+
+The specification itself is tested, too. When a model writes its own specification or is tuned to generate proofs, it may choose weak invariants: formally checkable conditions that constrain almost nothing. The authors call this a “gut check.” To detect weak conditions, `pdd-prove` mutates the code: for each `ensures` condition, it adds an error in a separate copy—for example, rejecting everyone or looking up the username before the email address. Verus must reject each faulty version because of the corresponding condition. If the error passes, the condition does not constrain behavior and is considered a gap.
+
+The process does not allow requirements to be changed silently. If a construct cannot be expressed in the pinned version of Verus, the task stops and goes back to the team; the system does not replace an asynchronous function with a synchronous one or weaken a contract.
+
+[FIGURE:6]
+
+## Code review and what comes next
+
+After the tasks pass, `pdd-prove` opens pull requests. They add a separate `verified/` package with `login_flow`, helper functions, proofs, and trusted wrappers with tests. The actual handler routes requests through `login_flow` while preserving existing HTTP status codes. The verified logic is connected to the production login path, not a separate copy of the application.
+
+The developer was able to merge the changes without reviewing all the generated code line by line. The main requirements check had already happened while working on the intent document, where the team has the final say. The pull request shows which requirements were formally proved and which were checked with tests.
+
+When the changes are merged, PDD Kit adds a Verus check to CI alongside the tests. Future changes to login code—by a person or an agent—must still meet the same specification; a failed proof stops the build, just like a failing test. The system also removes tests that duplicate properties already proved, such as separate examples for password checking, while keeping tests for the trusted boundary.
+
+The authors divide the guarantees into three groups:
+
+- **Proved:** The bodies of `login_flow`, `login_core`, `lookup_target`, `decide_login`, and `issue_token` meet their contracts for every input. The verification covers table selection, comparing the password against the hash for the correct account, token contents, and rejection with existing 400, 401, or 500 status codes without issuing a token.
+- **Accepted on trust and checked with tests:** The two database lookups, `check_password` with bcrypt, the clock, token signing, the database error message, and request parsing by the handler. Each component relies on a contract approved by the developer; the tests use real bcrypt, the actual SQLite schema, and the real router.
+- **Accepted as assumptions:** The Verus toolchain, the Rust compiler, Z3, and Verus’s standard library `vstd`.
+
+## Why Rust
+
+PDD Kit currently verifies only Rust, because that is what Verus supports. If a project is already written in Rust, no migration is needed. Code in other languages can be moved to Rust and checked against the same specification; projects not written in Rust can call verified Rust code through bindings.
+
+The authors also note that reducing dependence on line-by-line review changes the role of readability when choosing a language. In their view, a language can be chosen for speed and safety, and the program can be optimized more aggressively: a change that violates the specification will not pass the proof.
+
+## Limitations and future plans
+
+PDD Kit is a research prototype that currently supports only Rust. Proofs require real work, mainly to prepare them. A clear specification reduces this cost, so much of the toolkit is devoted to clarifying intent. The authors recommend starting where errors are most costly, such as login, payments, or access controls, then verifying the rest of the project one part at a time.
+
+In Pet Store, the team formally verified one part of one application: a readable specification, a Verus proof, and tests for what is accepted on trust. The guarantees depend on six such components, most heavily on `check_password`, which underpins the password guarantees, and the two database queries, which determine whether the correct account is selected. Tests support these assumptions but do not prove them. The authors expect the trusted boundary to shrink substantially over time and want to find out how far the approach can scale.
+
+The approach shifts attention from checking lines of code to checking what the team wanted the program to do. The plan must become a commitment for the agent: a formal proof ties the implementation to agreed requirements, but does not remove the limitations of the parts left outside the proof.
+
+## Acknowledgments
+
+The work was carried out by Microsoft Research Catalyst Lab, GitHub Next, and the Research in Software Engineering (RiSE) group. The authors thanked Maggie Appleton and Krzysztof Cieslak of GitHub Next for working together on Chopin, and Nikhil Swamy, Leif Andersen, Janardhan Kulkarni, and Shuvendu Lahiri for feedback and discussions on formal verification and formalizing intent. The F*/Pulse and Verus teams helped with the project; Idan Gazit of GitHub Next supported the collaboration.
+
+## Frequently asked questions
+
+### If AI writes the specification, who checks that it is correct?
+
+The developer does: a proof shows that the program conforms to the specification, but does not confirm that the specification captures the intent. That is why `pdd-plan` examines the code, asks questions before writing the specification, and turns the answers into a plain-language plan and a Verus specification for review. Two reviewer agents also check the specification, and `pdd-prove` adds one error for each condition to find conditions that constrain nothing. A faulty specification is still possible, so the developer needs to state the requirements explicitly, resolve ambiguities, and approve the plan before verification begins.
+
+### How does PDD differ from specification-driven development, test-driven development, and agent self-checking?
+
+The difference is what keeps the code within the plan. In specification-driven development, nothing enforces compliance with the specification. Test-driven development checks sample inputs, and tests are often written for an implementation that already exists. In self-checking, the same model that wrote the code evaluates its work. In PDD, Verus automatically checks a proof that the implementation conforms to an approved specification. The approach retains the planning familiar from specification-driven development and adds tests where the proof does not reach. A test checks some inputs; a proof confirms specified properties for all inputs in the formal model, subject to its assumptions.
+
+### What exactly is proved, and where does verification run?
+
+The proof is Rust code with Verus constructs. Verus checks it mechanically using the Z3 solver. Verification runs wherever Rust is built: `pdd-prove` runs it while preparing the proof, and `pdd-ship` adds it to the build and CI. The check is deterministic and does not involve models: models may write the specification, code, and proof, but the result is determined by running Verus. A small module usually takes seconds; a large codebase can take up to several minutes. The time depends on the size of the code and the complexity of the proofs.
+
+### What does the developer review if line-by-line review is replaced?
+
+PDD Kit shifts the main focus to requirements for the program’s behavior. The developer reviews the plain-language plan, the formal specification, and the trusted components outside the proof. The pull request lists what has been formally proved, what has been checked with tests, and where additional review may be needed. In Pet Store, this approach reduced dependence on exhaustively reviewing generated code line by line.
+
+### Are other languages supported, and why was Verus chosen?
+
+Only Rust is supported for verification today. Verus can check Rust code directly, which fits PDD Kit’s goal of integrating formal verification into an existing Rust development workflow. Other proof languages, including Lean, F*, and Rocq, take different approaches and have their own characteristics. The authors believe PDD Kit’s methods may help apply those languages, too.
+
+The project’s authors are Alex Lavallée and Mattai Philipose.
+
+Dataist’s take: PDD Kit shows how formal proofs can complement tests and requirements review when working with code generated by AI agents. But the guarantee applies to the agreed specification and depends on components left on trust: in this example, the key assumptions about the password and the selected account are not proved, only tested.
