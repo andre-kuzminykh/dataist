@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как формально проверять веб-приложения, созданные ИИ-агентами, с помощью PDD Kit</title>
+
+    <!-- Favicon. СВОЙ домен, а не раздача исходников GitHub (FR-F013-111):
+         та отдаёт ИСХОДНИКИ репозитория, а не картинки сайту — ограничивает
+         частоту обращений и отвечает медленнее своего. Файл лежит в том же
+         репозитории, который сайт и отдаёт. -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- ЧЕМ собрана страница (FR-F013-65). Проверки живого сайта обязаны
+         отличать «страница собрана старым шаблоном» от «страница сломана»:
+         без метки правило про подпись новости ругалось на все прежние
+         страницы разом и переставало читаться. Даты для этого не годятся —
+         перевыпуск ставит всем один сегодняшний день. -->
+    <meta name="generator" content="nrnm-news 4" />
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Новости" />
+    <meta property="og:title" content="Как формально проверять веб-приложения, созданные ИИ-агентами, с помощью PDD Kit" />
+    <meta property="og:description" content="Microsoft показала PDD Kit — исследовательский набор инструментов, который превращает требования к программе в формальную спецификацию, а затем проверяет, что код ИИ-агента ей соответствует. В проекте GitHub Next Chopin команда применила его к логике входа в Rust-приложении Pet Store: формально проверяемая часть охватила путь от данных запроса до токена или ошибки. Для остального система использовала тесты. Разработчик проверял требования и спецификацию, не читая сгенерированный код построчно." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/" />
+    <meta property="og:image" content="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <!-- ВРЕМЯ, а не только дата (FR-F013-72). Сайт сортирует ленту новостей
+         по этому полю. Пока здесь стояла одна дата, все новости суток были
+         для него «одновременными», порядок между ними получался случайным, и
+         свежая не поднималась наверх: владелец видел последней ту, что вышла
+         тремя выпусками раньше. Читателю над заголовком по-прежнему
+         показывается день. -->
+    <meta property="article:published_time" content="2026-11-05T17:18:23.907542+00:00" />
+    <!-- ПОДПИСЬ ДЛЯ САМОГО САЙТА (FR-F013-70). Карточку новости на главной и
+         в разделе рисует приложение `dataist-ai-web`: оно разбирает эту
+         страницу и ставит СВОЮ подпись — имя соседнего проекта с бейджем
+         «i». Наша подпись под заголовком до карточки не доходит, и владелец
+         видел на главной чужое имя.
+         Приложение читает `article:author` и подставляет его вместо
+         умолчания (`content_service.py`), поэтому имя канала достаточно
+         ПОЛОЖИТЬ сюда — менять приложение не нужно. Прежнее имя здесь не
+         поминается: оно уехало бы в каждую выложенную страницу. -->
+    <meta property="article:author" content="@neuronium_ai" />
+    <!-- Аватарка для той же карточки: у категории «новости» приложение по
+         умолчанию держит пустую строку, а пустая строка у него означает
+         бейдж «i» вместо картинки (`post.py`). Ключ читается рядом с
+         подписью: `meta.get("article:author:avatar")`. -->
+    <meta property="article:author:avatar" content="https://dataist.ai/pics/photo_2026-02-01%2020.43.54.jpeg" />
+
+    <meta name="description" content="Microsoft показала PDD Kit — исследовательский набор инструментов, который превращает требования к программе в формальную спецификацию, а затем проверяет, что код ИИ-агента ей соответствует. В проекте GitHub Next Chopin команда применила его к логике входа в Rust-приложении Pet Store: формально проверяемая часть охватила путь от данных запроса до токена или ошибки. Для остального система использовала тесты. Разработчик проверял требования и спецификацию, не читая сгенерированный код построчно." />
+    <link rel="canonical" href="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/" />
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "headline": "\u041a\u0430\u043a \u0444\u043e\u0440\u043c\u0430\u043b\u044c\u043d\u043e \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0442\u044c \u0432\u0435\u0431-\u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u044f, \u0441\u043e\u0437\u0434\u0430\u043d\u043d\u044b\u0435 \u0418\u0418-\u0430\u0433\u0435\u043d\u0442\u0430\u043c\u0438, \u0441 \u043f\u043e\u043c\u043e\u0449\u044c\u044e PDD Kit",
+      "description": "Microsoft \u043f\u043e\u043a\u0430\u0437\u0430\u043b\u0430 PDD Kit \u2014 \u0438\u0441\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u0442\u0435\u043b\u044c\u0441\u043a\u0438\u0439 \u043d\u0430\u0431\u043e\u0440 \u0438\u043d\u0441\u0442\u0440\u0443\u043c\u0435\u043d\u0442\u043e\u0432, \u043a\u043e\u0442\u043e\u0440\u044b\u0439 \u043f\u0440\u0435\u0432\u0440\u0430\u0449\u0430\u0435\u0442 \u0442\u0440\u0435\u0431\u043e\u0432\u0430\u043d\u0438\u044f \u043a \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u0435 \u0432 \u0444\u043e\u0440\u043c\u0430\u043b\u044c\u043d\u0443\u044e \u0441\u043f\u0435\u0446\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044e, \u0430 \u0437\u0430\u0442\u0435\u043c \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442, \u0447\u0442\u043e \u043a\u043e\u0434 \u0418\u0418-\u0430\u0433\u0435\u043d\u0442\u0430 \u0435\u0439 \u0441\u043e\u043e\u0442\u0432\u0435\u0442\u0441\u0442\u0432\u0443\u0435\u0442. \u0412 \u043f\u0440\u043e\u0435\u043a\u0442\u0435 GitHub Next Chopin \u043a\u043e\u043c\u0430\u043d\u0434\u0430 \u043f\u0440\u0438\u043c\u0435\u043d\u0438\u043b\u0430 \u0435\u0433\u043e \u043a \u043b\u043e\u0433\u0438\u043a\u0435 \u0432\u0445\u043e\u0434\u0430 \u0432 Rust-\u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0438 Pet Store: \u0444\u043e\u0440\u043c\u0430\u043b\u044c\u043d\u043e \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u043c\u0430\u044f \u0447\u0430\u0441\u0442\u044c \u043e\u0445\u0432\u0430\u0442\u0438\u043b\u0430 \u043f\u0443\u0442\u044c \u043e\u0442 \u0434\u0430\u043d\u043d\u044b\u0445 \u0437\u0430\u043f\u0440\u043e\u0441\u0430 \u0434\u043e \u0442\u043e\u043a\u0435\u043d\u0430 \u0438\u043b\u0438 \u043e\u0448\u0438\u0431\u043a\u0438. \u0414\u043b\u044f \u043e\u0441\u0442\u0430\u043b\u044c\u043d\u043e\u0433\u043e \u0441\u0438\u0441\u0442\u0435\u043c\u0430 \u0438\u0441\u043f\u043e\u043b\u044c\u0437\u043e\u0432\u0430\u043b\u0430 \u0442\u0435\u0441\u0442\u044b. \u0420\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u0447\u0438\u043a \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u043b \u0442\u0440\u0435\u0431\u043e\u0432\u0430\u043d\u0438\u044f \u0438 \u0441\u043f\u0435\u0446\u0438\u0444\u0438\u043a\u0430\u0446\u0438\u044e, \u043d\u0435 \u0447\u0438\u0442\u0430\u044f \u0441\u0433\u0435\u043d\u0435\u0440\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0439 \u043a\u043e\u0434 \u043f\u043e\u0441\u0442\u0440\u043e\u0447\u043d\u043e.",
+      "image": "https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/cover.jpg",
+      "url": "https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/"
+      },
+      "datePublished": "2026-11-05T17:18:23.907542+00:00",
+      "inLanguage": "ru",
+      "author": {"@type": "Organization", "@id": "https://dataist.ai/#organization", "name": "Dataist", "url": "https://dataist.ai/"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <!-- `defer`: нужен только внутри телеграма, а первую отрисовку
+         блокировал у ВСЕХ читателей (FR-F013-113). Код ниже
+         спрашивает `window.Telegram?.WebApp` и пустоту переживает. -->
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+                document.documentElement.classList.add('js');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- СТИЛИ: ГОТОВЫЙ ФАЙЛ, А НЕ СБОРКА У ЧИТАТЕЛЯ (FR-F013-112).
+         Здесь стоял CDN-скрипт Tailwind — это не CSS, а КОМПИЛЯТОР: он
+         скачивался, читал разметку и собирал стили прямо в браузере, и до
+         этого момента страница не выглядела страницей. Авторы Tailwind
+         прямо пишут, что в бою так нельзя.
+
+         Файл отдаёт ПРИЛОЖЕНИЕ `dataist-ai-web`, а не репозиторий контента:
+         это разные вещи с разным порядком выката, и однажды все 1820 статей
+         на время остались без вёрстки — страницы уехали за минуту, а
+         приложение с этим файлом задеплоить забыли.
+
+         Следствие, о котором надо помнить: класса, которого нет в собранном
+         файле, на странице НЕ БУДЕТ — молча. Привычные утилиты собраны с
+         запасом, незнакомое семейство (`bg-violet-500`, `text-[13.5px]`)
+         надо досбирать на стороне приложения. -->
+    <link rel="stylesheet" href="/static/css/tailwind.css">
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <!-- `defer`: скрипт иконок не стоит на пути первой отрисовки, а
+         `createIcons` ниже всё равно вызывается через `window.lucide`
+         и ждать его не обязан (FR-F013-113). -->
+    <script src="https://unpkg.com/lucide@1.31.0" defer></script>
+
+
+    <!-- Собственные стили страницы — СОБРАННЫМИ, а не исходником.
+         Прежний блок был написан на особом типе, который понимал только
+         тот самый CDN-скрипт: браузер такой тип игнорирует, а короткую
+         запись утилит внутри раскрывал он же. Убрать скрипт и оставить
+         блок как был — значит обнулить все свои стили разом: карточки,
+         врезки, сетки фактов, ленту соседних материалов.
+
+         Правил `.fade-in` здесь больше нет НАРОЧНО: текст прятался
+         под `opacity: 0` и показывался скриптом, а скрипт мог не
+         дожить до этой строки (FR-F013-113). Плавное появление —
+         украшение, видимость текста — нет. -->
+    <style>
+.glass-header{border-bottom-width:1px;border-color:rgba(0,0,0,.05);background-color:hsla(0,0%,100%,.7);--tw-backdrop-blur:blur(40px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.glass-header:is(.dark *){border-color:hsla(0,0%,100%,.1);background-color:rgba(0,0,0,.7)}.glass-panel{border-width:1px;border-color:rgba(0,0,0,.05);--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px rgba(0,0,0,.06);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.glass-panel:is(.dark *){border-color:hsla(0,0%,100%,.1);--tw-bg-opacity:1;background-color:rgb(28 28 30/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px hsla(0,0%,100%,.04);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);--tw-shadow-color:#000;--tw-shadow:var(--tw-shadow-colored)}body{--tw-bg-opacity:1;background-color:rgb(245 245 247/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1));transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.3s}body:is(.dark *){--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::-moz-selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}:is(.dark *)::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}:is(.dark *)::selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.article-content p{font-family:Inter,sans-serif;font-size:1.125rem;line-height:1.75;margin-bottom:1.5rem;color:rgba(0,0,0,.85)}.dark .article-content p{color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-content p{font-size:1.3125rem;line-height:1.8;margin-bottom:2rem}}.article-content strong{font-weight:600;color:#000}.dark .article-content strong{color:#fff}.article-content em{font-style:italic}.article-content h2{font-family:Inter,sans-serif;font-weight:700;font-size:1.5rem;line-height:1.15;letter-spacing:-.02em;margin-top:4rem;margin-bottom:2rem;color:#000}.dark .article-content h2{color:#fff}@media (min-width:768px){.article-content h2{font-size:1.875rem}}@media (min-width:1024px){.article-content h2{font-size:2.25rem}}.article-content .cta-head{margin-top:0;margin-bottom:0}.article-content section{max-width:48rem;margin-left:auto;margin-right:auto;width:100%}.article-content figure{margin:3rem auto;max-width:48rem}.apple-img,.article-content .arxiv-chart{width:100%;border-radius:1.5rem;overflow:hidden;background:#fff;border:1px solid rgba(0,0,0,.05);box-shadow:0 4px 24px rgba(0,0,0,.04);display:block;padding:0}.dark .apple-img,.dark .article-content .arxiv-chart{background:#1c1c1e;border-color:hsla(0,0%,100%,.1);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.article-content figure img{width:100%;height:auto;display:block;-o-object-fit:cover;object-fit:cover}.article-content figure p{font-family:Space Mono,monospace;font-size:.875rem;color:#86868b;margin:1rem auto 0;text-align:center;line-height:1.6;max-width:42rem}.dark .article-content figure p{color:#8e8e93}.article-lead{font-family:Inter,sans-serif;font-weight:500;font-size:1.25rem;line-height:1.6;margin:.5rem 0 3rem;padding-left:1.25rem;border-left:2px solid #000;color:#86868b}.dark .article-lead{border-color:#fff;color:#8e8e93}@media (min-width:768px){.article-lead{font-size:1.5rem;padding-left:2rem}}.article-content .tech-card{position:relative;display:block;margin:0 auto 10px;max-width:48rem;padding:14px 18px 14px 44px;border-radius:14px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.06)}.dark .article-content .tech-card{background:hsla(0,0%,100%,.04);border-color:hsla(0,0%,100%,.1)}.article-content .tech-card:before{content:"";position:absolute;left:18px;top:1.35em;width:8px;height:8px;border-radius:50%;background:linear-gradient(100deg,#f97316,#8b5cf6)}.article-content .tech-card span{font-family:Inter,sans-serif;font-size:1rem;line-height:1.55;color:rgba(0,0,0,.85)}.dark .article-content .tech-card span{color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-content .tech-card span{font-size:1.0625rem}}.article-content .tech-card span strong{display:block;margin-bottom:3px;font-family:Inter,sans-serif;font-weight:700;font-size:1.05rem;letter-spacing:-.01em;color:#000}.dark .article-content .tech-card span strong{color:#fff}@media (min-width:768px){.article-content .tech-card span strong{font-size:1.15rem}}.article-content .tech-card.flex span strong{display:inline;margin-bottom:0;font-size:inherit}.article-content .tech-num{display:flex;align-items:center;gap:14px;padding-left:18px}.article-content .tech-num:before{content:none}.article-content .tech-num .ig-num{flex:0 0 auto}.article-content .tech-card.flex{padding-left:18px;gap:14px;display:flex}.article-content .tech-card.flex:before{content:none}.article-content .tech-card .text-cyber-orange{color:#f97316}.article-content .prompt-box{max-width:48rem;margin:2rem auto;border-radius:14px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.06);overflow:hidden}.dark .article-content .prompt-box{background:hsla(0,0%,100%,.04);border-color:hsla(0,0%,100%,.1)}.article-content .prompt-box__head{display:flex;align-items:center;gap:10px;padding:11px 18px;border-bottom:1px solid rgba(0,0,0,.06);font-family:Space Mono,monospace;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:#86868b}.dark .article-content .prompt-box__head{border-color:hsla(0,0%,100%,.1);color:#8e8e93}.article-content .prompt-box__head:before{content:"";flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:linear-gradient(100deg,#f97316,#8b5cf6)}.article-content .prompt-box pre{margin:0;padding:16px 18px;overflow-x:auto}.article-content .prompt-box code{display:block;font-family:Space Mono,monospace;font-size:.8125rem;line-height:1.65;color:rgba(0,0,0,.85);white-space:pre-wrap;overflow-wrap:anywhere}.dark .article-content .prompt-box code{color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-content .prompt-box code{font-size:.875rem}}.article-content code.inline-code{font-family:Space Mono,monospace;font-size:.875em;padding:2px 6px;border-radius:6px;overflow-wrap:anywhere;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.06)}.dark .article-content code.inline-code{background:hsla(0,0%,100%,.08);border-color:hsla(0,0%,100%,.12)}.article-content .ig{display:grid;gap:12px;margin:2.5rem auto;max-width:48rem;padding:24px 18px;border-radius:20px;background:#fff;border:1px solid rgba(0,0,0,.07);box-shadow:0 4px 24px rgba(0,0,0,.04)}.dark .article-content .ig{background:#1c1c1e;border-color:hsla(0,0%,100%,.12);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}@media (min-width:768px){.article-content .ig{padding:30px 26px;border-radius:24px}}.article-content .ig-facts,.article-content .ig-steps{display:flex;flex-wrap:wrap;justify-content:center}.article-content .ig-facts>*,.article-content .ig-steps>*{flex:0 1 calc((100% - (var(--cols, 3) - 1)*12px)/var(--cols, 3))}@media (max-width:639px){.article-content .ig-facts>*,.article-content .ig-steps>*{flex-basis:100%}}.article-content .ig-compare{grid-template-columns:1fr;gap:14px}@media (min-width:640px){.article-content .ig-compare{grid-template-columns:1fr 1fr}}.article-content .ig-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}.article-content .ig-fact,.article-content .ig-step{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0;padding:12px 8px}.article-content .ig-num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;font-family:Space Mono,monospace;color:#f97316;border:2px solid rgba(249,115,22,.55);background:rgba(249,115,22,.07)}.article-content .ig-big{font-family:Space Mono,monospace;font-weight:700;font-size:1.4rem;line-height:1.15;letter-spacing:-.01em;background:linear-gradient(100deg,#f97316,#8b5cf6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#8b5cf6;overflow-wrap:anywhere}@media (min-width:768px){.article-content .ig-big{font-size:1.75rem}}.article-content .ig-lb{font-weight:600;font-size:.9rem;line-height:1.3;overflow-wrap:anywhere}.article-content .ig-sub{font-size:.8rem;line-height:1.4;color:#86868b;overflow-wrap:anywhere}.dark .article-content .ig-sub{color:#8e8e93}.article-content .ig-col{display:flex;flex-direction:column;gap:7px;padding:16px 18px;border-radius:14px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.06);min-width:0}.dark .article-content .ig-col{background:hsla(0,0%,100%,.04);border-color:hsla(0,0%,100%,.1)}.article-content .ig-hd{font-weight:700;font-size:.95rem;line-height:1.3}.article-content .ig-tx{font-size:.95rem;line-height:1.5;color:#86868b;overflow-wrap:anywhere}.dark .article-content .ig-tx{color:#8e8e93}.article-content .ig-compare .ig-col:first-child .ig-hd{color:#f97316}.article-content .ig-compare .ig-col:last-child .ig-hd{color:#8b5cf6}.article-content .ig-chip{border-radius:999px;padding:8px 15px;font-size:.875rem;font-weight:600;border:1.5px solid rgba(139,92,246,.45);color:#8b5cf6;background:rgba(139,92,246,.08);line-height:1.2}.article-content .ig-chips .ig-chip:nth-child(odd){border-color:rgba(249,115,22,.5);color:#f97316;background:rgba(249,115,22,.07)}.article-content .ig p{margin:0}.article-content .vid{margin:2.5rem auto;max-width:48rem}.article-content .vid-box{position:relative;width:100%;aspect-ratio:16/9;border-radius:1.25rem;overflow:hidden;background:#000;border:1px solid rgba(0,0,0,.07)}.dark .article-content .vid-box{border-color:hsla(0,0%,100%,.12)}.article-content .vid-player{width:100%;height:100%;display:block;border:0}.article-content .vid-cap{font-family:Space Mono,monospace;font-size:.875rem;color:#86868b;margin:1rem auto 0;text-align:center;line-height:1.6;max-width:42rem}.dark .article-content .vid-cap{color:#8e8e93}.article-content .vid-src{font-family:Space Mono,monospace;font-size:.8rem;color:#86868b;margin:.5rem auto 0;text-align:center}.dark .article-content .vid-src{color:#8e8e93}.article-content .vid-src a{text-decoration:underline}.article-content .vid-link{display:block}.article-content .vid-poster{width:100%;height:100%;-o-object-fit:cover;object-fit:cover;display:block}.article-content .vid-play{position:absolute;left:50%;top:50%;width:4.5rem;height:4.5rem;transform:translate(-50%,-50%);border-radius:50%;background:rgba(0,0,0,.55);border:2px solid hsla(0,0%,100%,.9)}.article-content .vid-play:after{content:"";position:absolute;left:56%;top:50%;transform:translate(-50%,-50%);border-left:1.15rem solid #fff;border-top:.72rem solid transparent;border-bottom:.72rem solid transparent}.article-content .vid-link:hover .vid-play{background:rgba(0,0,0,.75)}@media (prefers-reduced-motion:reduce){}.rel-rail{display:flex;gap:16px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x proximity;padding:4px 2px 12px;overscroll-behavior-x:contain;scrollbar-width:none;-ms-overflow-style:none}.rel-rail::-webkit-scrollbar{display:none}.rel-rail>a{flex:0 0 auto;width:208px;scroll-snap-align:start;text-decoration:none;display:block;transition:transform .25s cubic-bezier(.2,.8,.2,1)}@media (min-width:640px){.rel-rail>a{width:244px}}.rel-rail>a:hover{transform:translateY(-4px)}.rel-thumb{display:block;position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:18px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.1);box-shadow:0 4px 24px rgba(0,0,0,.05)}.dark .rel-thumb{background:hsla(0,0%,100%,.045);border-color:hsla(0,0%,100%,.14);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.rel-thumb img{width:100%;height:100%;-o-object-fit:cover;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}.rel-rail>a:hover .rel-thumb img{transform:scale(1.05)}.rel-rail time{display:block;margin:12px 0 5px;font-family:Space Mono,monospace;font-size:.625rem;letter-spacing:.08em;color:#86868b}.dark .rel-rail time{color:#8e8e93}.rel-title{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.875rem;font-weight:600;line-height:1.4;letter-spacing:-.01em;color:#000}.dark .rel-title{color:#fff}.rel-fade{position:absolute;top:0;bottom:12px;width:96px;pointer-events:none;opacity:0;z-index:2;transition:opacity .35s ease}.rel-fade-l{left:0;background:linear-gradient(90deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.rel-fade-r{right:0;background:linear-gradient(270deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.dark .rel-fade-l{background:linear-gradient(90deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.dark .rel-fade-r{background:linear-gradient(270deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.rel-arrow{position:absolute;top:calc(50% - 34px);translate:0 -50%;z-index:3;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid rgba(0,0,0,.1);background:#fff;color:#000;box-shadow:0 8px 26px rgba(0,0,0,.14);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,transform .25s ease}.dark .rel-arrow{border-color:hsla(0,0%,100%,.14);background:#1c1c1e;color:#fff}.rel-arrow:hover{transform:scale(1.08)}.rel-arrow-l{left:6px}.rel-arrow-r{right:6px}.rel-wrap[data-left="1"] .rel-fade-l,.rel-wrap[data-right="1"] .rel-fade-r{opacity:1}.rel-wrap[data-left="1"] .rel-arrow-l,.rel-wrap[data-right="1"] .rel-arrow-r{opacity:1;visibility:visible;pointer-events:auto}@media (hover:none){.rel-arrow{display:none}}@media (prefers-reduced-motion:reduce){.rel-arrow,.rel-fade,.rel-rail>a,.rel-thumb img{transition:none}}
+    </style>
+    <style>
+        /* --- ряд рубрик в шапке -----------------------------------------
+           Палитра витрин. На странице статьи её не было вовсе: переменные
+           живут в styles.css приложения, которого страница не подключает.
+           Из-за этого и переключатель языка рисовал неактивный язык тем же
+           цветом, что активный — значение var(--text-muted) не определено,
+           объявление отбрасывается, цвет наследуется. */
+        :root {
+            --bg-color: #F5F5F7;
+            --text-main: #1d1d1f;
+            --text-muted: #86868B;
+            --chip-border: rgba(0, 0, 0, 0.08);
+        }
+        .dark {
+            --bg-color: #000000;
+            --text-main: #f5f5f7;
+            --text-muted: #8E8E93;
+            /* 0.19, а не 0.10: на чистом чёрном десятая доля даёт
+               rgb(25,25,25) — ряд читается не кнопками, а россыпью слов. */
+            --chip-border: rgba(255, 255, 255, 0.19);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Края растворяет МАСКА самого ряда, а не градиент поверх него:
+           накладной прямоугольник пришлось бы красить фоном страницы, и на
+           границе тем он выглядел бы грязным мазком.
+
+           Правый край растворён сразу, ещё до пересчёта скриптом: рубрики
+           в шапку обычно не помещаются, и до первого замера честнее
+           показать растворение, чем сухой обрез. Не понадобится — скрипт
+           обнулит. */
+        #category-scroll {
+            --fade-l: 0px;
+            --fade-r: 56px;
+            -webkit-mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+            mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+        }
+
+        /* Заливки у рубрики нет, всю форму держит рамка — значит и рамка
+           задаётся здесь, а не только утилитой Tailwind. */
+        .category-btn {
+            transition: all 0.25s ease;
+            background: transparent;
+            border: 1px solid var(--chip-border);
+        }
+        .category-btn.active,
+        .category-btn.active:hover {
+            background: var(--text-main);
+            color: var(--bg-color);
+            border-color: var(--text-main);
+        }
+
+        /* Выбор рубрики на телефоне — на <details>, то есть без единой
+           строки JavaScript: раскрытие списка не должно зависеть от того,
+           доехала ли чужая библиотека. */
+        #cat-menu > summary { list-style: none; cursor: pointer; }
+        #cat-menu > summary::-webkit-details-marker { display: none; }
+        #cat-menu > summary::marker { content: ""; }
+        #cat-menu[open] > summary .cat-caret { transform: rotate(180deg); }
+        .cat-caret { transition: transform 0.2s ease; }
+        /* Подпись на кнопке телефона не должна раздувать шапку, и её ширина не
+           должна зависеть от длины названия рубрики. У «Исследований» кнопка
+           выходила на 135 пикселей против 106 у «Новостей», и правый край
+           «Telegram» уезжал за экран на 390. Замер поймал; на широком экране
+           этого не видно вовсе.
+
+           3.5rem, а не 4.5: с четырьмя с половиной не хватало ровно четырёх
+           пикселей. Теперь длина названия на ширину шапки не влияет никак. */
+        #cat-menu > summary > span {
+            max-width: 3.5rem; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        #cat-menu .cat-item {
+            display: flex; align-items: center; gap: 0.625rem;
+            padding: 0.625rem 0.75rem; border-radius: 0.75rem;
+            font-family: "Space Mono", monospace; font-size: 11px;
+            font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+            color: var(--text-muted); text-decoration: none;
+        }
+        #cat-menu .cat-item.active {
+            background: var(--text-main); color: var(--bg-color);
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4 shrink-0">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">
+                    ДАТАИСТ
+                </div>
+            </a>
+            <details id="cat-menu" class="sm:hidden relative -ml-2">
+                <summary class="category-btn inline-flex items-center gap-1.5 px-3 py-2 rounded-full font-mono text-[10px] font-bold tracking-tight uppercase text-black dark:text-white" aria-label="Выбрать рубрику">
+                    <i data-lucide="newspaper" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span>Новости</span>
+                    <i data-lucide="chevron-down" class="cat-caret w-3.5 h-3.5 shrink-0"></i>
+                </summary>
+                <div class="absolute left-0 top-full mt-2 w-56 p-2 rounded-2xl glass-panel flex flex-col gap-0.5 z-50">
+                    <a href="/ru/?cat=all" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i><span>Все</span></a>
+                    <a href="/ru/?cat=learning" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="graduation-cap" class="w-4 h-4 shrink-0"></i><span>Обучение</span></a>
+                    <a href="/ru/?cat=research" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="microscope" class="w-4 h-4 shrink-0"></i><span>Исследования</span></a>
+                    <a href="/ru/?cat=tech" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="cpu" class="w-4 h-4 shrink-0"></i><span>Технологии</span></a>
+                    <a href="/ru/?cat=cases" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="briefcase" class="w-4 h-4 shrink-0"></i><span>Кейсы</span></a>
+                    <a href="/ru/?cat=thoughts" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="brain" class="w-4 h-4 shrink-0"></i><span>Мысли</span></a>
+                    <a href="/ru/?cat=news" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" aria-current="page" class="cat-item active"><i data-lucide="newspaper" class="w-4 h-4 shrink-0"></i><span>Новости</span></a>
+                </div>
+            </details>
+        </div>
+            <div id="category-scroll" class="hidden sm:block flex-1 min-w-0 overflow-x-auto no-scrollbar">
+                <nav aria-label="Рубрики" class="flex flex-nowrap items-center gap-2 w-max mx-auto">
+                    <a href="/ru/?cat=all" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="all" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i><span>Все</span></a>
+                    <a href="/ru/?cat=learning" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="learning" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="graduation-cap" class="w-3.5 h-3.5 shrink-0"></i><span>Обучение</span></a>
+                    <a href="/ru/?cat=research" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="research" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i><span>Исследования</span></a>
+                    <a href="/ru/?cat=tech" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="tech" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="cpu" class="w-3.5 h-3.5 shrink-0"></i><span>Технологии</span></a>
+                    <a href="/ru/?cat=cases" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="cases" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="briefcase" class="w-3.5 h-3.5 shrink-0"></i><span>Кейсы</span></a>
+                    <a href="/ru/?cat=thoughts" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="thoughts" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="brain" class="w-3.5 h-3.5 shrink-0"></i><span>Мысли</span></a>
+                    <a href="/ru/?cat=news" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="news" aria-current="page" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white active"><i data-lucide="newspaper" class="w-3.5 h-3.5 shrink-0"></i><span>Новости</span></a>
+                </nav>
+            </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <nav id="lang-switch" aria-label="Язык" class="flex items-center gap-1.5 md:gap-2 font-mono text-[11px] md:text-sm font-bold uppercase tracking-widest select-none"><span aria-current="true" class="text-black dark:text-white">RU</span><span aria-hidden="true" class="text-[var(--text-muted)] opacity-40">|</span><a href="/" hreflang="en" lang="en" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="text-[var(--text-muted)] hover:text-black dark:hover:text-white transition-colors no-underline">EN</a></nav>
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/neuronium_ai" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <script>
+        /* Растворение краёв ряда рубрик.
+
+           Отдельным блоком намеренно: в общем блоке внизу страницы первой
+           строкой идёт обращение к библиотеке иконок с unpkg.com, и если
+           она не ответила, весь тот блок не исполняется. Ряду рубрик до
+           этого дела быть не должно. */
+        (function () {
+            var el = document.getElementById('category-scroll');
+            if (!el) return;
+            var row = el.firstElementChild;
+            var RAMP = 48, MAX = 56;          // те же числа, что на витрине
+            var placed = false;
+
+            function update() {
+                var max = el.scrollWidth - el.clientWidth;
+                var w = function (v) {
+                    return max <= 8 ? 0
+                        : Math.round(Math.min(1, Math.max(0, v) / RAMP) * MAX);
+                };
+                el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+
+                if (!placed && max > 8) {
+                    placed = true;
+                    var active = el.querySelector('.category-btn.active');
+                    if (active) {
+                        /* Ровно настолько, чтобы текущая рубрика влезла, и
+                           ни пикселем больше: центрирование утаскивало ряд
+                           до упора и прятало «Все» за краем насовсем.
+                           Запас 64 шире растворения (56), иначе рубрика
+                           встаёт под маску и читается наполовину. */
+                        var pad = 64;
+                        var l = active.offsetLeft - pad;
+                        var r = active.offsetLeft + active.offsetWidth + pad;
+                        if (r > el.scrollLeft + el.clientWidth) el.scrollLeft = r - el.clientWidth;
+                        else if (l < el.scrollLeft) el.scrollLeft = Math.max(0, l);
+                        max = el.scrollWidth - el.clientWidth;
+                        el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                        el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+                    }
+                }
+            }
+
+            el.addEventListener('scroll', update, { passive: true });
+            window.addEventListener('resize', update);
+
+            /* Главное. Ряд меняет ширину ПОСЛЕ первого замера: `<i
+               data-lucide>` превращается в svg, когда догрузится библиотека
+               иконок, и рубрики раздаются. Разовый замер этого не ловит —
+               край резался насухо. Наблюдатель ловит любое изменение
+               размера, чем бы оно ни было вызвано. */
+            if (window.ResizeObserver && row) new ResizeObserver(update).observe(row);
+            window.addEventListener('load', update);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+
+            update();
+        })();
+
+        /* Меню рубрик на телефоне закрывается нажатием мимо него.
+           Раскрытие держится на <details> и работает без скрипта; это лишь
+           удобство — не сработает, меню закроется повторным нажатием. */
+        (function () {
+            var menu = document.getElementById('cat-menu');
+            if (!menu) return;
+            document.addEventListener('click', function (e) {
+                if (menu.open && !menu.contains(e.target)) menu.open = false;
+            });
+        })();
+    </script>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА НОВОСТИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="newspaper" class="w-3.5 h-3.5"></i>
+                    <span>Новости · 2026-11-05</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Как формально проверять веб-приложения, созданные ИИ-агентами, с помощью PDD Kit
+                </h1>
+
+                <!-- ПОДПИСЬ НОВОСТИ (FR-F013-64, FR-F013-124): имя задаёт
+                     конвейер, ссылка ведёт в канал. Аватарка — картинка
+                     владельца; не загрузилась, значит просто нет кадра, а
+                     подпись остаётся. Имён здесь не поминаем даже
+                     комментарием: блок вместе с ним уезжает и в уже
+                     выложенные страницы (`resign_news`). -->
+                <a href="https://t.me/neuronium_ai" target="_blank" rel="noopener"
+                   class="inline-flex items-center gap-2.5 mb-8 group/author">
+                    <img src="https://dataist.ai/pics/photo_2026-02-01%2020.43.54.jpeg" alt="Dataist"
+                         loading="lazy"
+                         class="w-9 h-9 rounded-full object-cover border border-black/10 dark:border-white/20 bg-black/5 dark:bg-white/10">
+                    <span class="font-mono text-sm font-bold tracking-tight text-black dark:text-white group-hover/author:opacity-60 transition-opacity">Dataist</span>
+                </a>
+
+                <p class="article-lead text-left max-w-3xl mx-auto">Microsoft показала PDD Kit — исследовательский набор инструментов, который превращает требования к программе в формальную спецификацию, а затем проверяет, что код ИИ-агента ей соответствует. В проекте GitHub Next Chopin команда применила его к логике входа в Rust-приложении Pet Store: формально проверяемая часть охватила путь от данных запроса до токена или ошибки. Для остального система использовала тесты. Разработчик проверял требования и спецификацию, не читая сгенерированный код построчно.</p>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/cover.jpg"
+                         alt="Обложка: Как формально проверять веб-приложения, созданные ИИ-агентами, с помощью PDD Kit"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ НОВОСТИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+                <section>
+<h2>Зачем проверять план</h2>
+<p>Агенты для программирования уже создают целые функции за один сеанс — иногда десятки и сотни тысяч строк. Построчная проверка таких изменений плохо масштабируется, поэтому команды чаще согласуют с агентом план и тесты, а затем передают ему реализацию.</p>
+<p>Но план на естественном языке сам по себе не заставляет агента ему следовать. Агент может реализовать немного другое, а затем написать тесты, которые проверяют именно получившийся код. В результате проверок и строк покрытия становится больше, но расхождение между запросом и программой может обнаружиться только после сообщения об ошибке или редкого случая.</p>
+<p>Тесты проверяют лишь часть возможных входных данных. Формальное доказательство может показать, что код выполняет заданные требования для каждого входа, охваченного спецификацией. Раньше такой подход требовал специалистов, отдельных языков и долгой работы. По словам авторов, теперь ИИ-агенты всё лучше помогают составлять формальные спецификации и доказательства. Для этого процесса они используют термин Proof-Driven Development (PDD) и создали PDD Kit.</p>
+<p>Работу представили в контексте Microsoft at SOSP 2026 — площадки, где академические и промышленные участники обсуждают теорию и практику системного программного обеспечения.</p>
+</section>
+<section>
+<h2>Как работает PDD Kit</h2>
+<p>PDD Kit — набор инструментов для формальных методов, устроенный примерно так же, как Spec Kit для разработки по спецификации. Он работает внутри Chopin — среды GitHub Next для совместного планирования в реальном времени, где команда и агенты редактируют общий документ.</p>
+<p>Сначала участники команды уточняют намерения обычным языком. PDD Kit задаёт вопросы, объясняет связанные с ними части кода и записывает ответы в документ намерений. Он связывает исходные требования с формальной спецификацией и тестами. То, что можно выразить формально, становится спецификацией; остальное оформляется как неформальные требования для тестирования. Затем система готовит доказательства для формальной части и тесты для остальной. Для работы с PDD Kit не требуется опыт в формальных методах.</p>
+<p>Каждый результат отмечает, каким способом его проверили:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Формальная проверка</strong> — математическое доказательство того, что код выполняет спецификацию для всех возможных входов. Сейчас PDD Kit использует Verus — язык доказательств для Rust, созданный при участии Microsoft Research, Carnegie Mellon University, VMware Research, ETH Zurich, MPI-SWS, UNSW Sydney, University of Texas at Austin, University of Michigan, University of British Columbia, University of Wisconsin–Madison и Weizmann Institute of Science.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Эмпирическая проверка</strong> — запуск кода и наблюдение за его поведением. Так проверяют то, чего доказательство не охватывает, например стороннюю криптографическую библиотеку или пользовательский интерфейс. Для этого используют модульные тесты и тесты полного сценария, автоматизацию терминала, браузерных агентов и агентов, управляющих компьютером. Успешный тест считается свидетельством, а не доказательством: он подтверждает работу только на проверенных входах.</span></div>
+<p>Граница между проверенным и принятым на доверии кодом называется доверенной вычислительной базой (TCB). PDD Kit обозначает её явно и просит разработчика отдельно подтвердить каждую часть.</p>
+</section>
+<section>
+<h2>Приложение Pet Store</h2>
+<p>Чтобы проверить подход на существующей кодовой базе, команда создала Pet Store — веб-приложение, полностью написанное на Rust. Серверная часть использует Axum и SQLite, работает с запасами товаров, скидками, заказами и оформлением покупок. Интерфейс создан на Leptos и компилируется в WebAssembly. В приложении около 5 000 строк Rust.</p>
+<p>Авторы сосредоточились на логике входа, хотя тот же процесс можно применить для проверки функциональной корректности всего приложения. PDD Kit рекомендует начинать с наиболее чувствительных частей и постепенно проверять остальные. Ошибка при входе может открыть злоумышленнику аккаунт покупателя или права администратора.</p>
+<p>В Chopin разработчик сформулировал требования двумя пунктами:</p>
+<div class="tech-card tech-num rounded-xl px-5 py-3 mb-2"><span class="ig-num">1</span><span class="text-sm">Токен выдаётся только при правильном пароле.</span></div>
+<div class="tech-card tech-num rounded-xl px-5 py-3 mb-2"><span class="ig-num">2</span><span class="text-sm">Токены администратора выдаются только аккаунтам администраторов.</span></div>
+<p>Запрос намеренно оставили кратким: задача PDD Kit — уточнить намерение и превратить его в требования, которые можно проверить доказательством.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/fig_0.jpg" alt="Разработка на основе доказательств с PDD Kit. Члены команды согласовывают намерение. Verus и набор тестов следят, чтобы код ему соответствовал" class="w-full object-contain rounded-lg">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Разработка на основе доказательств с PDD Kit. Члены команды согласовывают намерение. Verus и набор тестов следят, чтобы код ему соответствовал</p>
+<p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://www.microsoft.com/en-us/research/blog/formally-verifying-agent-written-full-stack-web-apps-with-pdd-kit/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">microsoft.com</a></p>
+</div></figure>
+</section>
+<section>
+<h2>От уточнений к карте требований</h2>
+<p>Перед написанием кода этап планирования <code class="inline-code">pdd-plan</code> изучает проект и показывает вопросы во вкладке решений. Если вопрос зависит от устройства программы, система сначала объясняет соответствующий фрагмент: его назначение, связи с другими частями и конкретную функцию.</p>
+<p>Одно из уточнений касалось формулировки «токен выдаётся только при правильном пароле». Она запрещает выдать токен при неверном пароле, но сама по себе не требует выдавать его при верном: программа, которая отказывает всем, тоже выполняет это условие. Чтобы исключить такой вариант, нужно добавить обратное требование — правильный пароль всегда даёт токен. Первое условие означает «если выдан токен, пароль правильный», второе — «если пароль правильный, выдаётся токен». Вместе они образуют условие «тогда и только тогда». Без уточнения агент мог бы выбрать одну трактовку молча; разработчик подтвердил обе.</p>
+<p>По мере обсуждения PDD Kit поддерживает краткое описание работы в начале плана, чтобы команде не приходилось искать решения в длинной переписке. В нём есть схема входа, обзор того, что будет доказано или принято на доверии, и, если нужно, наглядная модель. Для входа система нарисовала стойку выдачи билетов.</p>
+<p>Карта намерений связывает каждое требование со словами разработчика и зафиксированным решением. Записи ведут к соответствующей части формальной спецификации и тестам; в спецификации есть фрагменты контракта Verus с пояснениями. Карточка решения показывает неоднозначность, которую агент иначе мог бы разрешить сам. В одном из сравнений две трактовки отличались единственной ячейкой: случаем, когда правильный пароль не приводит к выдаче токена.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/fig_1.jpg" alt="Первая карточка решения. Условие «только с правильным паролем» само по себе выполняет и система входа, которая никого не пускает. Проверка в обе стороны исключает такой вариант" class="w-full object-contain rounded-lg">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Первая карточка решения. Условие «только с правильным паролем» само по себе выполняет и система входа, которая никого не пускает. Проверка в обе стороны исключает такой вариант</p>
+<p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://www.microsoft.com/en-us/research/blog/formally-verifying-agent-written-full-stack-web-apps-with-pdd-kit/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">microsoft.com</a></p>
+</div></figure>
+</section>
+<section>
+<h2>Как проверяли вход</h2>
+<p>Перед началом работы команда должна подтвердить план целиком. В первом варианте PDD Kit предложил доказать основную логику входа — выбор таблицы и проверку пароля, — а окружающий обработчик оставить доверенным и покрыть тестами. Разработчик решил включить в доказательство и обработчик: именно там ожидаются результаты запросов к базе данных и подписывается токен, поэтому при изменении кода можно случайно переставить строки.</p>
+<p>Для обработчика входа подготовили отдельную асинхронную спецификацию. Она охватила путь от полей запроса до токена или HTTP-ошибки. После изменения PDD Kit снова запросил подтверждение плана: совпадения с намерением недостаточно, если заодно расширяется объём доверенного кода.</p><figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/fig_7.jpg" alt="Что доказывается, а чему доверяют при входе. Зелёные функции Verus доказывает для любого ввода. Янтарные элементы считаются доверенными, принимаются разработчиком и проверяются запланированными тестами из §4.1 плана" class="w-full object-contain rounded-lg"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Что доказывается, а чему доверяют при входе. Зелёные функции Verus доказывает для любого ввода. Янтарные элементы считаются доверенными, принимаются разработчиком и проверяются запланированными тестами из §4.1 плана</p><p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://www.microsoft.com/en-us/research/blog/formally-verifying-agent-written-full-stack-web-apps-with-pdd-kit/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">microsoft.com</a></p></div></figure><figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/fig_8.jpg" alt="Карточка доверия для check_password. Verus принимает эти два условия на веру, поэтому человек принимает их, а два теста проверяют" class="w-full object-contain rounded-lg"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Карточка доверия для check_password. Verus принимает эти два условия на веру, поэтому человек принимает их, а два теста проверяют</p><p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://www.microsoft.com/en-us/research/blog/formally-verifying-agent-written-full-stack-web-apps-with-pdd-kit/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">microsoft.com</a></p></div></figure><figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/fig_9.jpg" alt="Запланированный тест для доверенного check_password, написанный до появления самого теста. В плане успешный тест обозначен как свидетельство, а не доказательство" class="w-full object-contain rounded-lg"><p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Запланированный тест для доверенного check_password, написанный до появления самого теста. В плане успешный тест обозначен как свидетельство, а не доказательство</p><p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://www.microsoft.com/en-us/research/blog/formally-verifying-agent-written-full-stack-web-apps-with-pdd-kit/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">microsoft.com</a></p></div></figure>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/fig_2.jpg" alt="Модель входа в PDD Kit. Переданное поле выбирает окно, окно выбирает таблицу, а вместе с ней — роль; ничего не выводится, пока пароль не совпадает" class="w-full object-contain rounded-lg">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Модель входа в PDD Kit. Переданное поле выбирает окно, окно выбирает таблицу, а вместе с ней — роль; ничего не выводится, пока пароль не совпадает</p>
+<p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://www.microsoft.com/en-us/research/blog/formally-verifying-agent-written-full-stack-web-apps-with-pdd-kit/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">microsoft.com</a></p>
+</div></figure>
+</section>
+<section>
+<h2>Что осталось за границей доказательства</h2>
+<p>Доказать можно не всё. В проверке входа PDD Kit выделил несколько ограничений:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Код, которого не видит проверяющая система: хеширование в bcrypt, запросы sqlx и подпись jsonwebtoken находятся в других пакетах.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Сведения о внешнем мире: текущее содержимое SQLite и показания часов поступают программе извне.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Завершение и скорость работы: спецификация описывает результат, если вход завершился; зависший или медленный запрос ей не противоречит.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">То, что требует человеческой оценки: например, понятность сообщения об ошибке или интерфейса.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Требования, которые никто не записал: доказательство охватывает спецификацию, но не неуказанные пожелания.</span></div>
+<p>Для таких частей используется эмпирическая проверка. PDD Kit обозначает границу доверия и оборачивает каждый непроверяемый компонент небольшой функцией с контрактом-предположением. В Verus для этого применяются <code class="inline-code">#[verifier::external_body]</code> или <code class="inline-code">external_fn_specification</code>. Разработчик принимает каждый контракт отдельно, а план получает тест на каждое его условие.</p>
+<p>В примере команда подтвердила шесть частей:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Два поиска: <code class="inline-code">Customer::find_by_email</code> и <code class="inline-code">Admin::find_by_username</code>. Если запрос завершается успешно, он возвращает строку из соответствующей таблицы для указанного адреса или имени пользователя либо сообщает, что записи нет.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><code class="inline-code">check_password</code> — обёртка над <code class="inline-code">bcrypt::verify</code>. Ошибка возникает только тогда, когда bcrypt не может прочитать сохранённый хеш; <code class="inline-code">Ok(true)</code> означает, что пароль правильный.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><code class="inline-code">generate_token</code> подписывает именно переданные утверждения с настроенным секретом, а ошибку подписи возвращает как 500.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><code class="inline-code">expiry_from_now</code> читает часы и задаёт срок действия ровно через 24 часа.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><code class="inline-code">database_error</code> преобразует ошибку поиска в существующую ошибку 500 с сообщением sqlx.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Оболочка обработчика входа разбирает запрос и без изменений передаёт его поля в <code class="inline-code">login_flow</code>.</span></div>
+<p>Для поиска по базе данных код остаётся на прежнем месте, а внешний контракт описывает, что он должен вернуть. В примере контракт <code class="inline-code">ex_customer_find_by_email</code> задаёт условие: успешный запрос возвращает запись клиента, соответствующую точному адресу электронной почты, или <code class="inline-code">None</code>, если записи нет. Сам запрос выполняется в sqlx и недоступен для проверки Verus.</p>
+<p>Часы вынесены в обёртку <code class="inline-code">expiry_from_now</code>, помеченную <code class="inline-code">#[verifier::external_body]</code>. Verus использует её условие и не проверяет тело функции: срок действия должен наступить ровно через 86 400 секунд после чтения часов. Функция по-прежнему может аварийно завершиться, если время выходит за допустимые пределы; гарантия от этого не даётся.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/fig_3.jpg" alt="Запись в карте намерений после принятия решения: при входе токен выдаётся только при правильном пароле для этой учётной записи и всегда выдаётся при нём. Блок-схема показывает все возможные исходы проверки пароля" class="w-full object-contain rounded-lg">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Запись в карте намерений после принятия решения: при входе токен выдаётся только при правильном пароле для этой учётной записи и всегда выдаётся при нём. Блок-схема показывает все возможные исходы проверки пароля</p>
+<p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://www.microsoft.com/en-us/research/blog/formally-verifying-agent-written-full-stack-web-apps-with-pdd-kit/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">microsoft.com</a></p>
+</div></figure>
+<p>PDD Kit показывает, что именно доказывает Verus, что люди принимают и проверяют тестами, а также что остаётся без обещаний. Каждый выбор границы доверия вынесен в отдельную карточку: в ней указаны принятые условия и последствия, если предположение окажется неверным. Для каждого такого условия план предусматривает эмпирическую проверку в формате «Дано / Когда / Тогда». До запуска она отмечена как запланированная; после запуска сохраняются результат команды и коммит, на котором её выполнили.</p>
+<p>План также явно указывает, чего команда не обещает: что асинхронная операция входа обязательно завершится, что выход часов за допустимый диапазон не приведёт к аварийному завершению, что попытки входа ограничены по частоте или времени и что другие конечные точки правильно обрабатывают роль пользователя.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/fig_4.jpg" alt="Два прочтения одного и того же предложения. Они различаются одной ячейкой, и от этой ячейки зависит, что должно установить доказательство" class="w-full object-contain rounded-lg">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Два прочтения одного и того же предложения. Они различаются одной ячейкой, и от этой ячейки зависит, что должно установить доказательство</p>
+<p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://www.microsoft.com/en-us/research/blog/formally-verifying-agent-written-full-stack-web-apps-with-pdd-kit/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">microsoft.com</a></p>
+</div></figure>
+</section>
+<section>
+<h2>Спецификация и код входа</h2>
+<p>Документ намерений — версия формальной спецификации на обычном языке, которую проверяет команда. Читать доказательство вместо кода не требуется: его пишет агент, а Verus механически проверяет каждый шаг. Условия в спецификации относятся к результату функции и должны выполняться для каждого возможного входа. Если хотя бы одно условие может нарушиться, сборка завершается ошибкой, а Verus указывает на него.</p>
+<p>Для требования о пароле важно, что проверка пароля и выданный токен относятся к одному аккаунту. Например, ошибка могла бы позволить проверить пароль Боба, а токен выпустить для аккаунта Алисы. Отдельные шаги выглядели бы правильными, но формальное условие выявило бы несоответствие.</p>
+<p>Спецификация описывает SQLite, bcrypt и JWT без запуска этих компонентов. Для этого используются абстрактные функции без тела: <code class="inline-code">customer_on_file(email)</code> и <code class="inline-code">admin_on_file(username)</code> обозначают записи в базе, <code class="inline-code">bcrypt_verdict(password, hash)</code> — результат проверки bcrypt, а <code class="inline-code">token_claims(token, secret)</code> — содержимое токена. Verus знает об их поведении только то, что обещают доверенные контракты.</p>
+<p>Определение <code class="inline-code">named_account(email, username)</code> указывает, какой аккаунт соответствует запросу: сначала запись покупателя для указанного адреса; если адрес не передан — запись администратора для имени пользователя; в остальных случаях аккаунта нет. Это похожий на Rust математический код, который не запускается и существует только в контрактах. Такой код называют призрачным: проверяющая система учитывает его, а компилятор удаляет из программы.</p>
+<p>Два исходных требования разработчика превратились в восемь условий для <code class="inline-code">login_flow</code>. Они описывают, в частности, следующие случаи:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Запрос без адреса электронной почты и имени пользователя возвращает 400 с существующим сообщением.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Токен выдаётся для названного аккаунта только при правильном пароле и содержит идентификатор этого аккаунта и роль его таблицы.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Правильный пароль даёт токен, если не возникла ошибка поиска или подписи; в этих случаях возможна ошибка 500.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Несуществующий аккаунт и неверный пароль приводят к 401, если не произошла ошибка поиска.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Если bcrypt не может прочитать сохранённый хеш, функция возвращает 500 и не выдаёт токен.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Роль администратора появляется только для записи из таблицы администраторов, найденной по имени пользователя без адреса электронной почты.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">При входе по электронной почте токен получает роль покупателя.</span></div>
+<p>Контракт <code class="inline-code">check_password</code> связывает функцию с абстрактным результатом bcrypt: ответ успешен тогда, когда bcrypt может прочитать хеш; значение ответа определяет, правильный ли пароль. Тело функции Verus не проверяет, поэтому все обещания о пароле в <code class="inline-code">login_flow</code> зависят от этого принятого контракта. Доказательство охватывает все варианты результата входа, но только один из них содержит токен.</p>
+<p>Функция <code class="inline-code">login_flow</code> асинхронная и ожидает запрос к базе данных. Verus позволяет задавать контракты для асинхронных функций: <code class="inline-code">requires</code> проверяется при создании задачи, а <code class="inline-code">ensures</code> — для результата после её ожидания. Гарантии того, что задача завершится, нет; зависший запрос не нарушает условия.</p>
+<p>Логика разделена на небольшие функции. <code class="inline-code">lookup_target</code> выбирает таблицу, <code class="inline-code">login_core</code> ожидает результат поиска и передаёт управление функции <code class="inline-code">decide_login</code>, которая проверяет пароль. <code class="inline-code">issue_token</code> подписывает токен или преобразует отказ в существующую HTTP-ошибку. У каждой функции свой контракт, и Verus использует эти контракты, доказывая поведение <code class="inline-code">login_flow</code>. Если изменить тело <code class="inline-code">decide_login</code>, повторно доказывать нужно только эту функцию.</p>
+<p>Контракт <code class="inline-code">lookup_target</code> задаёт выбор таблицы: переданный адрес электронной почты направляет поиск к покупателям; если адреса нет, имя пользователя направляет поиск к администраторам; если нет ни того ни другого, вход отклоняется из-за отсутствия идентификатора. <code class="inline-code">decide_login</code> отказывает, если запись не найдена, выдаёт утверждения только при совпадении пароля и назначает роль в зависимости от таблицы, в которой нашлась запись.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/fig_5.jpg" alt="Чтобы доказать больше свойств входа, нужно доверять большему числу небольших обёрток. На карточке это указано до того, как разработчик сделает выбор" class="w-full object-contain rounded-lg">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Чтобы доказать больше свойств входа, нужно доверять большему числу небольших обёрток. На карточке это указано до того, как разработчик сделает выбор</p>
+<p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://www.microsoft.com/en-us/research/blog/formally-verifying-agent-written-full-stack-web-apps-with-pdd-kit/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">microsoft.com</a></p>
+</div></figure>
+<p>Файл спецификации <code class="inline-code">verified/src/login.rs</code> устроен в четыре слоя: необходимые Verus типы и импорты, абстрактная модель внешнего мира, контракты доверенных частей и пять контрактов, которые должно выполнить доказательство. В частности, пул соединений остаётся непрозрачным для проверки, а поля записи клиента доступны.</p>
+<p>Отдельный тип <code class="inline-code">LoginError</code> отделяет причину отказа от HTTP-ответа. Благодаря этому <code class="inline-code">issue_token</code> связывает каждый отказ с существующим статусом: отсутствие адреса и имени пользователя — 400, отсутствие аккаунта или неправильный пароль — 401, ошибка чтения хеша или запроса к базе данных — 500.</p>
+<p>До возвращения плана два агента-рецензента ищут ошибки в формальной спецификации, созданной по документу намерений. Они проверяют, соответствует ли она запросу и не обещает ли больше, чем можно доказать. Уточнение спецификации выполняется в фоне и учитывает ответы пользователя, пока рецензенты не согласятся, что она корректна.</p>
+</section>
+<section>
+<h2>Доказательство, тесты и проверка требований</h2>
+<p>После подтверждения спецификации разработчик больше не проверяет реализацию построчно: её и доказательство проверяют машины. Этап сборки передаёт план <code class="inline-code">pdd-prove</code>, который превращает его в список задач. Для логики входа было семь задач: подготовить <code class="inline-code">login.rs</code> к сборке с Verus внутри серверной части, доказать решения, выдачу токена и полный путь входа, а затем создать тесты для доверенных обёрток и сценария целиком.</p>
+<p>Каждая задача проходит одинаковый цикл:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Агент для программирования пишет реализацию и доказательство, а Verus проверяет их по формальной спецификации.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Для каждой части доверенной границы запускаются предусмотренные планом тесты.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm">Проверяющий ИИ-модуль сравнивает план, спецификацию и результаты, чтобы найти требования без доказательства или успешно пройденной проверки. Найденные пробелы возвращаются агенту. Если противоречие есть в самой спецификации, например требования исключают друг друга, вопрос передают разработчику.</span></div>
+<p>Проверяется и сама спецификация. Когда модель пишет собственную спецификацию или её настраивают на создание доказательств, она может выбрать слабые инварианты: формально проверяемые условия, которые почти ничего не ограничивают. Авторы называют такую проверку «проверкой на ощущениях». Чтобы обнаружить слабые условия, <code class="inline-code">pdd-prove</code> меняет код: для каждого условия <code class="inline-code">ensures</code> в отдельной копии добавляет ошибку — например, отказывает всем или ищет имя пользователя раньше электронной почты. Verus должен отвергнуть каждую ошибочную версию именно по соответствующему условию. Если ошибка проходит, условие не ограничивает поведение и считается пробелом.</p>
+<p>Процесс не позволяет незаметно менять требования. Если конструкцию нельзя выразить в закреплённой версии Verus, задача останавливается и возвращается команде — система не заменяет асинхронную функцию синхронной и не ослабляет контракт.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/kak-formalno-proveriat-veb-prilozheniia-sozdannye-ii-agentami-s-pomoshchiu-pdd-k/fig_6.jpg" alt="Где заканчивается доказательство для входа. Verus доказывает корректность ядра для любого ввода. Люди принимают доверенное кольцо, а тесты его проверяют. В плане перечислено то, что никто не обещает" class="w-full object-contain rounded-lg">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Где заканчивается доказательство для входа. Verus доказывает корректность ядра для любого ввода. Люди принимают доверенное кольцо, а тесты его проверяют. В плане перечислено то, что никто не обещает</p>
+<p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Источник: <a href="https://www.microsoft.com/en-us/research/blog/formally-verifying-agent-written-full-stack-web-apps-with-pdd-kit/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">microsoft.com</a></p>
+</div></figure>
+</section>
+<section>
+<h2>Проверка кода и дальнейшая работа</h2>
+<p>После прохождения задач <code class="inline-code">pdd-prove</code> открывает запросы на включение изменений. Они добавляют отдельный пакет <code class="inline-code">verified/</code> с <code class="inline-code">login_flow</code>, вспомогательными функциями, доказательствами и доверенными обёртками с тестами. Настоящий обработчик направляет запросы через <code class="inline-code">login_flow</code>, сохраняя существующие HTTP-статусы. Проверенная логика подключается к рабочему пути входа, а не к отдельной копии приложения.</p>
+<p>Разработчик смог включить изменения, не проверяя весь сгенерированный код построчно. Основная проверка требований уже прошла при работе с документом намерений, где последнее слово остаётся за командой. Запрос на включение изменений показывает, какие требования доказаны формально, а какие проверены тестами.</p>
+<p>При слиянии PDD Kit добавляет проверку Verus в CI рядом с тестами. Последующие изменения входа — от человека или агента — должны по-прежнему соответствовать той же спецификации; нарушенное доказательство останавливает сборку, как и проваленный тест. Кроме того, система удаляет тесты, которые повторяют уже доказанные свойства, например отдельные примеры для проверки пароля, и сохраняет тесты доверенной границы.</p>
+<p>Авторы разделяют гарантии на три группы:</p>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Доказано:</strong> тела <code class="inline-code">login_flow</code>, <code class="inline-code">login_core</code>, <code class="inline-code">lookup_target</code>, <code class="inline-code">decide_login</code> и <code class="inline-code">issue_token</code> выполняют свои контракты для каждого входа. Проверены выбор таблицы, сравнение пароля с хешем нужного аккаунта, содержимое токена и отказ с существующими статусами 400, 401 или 500 без выдачи токена.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Принято на доверии и проверено тестами:</strong> два поиска в базе данных, <code class="inline-code">check_password</code> с bcrypt, часы, подпись токена, сообщение об ошибке базы данных и разбор запроса обработчиком. Каждый компонент опирается на принятый разработчиком контракт; тесты используют настоящий bcrypt, реальную схему SQLite и настоящий маршрутизатор.</span></div>
+<div class="tech-card rounded-xl px-5 py-3 mb-2"><span class="text-sm"><strong>Принято как предположение:</strong> цепочка инструментов Verus, компилятор Rust, Z3 и стандартная библиотека Verus <code class="inline-code">vstd</code>.</span></div>
+</section>
+<section>
+<h2>Почему Rust</h2>
+<p>Сейчас PDD Kit проверяет только Rust — на нём работает Verus. Если проект уже написан на Rust, перенос не требуется. Код на других языках можно перенести на Rust и проверить по той же спецификации; проекты не на Rust могут вызывать проверенный код Rust через связующие интерфейсы.</p>
+<p>Авторы также отмечают, что сокращение зависимости от построчной проверки меняет роль читаемости при выборе языка. По их мнению, язык можно выбирать ради скорости и безопасности и активнее оптимизировать программу: изменение, нарушающее спецификацию, не пройдёт доказательство.</p>
+</section>
+<section>
+<h2>Ограничения и дальнейшие планы</h2>
+<p>PDD Kit — исследовательский прототип, который пока поддерживает только Rust. Доказательства требуют реальной работы, главным образом на их подготовку. Ясная спецификация снижает эти затраты, поэтому значительная часть инструментария посвящена уточнению намерений. Авторы рекомендуют начинать с мест, где ошибка обходится дороже всего, например с входа, платежей или прав доступа, а затем проверять остальные части проекта по одной.</p>
+<p>В Pet Store формально проверили один фрагмент одного приложения: читаемую спецификацию, доказательство Verus и тесты для того, что принято на доверии. Гарантии зависят от шести таких частей; больше всего — от <code class="inline-code">check_password</code>, на котором держатся обещания о паролях, и двух запросов к базе данных, от которых зависит правильность выбранного аккаунта. Тесты поддерживают эти предположения, но не доказывают их. Авторы ожидают, что со временем доверенная граница заметно сократится, и хотят проверить, насколько далеко можно масштабировать подход.</p>
+<p>В основе подхода — перенос внимания с проверки строк кода на проверку того, что команда хотела получить. План должен стать обязательством для агента: формальное доказательство связывает реализацию с согласованными требованиями, но не устраняет ограничений тех частей, которые остаются за границей доказательства.</p>
+</section>
+<section>
+<h2>Благодарности</h2>
+<p>Работу выполнили Microsoft Research Catalyst Lab, GitHub Next и группа Research in Software Engineering (RiSE). Авторы поблагодарили Мэгги Эпплтон и Кшиштофа Цесляка из GitHub Next за совместную работу над Chopin, а также Никхила Свами, Лефа Иоаннидиса, Джанардхана Кулкарни и Шувенду Лахири — за отзывы и обсуждения формальной проверки и формализации намерений. Команды F*/Pulse и Verus помогали проекту; Идан Газит из GitHub Next поддерживал сотрудничество.</p>
+</section>
+<section>
+<h2>Ответы на частые вопросы</h2>
+<h3>Если спецификацию пишет ИИ, кто проверяет, что она верна?</h3>
+<p>Разработчик: доказательство показывает, что программа соответствует спецификации, но не подтверждает, что спецификация передаёт задуманное. Поэтому <code class="inline-code">pdd-plan</code> изучает код, задаёт вопросы до написания спецификации и превращает ответы в план на обычном языке и спецификацию Verus для согласования. Два агента-рецензента дополнительно проверяют спецификацию, а <code class="inline-code">pdd-prove</code> добавляет по одной ошибке на каждое условие, чтобы находить условия, которые ничего не ограничивают. Ошибочная спецификация всё равно возможна, поэтому разработчику нужно явно записать требования, разобрать неоднозначности и подтвердить план до начала проверки.</p>
+<h3>Чем PDD отличается от разработки по спецификации, разработки через тестирование и самопроверки агента?</h3>
+<p>Различие — в том, что удерживает код в рамках плана. При разработке по спецификации её соблюдение ничем не обеспечивается. Разработка через тестирование проверяет образцы входных данных, причём тесты нередко пишутся под уже созданную реализацию. При самопроверке работу оценивает та же модель, которая написала код. В PDD Verus автоматически проверяет доказательство соответствия одобренной спецификации. Подход сохраняет планирование, знакомое по разработке по спецификации, и добавляет тесты там, куда доказательство не распространяется. Тест проверяет некоторые входы; доказательство подтверждает заданные свойства для всех входов формальной модели с учётом её предположений.</p>
+<h3>Что именно доказывается и где запускается проверка?</h3>
+<p>Доказательство — это код Rust с конструкциями Verus. Verus механически проверяет его с помощью решателя Z3. Проверка работает там же, где собирается Rust: <code class="inline-code">pdd-prove</code> запускает её во время подготовки доказательства, а <code class="inline-code">pdd-ship</code> добавляет её в сборку и CI. Проверка детерминированная, модели в ней не участвуют: модели могут писать спецификацию, код и доказательство, но результат определяет запуск Verus. Для небольшого модуля он обычно занимает секунды, для крупной кодовой базы — до нескольких минут; время зависит от размера кода и сложности доказательств.</p>
+<h3>Что проверяет разработчик, если построчная проверка заменяется?</h3>
+<p>PDD Kit переносит основное внимание на требования к поведению программы. Разработчик проверяет план на обычном языке, формальную спецификацию и доверенные компоненты за пределами доказательства. Запрос на включение изменений перечисляет, что формально доказано, что проверено тестами и где может понадобиться дополнительная проверка. В Pet Store такой подход сократил зависимость от исчерпывающего просмотра сгенерированного кода построчно.</p>
+<h3>Поддерживаются ли другие языки и почему выбрали Verus?</h3>
+<p>Сейчас проверяется только Rust. Verus позволяет проверять код Rust напрямую, что соответствует задаче PDD Kit — встроить формальную проверку в существующий процесс разработки на Rust. Другие языки доказательств, включая Lean, F* и Rocq, используют другие подходы и имеют свои особенности. Методы PDD Kit, по мнению авторов, могут помочь применять и их.</p>
+<p>Авторы проекта — Алекс Лаваи и Маттай Филипозе.</p>
+<p>По оценке Dataist, PDD Kit показывает, как формальное доказательство может дополнить тесты и проверку требований при работе с кодом, созданным ИИ-агентами. Но гарантия здесь относится к согласованной спецификации и зависит от компонентов, оставленных на доверии: в примере ключевые предположения о пароле и выбранном аккаунте не доказаны, а только проверены тестами.</p>
+</section>
+
+                <!-- Источник(и) новости -->
+                <div class="mt-14 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://www.microsoft.com/en-us/research/blog/formally-verifying-agent-written-full-stack-web-apps-with-pdd-kit/" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Источник</span>
+                    </a>
+                </div>
+
+                <section class="mt-16 md:mt-20 fade-in" aria-labelledby="related-heading">
+                    <h2 id="related-heading"
+                        class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight mb-6 md:mb-8">
+                        Читайте также
+                    </h2>
+                    
+                    <div class="rel-wrap relative -mx-4 md:mx-0" data-left="0" data-right="1"
+                         data-date="2026-11-05">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l"
+                                aria-label="Предыдущие материалы">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r"
+                                aria-label="Следующие материалы">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0">
+                            <a href="https://dataist.ai/news/kak-nosimye-datchiki-vyiavliaiut-priznaki-vysokogo-davleniia/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/kak-nosimye-datchiki-vyiavliaiut-priznaki-vysokogo-davleniia/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Как носимые датчики выявляют признаки высокого давления</span>
+                            </a>
+                            <a href="https://dataist.ai/news/axiom-math-ne-khochet-puskat-ii-shlak-v-matematiku/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/axiom-math-ne-khochet-puskat-ii-shlak-v-matematiku/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Axiom Math не хочет пускать ИИ-шлак в математику</span>
+                            </a>
+                            <a href="https://dataist.ai/news/pochemu-vybor-ii-modeli-stal-infrastrukturnym-resheniem/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/pochemu-vybor-ii-modeli-stal-infrastrukturnym-resheniem/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Почему выбор ИИ-модели стал инфраструктурным решением</span>
+                            </a>
+                            <a href="https://dataist.ai/news/dropbox-pokupaet-tigris-data-za-350-mln-chtoby-ukrepit-infrastrukturu-dlia-ii/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/dropbox-pokupaet-tigris-data-za-350-mln-chtoby-ukrepit-infrastrukturu-dlia-ii/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Dropbox покупает Tigris Data за $350 млн, чтобы укрепить инфраструктуру для ИИ</span>
+                            </a>
+                            <a href="https://dataist.ai/news/on-zarabatyvaet-na-trollinge-ii-laboratorii-teper-vse-khotiat-s-nim-rabotat/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/on-zarabatyvaet-na-trollinge-ii-laboratorii-teper-vse-khotiat-s-nim-rabotat/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Он зарабатывает на троллинге ИИ-лабораторий. Теперь все хотят с ним работать</span>
+                            </a>
+                            <a href="https://dataist.ai/news/avstraliitsy-poka-ne-oshchutili-polzy-ot-ii-i-data-tsentrov-vybory-v-ssha-pokaza/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/avstraliitsy-poka-ne-oshchutili-polzy-ot-ii-i-data-tsentrov-vybory-v-ssha-pokaza/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Австралийцы пока не ощутили пользы от ИИ и дата-центров — выборы в США показали, что они могут стать политическим криптонитом</span>
+                            </a>
+                            <a href="https://dataist.ai/news/ekskliuziv-smart-koltso-aina-khochet-stat-pultom-dlia-vashego-ii-agenta/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/ekskliuziv-smart-koltso-aina-khochet-stat-pultom-dlia-vashego-ii-agenta/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Эксклюзив: смарт-кольцо Aina хочет стать пультом для вашего ИИ-агента</span>
+                            </a>
+                            <a href="https://dataist.ai/news/apple-urezaet-vnutrennie-biudzhety-na-ii-i-planiruet-sokrashchat-ikh-dalshe/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/apple-urezaet-vnutrennie-biudzhety-na-ii-i-planiruet-sokrashchat-ikh-dalshe/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Apple урезает внутренние бюджеты на ИИ и планирует сокращать их дальше</span>
+                            </a>
+                            <a href="https://dataist.ai/news/poisk-novykh-lekarstv-otnimaet-mnogo-truda-etot-ii-startap-propuskaet-laboratorn/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/poisk-novykh-lekarstv-otnimaet-mnogo-truda-etot-ii-startap-propuskaet-laboratorn/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Поиск новых лекарств отнимает много труда. Этот ИИ-стартап пропускает лабораторные испытания</span>
+                            </a>
+                            <a href="https://dataist.ai/news/startap-iz-y-combinator-vydelil-1-mln-na-reshenie-piati-nereshennykh-zadach-mate/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/startap-iz-y-combinator-vydelil-1-mln-na-reshenie-piati-nereshennykh-zadach-mate/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Стартап из Y Combinator выделил $1 млн на решение пяти нерешённых задач материаловедения с помощью ИИ</span>
+                            </a>
+                            <a href="https://dataist.ai/news/sleduiushchii-fokus-ii-zagovorit-s-delfinami/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/sleduiushchii-fokus-ii-zagovorit-s-delfinami/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Следующий фокус ИИ? Заговорить с дельфинами</span>
+                            </a>
+                            <a href="https://dataist.ai/news/agility-pervaia-publichnaia-kompaniia-tselikom-posviashchennaia-chelovekopodobny/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/agility-pervaia-publichnaia-kompaniia-tselikom-posviashchennaia-chelovekopodobny/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Agility — первая публичная компания, целиком посвящённая человекоподобным роботам. Купите её акции?</span>
+                            </a>
+                            <a href="https://dataist.ai/news/aktivisty-po-vsei-evrope-gotoviatsia-k-dvukhdnevnym-protestam-protiv-data-tsentr/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/aktivisty-po-vsei-evrope-gotoviatsia-k-dvukhdnevnym-protestam-protiv-data-tsentr/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Активисты по всей Европе готовятся к двухдневным протестам против дата-центров</span>
+                            </a>
+                            <a href="https://dataist.ai/news/parlamentskoe-rassledovanie-zavisimost-velikobritanii-ot-kitaia-v-postavkakh-kri/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/parlamentskoe-rassledovanie-zavisimost-velikobritanii-ot-kitaia-v-postavkakh-kri/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Парламентское расследование: зависимость Великобритании от Китая в поставках критически важных минералов для обороны и ИИ названа «опасной»</span>
+                            </a>
+                            <a href="https://dataist.ai/news/byvshie-sotrudniki-google-zaiavili-chto-ikh-novaia-model-ripple-65b-preview-pod/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/byvshie-sotrudniki-google-zaiavili-chto-ikh-novaia-model-ripple-65b-preview-pod/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Бывшие сотрудники Google заявили, что их новая модель Ripple-65B Preview под Apache 2.0 лидирует среди открытых моделей США в двух крупных тестах кодирования</span>
+                            </a>
+                            <a href="https://dataist.ai/news/meta-kupila-startap-conductor-razrabatyvaiushchii-ii-dlia-programmirovaniia/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/meta-kupila-startap-conductor-razrabatyvaiushchii-ii-dlia-programmirovaniia/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Meta купила стартап Conductor, разрабатывающий ИИ для программирования</span>
+                            </a>
+                            <a href="https://dataist.ai/news/siniaia-volna-zastavila-tekhnobratev-iskat-mesto-dlia-data-tsentrov-v-kosmose/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/siniaia-volna-zastavila-tekhnobratev-iskat-mesto-dlia-data-tsentrov-v-kosmose/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Синяя волна заставила технобратьев искать место для дата-центров в космосе</span>
+                            </a>
+                            <a href="https://dataist.ai/news/openai-uzhe-pytaetsia-povliiat-na-vybory-2028-goda/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/openai-uzhe-pytaetsia-povliiat-na-vybory-2028-goda/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">OpenAI уже пытается повлиять на выборы 2028 года</span>
+                            </a>
+                            <a href="https://dataist.ai/news/gonka-ii-razduvaet-raskhody-na-graficheskie-protsessory-pamiat-i-po/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/gonka-ii-razduvaet-raskhody-na-graficheskie-protsessory-pamiat-i-po/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-04">2026-11-04</time>
+                                <span class="rel-title">Гонка ИИ раздувает расходы на графические процессоры, память и ПО</span>
+                            </a>
+                            <a href="https://dataist.ai/news/predvybornye-strashilki-krupneishie-partii-viktorii-obmenialis-vypadami-iz-za-ii/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/news/predvybornye-strashilki-krupneishie-partii-viktorii-obmenialis-vypadami-iz-za-ii/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-04">2026-11-04</time>
+                                <span class="rel-title">Предвыборные страшилки: крупнейшие партии Виктории обменялись выпадами из-за ИИ-роликов с лидерами в политической рекламе</span>
+                            </a>
+                            
+                        </div>
+                    </div>
+                    
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка мигает
+                                // в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+                            function step(dir) {
+                                // Листаем на видимую ширину минус нахлёст,
+                                // чтобы следующая карточка подсказывала, что
+                                // лента продолжается.
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            sync();
+
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них в
+                            // страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую подложку,
+                                    // а не значок сломанной картинки.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = item.date; }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            function same(url) {
+                                try { return new URL(url, location.href).pathname === location.pathname; }
+                                catch (e) { return false; }
+                            }
+
+                            // Лента дотягивается ОДИН раз и только когда
+                            // читатель до неё добрался: 125 КБ фида не должны
+                            // грузиться у того, кто до подвала не дошёл.
+                            var loaded = false;
+                            function fill() {
+                                if (loaded) return;
+                                loaded = true;
+                                fetch('https://dataist.ai/news/index.json')
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) return;
+                                        var all = list.filter(function (x) {
+                                            return x && x.url && x.title;
+                                        });
+                                        // Свежие вперёд. Фид приходит уже в
+                                        // этом порядке, но сортировка здесь
+                                        // стоит явно: порядок ленты — правило
+                                        // блока, а не побочный эффект того,
+                                        // как список собрали на сервере.
+                                        all.sort(function (a, b) {
+                                            return String(b.date || '').localeCompare(String(a.date || ''));
+                                        });
+                                        // Где в этом списке стоит сама статья.
+                                        // Считаем ДО того, как её выбросить:
+                                        // её место и есть «здесь», а первым
+                                        // после неё идёт ровно предыдущий
+                                        // разбор.
+                                        var mineAt = -1;
+                                        for (var i = 0; i < all.length; i++) {
+                                            if (same(all[i].url)) { mineAt = i; break; }
+                                        }
+                                        var rows = all.filter(function (x) { return !same(x.url); });
+                                        if (!rows.length) return;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+
+                                        // ЛЕНТА ОТКРЫВАЕТСЯ НА МЕСТЕ ЭТОЙ
+                                        // СТАТЬИ, а не с самого свежего
+                                        // разбора. Влево от стартовой позиции
+                                        // остаётся то, что вышло ПОСЛЕ неё,
+                                        // вправо уходит то, что было ДО.
+                                        //
+                                        // Без этого лента получалась одинаковой
+                                        // на всех страницах сайта: у майской
+                                        // статьи она начиналась бы с сентября,
+                                        // и соседство по времени — то самое,
+                                        // ради чего блок и нужен, — пропадало
+                                        // ровно в тот момент, когда страница
+                                        // становится интерактивной.
+                                        //
+                                        // Позицию берём по месту самой статьи
+                                        // в фиде. Сравнивать по дате нельзя:
+                                        // за один день выходит по два разбора
+                                        // («2026-07-05» и «2026-07-05_1»), и
+                                        // правило «дата меньше моей» проскочит
+                                        // собрата того же дня — лента откроется
+                                        // на разборе через один.
+                                        //
+                                        // Дата остаётся запасным ответом на
+                                        // случай, если статьи в фиде нет
+                                        // вовсе: свежая страница попадает туда
+                                        // не раньше, чем пересоберётся индекс.
+                                        var at = 0;
+                                        if (mineAt >= 0) {
+                                            at = mineAt;
+                                        } else {
+                                            var mine = wrap.dataset.date || '';
+                                            if (mine) {
+                                                for (var k = 0; k < rows.length; k++) {
+                                                    if (String(rows[k].date || '') < mine) { at = k; break; }
+                                                }
+                                            }
+                                        }
+                                        // Самый старый разбор: предыдущего у
+                                        // него нет, поэтому лента встаёт в
+                                        // конец — слева от края всё свежее.
+                                        if (at > rows.length - 1) at = rows.length - 1;
+                                        var target = rail.children[at];
+                                        if (target) {
+                                            // Без плавности: это не жест
+                                            // читателя, а исходное положение.
+                                            rail.scrollLeft = target.offsetLeft - rail.offsetLeft;
+                                        }
+                                        sync();
+                                    })
+                                    .catch(function () { /* остаёмся с разметкой */ });
+                            }
+                            if ('IntersectionObserver' in window) {
+                                var io = new IntersectionObserver(function (es) {
+                                    if (es.some(function (e) { return e.isIntersecting; })) {
+                                        io.disconnect();
+                                        fill();
+                                    }
+                                }, { rootMargin: '400px' });
+                                io.observe(wrap);
+                            } else {
+                                fill();
+                            }
+                        })();
+                    </script>
+                </section>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="cta-head font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                Ежедневные новости об ИИ
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день отбираем важные новости об ИИ и рассказываем главное — без хайпа и воды. Если хотите понимать, что происходит в ИИ раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Только важное — каждый день
+                            </p>
+                            <a href="https://t.me/neuronium_ai" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        // ЧУЖАЯ БИБЛИОТЕКА НЕ ИМЕЕТ ПРАВА РОНЯТЬ ВИДИМОСТЬ ТЕКСТА
+        // (FR-F013-113). Здесь стояло голое `lucide.createIcons()`. Не
+        // ответил `unpkg.com` — а он чужой сервер и отвечает не всегда, —
+        // `lucide` не существует, первая же строка бросает исключение, и
+        // ВЕСЬ остальной блок не исполняется: ни кнопка темы, ни полоса
+        // прогресса, ни наблюдатель, снимавший с текста `opacity: 0`.
+        // Читатель видел пустую страницу. Иконка не показалась — досадно;
+        // статья не показалась — потеряли читателя.
+        //
+        // И ВЫЗОВ УЕХАЛ В `DOMContentLoaded`. С `defer` библиотека грузится
+        // ПОСЛЕ разбора страницы, а этот блок — встроенный и выполняется
+        // сразу: проверка `window.lucide` на этом месте была бы всегда
+        // ложной, и иконок не стало бы вовсе. Отложенные скрипты успевают
+        // до `DOMContentLoaded` — там их и зовём.
+        function нарисоватьИконки() {
+            if (window.lucide) lucide.createIcons();
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', нарисоватьИконки);
+        } else {
+            нарисоватьИконки();
+        }
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(нарисоватьИконки, 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Появление блоков. Вызывается сразу, если DOM уже готов (страница
+        // могла быть вставлена после загрузки — Web View, предпросмотр,
+        // встраивание): иначе обработчик DOMContentLoaded уже не сработает и
+        // контент навсегда остался бы скрытым.
+        function initReveal() {
+            const targets = document.querySelectorAll('.fade-in');
+            if (!('IntersectionObserver' in window)) {
+                targets.forEach(el => el.classList.add('visible'));
+                return;
+            }
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { root: null, rootMargin: '0px', threshold: 0.05 });
+            targets.forEach(el => observer.observe(el));
+            // Страховка: если наблюдатель по какой-то причине не сработал,
+            // показываем всё — пустая страница хуже, чем отсутствие анимации.
+            setTimeout(() => targets.forEach(el => el.classList.add('visible')), 1500);
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initReveal);
+        } else {
+            initReveal();
+        }
+    </script>
+</body>
+</html>
