@@ -1,0 +1,137 @@
+## HOPE preserves connections between experts when compressing MoE models
+
+## Why expert connections matter
+
+In MoE models, each token is routed to only a few experts, but inference requires memory for all of them. Qwen3.5-122B, for example, has 48 MoE layers, each with 256 experts. Their multilayer perceptrons account for 95% of parameter memory — about 250 GB — even though only 8 experts are used in each layer for any given token.
+
+One way to reduce memory requirements is to permanently remove the least useful experts. This approach requires no additional training, adds no latency from dynamically loading and unloading experts, and works alongside quantization. The challenge is deciding which experts can be removed with the least damage.
+
+Most existing methods score experts individually: each expert gets a number based on calibration data, and the lowest-scoring ones are removed. This misses the fact that experts can form stable groups and are often activated together. Removing one member of an important group can disrupt the others’ ability to work together.
+
+Researchers had previously observed these patterns: groups of experts selected together emerge early in training and persist afterward. The risk of disrupting these connections therefore grows with the share of experts removed. This matters especially when pruning 50% of the experts.
+
+## How HOPE selects experts
+
+For each token, the MoE router selects a set of K experts with the highest weights from a total of E experts. K is usually 8. The layer’s output is the weighted sum of the selected experts’ outputs, with the weights set by the router.
+
+If a selected expert is removed, the next-highest-weight expert takes its place. The difference between the original and new layer outputs is the pruning error. HOPE searches for a set of experts of a specified size to remove in a way that reduces this error on calibration data.
+
+Finding the best set directly is difficult because replacements depend on exactly which experts are removed. HOPE therefore uses a simpler measure, Z, which provides an upper bound on the main part of the error. Expanding it produces pairwise terms for experts: these account for their joint contribution, which methods that score experts independently ignore.
+
+HOPE then minimizes the average value of Z over the calibration set. It constructs a matrix F and solves a quadratic optimization problem constrained by the number of experts to remove. The diagonal elements of F represent each expert’s individual importance, while the off-diagonal elements represent the strength of pairwise contributions. The problem is solved using a continuous relaxation, after which the result is rounded to a binary set.
+
+In practice, the matrix is built from calibration data. This requires just one forward pass through the model, the same as other expert-pruning methods. The optimization adds some time: although the problem is non-convex, a standard solver handles it in about 1–2 seconds per layer. The authors estimate that the total overhead is small compared with the time required for calibration.
+
+As an example, the authors show matrix F for GLM-4.5-Air, which has 128 experts per layer and 106 billion parameters. Blocks of experts with strong pairwise connections appear in early, middle and late layers.
+
+## Connection to REAP
+
+HOPE is closely related to REAP, a pruning method that scores experts individually while accounting for router weights. The diagonal of matrix F almost reproduces REAP’s ranking of experts: the Spearman correlation coefficient is 0.988. The difference is that HOPE also accounts for connections between experts, represented by the matrix’s off-diagonal elements.
+
+## Results across three models
+
+The authors tested HOPE on Qwen3.5-122B, Qwen3.5-35B and GLM-4.5-Air. They used Evol-CodeAlpaca and SWE-Bench Verified trajectories for calibration. The pruned models were evaluated on the Tulu3 test suite and the SWE-Bench Pro benchmark, where agent models solve GitHub tasks autonomously. HOPE was compared with four methods: REAP, MAN, EAN and Frequency. The share of experts removed ranged from 10% to 50%.
+
+Among the five methods, HOPE achieved the best average rank, at 2.07. It placed first in 39% of test conditions and in the top two in 67%. In head-to-head comparisons, HOPE beat each of the other methods in most cases.
+
+HOPE’s advantage becomes more pronounced as the share of experts removed increases. At 50% pruning, its average rank was 1.58, compared with 2.42 for its closest competitor, REAP. The authors note that this kind of reduction could free memory for longer context, deeper reasoning and more tool calls.
+
+The difference was especially notable on SWE-Bench Pro. These tasks require a combination of coding, tool calls and reasoning over many steps, and can therefore engage different combinations of experts. On Qwen3.5-35B-A3B with half its experts removed, HOPE scored 42.3, compared with 41.8 for the unpruned model. Under the same conditions, REAP scored 36.2 — a 13% drop from the original result.
+
+A pruned model can sometimes match or outperform the original. The authors suggest that removing experts with little relevance to specific tasks may reduce interference; other pruning methods have produced similar results. In addition, calibration on coding tasks did not seriously degrade performance on tests unrelated to coding. HOPE also performed well across the full Tulu3 suite, regardless of which dataset was used for calibration.
+
+## Which connections HOPE tries to preserve
+
+The authors separately compared experts for which HOPE and REAP made different choices. They calculated the average connection strength between each such expert and the other experts that were kept. On average, experts kept only by HOPE had higher scores for working together than those kept only by REAP.
+
+In other words, HOPE’s optimization may sacrifice some experts with high individual scores to preserve connected groups. Based on the benchmark results, the authors conclude that this trade-off was beneficial in the conditions they tested.
+
+## How to run HOPE
+
+The HOPE package has been tested on Qwen3, Qwen3-Next, Qwen3.5 and GLM-4.5. The process has three stages: collect calibration data, compute a pruning set and create a smaller model.
+
+### 1. Collect calibration data
+
+```System prompt
+hope calibrate \
+    --model-path Qwen/Qwen3.5-35B-A3B \
+    --prompts calibration_prompts.txt \
+    --out-path observations.h5
+```
+
+The command makes one forward pass over the calibration data. This can consist of AI-agent action sequences or individual prompts and responses. It uses Hugging Face Transformers tools to access the MoE layers. For each token, it saves the selected experts, their router weights, output norms and co-activation statistics. The result is matrix F in an HDF5 file.
+
+### 2. Solve the optimization problem
+
+```System prompt
+hope solve \
+    --obs-path observations.h5 \
+    --prune-frac 0.50 \
+    --out-path pruneset.json
+```
+
+The command loads matrix F and solves a binary quadratic optimization problem using a continuous relaxation. It takes a few seconds per layer. The result is written to a JSON file containing the set of experts to remove — the output of the HOPE algorithm.
+
+### 3. Create a pruned model
+
+```System prompt
+hope prune \
+    --model-path Qwen/Qwen3.5-35B-A3B \
+    --pruneset-path pruneset.json \
+    --out-path ./Qwen3.5-35B-A3B-pruned-50
+```
+
+This command applies the resulting set and creates a smaller model checkpoint. The result is a standard Hugging Face checkpoint that takes up less disk and memory. No changes to model definitions for vLLM or SGLang are required.
+
+The authors have also released a more compact Python interface:
+
+```System prompt
+from
+ hope.calibrate 
+import
+ calibrate
+
+from
+ hope.solve 
+import
+ solve
+
+from
+ hope.prune 
+import
+ prune_model
+
+calibrate(
+"Qwen/Qwen3.5-35B-A3B"
+, calibration_prompts, 
+"observations.h5"
+)
+solve(
+"observations.h5"
+, prune_frac=
+0.50
+, out_path=
+"pruneset.json"
+)
+prune_model(
+"Qwen/Qwen3.5-35B-A3B"
+, 
+"pruneset.json"
+, 
+"./Qwen3.5-35B-A3B-pruned-50"
+)
+```
+
+This code collects calibration data, computes a set for removing half the experts, and creates a new checkpoint.
+
+## Limitations
+
+HOPE’s advantage is strongest when removing 40–50% of experts. At 10–20%, REAP and MAN sometimes deliver comparable results, and the gap between methods narrows.
+
+Like most expert-pruning methods, HOPE makes decisions separately for each layer and does not account for connections between layers. The authors describe the theoretical basis for a version of HOPE that accounts for inter-layer connections, but those results are still preliminary.
+
+Finally, HOPE models interactions between pairs of experts. Accounting for groups of three or more could provide additional information, but evaluating such interactions is difficult because the number of combinations grows rapidly.
+
+The paper is titled *Higher-Order Pruning of Experts in Mixture-of-Experts Language Models*. Its authors are Alex M. Tseng, Prannay Koul, Luca Zancato, Wei Xia and Stefano Soatto. The preprint was published on arXiv under the number arXiv:2609.18916 in 2026. The authors have posted code and materials for applying HOPE to hybrid architectures in the relevant repositories.
+
+Dataist's take: HOPE shows that aggressively reducing MoE models may require preserving not only useful individual experts, but also the connections between them. So far, its advantage is clearest at high pruning rates, while cross-layer decisions and interactions among larger expert groups remain outside the tested version of the method.
