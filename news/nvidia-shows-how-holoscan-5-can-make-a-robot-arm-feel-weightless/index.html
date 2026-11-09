@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NVIDIA shows how Holoscan 5 can make a robot arm feel weightless</title>
+
+    <!-- Favicon. СВОЙ домен, а не раздача исходников GitHub (FR-F013-111):
+         та отдаёт ИСХОДНИКИ репозитория, а не картинки сайту — ограничивает
+         частоту обращений и отвечает медленнее своего. Файл лежит в том же
+         репозитории, который сайт и отдаёт. -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- ЧЕМ собрана страница (FR-F013-65). Проверки живого сайта обязаны
+         отличать «страница собрана старым шаблоном» от «страница сломана»:
+         без метки правило про подпись новости ругалось на все прежние
+         страницы разом и переставало читаться. Даты для этого не годятся —
+         перевыпуск ставит всем один сегодняшний день. -->
+    <meta name="generator" content="nrnm-news 4" />
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="News" />
+    <meta property="og:title" content="NVIDIA shows how Holoscan 5 can make a robot arm feel weightless" />
+    <meta property="og:description" content="NVIDIA has shown how to make a robotic arm feel weightless with Holoscan 5. The example uses a Seeed Studio reBot Arm B601-DM manipulator and the Pinocchio inverse-dynamics solver. Three operators read joint states, calculate torque and send commands to the motors. The control loop runs at 400 Hz. The authors also compared latency and jitter in Python and C++ implementations, and tested how pinning threads to CPU cores affects them." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/news/nvidia-shows-how-holoscan-5-can-make-a-robot-arm-feel-weightless/" />
+    <meta property="og:image" content="https://dataist.ai/news/nvidia-shows-how-holoscan-5-can-make-a-robot-arm-feel-weightless/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <!-- ВРЕМЯ, а не только дата (FR-F013-72). Сайт сортирует ленту новостей
+         по этому полю. Пока здесь стояла одна дата, все новости суток были
+         для него «одновременными», порядок между ними получался случайным, и
+         свежая не поднималась наверх: владелец видел последней ту, что вышла
+         тремя выпусками раньше. Читателю над заголовком по-прежнему
+         показывается день. -->
+    <meta property="article:published_time" content="2026-11-09T19:11:13.055958+00:00" />
+    <!-- ПОДПИСЬ ДЛЯ САМОГО САЙТА (FR-F013-70). Карточку новости на главной и
+         в разделе рисует приложение `dataist-ai-web`: оно разбирает эту
+         страницу и ставит СВОЮ подпись — имя соседнего проекта с бейджем
+         «i». Наша подпись под заголовком до карточки не доходит, и владелец
+         видел на главной чужое имя.
+         Приложение читает `article:author` и подставляет его вместо
+         умолчания (`content_service.py`), поэтому имя канала достаточно
+         ПОЛОЖИТЬ сюда — менять приложение не нужно. Прежнее имя здесь не
+         поминается: оно уехало бы в каждую выложенную страницу. -->
+    <meta property="article:author" content="@neuronium_ai" />
+    <!-- Аватарка для той же карточки: у категории «новости» приложение по
+         умолчанию держит пустую строку, а пустая строка у него означает
+         бейдж «i» вместо картинки (`post.py`). Ключ читается рядом с
+         подписью: `meta.get("article:author:avatar")`. -->
+    <meta property="article:author:avatar" content="https://dataist.ai/pics/photo_2026-02-01%2020.43.54.jpeg" />
+
+    <meta name="description" content="NVIDIA has shown how to make a robotic arm feel weightless with Holoscan 5. The example uses a Seeed Studio reBot Arm B601-DM manipulator and the Pinocchio inverse-dynamics solver. Three operators read joint states, calculate torque and send commands to the motors. The control loop runs at 400 Hz. The authors also compared latency and jitter in Python and C++ implementations, and tested how pinning threads to CPU cores affects them." />
+    <link rel="canonical" href="https://dataist.ai/news/nvidia-shows-how-holoscan-5-can-make-a-robot-arm-feel-weightless/" />
+    <!-- ПАРА RU/EN ДЛЯ ПОИСКОВИКА (FR-F016-73). Без этих строк он про пару
+         не знает вовсе и считает две версии одной новости разными
+         материалами. Строки одинаковые на обеих страницах пары — так их и
+         полагается ставить.
+
+         Нет двойника — нет и строк: врать поисковику про несуществующую
+         страницу хуже, чем молчать. Это единственное, что добавляется в
+         `<head>` кроме иконки; `og:`- и `twitter:`-теги правка не трогает,
+         карточку в телеграме не меняет. -->
+    <link rel="alternate" hreflang="ru" href="https://dataist.ai/news/nvidia-pokazala-kak-sdelat-robotizirovannuiu-ruku-nevesomoi-s-pomoshchiu-holosca/">
+    <link rel="alternate" hreflang="en" href="https://dataist.ai/news/nvidia-shows-how-holoscan-5-can-make-a-robot-arm-feel-weightless/">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "NewsArticle",
+      "headline": "NVIDIA shows how Holoscan 5 can make a robot arm feel weightless",
+      "description": "NVIDIA has shown how to make a robotic arm feel weightless with Holoscan 5. The example uses a Seeed Studio reBot Arm B601-DM manipulator and the Pinocchio inverse-dynamics solver. Three operators read joint states, calculate torque and send commands to the motors. The control loop runs at 400 Hz. The authors also compared latency and jitter in Python and C++ implementations, and tested how pinning threads to CPU cores affects them.",
+      "image": "https://dataist.ai/news/nvidia-shows-how-holoscan-5-can-make-a-robot-arm-feel-weightless/cover.jpg",
+      "url": "https://dataist.ai/news/nvidia-shows-how-holoscan-5-can-make-a-robot-arm-feel-weightless/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/news/nvidia-shows-how-holoscan-5-can-make-a-robot-arm-feel-weightless/"
+      },
+      "datePublished": "2026-11-09T19:11:13.055958+00:00",
+      "inLanguage": "en",
+      "author": {"@type": "Organization", "@id": "https://dataist.ai/#organization", "name": "Dataist", "url": "https://dataist.ai/"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Dataist",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://dataist.ai/news/nvidia-shows-how-holoscan-5-can-make-a-robot-arm-feel-weightless/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <!-- `defer`: нужен только внутри телеграма, а первую отрисовку
+         блокировал у ВСЕХ читателей (FR-F013-113). Код ниже
+         спрашивает `window.Telegram?.WebApp` и пустоту переживает. -->
+    <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+                document.documentElement.classList.add('js');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- СТИЛИ: ГОТОВЫЙ ФАЙЛ, А НЕ СБОРКА У ЧИТАТЕЛЯ (FR-F013-112).
+         Здесь стоял CDN-скрипт Tailwind — это не CSS, а КОМПИЛЯТОР: он
+         скачивался, читал разметку и собирал стили прямо в браузере, и до
+         этого момента страница не выглядела страницей. Авторы Tailwind
+         прямо пишут, что в бою так нельзя.
+
+         Файл отдаёт ПРИЛОЖЕНИЕ `dataist-ai-web`, а не репозиторий контента:
+         это разные вещи с разным порядком выката, и однажды все 1820 статей
+         на время остались без вёрстки — страницы уехали за минуту, а
+         приложение с этим файлом задеплоить забыли.
+
+         Следствие, о котором надо помнить: класса, которого нет в собранном
+         файле, на странице НЕ БУДЕТ — молча. Привычные утилиты собраны с
+         запасом, незнакомое семейство (`bg-violet-500`, `text-[13.5px]`)
+         надо досбирать на стороне приложения. -->
+    <link rel="stylesheet" href="/static/css/tailwind.css">
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <!-- `defer`: скрипт иконок не стоит на пути первой отрисовки, а
+         `createIcons` ниже всё равно вызывается через `window.lucide`
+         и ждать его не обязан (FR-F013-113). -->
+    <script src="https://unpkg.com/lucide@1.31.0" defer></script>
+
+
+    <!-- Собственные стили страницы — СОБРАННЫМИ, а не исходником.
+         Прежний блок был написан на особом типе, который понимал только
+         тот самый CDN-скрипт: браузер такой тип игнорирует, а короткую
+         запись утилит внутри раскрывал он же. Убрать скрипт и оставить
+         блок как был — значит обнулить все свои стили разом: карточки,
+         врезки, сетки фактов, ленту соседних материалов.
+
+         Правил `.fade-in` здесь больше нет НАРОЧНО: текст прятался
+         под `opacity: 0` и показывался скриптом, а скрипт мог не
+         дожить до этой строки (FR-F013-113). Плавное появление —
+         украшение, видимость текста — нет. -->
+    <style>
+.glass-header{border-bottom-width:1px;border-color:rgba(0,0,0,.05);background-color:hsla(0,0%,100%,.7);--tw-backdrop-blur:blur(40px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.glass-header:is(.dark *){border-color:hsla(0,0%,100%,.1);background-color:rgba(0,0,0,.7)}.glass-panel{border-width:1px;border-color:rgba(0,0,0,.05);--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px rgba(0,0,0,.06);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.glass-panel:is(.dark *){border-color:hsla(0,0%,100%,.1);--tw-bg-opacity:1;background-color:rgb(28 28 30/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px hsla(0,0%,100%,.04);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);--tw-shadow-color:#000;--tw-shadow:var(--tw-shadow-colored)}body{--tw-bg-opacity:1;background-color:rgb(245 245 247/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1));transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.3s}body:is(.dark *){--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::-moz-selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}:is(.dark *)::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}:is(.dark *)::selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.article-content p{font-family:Inter,sans-serif;font-size:1.125rem;line-height:1.75;margin-bottom:1.5rem;color:rgba(0,0,0,.85)}.dark .article-content p{color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-content p{font-size:1.3125rem;line-height:1.8;margin-bottom:2rem}}.article-content strong{font-weight:600;color:#000}.dark .article-content strong{color:#fff}.article-content em{font-style:italic}.article-content h2{font-family:Inter,sans-serif;font-weight:700;font-size:1.5rem;line-height:1.15;letter-spacing:-.02em;margin-top:4rem;margin-bottom:2rem;color:#000}.dark .article-content h2{color:#fff}@media (min-width:768px){.article-content h2{font-size:1.875rem}}@media (min-width:1024px){.article-content h2{font-size:2.25rem}}.article-content .cta-head{margin-top:0;margin-bottom:0}.article-content section{max-width:48rem;margin-left:auto;margin-right:auto;width:100%}.article-content figure{margin:3rem auto;max-width:48rem}.apple-img,.article-content .arxiv-chart{width:100%;border-radius:1.5rem;overflow:hidden;background:#fff;border:1px solid rgba(0,0,0,.05);box-shadow:0 4px 24px rgba(0,0,0,.04);display:block;padding:0}.dark .apple-img,.dark .article-content .arxiv-chart{background:#1c1c1e;border-color:hsla(0,0%,100%,.1);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.article-content figure img{width:100%;height:auto;display:block;-o-object-fit:cover;object-fit:cover}.article-content figure p{font-family:Space Mono,monospace;font-size:.875rem;color:#86868b;margin:1rem auto 0;text-align:center;line-height:1.6;max-width:42rem}.dark .article-content figure p{color:#8e8e93}.article-lead{font-family:Inter,sans-serif;font-weight:500;font-size:1.25rem;line-height:1.6;margin:.5rem 0 3rem;padding-left:1.25rem;border-left:2px solid #000;color:#86868b}.dark .article-lead{border-color:#fff;color:#8e8e93}@media (min-width:768px){.article-lead{font-size:1.5rem;padding-left:2rem}}.article-content .tech-card{position:relative;display:block;margin:0 auto 10px;max-width:48rem;padding:14px 18px 14px 44px;border-radius:14px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.06)}.dark .article-content .tech-card{background:hsla(0,0%,100%,.04);border-color:hsla(0,0%,100%,.1)}.article-content .tech-card:before{content:"";position:absolute;left:18px;top:1.35em;width:8px;height:8px;border-radius:50%;background:linear-gradient(100deg,#f97316,#8b5cf6)}.article-content .tech-card span{font-family:Inter,sans-serif;font-size:1rem;line-height:1.55;color:rgba(0,0,0,.85)}.dark .article-content .tech-card span{color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-content .tech-card span{font-size:1.0625rem}}.article-content .tech-card span strong{display:block;margin-bottom:3px;font-family:Inter,sans-serif;font-weight:700;font-size:1.05rem;letter-spacing:-.01em;color:#000}.dark .article-content .tech-card span strong{color:#fff}@media (min-width:768px){.article-content .tech-card span strong{font-size:1.15rem}}.article-content .tech-card.flex span strong{display:inline;margin-bottom:0;font-size:inherit}.article-content .tech-num{display:flex;align-items:center;gap:14px;padding-left:18px}.article-content .tech-num:before{content:none}.article-content .tech-num .ig-num{flex:0 0 auto}.article-content .tech-card.flex{padding-left:18px;gap:14px;display:flex}.article-content .tech-card.flex:before{content:none}.article-content .tech-card .text-cyber-orange{color:#f97316}.article-content .prompt-box{max-width:48rem;margin:2rem auto;border-radius:14px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.06);overflow:hidden}.dark .article-content .prompt-box{background:hsla(0,0%,100%,.04);border-color:hsla(0,0%,100%,.1)}.article-content .prompt-box__head{display:flex;align-items:center;gap:10px;padding:11px 18px;border-bottom:1px solid rgba(0,0,0,.06);font-family:Space Mono,monospace;font-size:.75rem;letter-spacing:.1em;text-transform:uppercase;color:#86868b}.dark .article-content .prompt-box__head{border-color:hsla(0,0%,100%,.1);color:#8e8e93}.article-content .prompt-box__head:before{content:"";flex:0 0 auto;width:8px;height:8px;border-radius:50%;background:linear-gradient(100deg,#f97316,#8b5cf6)}.article-content .prompt-box pre{margin:0;padding:16px 18px;overflow-x:auto}.article-content .prompt-box code{display:block;font-family:Space Mono,monospace;font-size:.8125rem;line-height:1.65;color:rgba(0,0,0,.85);white-space:pre-wrap;overflow-wrap:anywhere}.dark .article-content .prompt-box code{color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-content .prompt-box code{font-size:.875rem}}.article-content code.inline-code{font-family:Space Mono,monospace;font-size:.875em;padding:2px 6px;border-radius:6px;overflow-wrap:anywhere;background:rgba(0,0,0,.05);border:1px solid rgba(0,0,0,.06)}.dark .article-content code.inline-code{background:hsla(0,0%,100%,.08);border-color:hsla(0,0%,100%,.12)}.article-content .ig{display:grid;gap:12px;margin:2.5rem auto;max-width:48rem;padding:24px 18px;border-radius:20px;background:#fff;border:1px solid rgba(0,0,0,.07);box-shadow:0 4px 24px rgba(0,0,0,.04)}.dark .article-content .ig{background:#1c1c1e;border-color:hsla(0,0%,100%,.12);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}@media (min-width:768px){.article-content .ig{padding:30px 26px;border-radius:24px}}.article-content .ig-facts,.article-content .ig-steps{display:flex;flex-wrap:wrap;justify-content:center}.article-content .ig-facts>*,.article-content .ig-steps>*{flex:0 1 calc((100% - (var(--cols, 3) - 1)*12px)/var(--cols, 3))}@media (max-width:639px){.article-content .ig-facts>*,.article-content .ig-steps>*{flex-basis:100%}}.article-content .ig-compare{grid-template-columns:1fr;gap:14px}@media (min-width:640px){.article-content .ig-compare{grid-template-columns:1fr 1fr}}.article-content .ig-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}.article-content .ig-fact,.article-content .ig-step{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;min-width:0;padding:12px 8px}.article-content .ig-num{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;font-family:Space Mono,monospace;color:#f97316;border:2px solid rgba(249,115,22,.55);background:rgba(249,115,22,.07)}.article-content .ig-big{font-family:Space Mono,monospace;font-weight:700;font-size:1.4rem;line-height:1.15;letter-spacing:-.01em;background:linear-gradient(100deg,#f97316,#8b5cf6);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#8b5cf6;overflow-wrap:anywhere}@media (min-width:768px){.article-content .ig-big{font-size:1.75rem}}.article-content .ig-lb{font-weight:600;font-size:.9rem;line-height:1.3;overflow-wrap:anywhere}.article-content .ig-sub{font-size:.8rem;line-height:1.4;color:#86868b;overflow-wrap:anywhere}.dark .article-content .ig-sub{color:#8e8e93}.article-content .ig-col{display:flex;flex-direction:column;gap:7px;padding:16px 18px;border-radius:14px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.06);min-width:0}.dark .article-content .ig-col{background:hsla(0,0%,100%,.04);border-color:hsla(0,0%,100%,.1)}.article-content .ig-hd{font-weight:700;font-size:.95rem;line-height:1.3}.article-content .ig-tx{font-size:.95rem;line-height:1.5;color:#86868b;overflow-wrap:anywhere}.dark .article-content .ig-tx{color:#8e8e93}.article-content .ig-compare .ig-col:first-child .ig-hd{color:#f97316}.article-content .ig-compare .ig-col:last-child .ig-hd{color:#8b5cf6}.article-content .ig-chip{border-radius:999px;padding:8px 15px;font-size:.875rem;font-weight:600;border:1.5px solid rgba(139,92,246,.45);color:#8b5cf6;background:rgba(139,92,246,.08);line-height:1.2}.article-content .ig-chips .ig-chip:nth-child(odd){border-color:rgba(249,115,22,.5);color:#f97316;background:rgba(249,115,22,.07)}.article-content .ig p{margin:0}.article-content .vid{margin:2.5rem auto;max-width:48rem}.article-content .vid-box{position:relative;width:100%;aspect-ratio:16/9;border-radius:1.25rem;overflow:hidden;background:#000;border:1px solid rgba(0,0,0,.07)}.dark .article-content .vid-box{border-color:hsla(0,0%,100%,.12)}.article-content .vid-player{width:100%;height:100%;display:block;border:0}.article-content .vid-cap{font-family:Space Mono,monospace;font-size:.875rem;color:#86868b;margin:1rem auto 0;text-align:center;line-height:1.6;max-width:42rem}.dark .article-content .vid-cap{color:#8e8e93}.article-content .vid-src{font-family:Space Mono,monospace;font-size:.8rem;color:#86868b;margin:.5rem auto 0;text-align:center}.dark .article-content .vid-src{color:#8e8e93}.article-content .vid-src a{text-decoration:underline}.article-content .vid-link{display:block}.article-content .vid-poster{width:100%;height:100%;-o-object-fit:cover;object-fit:cover;display:block}.article-content .vid-play{position:absolute;left:50%;top:50%;width:4.5rem;height:4.5rem;transform:translate(-50%,-50%);border-radius:50%;background:rgba(0,0,0,.55);border:2px solid hsla(0,0%,100%,.9)}.article-content .vid-play:after{content:"";position:absolute;left:56%;top:50%;transform:translate(-50%,-50%);border-left:1.15rem solid #fff;border-top:.72rem solid transparent;border-bottom:.72rem solid transparent}.article-content .vid-link:hover .vid-play{background:rgba(0,0,0,.75)}@media (prefers-reduced-motion:reduce){}.rel-rail{display:flex;gap:16px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x proximity;padding:4px 2px 12px;overscroll-behavior-x:contain;scrollbar-width:none;-ms-overflow-style:none}.rel-rail::-webkit-scrollbar{display:none}.rel-rail>a{flex:0 0 auto;width:208px;scroll-snap-align:start;text-decoration:none;display:block;transition:transform .25s cubic-bezier(.2,.8,.2,1)}@media (min-width:640px){.rel-rail>a{width:244px}}.rel-rail>a:hover{transform:translateY(-4px)}.rel-thumb{display:block;position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:18px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.1);box-shadow:0 4px 24px rgba(0,0,0,.05)}.dark .rel-thumb{background:hsla(0,0%,100%,.045);border-color:hsla(0,0%,100%,.14);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.rel-thumb img{width:100%;height:100%;-o-object-fit:cover;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}.rel-rail>a:hover .rel-thumb img{transform:scale(1.05)}.rel-rail time{display:block;margin:12px 0 5px;font-family:Space Mono,monospace;font-size:.625rem;letter-spacing:.08em;color:#86868b}.dark .rel-rail time{color:#8e8e93}.rel-title{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.875rem;font-weight:600;line-height:1.4;letter-spacing:-.01em;color:#000}.dark .rel-title{color:#fff}.rel-fade{position:absolute;top:0;bottom:12px;width:96px;pointer-events:none;opacity:0;z-index:2;transition:opacity .35s ease}.rel-fade-l{left:0;background:linear-gradient(90deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.rel-fade-r{right:0;background:linear-gradient(270deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.dark .rel-fade-l{background:linear-gradient(90deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.dark .rel-fade-r{background:linear-gradient(270deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.rel-arrow{position:absolute;top:calc(50% - 34px);translate:0 -50%;z-index:3;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid rgba(0,0,0,.1);background:#fff;color:#000;box-shadow:0 8px 26px rgba(0,0,0,.14);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,transform .25s ease}.dark .rel-arrow{border-color:hsla(0,0%,100%,.14);background:#1c1c1e;color:#fff}.rel-arrow:hover{transform:scale(1.08)}.rel-arrow-l{left:6px}.rel-arrow-r{right:6px}.rel-wrap[data-left="1"] .rel-fade-l,.rel-wrap[data-right="1"] .rel-fade-r{opacity:1}.rel-wrap[data-left="1"] .rel-arrow-l,.rel-wrap[data-right="1"] .rel-arrow-r{opacity:1;visibility:visible;pointer-events:auto}@media (hover:none){.rel-arrow{display:none}}@media (prefers-reduced-motion:reduce){.rel-arrow,.rel-fade,.rel-rail>a,.rel-thumb img{transition:none}}
+    </style>
+    <style>
+        /* --- ряд рубрик в шапке -----------------------------------------
+           Палитра витрин. На странице статьи её не было вовсе: переменные
+           живут в styles.css приложения, которого страница не подключает.
+           Из-за этого и переключатель языка рисовал неактивный язык тем же
+           цветом, что активный — значение var(--text-muted) не определено,
+           объявление отбрасывается, цвет наследуется. */
+        :root {
+            --bg-color: #F5F5F7;
+            --text-main: #1d1d1f;
+            --text-muted: #86868B;
+            --chip-border: rgba(0, 0, 0, 0.08);
+        }
+        .dark {
+            --bg-color: #000000;
+            --text-main: #f5f5f7;
+            --text-muted: #8E8E93;
+            /* 0.19, а не 0.10: на чистом чёрном десятая доля даёт
+               rgb(25,25,25) — ряд читается не кнопками, а россыпью слов. */
+            --chip-border: rgba(255, 255, 255, 0.19);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Края растворяет МАСКА самого ряда, а не градиент поверх него:
+           накладной прямоугольник пришлось бы красить фоном страницы, и на
+           границе тем он выглядел бы грязным мазком.
+
+           Правый край растворён сразу, ещё до пересчёта скриптом: рубрики
+           в шапку обычно не помещаются, и до первого замера честнее
+           показать растворение, чем сухой обрез. Не понадобится — скрипт
+           обнулит. */
+        #category-scroll {
+            --fade-l: 0px;
+            --fade-r: 56px;
+            -webkit-mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+            mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+        }
+
+        /* Заливки у рубрики нет, всю форму держит рамка — значит и рамка
+           задаётся здесь, а не только утилитой Tailwind. */
+        .category-btn {
+            transition: all 0.25s ease;
+            background: transparent;
+            border: 1px solid var(--chip-border);
+        }
+        .category-btn.active,
+        .category-btn.active:hover {
+            background: var(--text-main);
+            color: var(--bg-color);
+            border-color: var(--text-main);
+        }
+
+        /* Выбор рубрики на телефоне — на <details>, то есть без единой
+           строки JavaScript: раскрытие списка не должно зависеть от того,
+           доехала ли чужая библиотека. */
+        #cat-menu > summary { list-style: none; cursor: pointer; }
+        #cat-menu > summary::-webkit-details-marker { display: none; }
+        #cat-menu > summary::marker { content: ""; }
+        #cat-menu[open] > summary .cat-caret { transform: rotate(180deg); }
+        .cat-caret { transition: transform 0.2s ease; }
+        /* Подпись на кнопке телефона не должна раздувать шапку, и её ширина не
+           должна зависеть от длины названия рубрики. У «Исследований» кнопка
+           выходила на 135 пикселей против 106 у «Новостей», и правый край
+           «Telegram» уезжал за экран на 390. Замер поймал; на широком экране
+           этого не видно вовсе.
+
+           3.5rem, а не 4.5: с четырьмя с половиной не хватало ровно четырёх
+           пикселей. Теперь длина названия на ширину шапки не влияет никак. */
+        #cat-menu > summary > span {
+            max-width: 3.5rem; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        #cat-menu .cat-item {
+            display: flex; align-items: center; gap: 0.625rem;
+            padding: 0.625rem 0.75rem; border-radius: 0.75rem;
+            font-family: "Space Mono", monospace; font-size: 11px;
+            font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+            color: var(--text-muted); text-decoration: none;
+        }
+        #cat-menu .cat-item.active {
+            background: var(--text-main); color: var(--bg-color);
+        }
+    </style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4 shrink-0">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">
+                    DATAIST
+                </div>
+            </a>
+            <details id="cat-menu" class="sm:hidden relative -ml-2">
+                <summary class="category-btn inline-flex items-center gap-1.5 px-3 py-2 rounded-full font-mono text-[10px] font-bold tracking-tight uppercase text-black dark:text-white" aria-label="Choose a section">
+                    <i data-lucide="newspaper" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span>News</span>
+                    <i data-lucide="chevron-down" class="cat-caret w-3.5 h-3.5 shrink-0"></i>
+                </summary>
+                <div class="absolute left-0 top-full mt-2 w-56 p-2 rounded-2xl glass-panel flex flex-col gap-0.5 z-50">
+                    <a href="/?cat=all" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="cat-item"><i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i><span>All</span></a>
+                    <a href="/?cat=research" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="cat-item"><i data-lucide="microscope" class="w-4 h-4 shrink-0"></i><span>Research</span></a>
+                    <a href="/?cat=news" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" aria-current="page" class="cat-item active"><i data-lucide="newspaper" class="w-4 h-4 shrink-0"></i><span>News</span></a>
+                </div>
+            </details>
+        </div>
+            <div id="category-scroll" class="hidden sm:block flex-1 min-w-0 overflow-x-auto no-scrollbar">
+                <nav aria-label="Sections" class="flex flex-nowrap items-center gap-2 w-max mx-auto">
+                    <a href="/?cat=all" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="all" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i><span>All</span></a>
+                    <a href="/?cat=research" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="research" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i><span>Research</span></a>
+                    <a href="/?cat=news" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" data-cat="news" aria-current="page" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white active"><i data-lucide="newspaper" class="w-3.5 h-3.5 shrink-0"></i><span>News</span></a>
+                </nav>
+            </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+            <nav id="lang-switch" aria-label="Language" class="flex items-center gap-1.5 md:gap-2 font-mono text-[11px] md:text-sm font-bold uppercase tracking-widest select-none"><a href="/news/nvidia-pokazala-kak-sdelat-robotizirovannuiu-ruku-nevesomoi-s-pomoshchiu-holosca/" hreflang="ru" lang="ru" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="text-[var(--text-muted)] hover:text-black dark:hover:text-white transition-colors no-underline">RU</a><span aria-hidden="true" class="text-[var(--text-muted)] opacity-40">|</span><span aria-current="true" class="text-black dark:text-white">EN</span></nav>
+            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Toggle theme">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://x.com/neuronium_ai" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">X</span>
+            </a>
+        </div>
+    </header>
+
+    <script>
+        /* Растворение краёв ряда рубрик.
+
+           Отдельным блоком намеренно: в общем блоке внизу страницы первой
+           строкой идёт обращение к библиотеке иконок с unpkg.com, и если
+           она не ответила, весь тот блок не исполняется. Ряду рубрик до
+           этого дела быть не должно. */
+        (function () {
+            var el = document.getElementById('category-scroll');
+            if (!el) return;
+            var row = el.firstElementChild;
+            var RAMP = 48, MAX = 56;          // те же числа, что на витрине
+            var placed = false;
+
+            function update() {
+                var max = el.scrollWidth - el.clientWidth;
+                var w = function (v) {
+                    return max <= 8 ? 0
+                        : Math.round(Math.min(1, Math.max(0, v) / RAMP) * MAX);
+                };
+                el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+
+                if (!placed && max > 8) {
+                    placed = true;
+                    var active = el.querySelector('.category-btn.active');
+                    if (active) {
+                        /* Ровно настолько, чтобы текущая рубрика влезла, и
+                           ни пикселем больше: центрирование утаскивало ряд
+                           до упора и прятало «Все» за краем насовсем.
+                           Запас 64 шире растворения (56), иначе рубрика
+                           встаёт под маску и читается наполовину. */
+                        var pad = 64;
+                        var l = active.offsetLeft - pad;
+                        var r = active.offsetLeft + active.offsetWidth + pad;
+                        if (r > el.scrollLeft + el.clientWidth) el.scrollLeft = r - el.clientWidth;
+                        else if (l < el.scrollLeft) el.scrollLeft = Math.max(0, l);
+                        max = el.scrollWidth - el.clientWidth;
+                        el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                        el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+                    }
+                }
+            }
+
+            el.addEventListener('scroll', update, { passive: true });
+            window.addEventListener('resize', update);
+
+            /* Главное. Ряд меняет ширину ПОСЛЕ первого замера: `<i
+               data-lucide>` превращается в svg, когда догрузится библиотека
+               иконок, и рубрики раздаются. Разовый замер этого не ловит —
+               край резался насухо. Наблюдатель ловит любое изменение
+               размера, чем бы оно ни было вызвано. */
+            if (window.ResizeObserver && row) new ResizeObserver(update).observe(row);
+            window.addEventListener('load', update);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+
+            update();
+        })();
+
+        /* Меню рубрик на телефоне закрывается нажатием мимо него.
+           Раскрытие держится на <details> и работает без скрипта; это лишь
+           удобство — не сработает, меню закроется повторным нажатием. */
+        (function () {
+            var menu = document.getElementById('cat-menu');
+            if (!menu) return;
+            document.addEventListener('click', function (e) {
+                if (menu.open && !menu.contains(e.target)) menu.open = false;
+            });
+        })();
+    </script>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА НОВОСТИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="newspaper" class="w-3.5 h-3.5"></i>
+                    <span>News · 2026-11-09</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    NVIDIA shows how Holoscan 5 can make a robot arm feel weightless
+                </h1>
+
+                <!-- ПОДПИСЬ НОВОСТИ (FR-F013-64, FR-F013-124): имя задаёт
+                     конвейер, ссылка ведёт в канал. Аватарка — картинка
+                     владельца; не загрузилась, значит просто нет кадра, а
+                     подпись остаётся. Имён здесь не поминаем даже
+                     комментарием: блок вместе с ним уезжает и в уже
+                     выложенные страницы (`resign_news`). -->
+                <a href="https://x.com/neuronium_ai" target="_blank" rel="noopener"
+                   class="inline-flex items-center gap-2.5 mb-8 group/author">
+                    <img src="https://dataist.ai/pics/photo_2026-02-01%2020.43.54.jpeg" alt="Dataist"
+                         loading="lazy"
+                         class="w-9 h-9 rounded-full object-cover border border-black/10 dark:border-white/20 bg-black/5 dark:bg-white/10">
+                    <span class="font-mono text-sm font-bold tracking-tight text-black dark:text-white group-hover/author:opacity-60 transition-opacity">Dataist</span>
+                </a>
+
+                <p class="article-lead text-left max-w-3xl mx-auto">NVIDIA has shown how to make a robotic arm feel weightless with Holoscan 5. The example uses a Seeed Studio reBot Arm B601-DM manipulator and the Pinocchio inverse-dynamics solver. Three operators read joint states, calculate torque and send commands to the motors. The control loop runs at 400 Hz. The authors also compared latency and jitter in Python and C++ implementations, and tested how pinning threads to CPU cores affects them.</p>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/news/nvidia-shows-how-holoscan-5-can-make-a-robot-arm-feel-weightless/cover.jpg"
+                         alt="Cover: NVIDIA shows how Holoscan 5 can make a robot arm feel weightless"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ НОВОСТИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+                <section>
+<h2>How NVIDIA Holoscan 5 enables gravity-compensated robot control</h2>
+
+</section>
+<section>
+<h2>Why Holoscan is useful</h2>
+<p>The Holoscan SDK brings low-latency control and high-throughput data processing together in a single programming model. It is designed for workloads running on both CPUs and GPUs. The runtime is meant to reduce unnecessary overhead and make it clear how an application executes.</p>
+<p>Operators can be grouped into a partition, where they run in sequence on a single thread without thread switches or extra system calls. Timers or incoming data trigger execution, while bounded queues that drop the oldest items prevent stale data from piling up.</p>
+<p>Existing algorithms can be integrated without rewriting them for the framework. Holoscan 5 adds a lightweight programming model that is easier to embed in existing codebases, along with a more convenient way to exchange data with graphs.</p>
+<p>The same model can support CPU motor-control loops running at 10 kHz, compute-intensive GPU workloads and AI inference. Developers can describe execution using operators, ports and graphs, split workloads across multiple graphs, pin partitions to CPU cores, run them on CUDA Green contexts or launch them as CUDA graphs.</p>
+<p>Operators can also specify timing requirements. Before the first run, Holoscan compiles an execution plan that can be inspected to catch configuration errors before deployment on hardware. Built-in NVTX markers show operator activity and message transfers in Nsight Systems. This makes it possible to analyze CPU-side latency and update jitter, then repeat the measurements as the application evolves.</p>
+</section>
+<section>
+<h2>A manipulator for torque control</h2>
+<p>The example uses the Seeed Studio reBot Arm B601-DM, an accessible platform for learning modern robot control. Low-cost manipulators often use hobby servos with high gear ratios that support position control only. The reBot Arm uses quasi-direct-drive (QDD) actuators, which provide broad bandwidth for control and measurement. This is useful for tactile interaction, human-robot collaboration and other torque-control tasks.</p>
+<p>Gravity compensation helps test how closely a robot model matches its physical construction before perception and motion planning systems are added. Position-only control can hide errors in joint axes, offsets, link placement, masses and moments of inertia. With gravity compensation, such errors immediately affect the required torque: incorrect Denavit–Hartenberg parameters or mass properties can make the arm sag or rise as its pose changes.</p>
+<p>Even if the final system does not need gravity compensation, torque control makes it possible to tune how the robot responds to external forces. In this example, gravity compensation is combined with low stiffness and damping: the arm supports its own weight but yields to a person’s hand.</p>
+<p>This kind of control requires fast, predictable measurements—hundreds or thousands of times per second. Runtime overhead and thread switches add phase delay and jitter, which can undermine the robot’s stability.</p>
+<p>Pinocchio calculates the inverse dynamics. The library loads the robot model in URDF format and uses the recursive Newton–Euler algorithm (RNEA) to calculate joint torques for given positions, velocities and accelerations. The motorbridge library reads joint measurements and sends commands to the motors.</p>
+</section>
+<section>
+<h2>Setting up the Python example</h2>
+<p>The guide uses the Holoscan Python API. The repository also includes a full C++ implementation with its own build instructions. Both versions use the same three-operator control loop.</p>
+<p>You need a Linux system with Python 3.12 or later. From the repository root, run:</p>
+<div class="prompt-box"><div class="prompt-box__head">Environment setup commands</div><pre><code>python3.12 -m venv build/python-venv
+build/python-venv/bin/python -m pip install --only-binary=:all: -r requirements-python.txt
+build/python-venv/bin/python -m pip check</code></pre></div>
+<p>Then check the serial port and motor IDs in the manipulator’s configuration file. The repository’s technical guide covers setup, the mathematics and running the hardware.</p>
+</section>
+<figure class="vid"><div class="vid-box"><video controls preload="metadata" playsinline class="vid-player"><source src="https://developer.download.nvidia.com/devblogs/rebot-side-by-side-10M-h265.mp4#t=0.1" type="video/mp4"></video></div><p class="vid-cap">Video 1. A responsive robot with Holoscan installed for gravity compensation workload vs. a custom script runtime</p><p class="vid-src">Source: <a href="https://developer.nvidia.com/blog/make-a-robot-arm-feel-weightless-with-nvidia-holoscan-5/" target="_blank" rel="noopener nofollow">developer.nvidia.com</a></p></figure>
+<section>
+<h2>The three operators in the control loop</h2>
+<p>Holoscan 5 has two core concepts: operators and graphs. Reading the robot’s state, calculating a command with the inverse-dynamics solver and sending the command to the manipulator are handled by three operators.</p>
+<p>Custom operators have three important methods. The guide refers to their list as a table of key methods, but does not provide the method names in the text.</p>
+</section>
+<section>
+<h2>1. Reading joint states on a timer</h2>
+<p><code class="inline-code">JointStateSourceOp</code> declares an output in <code class="inline-code">setup()</code>. Its <code class="inline-code">OnClock</code> contract triggers it every 2.5 ms, or at 400 Hz. Each time <code class="inline-code">compute()</code> runs, the operator reads the state of all seven motors and sends it on.</p>
+<div class="prompt-box"><div class="prompt-box__head">State-reading operator</div><pre><code>import holoscan as hsdk
+
+class JointStateSourceOp(hsdk.Operator):
+    state = hsdk.Output(&quot;state&quot;, hsdk.pyobject)
+
+    def setup(self, spec):
+        spec.output(self.state)
+
+    def contract(self):
+        return hsdk.Contract().trigger(hsdk.OnClock(period=hsdk.time.us(2500)))
+
+    def start(self):
+        self.sequence = 0
+
+    def compute(self, ctx):
+        self.sequence += 1
+        self.state.emit(robot.read_state(self.sequence))</code></pre></div>
+</section>
+<section>
+<h2>2. Calculating compensation when data arrives</h2>
+<p><code class="inline-code">PinocchioGravityOp</code> declares an input for the state and an output for the command. The <code class="inline-code">OnEach</code> operator triggers a calculation whenever a new state arrives. The <code class="inline-code">hsdk.Param</code> parameters set the gain values, torque scaling and joint directions.</p>
+<div class="prompt-box"><div class="prompt-box__head">Compensation calculation operator</div><pre><code>class PinocchioGravityOp(hsdk.Operator):
+    state = hsdk.Input(&quot;state&quot;, hsdk.pyobject)
+    command = hsdk.Output(&quot;command&quot;, hsdk.pyobject)
+    kp = hsdk.Param(1.5, range=(0.0, 500.0))
+    kd = hsdk.Param(1.0, range=(0.0, 5.0))
+    tau_scale = hsdk.Param([1.0] * 6)
+    joint_direction = hsdk.Param([1.0] * 6)
+
+    def setup(self, spec):
+        spec.input(self.state, queue_depth=1)
+        spec.output(self.command)
+
+    def contract(self):
+        return hsdk.Contract().trigger(hsdk.OnEach(self.state))
+
+    def compute(self, ctx):
+        state = self.state.receive_data()
+        command = controller.compute(
+            state, kp=self.kp, kd=self.kd,
+            tau_scale=self.tau_scale, joint_direction=self.joint_direction)
+        self.command.emit(command)</code></pre></div>
+<p>Inside <code class="inline-code">compute()</code>, the operator passes the received state and current parameters to a helper function. The function maps the manipulator’s six angles to the URDF model, checks the limits and gets the gravity torques from Pinocchio:</p>
+<div class="prompt-box"><div class="prompt-box__head">Gravity torque calculation</div><pre><code>gravity = pin.computeGeneralizedGravity(self.model, self.data, self.q)[self.v_indices]</code></pre></div>
+<p>The calculated torques are added to the motor commands as feedforward compensation, alongside position, velocity, stiffness and damping. The first command already includes the gravity component and the specified compliance settings.</p>
+</section>
+<section>
+<h2>3. Sending commands to the motors</h2>
+<p><code class="inline-code">MotorCommandSinkOp</code> declares one input and runs whenever a command arrives. Its <code class="inline-code">compute()</code> method passes the command to a robot helper module. The module checks whether the command has expired, whether commands are out of order and whether the command is within the allowed range, then sends a packet to the motors.</p>
+<div class="prompt-box"><div class="prompt-box__head">Command-sending operator</div><pre><code>class MotorCommandSinkOp(hsdk.Operator):
+    command = hsdk.Input(&quot;command&quot;, hsdk.pyobject)
+
+    def setup(self, spec):
+        spec.input(self.command, queue_depth=1)
+
+    def contract(self):
+        return hsdk.Contract().trigger(hsdk.OnEach(self.command))
+
+    def compute(self, ctx):
+        robot.send_command(self.command.receive_data())
+
+    def stop(self):
+        robot.disable()</code></pre></div>
+<p>After sending commands to all seven motors, the helper module records the completion time. If no send completes within 100 ms—the default value—the watchdog attempts to disable the motors and stops the graph. The operator’s <code class="inline-code">stop()</code> method also disables the motors.</p>
+</section>
+<figure class="vid"><div class="vid-box"><video controls preload="metadata" playsinline class="vid-player"><source src="https://developer.download.nvidia.com/devblogs/Holoscan5GravComp.mp4#t=0.1" type="video/mp4"></video></div><p class="vid-cap">Video 2. The controller updates while the joint torques as the pose changes</p><p class="vid-src">Source: <a href="https://developer.nvidia.com/blog/make-a-robot-arm-feel-weightless-with-nvidia-holoscan-5/" target="_blank" rel="noopener nofollow">developer.nvidia.com</a></p></figure>
+<section>
+<h2>Building and running the graph</h2>
+<p>The operators are connected through ports, and the compensation parameters are passed when the operator is created:</p>
+<div class="prompt-box"><div class="prompt-box__head">Graph construction</div><pre><code>graph = hsdk.Graph(&quot;rebot-gravity&quot;, default_clock=hsdk.RealtimeClock)
+source = graph.op(JointStateSourceOp, &quot;joint_feedback&quot;)
+gravity = graph.op(PinocchioGravityOp, &quot;gravity&quot;, **controller.parameters.operator_kwargs())
+sink = graph.op(MotorCommandSinkOp, &quot;motor_commands&quot;)
+graph.add_flow(source.state, gravity.state, queue_depth=1, queue_policy=hsdk.QueuePolicy.DROP_OLDEST)
+graph.add_flow(gravity.command, sink.command, queue_depth=1, queue_policy=hsdk.QueuePolicy.DROP_OLDEST)
+graph.partition(&quot;control&quot;).add(source).add(gravity).add(sink)</code></pre></div>
+<p>A partition runs the callbacks of its operators sequentially on a single thread managed by the runtime. All three operators are in the <code class="inline-code">control</code> partition, so passing the state, calculating torque and sending the command require no thread switches. The source sets the rate, while the other operators follow the incoming data. Queues with a depth of one that drop the oldest data prevent stale samples from accumulating.</p>
+<p>Before the motors are enabled, Holoscan compiles the description into an execution plan that can be checked:</p>
+<div class="prompt-box"><div class="prompt-box__head">Compile and run the graph</div><pre><code>plan = hsdk.compile(build_graph(robot, controller))
+if not plan:
+    raise RuntimeError(plan.summary())
+
+prepare_gravity_compensation(robot, controller)
+hsdk.run_async(plan)</code></pre></div>
+<p>The model and motors are initialized in <code class="inline-code">prepare_gravity_compensation()</code> after the graph is compiled and immediately before it runs. Signal handlers set <code class="inline-code">stop_requested</code> when Ctrl+C is pressed. The main loop monitors command execution, while a context manager stops the graph and waits for its threads to finish. The lifecycle handling also covers startup, watchdogs and shutdown.</p>
+</section>
+<section>
+<h2>Testing the manipulator</h2>
+<p>Before starting, place the arm in a safe initial position with the power off:</p>
+<div class="prompt-box"><div class="prompt-box__head">Launch command</div><pre><code>build/python-venv/bin/python python/gravity_compensation.py</code></pre></div>
+<p>When <code class="inline-code">Gravity compensation active</code> appears, the arm can be guided by hand. Return it to its initial position before pressing Ctrl+C: the stop command disables the motors.</p>
+</section>
+<section>
+<h2>Measuring latency and jitter</h2>
+<p>Holoscan integrates with NVIDIA Nsight Systems to analyze CPU and GPU task execution. Profiling requires no special decorators or custom timing code: just run the application without changes.</p>
+<div class="prompt-box"><div class="prompt-box__head">Profiling commands</div><pre><code>mkdir -p build/profiles
+nsys profile -t nvtx --sample=none --backtrace=none --cpuctxsw=none \
+  -o build/profiles/gravity-python \
+  build/python-venv/bin/python python/gravity_compensation.py</code></pre></div>
+<p>A summary of the time ranges can be generated with the standard command:</p>
+<div class="prompt-box"><div class="prompt-box__head">Summary command</div><pre><code>nsys stats --report nvtx_sum build/profiles/gravity-python.nsys-rep</code></pre></div>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/news/nvidia-shows-how-holoscan-5-can-make-a-robot-arm-feel-weightless/fig_0.jpg" alt="Figure 2. NVIDIA Nsight Systems (nsys) timeline and NVTX event trace showing task timing and latency across operators" class="w-full object-contain rounded-lg">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">Figure 2. NVIDIA Nsight Systems (nsys) timeline and NVTX event trace showing task timing and latency across operators</p>
+<p class="text-xs md:text-sm text-gray-500 dark:text-gray-400 mt-2 text-center font-mono">Source: <a href="https://developer.nvidia.com/blog/make-a-robot-arm-feel-weightless-with-nvidia-holoscan-5/" target="_blank" rel="noopener nofollow" class="underline hover:no-underline">developer.nvidia.com</a></p>
+</div></figure>
+</section>
+<section>
+<h2>Pinning threads to CPU cores</h2>
+<p>Holoscan’s deployment interface can pin the control partition to a CPU core. In the reported runs, helper and profiler threads were placed on another core, while two physical cores and their SMT threads were temporarily reserved from other applications using a Linux control group. This setup does not require rebuilding the kernel, changing boot parameters or restarting the computer. However, interrupts, timers and some kernel threads can still run on the reserved cores.</p>
+<p>The authors compared four configurations, collecting more than a million cycles in each run. Holoscan latency was measured from entry into the first operator to entry into the last; sending commands to the motors was not included. Pinned runs are shown as solid lines in the chart, and unpinned runs as dashed lines. The source also presents latency distributions for C++ and Python pipelines, with and without pinning, in a table, but the table’s numerical values are not included in the text.</p>
+<p>With thread pinning and core isolation, observed latency at the p99.99 level fell by about 5 times for C++ and 9.6 times for Python. Measurements were taken sequentially with profiling enabled; the first ten seconds were excluded, while latency outliers were retained.</p>
+<p>Both Holoscan versions call the Pinocchio solver, which is written in C++. But Python adds interpreter work, object allocation and interaction with the Global Interpreter Lock (GIL) around Pinocchio and the Holoscan runtime. These costs matter for CPU control loops with latency budgets measured in microseconds. C++ offers more control over memory allocation and system calls on the critical path, although the example still allocates memory and is not a system-call-free pipeline.</p>
+<p>For GPU perception workloads that take milliseconds or tens of milliseconds, small memory allocations and individual CPU system calls are usually less significant: the computations themselves take orders of magnitude longer. Python remains a practical way to build such pipelines when their components are implemented in CUDA.</p>
+</section>
+<figure class="vid"><div class="vid-box"><video controls preload="metadata" playsinline class="vid-player"><source src="https://developer.download.nvidia.com/devblogs/hsdk5-kcartesian-hold-10M-h265.mp4#t=0.1" type="video/mp4"></video></div><p class="vid-cap">Video 3. Real-time Cartesian position hold, maintaining target orientation while remaining haptically compliant</p><p class="vid-src">Source: <a href="https://developer.nvidia.com/blog/make-a-robot-arm-feel-weightless-with-nvidia-holoscan-5/" target="_blank" rel="noopener nofollow">developer.nvidia.com</a></p></figure>
+<section>
+<h2>From gravity compensation to full control</h2>
+<p>The basic loop consists of three Holoscan operators: one reads joint states on a timer, another calculates gravity torques with Pinocchio, and the third sends commands to the motors. Holoscan checks the graph before the motors are enabled, and Nsight Systems can be used to inspect its execution.</p>
+<p>Gravity compensation is a foundation, not a complete control system. The repository includes a second Python example that adds kinematics and impedance control as reusable Holoscan operators. It accepts target positions and orientations, for example from a trained policy, while keeping the arm compliant when touched.</p>
+<p>This provides a basis for developing hand-guided learning, teleoperation and object manipulation. To add perception, the guide proposes using the Holoscan computer vision module and NVIDIA Isaac ROS components, which include reusable Holoscan operators and reference applications, including GR00T inference.</p>
+<p>The authors recommend downloading the Holoscan 5 SDK and using the full guide to continue.</p>
+<p>Dataist’s take: The example shows how splitting control into operators and checking the graph before startup can help manage a robotic control loop. The latency results, however, come from sequential runs with profiling enabled, and the measured interval does not include sending commands to the motors.</p>
+</section>
+
+                <!-- Источник(и) новости -->
+                <div class="mt-14 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://developer.nvidia.com/blog/make-a-robot-arm-feel-weightless-with-nvidia-holoscan-5/" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Source</span>
+                    </a>
+                </div>
+
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="cta-head font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                Daily AI news
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Every day we pick what actually matters in AI and explain it plainly — no hype, no filler. Subscribe if you want to follow where the industry is going.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Only what matters — every day
+                            </p>
+                            <a href="https://x.com/neuronium_ai" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">Follow on X</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        // ЧУЖАЯ БИБЛИОТЕКА НЕ ИМЕЕТ ПРАВА РОНЯТЬ ВИДИМОСТЬ ТЕКСТА
+        // (FR-F013-113). Здесь стояло голое `lucide.createIcons()`. Не
+        // ответил `unpkg.com` — а он чужой сервер и отвечает не всегда, —
+        // `lucide` не существует, первая же строка бросает исключение, и
+        // ВЕСЬ остальной блок не исполняется: ни кнопка темы, ни полоса
+        // прогресса, ни наблюдатель, снимавший с текста `opacity: 0`.
+        // Читатель видел пустую страницу. Иконка не показалась — досадно;
+        // статья не показалась — потеряли читателя.
+        //
+        // И ВЫЗОВ УЕХАЛ В `DOMContentLoaded`. С `defer` библиотека грузится
+        // ПОСЛЕ разбора страницы, а этот блок — встроенный и выполняется
+        // сразу: проверка `window.lucide` на этом месте была бы всегда
+        // ложной, и иконок не стало бы вовсе. Отложенные скрипты успевают
+        // до `DOMContentLoaded` — там их и зовём.
+        function нарисоватьИконки() {
+            if (window.lucide) lucide.createIcons();
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', нарисоватьИконки);
+        } else {
+            нарисоватьИконки();
+        }
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(нарисоватьИконки, 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Появление блоков. Вызывается сразу, если DOM уже готов (страница
+        // могла быть вставлена после загрузки — Web View, предпросмотр,
+        // встраивание): иначе обработчик DOMContentLoaded уже не сработает и
+        // контент навсегда остался бы скрытым.
+        function initReveal() {
+            const targets = document.querySelectorAll('.fade-in');
+            if (!('IntersectionObserver' in window)) {
+                targets.forEach(el => el.classList.add('visible'));
+                return;
+            }
+            const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        obs.unobserve(entry.target);
+                    }
+                });
+            }, { root: null, rootMargin: '0px', threshold: 0.05 });
+            targets.forEach(el => observer.observe(el));
+            // Страховка: если наблюдатель по какой-то причине не сработал,
+            // показываем всё — пустая страница хуже, чем отсутствие анимации.
+            setTimeout(() => targets.forEach(el => el.classList.add('visible')), 1500);
+        }
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initReveal);
+        } else {
+            initReveal();
+        }
+    </script>
+</body>
+</html>
