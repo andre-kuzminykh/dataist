@@ -1,0 +1,91 @@
+# Hugging Face outlines a common interface for decision models
+
+## Decisions instead of text responses
+
+Large language models are good at generating text, but some tasks boil down to choosing from a predefined set of options. For example, when a customer reports being charged twice and asks for a refund, support needs to identify the responsible team, assess the urgency of the request and determine whether the customer is asking for a refund.
+
+A conventional approach is to ask a language model to produce JSON with its answers. In an example using `llama cli` and the `ggml-org/gemma-4-e4b-it-GGUF:Q4_0` model, the model selects Billing, marks the request as high priority and notes that the customer is asking for a refund.
+
+Hugging Face proposes a different approach: the model directly scores the specified answers and returns a probability distribution without generating text. In an example using `autotrust/GEV-26B-Decide`, the probability that the request concerns billing and refunds is about 0.998, while the overall confidence is about 0.997.
+
+[FIGURE:0]
+
+## How decision models work
+
+A request consists of context—the state—and one or more questions with allowed answer types. The model returns structured decisions and probabilities. The approach is built around an interface: a state, questions and possible answers go in; decisions and probabilities come out.
+
+TypeSafe AI introduced Jev as a system 1 model, drawing an analogy with fast, intuitive thinking, as opposed to the slower, more deliberate thinking of system 2. But the term “decision model” has taken hold in the community: it describes the model’s computational role without tying it to a particular theory of thought.
+
+A standard language model can be asked to return JSON, but it does not always follow the schema: it may produce invalid JSON, add unexpected fields or choose an answer outside the allowed options. Outlines and XGrammar constrain generation to valid tokens and help enforce a specified structure, but require additional computation. If an application only needs to choose one option, generating a full response may be unnecessary.
+
+## How this approach differs from classification
+
+In traditional classification, a model is trained to choose from a predefined set of labels. For example, requests can be routed to Billing, Technical support or Sales. The classification component typically outputs one value for each class, and a softmax function converts those values into probabilities.
+
+The list of classes is built into the model’s classification component. If a Legal department is added, the existing model does not automatically gain a new class: that component may need to be modified, data collected, and the model fine-tuned or adapted.
+
+Zero-shot classification lets users supply categories with each request. In an example using `facebook/bart-large-mnli`, the text “My payment was deducted twice” is compared with the labels `billing`, `technical support` and `sales`. Their scores are 0.847, 0.096 and 0.057, respectively. If `legal` is added, the model recalculates the distribution: the scores become 0.819, 0.093, 0.055 and 0.033. One common way to implement this uses a model trained on natural language inference: each label becomes a hypothesis, and the model scores how well the original text supports it.
+
+Decision models extend this idea: multiple named questions, including questions with different answer types, can be asked about a single state. Their advantage is not that they introduce dynamic labels or probabilistic classification for the first time, but that they provide a common interface for these capabilities. That interface can be used with architectures and training methods specifically adapted to decision-making tasks.
+
+## Three question types
+
+A request includes a state and questions. The state is the information the model must assess: a plain string, a structured JSON object or other data types in models that support different modalities. In the example, it contains the customer’s message about being charged twice and asking for a refund, the `pro` plan and two previous requests.
+
+Questions support three answer types:
+
+- **Choice** — select one of several options.
+- **Score** — rate the state on an ordered scale.
+- **Noul** — give a probabilistic answer to a “yes” or “no” question.
+
+In the Choice example, the model selects Billing from three options—Billing, Technical support and Sales—and returns probabilities for each. The values are converted into probabilities using softmax; they sum to one, and the option with the highest probability is selected. The other scores are useful too: they show how the model distributes its confidence among the alternatives.
+
+Score is suited to ratings on a scale. For request urgency, the levels could be 0 for low, 1 for medium and 2 for high. In the example, the probabilities for these levels are about 0.015, 0.265 and 0.720. Rather than selecting the most likely level, the model returns the expected value of the index—about 1.7. This is not a separate level “between medium and high,” but a summary of the probability distribution.
+
+Noul answers a question that can be expressed as “yes” or “no.” Asked whether the customer is requesting a refund, the model returns a probability of about 0.995 for “yes.” If the result is 0.92, that means a 0.92 probability of “yes” and a 0.08 probability of “no.” The model returns the probability itself; the application decides how to respond to it.
+
+## How confidence is calculated
+
+For Choice and Score answers, the interface also returns a `confidence` field. It helps measure how concentrated the distribution is around one answer. For Choice, confidence is calculated from the maximum probability and the number of available options.
+
+If all options are equally likely, confidence is zero. If all the probability is assigned to one option, it is one. The higher the leading answer’s probability relative to a uniform distribution, the higher the score.
+
+In the example with three options, a leading-answer probability of 0.99 gives a confidence score of 0.98: the measure accounts for the number of available answers. In the Score example, confidence is lower, at 0.558.
+
+## Support across the Hugging Face ecosystem
+
+Decision models can use different internal designs: shared scoring components for an entire schema, separate scoring blocks based on language models, compact versions for edge devices and multimodal models. This architectural variety means that a separate interface for every model would require custom adaptations in the tooling.
+
+Hugging Face proposes a common contract without requiring a single implementation: models accept states and questions with the same structure, then return decisions in specified types. This would let inference tools, the Hugging Face Hub and training tools support models through a shared interface.
+
+## Transformers
+
+Transformers supports `DecisionPipeline`, `AutoModelForDecision` and `DecisionConfig`. They follow the same general principles as the library’s other pipelines and model classes, but are designed for decision models. For example, loading `autotrust/GEV-26B-Decide` shows that the `JevForDecision` model uses `bfloat16` on `cuda` and accepts text input.
+
+The model configuration and the model itself can be loaded through `DecisionConfig.from_pretrained` and `AutoModelForDecision.from_pretrained`. Transformers also supports the `/v1/systemone` endpoint. To run a local server, install the dependencies with `pip install "transformers[serving]"`, then run `transformers serve`.
+
+A request to the local server at `http://localhost:8000/v1/systemone` can include all three questions at once: department, urgency and whether a refund is being requested. In the published response, the department is Billing with a probability of about 0.998; the urgency score is about 1.75, and the probability that the customer is asking for a refund is about 0.995. The response reports 148 input tokens and zero output tokens.
+
+This interface also works with compatible autoregressive language models. Transformers builds decision prompts, scores the answer-label logits in a single batched pass and applies softmax without generating text. This makes it possible to test the interface without training a new model.
+
+## llama.cpp
+
+llama.cpp supports the same `/v1/systemone` API. A decision model in GGUF format can be launched with `llama serve -hf ggml-org/Kev-4B-GGUF`. The request, with the same state and questions, is then sent to `http://localhost:9931/v1/systemone`. If the server already has a model selected, the `model` field can be omitted.
+
+## Finding models on the Hub
+
+Hugging Face has added a dedicated tag for decision models so they can be found on the Hub. A shared architecture is not required: examples include models based on ModernBERT and models built on large generative language models.
+
+## Training decision models
+
+Models can be fine-tuned through the Transformers `Trainer` API. In a tutorial, JEV-9B is trained to route requests into three categories: refunds, delivery and technical problems. The process works as follows:
+
+- Each training example consists of a request—the state and questions—and the correct answer.
+- `model.decision_config.prepare_inputs` converts the request into model data in the same way as for a regular request.
+- The model returns one logit for each option, and Choice questions are trained with the standard cross-entropy loss function.
+
+The example uses six requests: a double charge and refund request, a package that was not delivered, an app failure, a refund, a question about a delivery’s location and an inability to log in. They are assigned to the options “billing and refund issues,” “orders and delivery” and “software and account issues.” Training is configured for 30 steps, a per-device batch size of 1 and a learning rate of 0.001. Logging is enabled every five steps; model saving and report uploads are disabled.
+
+Support for training decision models directly in TRL is also in preparation. At the time of publication, the relevant pull request, `huggingface/trl#8040`, was still open. To convert a generative language model into a decision model, Unsloth offers a recipe for fine-tuning models such as Qwen with LoRA and a dedicated scoring component.
+
+Decision models combine probabilistic scores and predefined question types in a common interface, without replacing traditional or zero-shot classification. Dataist’s take: the approach’s practical value depends on library compatibility and how reliably the model scores the options. The interface defines the output format, but does not guarantee that the decision is correct.
