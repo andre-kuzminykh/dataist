@@ -1,0 +1,73 @@
+Google Research has introduced a research system that uses wearable-device data to estimate “health age” and model how changes in habits may affect the body over the next 12 weeks. The SensorWM model was trained on 2.28 million person-weeks of data from about 100,000 Fitbit users. Combined with a language model, it helps create plans that account for possible health changes, a person’s habits and safety constraints. In a separate study, researchers added three routine blood-test measures to device data to assess risks to the cardiovascular, kidney and metabolic systems.
+
+## Google Research models how habits affect heart, kidney and metabolic health
+
+Cardiovascular disease, kidney disease and metabolic disorders, including type 2 diabetes, are linked and form cardiometabolic-kidney syndrome, or CKM. The condition can develop without symptoms for a long time, and everyday habits affect the risk: physical activity, sleep and cardiovascular function. Smartwatches track these data, but on their own they cannot answer how a specific change — such as an extra 30 minutes of sleep or a brisk walk — will affect health in the coming months.
+
+## A health age that can change
+
+Chronological age does not reflect a person’s physiological state: people born in the same year can differ considerably. Some biological clocks estimate whether the body is aging faster or slower than its chronological age, but they are often trained to predict year of birth. Such models may rely on traits that are difficult to change and do not show how a specific habit will affect future measurements.
+
+Google researchers described the approach in the paper “Personalized Health Coaching Through Modifiable Health Age and Wearable Counterfactual Trajectories” and a companion study, “Cardiovascular, Kidney, and Metabolic System Health Age From Wearables and Blood Biomarkers.” The approach has three components:
+
+- A modifiable health age (CHA) model, built around everyday habits and physiological measures passively collected by consumer wearables.
+- SensorWM, a model trained on more than 2.2 million person-weeks of data that simulates personalized 12-week “what if” scenarios. A language agent turns the simulation results into plans reviewed by specialists.
+- An extension for CKM assessment that combines device data with laboratory biomarkers to identify early changes in heart, kidney and metabolic function.
+
+CHA health age uses four main measures: resting heart rate, daily step count, sleep duration and weekly minutes of activity in exercise-intensity zones. When available, the model also accounts for VO2max, sleep regularity and insulin resistance. Because the measures are partly correlated, the model adjusts for their overlap so each contributes separately to the difference between health age and chronological age. A negative difference, such as −3 years, means the physiological profile looks younger than the person’s chronological age; a positive one indicates accelerated aging.
+
+The model was tested on three independent samples:
+
+- **Disease prediction.** The All of Us program included 22,748 people. Over more than 68,000 person-years of follow-up, Fitbit data and electronic health records were used with participants’ consent. Among healthy participants whose health age was higher than their chronological age at the start of follow-up, hypertension, cardiovascular disease or type 2 diabetes developed more often over the next eight years. Adding CHA to standard clinical measures — age, sex and body mass index — improved risk prediction, especially for people under 50.
+- **Changes over time.** In a longitudinal sample of 1,464 Fitbit users, habits and health age were tracked in consecutive three-month periods over two years. Participants whose habits changed consistently saw their health age fall.
+- **Comparison with clinical measures.** In the WEAR-ME study, CHA was more closely associated with the American Heart Association’s modified Life’s Essential 8 scale, metabolic syndrome severity and participants’ self-rated health than wearable aging models trained to predict chronological age.
+
+Among 18,423 All of Us participants without disease, those whose health age was equal to or lower than their chronological age were more likely to remain disease-free over eight years. Two-year observations also showed that health age could be reduced substantially within three-month periods.
+
+[FIGURE:1]
+
+## How SensorWM models change
+
+Health age shows a person’s current state. A personalized plan requires estimating what will happen over the next 12 weeks if specific habits change — and which option the person can realistically stick to.
+
+A simple calculator that sets new step or sleep targets does not account for how the body adapts. If someone moves more and sleeps better for several weeks, their resting heart rate and heart rate variability may change over time, too. Those changes affect subsequent health measures.
+
+SensorWM is a world model that accounts for specified actions. It was pretrained on anonymized data covering 2.28 million person-weeks from about 100,000 Fitbit users who consented to data use. From two weeks of baseline observations, the model predicts changes in 20 physiological measures over the following 12 weeks under different step, sleep and cardio activity patterns. In the study, SensorWM outperformed general-purpose time-series models such as TimesFM while preserving clinical patterns associated with diabetes, hypertension and insulin resistance.
+
+To develop plans, the researchers combined SensorWM with an optimizer that accounts for the feasibility of habit changes and a language agent:
+
+1. **Modeling.** For each person, SensorWM calculates 125 combinations of habits over 12 weeks and compares them with a forecast in which habits remain unchanged.
+2. **Feasibility and safety checks.** The optimizer compares the projected reduction in health age with how flexible the person’s habits have been in the past and with clinical safety constraints. For someone who can change their routine more easily, the system may choose a more ambitious goal: reducing health age by 2.3 years. For someone whose habits are more constrained, it may suggest a gradual plan targeting a 1.3-year reduction.
+3. **Coaching plan.** The language model turns the most suitable scenarios into a step-by-step 12-week plan.
+
+[FIGURE:2]
+
+## Specialists review the recommendations
+
+The researchers compared language-model recommendations based on SensorWM simulations with plans from the same model when it was given only the user’s wearable history. The blinded study involved five certified wellness specialists and five physicians board-certified in primary care and lifestyle medicine. They assessed 49 participant profiles representing five behavioral types, for a total of 490 paired evaluations. The researchers also conducted an automated evaluation across the full WEAR-ME sample of 2,780 people.
+
+- Wellness specialists preferred plans based on counterfactual scenarios in 71.4% of evaluations (p < 0.001). In 71.0% of cases, they also judged these plans more likely to help people stick with changes over the long term (p < 0.001).
+- Physicians found 99.2% of these plans consistent with safe exercise-intensity limits; physiological claims were accurate in 97.6% of cases.
+- Specialists noted the value of comparing a scenario in which habits stay the same with achievable alternatives. They called that contrast a compelling reason to act: 92% of physicians did so, versus 8%; 97% said it gave people a sense of being able to influence their own health, versus 59%.
+
+[FIGURE:3]
+
+## How blood tests complement wearable data
+
+Because the health-age model is modular, routine clinical test results can be added to it. In a companion study, the authors extended the approach to assess CKM by organ system, combining continuous wearable data with blood tests that do not, by themselves, reflect everyday habits.
+
+[FIGURE:4]
+
+The study included 819 people from WEAR-ME. The model combined activity, resting heart rate, sleep duration and active minutes in exercise-intensity zones with three laboratory measures:
+
+- total cholesterol-to-HDL ratio — for the cardiovascular system;
+- estimated glomerular filtration rate (eGFR) — to assess kidney function;
+- HOMA-IR index — to assess metabolic insulin resistance.
+
+The model estimated how far each measure deviated from clinical thresholds for good health and converted the deviation into a normalized score. The results showed that aging across organ systems does not follow one overall pattern: metabolic and cardiovascular problems are often linked, while early declines in kidney function frequently appear independently. The difference between CKM health age and chronological age was closely associated with clinical assessments — modified Life’s Essential 8 (r = −0.58) and metabolic syndrome severity (r = 0.65) — as well as with how healthy participants felt in everyday life.
+
+[FIGURE:5]
+
+Across the full sample, measures of kidney, metabolic and cardiovascular health varied among participants: some had better-than-reference values, while others showed hidden abnormalities. This underscores why assessing multiple systems can provide a more detailed picture than a single health-age measure.
+
+The authors view these results as a foundation for future prospective trials testing whether interactive “what if” scenarios help people maintain habits and improve their health over the long term. For now, the assessments were conducted offline on retrospective research samples, and the models remain research prototypes that are not intended for clinical diagnosis. Dataist’s take: the main result is a test of whether modeling possible changes can make recommendations more useful to specialists and participants. But the data do not yet show that these plans lead to lasting health changes in everyday life.
