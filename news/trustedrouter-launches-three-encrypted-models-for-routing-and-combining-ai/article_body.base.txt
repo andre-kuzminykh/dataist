@@ -1,0 +1,107 @@
+The startup TrustedRouter has launched three models through the New York Token Exchange that route requests among multiple AI models or combine their responses. Prometheus 4.0 aggregates responses from six open models, Liberty 4.0 uses models from NVIDIA, Reflection AI, and Meta, and Polyphemus 1.0 selects one model for each request. All three connect to the TrustedRouter gateway over an encrypted connection, but use different privacy settings.
+
+## TrustedRouter launches three encrypted models for selecting and combining AI
+
+TrustedRouter connects applications to models and computing providers. Companies can route requests to different suppliers based on price, availability, model capabilities, and privacy requirements. On eligible protected routes, the prompt remains encrypted until it is processed on the provider’s verified hardware. It is decrypted inside a protected environment designed to prevent the provider’s operators from accessing its contents; the level of protection depends on the route and privacy settings.
+
+The three new models are available through the existing API. They can be called through the New York Token Exchange using IDs that begin with `nyte/`. TrustedRouter and NYTE share keys, account balances, and routing rules. Developers can access the same set of settings with either the `nyte/` or `trustedrouter/` prefix.
+
+TrustedRouter founder and CEO Joseph Perla says individual models are not always available, so the router lets users choose another path for a request. Each of the three options decides for itself where and how to route the work: a complex research question may benefit from several independent answers, while a routine classification task may need only one model.
+
+## How the models handle requests
+
+Prometheus 4.0 and Liberty 4.0 send a request to several models simultaneously and independently. A separate call then evaluates the responses, and another component synthesizes the final answer. A full Prometheus request requires eight model calls; a Liberty request requires five. Multiple responses can help identify a missed source or a calculation error, but the synthesizer has to determine which answer is better supported. If several models repeat the same mistake, their agreement alone may not help correct it. The extra computation and synthesis time are part of the trade-off.
+
+Prometheus 4.0 uses open models. The published lineup includes Xiaomi MiMo-V2.6-Pro, Z.ai GLM 5.3, Moonshot AI Kimi K3, DeepSeek V4.1 Flash, MiniMax M3, and Alibaba Qwen 3.8. TrustedRouter lists a one-million-token context window for this model. The floating alias `nyte/prometheus` points to the latest version, while `nyte/prometheus-4.0` refers specifically to release 4.0.
+
+TrustedRouter has not yet said which model synthesizes responses in the production version, how many panelists must respond before synthesis begins, or how the stated context-window size works with the different limits of the component models.
+
+Liberty 4.0 combines models from three US developers: NVIDIA, Reflection AI, and Meta. Its component catalog lists NVIDIA Nemotron 3 Ultra, Reflection Beam, and Meta Muse Spark Open. According to TrustedRouter, the participants respond independently, and Meta combines their answers. If Meta’s model is unavailable, Beam handles the synthesis. If one participant does not respond, Liberty can proceed with the responses it has received.
+
+Polyphemus 1.0 selects a model before generating an answer: a selector examines the request, then the chosen model responds in a single call. Its documentation lists the Responses API and a 65,536-token context window.
+
+The selector costs $0.05 per million input tokens evaluated, on top of the selected model’s standard rates. If the selector fails, TrustedRouter’s general automatic route handles the request, and no selector fee is charged. To increase the chance of reusing cached input, developers can pass a session ID and conversation history with each turn. A session ends after an hour of inactivity. Polyphemus is listed with standard privacy. TrustedRouter has not yet disclosed which models the selector chooses from, what criteria it uses, or how its results compare with those from a single preselected model.
+
+## Pricing, savings, and test results
+
+TrustedRouter’s catalog lists Prometheus 4.0 component rates of approximately $0.01 to $1.48 per million input tokens and $0.13 to $7.39 per million output tokens. For Liberty 4.0, it lists ranges of $0.42–$1.32 per million input tokens and $1.27–$4.48 per million output tokens. These are prices for individual parts of the process, not necessarily the full cost of a request: each model, judge, and synthesizer adds to the total. TrustedRouter’s standard markup on prepaid text requests is 5.5%, with no subscription fee. For managed prepaid requests that use signed inference attestations, the company lists a total service fee of 12%.
+
+TrustedRouter compares request costs with Claude Fable 5.1. The company estimates that a full Liberty request costs 2.3–2.9 times less, equivalent to savings of about 60%. Across five calls, three open US models generate responses, one call evaluates them, and the last combines the results.
+
+For Prometheus, TrustedRouter estimates that a request costs 2.5–3 times less than Claude Fable 5.1, claiming savings of about 60–65%. A full run includes eight calls: six models respond, and two more calls evaluate and synthesize the answers.
+
+Polyphemus savings depend on the model selected. TrustedRouter estimates savings of about 60% when it selects Claude Opus 5.5 and about 80% when it selects GPT-6.1 Sol.
+
+[INFO:facts] 5.5% :: standard markup | 12% :: managed requests | 60–65% :: claimed Prometheus savings
+
+The company has published relative savings estimates, but has not disclosed comparable dollar amounts, task sets, quality metrics, or latency figures. It is also unclear whether the Polyphemus selector fee is included in the savings calculation.
+
+The most specific published result for the Prometheus line concerns an earlier version. In a July test, TrustedRouter said Prometheus 2.0 scored 77.4 across all 100 tasks in Perplexity’s DRACO deep-research benchmark. The company’s publication gives single-model results for comparison: 65.3 for Claude Fable 5, 63.3 for GPT-5.5, and 60.3 for Claude Opus 4.8. Perla cited these tests when explaining why he expects panels to handle complex requests better than single models. But the result is for an earlier configuration and a research benchmark. Comparisons on identical requests that assess cost, quality, and latency together are needed to determine whether the savings hold up on customers’ real-world tasks.
+
+In a VentureBeat test, Claude Code used TrustedRouter to query DeepSeek Flash and correctly named Paris as the capital of France. Claude Code then estimated that the same request to Fable 5.1 would have cost about 70 times more. That illustrates the price difference for one simple question. A more rigorous test would show how often a panel produces a usable answer where a cheaper single model fails, and what the extra work costs.
+
+## How the approach differs from other solutions
+
+GitHub Copilot Fusion selects models inside its coding agent. Depending on the task and effort setting, it can use one model, start with an efficient model and switch to another after checking quality, or ask one model to review another’s draft. Enterprise account administrators decide which models are allowed.
+
+In an independent test, Artificial Analysis found Fusion Max averaged $5.59 per coding task, compared with $11.42 for Claude Code running Claude Opus 5.5 in Max mode. The gap on the Coding Agent Index was two points. As VentureBeat previously reported, this test compares complete coding agents on identical tasks. TrustedRouter’s published DRACO results assess deep research and answer a different question.
+
+Sakana AI’s Fugu Max and Fugu Ultra v2 are closer to TrustedRouter in how they are used: they provide an API that hides coordination among multiple models. Fugu Max selects combinations from a set of models, balancing quality and cost. Ultra brings in a deeper group of agents for complex work.
+
+OpenRouter Fusion is closer to TrustedRouter in its panel design: its described pipeline can send a request to multiple models in parallel, pass their responses to a judge, and then send them to a model that produces the final answer. With OpenRouter, developers configure the panel and judge themselves. TrustedRouter offers named templates with defined purposes and versions.
+
+The published comparison describes the solutions as follows:
+
+- **TrustedRouter Prometheus and Liberty** — Models respond in parallel, a judge evaluates their answers, and a synthesizer produces the final response. Developers select a template through an OpenAI-compatible API. The company publishes component prices and claims savings of about 60–65% per full request versus Fable 5.1, depending on the template.
+- **TrustedRouter Polyphemus** — A selector chooses one model through the Responses API. The cost combines the selector fee with the selected model’s token charges. In two published examples, the company estimates savings of 60–80% versus Fable 5.1.
+- **GitHub Copilot Fusion** — A coding agent selects models and the order of operations based on the task, effort setting, and enterprise rules. GitHub bills for the models used; independent per-task price estimates have been published for a tested configuration.
+- **Sakana AI** — An API coordinates agents from fixed sets. Fugu Max selects a combination based on price and quality. Max costs $2 per million input tokens and $6 per million output tokens. Ultra starts at $5 and $30, respectively; prices are higher for contexts over 272,000 tokens and for billable coordination tokens.
+- **OpenRouter Fusion** — A configurable panel generates responses, a judge compares them, and a separate model writes the final answer. Developers can choose a template for cost or quality, or configure their own panel.
+- **Arcade** — Finds and ranks software actions for an agent, leaving the decision to call a tool to the agent model. In a workflow test, combined input and output token fees were 7.6% lower; the larger estimate of 37% came from modeling input costs.
+
+Arcade addresses a different problem: an agent connected to several business systems can spend tokens on tool descriptions it rarely uses. Arcade retrieves a short list as needed. In principle, tool discovery and model routing can work in the same application: the first selects available actions, the second selects a model for the request.
+
+## What encryption changes
+
+TrustedRouter says its gateway runs in a secure computing environment—an enclave that also runs the logic coordinating model calls. Clients can compare the gateway’s hardware attestation with published source code. The company says it does not retain logs of prompts or responses.
+
+According to information provided to VentureBeat, clients can require confidential hardware for every call in Liberty and Prometheus requests. This route requires end-to-end encryption, confidential computing on the provider’s side, and zero data retention. The requirement applies to panelists, judges, synthesizers, and fallback routes. If the gateway cannot find a suitable protected route for a required call, the request fails.
+
+TrustedRouter says Liberty 4.0 routes requests only to providers headquartered in the US and stops if it would otherwise have to contact a supplier in another country. However, the company determines the physical location of a data center based on information from the providers themselves. A signed attestation can identify the model and provider, and record the verification level on the upstream route. Perla noted that a response alone cannot reliably show which model generated it.
+
+Other details relevant to deployment have not yet been disclosed: how fallback calls appear on the bill, measured latency, and whether all three templates support streaming, tool calls, and structured responses.
+
+## How TrustedRouter came about
+
+Before launching TrustedRouter, Perla worked at the intersection of AI, cloud computing, and large-scale technology infrastructure. After studying computer science and machine learning at Princeton, he worked at Bridgewater Associates, founded the music startup Turntable.fm, and then joined Facebook. There, he was a technical lead on the team working on the mobile News Feed.
+
+Perla later began a doctoral program in artificial intelligence, but left academia and co-founded Terminal.com in 2013. The early GPU cloud-computing platform let developers and data scientists run jobs in containers instead of conventional virtual machines. Udacity later acquired Terminal.com. Perla then joined Lyft as one of its first 50 engineers and took part in developing its self-driving car program. More recently, he worked on another music startup that, he says, was acquired in 2025.
+
+Perla returned to AI infrastructure after conversations with people at large labs and cloud companies, including OpenAI and Anthropic. He says he concluded from those discussions that companies share confidential business information with AI providers without always understanding how the data may be stored or reused, even when privacy safeguards have been agreed upon.
+
+Perla studied confidential computing—a technology that protects data while it is being processed on remote hardware—and decided to combine it with model request routing. About a year ago, he began developing TrustedRouter, viewing it from the outset as a foundation for a larger AI market. Instead of building its own GPU infrastructure, the company created a routing service for external providers that can run models using confidential computing.
+
+TrustedRouter entered public beta in May and launched publicly on August 31 with $1.25 million in seed funding, Axios reported. Early investors included Sam Lessin of Slow Ventures, Bill Tai, Linda Avey, and George Hsin. Perla announced the exchange on October 15. The following day, Semafor reported that TrustedRouter had raised a $6 million seed round led by Sierra Ventures.
+
+The company has expanded its vision into a project intended to make private and competing models easier to access and compare on price, offering an alternative to the dominance of the largest AI providers. TrustedRouter says it processes more than three billion encrypted tokens on a typical day. Its catalog includes more than 600 models from more than 100 providers. Those figures cover the entire catalog; eligibility for protected routes is assessed separately.
+
+Perla’s long-term goal is to turn AI inference into a competitive commodity market and make encrypted processing standard. Under his plan, most GPUs should be encrypted this way by next year.
+
+## How the NYTE exchange works
+
+The New York Token Exchange is a proposed marketplace for buying, selling, and trading AI inference tokens—that is, units of text and other information that models process and generate. NYTE aims to make access to models and computing infrastructure a commodity that enterprises can buy from competing providers without signing a separate agreement with each AI company.
+
+The exchange relies on TrustedRouter, which connects clients to hundreds of models and infrastructure providers through a single interface. The company publishes a price index based on model capabilities and offers customers the option to reserve capacity at a fixed price in blocks of one billion tokens for use in 2027. Those reservations can be resold only through the NYTE program and under its terms. For providers, the exchange offers an early version of an open software suite: operators can prepare hardware for verification and sell inference.
+
+TrustedRouter plans to launch a futures initiative in January. Futures and derivatives also appear on the company’s roadmap in its public materials. NYTE aims to develop two complementary markets:
+
+1. **A spot market for AI tokens.** Companies will be able to buy available computing capacity from participating providers for immediate use. Instead of maintaining separate relationships with numerous AI companies and cloud operators, customers will get access to competing models and infrastructure through the exchange. Providers with available GPUs will be able to sell computing capacity on the same platform.
+2. **A market for futures and forward contracts.** Companies will be able to agree in advance to buy a specified amount of AI tokens for future delivery at a set price. This should help them plan AI expenses, while allowing infrastructure providers to lock in future revenue and potentially raise funds to buy additional GPUs and build data centers.
+
+For example, a company expecting to consume one billion AI tokens next year could enter a contract through NYTE for that amount at a price agreed in advance. An infrastructure provider could use the revenue or financing to buy GPUs, then provide inference services when the tokens are needed. If the customer needs fewer tokens, Perla proposes allowing it to resell unused contract capacity through the exchange rather than lose the value of its prepaid commitment.
+
+The marketplace is also designed for enterprises with their own GPU clusters. A large company with computing capacity sitting idle overnight or on weekends could potentially sell inference services through NYTE and act as both a buyer and a seller. Perla hopes to support this model with open-source software that makes it easier to build private AI infrastructure and participate in the market.
+
+The broader goal is to separate model development from the infrastructure used to run models, much as electricity generation and distribution eventually became markets with multiple suppliers. Model developers could focus on building better systems, infrastructure companies could compete on the efficiency of running them, and enterprises could buy computing at market prices without being tied to a single provider. Perla believes this would lower inference costs, improve reliability, and make expenses easier to plan, offering an alternative to the vertically integrated business models of leading AI companies.
+
+The launch of the new models provides a way to test this idea on companies’ real-world tasks: compare a panel, a router, and the model currently in use on the same set of requests. Dataist’s take: that comparison needs to include not only claimed savings, but also the cost of a usable answer, how long it takes to get one, and confirmation that every provider followed the company’s rules. For now, TrustedRouter publishes relative estimates and describes its route protections, but some information about quality, latency, and total request costs remains unknown.
