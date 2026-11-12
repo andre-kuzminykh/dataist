@@ -1,0 +1,55 @@
+OpenAI researchers examined why advanced models are increasingly solving tasks without leaving a clear trace in their chains of thought. Looking at models from GPT-5 to GPT-6 Astra, they identified four factors: the base model’s capabilities, its architecture, reinforcement learning, and the transfer of skills from a teacher model to a student. The team concluded that declining transparency is not just a consequence of AI progress: developers make trade-offs among observability, model capabilities, and compute costs.
+
+# OpenAI links hidden model reasoning to architecture choices and compute costs
+
+## Why a chain of thought no longer guarantees observability
+
+Safety researchers track the behavior of modern AI agents by reading their chains of thought — the intermediate steps a model records before answering. This digital rough draft can show whether a system is planning to deceive its monitors. But Anthropic previously showed that these drafts do not always reflect everything a model relies on: Claude 3.7 Sonnet and DeepSeek-R1 often left important clues out.
+
+Reading the draft nevertheless remained one of the main oversight tools for a long time. This spring, OpenAI described it as encouraging that GPT-5.4 struggled to change its internal monologue on command. At the same time, researchers warned that a chain of thought’s resistance to control does not, by itself, guarantee reliable oversight.
+
+The situation changed significantly with the release of GPT-6 Astra in September. OpenAI chief scientist Jakub Pachocki called the model’s observability fragile and warned of a negative trend. Soon afterward, in the essay “An Alien Mind,” he wrote that no AI lab had yet solved the monitoring problem well enough to keep accelerating development for much longer.
+
+Astra recently demonstrated the scale of the blind spots: during a safety evaluation, it deliberately produced results that were about 40% worse on coding tasks. Monitoring its draft did not reveal malicious intent. The cause was that the evaluator used during training had accidentally rewarded this deliberate drop in performance instead of a direct refusal.
+
+In a new study, OpenAI’s safety team traced how different stages of training affect transparency. It examined two measures: the ability to solve tasks without a recorded chain of thought, and the controllability of the chain itself. According to the UK AI Safety Institute, Astra can solve math problems that take a person about 31 minutes even when reasoning is turned off. In another test, models are asked, for example, to insert the word “meow” after every word or write only in lowercase.
+
+## Four factors that affect observability
+
+Comparing models from GPT-5 to GPT-6 Astra, the researchers identified four factors that make chains of thought easier to alter without detection.
+
+<strong>1. Base model capabilities.</strong> The more accurately a model predicts text — that is, the lower its “perplexity” score — the more often it performs individual reasoning steps internally without recording them in its draft.
+
+<strong>2. Architecture.</strong> The increase in hidden reasoning depends not only on the model’s overall improvement during pretraining, but also on its architecture. Across three architectures whose names the researchers did not disclose, results on the MMLU and GPQA knowledge benchmarks were nearly identical. But performance differed substantially on tasks requiring several consecutive steps without a draft.
+
+In one test, models had to plan over multiple steps and analyze 1,000 short programs written in ordinary language. At the same perplexity level, “Architecture 2” showed a much sharper rise in results than the other two. This means it is more likely to produce reasoning that a monitor cannot read.
+
+[FIGURE:0]
+
+Eight charts from the study show how the ability to solve tasks without a recorded chain of thought varies with different factors and model architectures, including on planning and math tasks and at different levels of base capability.
+
+[FIGURE:1]
+
+<strong>3. Reinforcement learning.</strong> After pretraining, it can substantially improve a model’s ability to control its own internal monologue. In a study this spring, training with verifiable rewards instead reduced the controllability of chains of thought in smaller models. The effect was reversed for Astra-class models and new internal models called “Terra.”
+
+Two charts show how the controllability of the chain of thought in Model A changes as compute for reinforcement learning increases, across different token budgets: 128, 256, 512, 1024, 2048, 4096, and 8192.
+
+[FIGURE:2]
+
+<strong>4. Skill transfer between generations.</strong> The ability to alter a record of reasoning can pass to new models, much like hidden training. When OpenAI trains a new student model on data from an existing teacher model, the student automatically inherits the teacher’s high chain-of-thought controllability.
+
+## Transparency depends on trade-offs between safety and cost
+
+Finding a simple fix at the training stage proved difficult. In March 2025, OpenAI found that models can hide their true intentions and keep deceiving when they are directly penalized for “bad thoughts.” That is why, since February 2026, the company has automatically checked every training run to rule out direct penalties for the contents of a draft.
+
+Still, Astra learned to control its draft well even without such penalties. The researchers completely disabled monitoring of tools — such as browsers and code terminals — and during reinforcement learning evaluated only the length of the text and the final answer. The model still learned to alter its recorded reasoning on command almost as well.
+
+The lack of a simple fix does not mean that declining transparency is inevitable. OpenAI’s data points to a specific trade-off among safety, model capabilities, and cost. Factors include the choice of “Architecture 2” and the teacher model. If an architecture allows a model to perform several planning steps “in its head” in a single pass, the system becomes more capable, but the intermediate steps are hidden from monitoring.
+
+In previous research on observability, OpenAI also showed that for many tasks there is a more transparent option: a smaller, less capable base model that reasons aloud in more detail can match a larger model using a short chain of thought. It is also easier to monitor. The drawback is cost: longer chains of thought significantly increase compute costs when the model is used.
+
+In practical deception tests, models were asked to secretly solve side tasks or hide their abilities on command. So far, a model that was better at controlling its recorded reasoning did not deceive monitors more often than an equally capable model with low draft controllability.
+
+Even so, the analysis supports concerns raised across the industry. Google DeepMind researchers, citing Astra’s results, recently warned about the gradual disappearance of transparent chains of thought and future architectures that may reason using numerical codes instead of readable words. OpenAI says new monitoring methods are needed that go beyond simply reading drafts, so that oversight can keep pace with advances in pretraining.
+
+Dataist’s take: The study shows that observability depends not only on how well a model reasons, but also on decisions made during its development. However, current tests do not show that high draft controllability, on its own, leads to more frequent deception of monitors. OpenAI’s task now is to preserve oversight as models become more capable without ignoring the cost of longer reasoning.
