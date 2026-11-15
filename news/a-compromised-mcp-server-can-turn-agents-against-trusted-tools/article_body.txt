@@ -1,0 +1,55 @@
+# A vulnerable MCP server can turn an AI agent against trusted tools
+
+## How MCP authorization rules have changed
+
+MCP authorization has gone through five stages, as documented in the protocol’s official changelogs:
+
+1. At first, the protocol had no common authorization scheme, leaving it entirely up to developers.
+2. A comprehensive authorization scheme based on OAuth 2.1 was then added.
+3. MCP servers were defined as full-fledged OAuth resource servers. Required resource indicators (RFC 8707) were also introduced to prevent malicious servers from obtaining tokens intended for other services.
+4. OAuth client ID metadata documents (CIMD) were added as the recommended registration method, alongside Dynamic Client Registration (DCR).
+5. DCR was deprecated and replaced with CIMD. Clients must check the `iss` parameter (RFC 9207). This stage was called the biggest update since MCP launched.
+
+The first version of MCP had no authentication requirements at all. Since then, each update has added stricter rules. As a result, servers built in the protocol’s first year may rely on approaches that no longer comply with the specification. The changes point toward formal OAuth mechanisms and away from lightweight registration schemes chosen by developers themselves.
+
+## What OWASP and the US National Security Agency indicate
+
+The OWASP MCP Top 10 ranks improper token management and secret leaks among the most serious risks. Hard-coded credentials and secrets stored in a model’s memory can open access to the entire connected environment. In some cases, prompt injection can be used to extract them.
+
+US National Security Agency guidance from May 2026 notes that only two of OWASP’s ten risk categories are related to text an agent reads and processes. The other eight—including risks involving credentials, access scope and identity—concern infrastructure that MCP does not constrain through built-in mechanisms. The protocol standardized tool discovery and calls, but did not specify how to verify the caller or determine what it is allowed to access.
+
+## How the attack spreads
+
+Unit 42, a Palo Alto Networks division, tested a scenario in which five MCP servers were connected to one AI agent. The attacks succeeded in 78.3% of tests. Five servers is a typical scale for a team that has moved beyond a single pilot project.
+
+The risk lies in the chain of trust. If an agent treats data from one server as trusted context, a compromised server can inject instructions that carry over into subsequent tool calls. Servers that were not themselves compromised may also be affected.
+
+## Two deployment scenarios
+
+The risk is lower, but not gone, for an internal tool behind a corporate firewall. In its Inside Track blog, Microsoft described governance rules for internal MCP systems: even for traffic within a company, it uses short-lived tokens with the minimum necessary permissions. Under this approach, internal access does not automatically mean trusted access.
+
+The stakes are higher for a remote server or a multi-tenant cloud service that exposes a connection point to clients. Microsoft’s Azure guidance recommends using an identity-validation gateway that rejects calls without a valid token bound to the intended audience. A registry should also record tool definitions. That way, a silent change in the behavior of a trusted dependency—a “dependency confusion” attack—is detected as a deviation from the recorded state rather than after it reaches production.
+
+## What to do and what to avoid
+
+<strong>Recommended:</strong>
+
+- Treat every MCP server as an OAuth resource server that validates tokens; the specification has been moving in this direction since June 2025.
+- Limit token scope and set short lifetimes. Microsoft specifically warns against granting full mailbox access when read-only permissions are sufficient.
+- Check the `iss` parameter now rather than waiting for the requirement to become mandatory.
+
+<strong>Not recommended:</strong>
+
+- Treat DCR as a dependable long-term solution: the mechanism has been officially deprecated since July 2026.
+- Load credentials when the server starts and keep them rather than obtaining them with each call. A token held in process memory cannot truly be revoked.
+- Connect a new MCP server without registering it in a system that lets you manage connections.
+
+## Where to apply controls
+
+Whether to validate centrally or individually, the answer is the same: put a separate layer in front of the servers. Microsoft and the US National Security Agency independently arrived at this approach: identity and access-scope checks, along with logging, should happen at that layer rather than being left to each server. A gateway can pin tool definitions and report changes.
+
+## Designing for change
+
+MCP’s authorization scheme has changed with every protocol update, and further tightening has already been signaled. But the direction is consistent: formal resource-server schemes, explicit validation of token issuers, and centralized management instead of informal trust. For a CTO planning to connect a new MCP service, identity and access management are part of the project itself, not a task to add after launch.
+
+Dataist’s take: as MCP spreads, access management becomes a shared infrastructure concern: an error in one server can affect calls to other connected tools. The specification still lacks built-in controls for many key risks, so security depends on how companies handle token validation, server registration and change monitoring.
