@@ -1,0 +1,51 @@
+The open-source TokenEconomizer plugin from UC Berkeley, Microsoft Research and Microsoft Security helps coding agents work more efficiently in repositories they already know. It analyzes completed sessions and draws on accumulated experience without changing the agent or its model. In tests on 277 bug-fixing tasks, costs fell by 18.4–30.9% across five agent-and-model combinations. Savings appeared in every repository tested, while overall task success rates remained stable.
+
+# TokenEconomizer cuts AI coding agent costs by up to 30.9%
+
+## Where the extra costs come from
+
+Every time an agent queries a model, it uses tokens: the prompt includes instructions, tool descriptions and session history. Developers often return to the same repositories, but an agent with no memory of past work has to figure out how to run tests again, load tools it does not need and repeat failed attempts.
+
+The TokenEconomizer authors examined this pattern with Claude Code, running SWE-Bench tasks in sequence across 60 tasks. SWE-Bench is a benchmark of real bug fixes in open-source Python projects. Once a repository’s history contained at least five completed tasks, 30% of tool calls repeated actions from earlier tasks in that repository. Only 7% of calls matched actions from the history of other repositories.
+
+At every step, Claude Code received descriptions of 23 tools, even though it never used 16 of them. And 17% of tasks that ended in failure accounted for 32% of total costs.
+
+The authors also tested three popular open-source plugins, each of which saved resources according to a predefined scheme. They reduced costs in some repositories, but not in others. The authors concluded that savings need to adapt to the characteristics of each repository.
+
+## How TokenEconomizer works
+
+After each session, the plugin reads its log and updates its information about the repository. It uses interfaces available to the agent and three mechanisms:
+
+- **Micro-skills** — short notes about repository-specific patterns. The plugin identifies recurring patterns and suggests notes, but adds them to the agent’s initial context only after they have been confirmed across several sessions. If new data contradicts a pattern, the note is removed.
+- **Tool selection** — the plugin removes tools that, based on the repository’s history, are unlikely to be needed, while keeping basic tools for running commands and editing files. Removed tools can be restored.
+- **Intervention in error loops** — the system tracks whether the agent is repeating the same failed attempt. A separate judge model determines whether the agent is stuck or making progress. If it is stuck, it receives a short note suggesting a different approach. In the open-source plugin, if that does not help, TokenEconomizer alerts the developer but does not stop the work on its own.
+
+[FIGURE:1]
+
+The controller adjusts its decisions as new data comes in. The reported savings include the cost of TokenEconomizer’s own model calls.
+
+## Test results
+
+The authors tested TokenEconomizer on 277 SWE-Bench tasks from six repositories, using five combinations of coding agents and models. Each repository’s tests started without any history of previous sessions.
+
+On average, costs fell by 18.4–30.9%. The reduction appeared across all 30 repository-and-agent-or-model combinations, with no loss in task performance. Reducing the model’s reasoning effort produced comparable or even greater savings, but noticeably worsened results.
+
+[FIGURE:2]
+
+Costs may rise at first as the plugin builds up experience. But cumulative costs fell below the baseline in every repository by the sixth task at the latest. Each of the three mechanisms saved resources on its own, and using them together produced the greatest effect.
+
+[FIGURE:3]
+
+Savings also held up in other tests. In sequential web development, costs on Web-Bench fell by 16.0–21.2%. In security testing, where each task involved a new repository, costs fell by 6.4–19.6%.
+
+[FIGURE:0]
+
+## A plugin for existing agents
+
+TokenEconomizer is designed as a lightweight controller that helps agents draw on experience not only when solving tasks, but also when managing compute resources. The open-source plugin works alongside existing coding agents without changing their models. It requires no separate API key, and the collected information stays on the developer’s computer.
+
+The authors see adapting systems’ behavior to accumulated experience as a direction for further development. The plugin gives developers and researchers a starting point for exploring this approach.
+
+The paper’s authors include Aaron J. Liu, Weijia Xu, Chandan Singh, Zixiao Chen, Jiavana Priya Inala, Bin Yu, Ion Stoica, Michele Galli and Jianfeng Gao. Jianfeng Gao is listed as a technical staff member and corporate vice president.
+
+Dataist’s take: TokenEconomizer targets recurring costs within a single repository, where an agent can use information accumulated from previous tasks. In tests, savings on tasks in new repositories were lower than when working sequentially on the same project.
