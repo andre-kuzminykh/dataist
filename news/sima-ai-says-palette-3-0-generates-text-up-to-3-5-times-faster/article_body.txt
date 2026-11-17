@@ -1,0 +1,72 @@
+SiMa.ai has released Palette 3.0, an update to its software platform for Modalix edge AI processors. The company says the new version improves how multiple AI tasks run together on a single chip, while accelerated decoding boosts text generation speed by up to 3.5 times. The update also adds a model browser with performance and resource-usage metrics. The platform is designed for devices such as robots, drones and industrial systems that need to process sensor data and run applications with limited memory and power.
+
+## Palette 3.0 speeds up text generation on edge processors by 3.5 times
+
+## What’s new in Palette 3.0
+
+The update changes how tasks are sent to the processor: applications send requests directly to drivers in the operating system kernel, bypassing an intermediate service. Each compute block handles one request at a time, but different blocks can run in parallel. Developers can assign a priority to each request.
+
+In a SiMa.ai presentation, one Modalix chip runs a language model and three vision-language models at the same time. In a separate demo, six Docker containers share the chip’s resources across tasks ranging from object detection to 3D pose estimation.
+
+SiMa.ai generative AI product manager Manuel Lopez Roldan gave the example of a camera that continuously searches for objects while a language model occasionally adds context to the scene. Developers can give object-detection requests higher priority, while allowing the language model to use the accelerator when it is free. The presentation materials do not show how long lower-priority requests might have to wait under sustained high load.
+
+The company also said that a single Modalix chip ran YOLOv26 object detection on 60 simultaneous 720p video streams. The combined throughput was 600 frames per second, or an average of 10 frames per second per stream.
+
+In another example, a new sensor is configured by pointing a camera at a color chart, after which an AI agent adjusts image-processing settings. According to Lopez Roldan, there is no need to rebuild the application code to make these changes: teams can configure a new sensor themselves.
+
+## What drives the faster generation
+
+SiMa.ai attributes most of the speed gain to speculative decoding. The method prepares several upcoming tokens in advance, then has the target model check them together. This reduces the number of sequential steps needed to generate a response.
+
+In the company’s presentation, decoding throughput is 2.21 to 3.49 times higher than with standard generation on the same target models. The methods used include EAGLE3, DFlash and multi-token prediction for Gemma 4. One highlighted result was obtained with DFlash N16 and Qwen3.5 9B.
+
+These figures compare Modalix with standard decoding on the same models. In a separate test of 900 requests to an automotive assistant, response time fell by 1.35 to 2.06 times. SiMa.ai says all 900 requests ended with the expected structured function calls.
+
+The company also estimates a 25.9% to 51.4% reduction in energy per compute request, with average power roughly unchanged. The savings come from the chip finishing its work faster. This calculation covers compute only: a robot’s total energy use also depends on its sensors, motors and other components.
+
+Another claimed capability is running OpenAI GPT-OSS-20B on a Modalix module with 16 GB of memory. But fitting a model on the device is not enough to judge its suitability: customers will need to test response time, context limits and accuracy in their own configurations.
+
+[INFO:facts] 3.5 times :: maximum generation speedup | 900 :: requests in automotive assistant test | 16 GB :: memory in Modalix module
+
+## The model browser exposes performance metrics
+
+The updated Model Browser displays not only throughput and latency, but also chip power, CPU and memory use, and the performance of individual model layers. If a model has several configurations, developers can compare how reducing numerical precision affects speed and quality. This helps them choose an option to test after fine-tuning a model on their own data.
+
+The download button provides an artifact ready to run locally on Modalix. For building models themselves, scripts are available in an open repository. They retrieve source models from places such as GitHub, Hugging Face or Roboflow. Lopez Roldan said the same workflow can also be used to prepare a model after fine-tuning. SiMa.ai considered customer requests when selecting the initial set of models.
+
+The model browser is scheduled to launch on November 17. SiMa.ai said the Palette SDK development tools have been available since October 31.
+
+The updates run on hardware that has already shipped. SiMa.ai generative AI product manager Manuel Lopez Roldan confirmed to VentureBeat that the changes are implemented in software. Ashok Sudarasanam, vice president of software for machine-learning accelerators, said his team builds a compiler that translates models into instructions for the accelerator, along with software that schedules their execution.
+
+According to Sudarasanam, the company has developed its hardware and software together from the start, and updates the software platform to support new models and accelerate applications on chips already delivered to customers.
+
+Customers can download update packages wherever network access is available, then install them on devices in the field. The board itself does not need internet access for this, Lopez Roldan said.
+
+## Pricing and alternatives
+
+Palette 3.0 is designed for developers embedding AI in physical devices. Palette Neat, a library in the application development layer, is distributed under the Apache 2.0 license. The licensing terms for the compiler and firmware have not yet been confirmed.
+
+Developers can get started through the SiMa.ai Developer Center and the company’s GitHub organization. The DevKit 3.0 costs $1,499 in the US and Europe. It includes a Modalix module, carrier board, enclosure, power supply and 500 GB storage drive. SiMa.ai has not disclosed separate pricing for Palette 3.0 software or hardware for volume deployments.
+
+SiMa.ai competes with a range of edge-computing solutions. Nvidia offers Jetson development kits and the JetPack software environment, while Hailo makes accelerators for running AI tasks locally on a host computer. The prices cited here are for development hardware, not the full cost of deployment: planning also needs to account for volume hardware and integration.
+
+The company gives the following specifications for comparison:
+
+- The DevKit 3.0 costs $1,499; SiMa.ai provides volume pricing on request. The platform includes the Apache 2.0-licensed Neat library and other components.
+- SiMa.ai focuses on running multiple models together under power constraints.
+- Nvidia Jetson is a hardware kit with the JetPack software environment. SiMa.ai’s table lists Nvidia prices from its frequently asked questions. A technical overview of Jetson Thor describes connecting the development kit to an existing robot and building and testing applications with JetPack 7.
+- A Hailo-based option starts at $200 for the accelerator; the Raspberry Pi board and other components cost extra. The solution includes Hailo software and tools for working with models.
+- Raspberry Pi documentation describes support for language and vision-language models of roughly up to 6 billion parameters. This differs from SiMa.ai’s example of a 20-billion-parameter mixture-of-experts model, but parameter count alone does not show accuracy or speed.
+- The comparison lists 8 GB of dedicated memory for Modalix to run language and vision-language models locally.
+
+The lower-cost Hailo-based option requires a Raspberry Pi, storage and other components to be added separately. Nvidia’s offering includes Jetson hardware and the company’s software stack, rather than a fully open software platform.
+
+## Testing with real applications
+
+Palette 3.0 is primarily aimed at teams whose perception and reasoning models already work separately, but begin competing for compute resources and memory when run together. For a robot, for example, object detection may need to respond within a set time while a language model generates a reply.
+
+Decoding metrics provide an estimate of generation speed, but demos with mixed workloads do not answer whether a specific application meets its deadlines. Developers need to test that on their own hardware and tasks.
+
+Existing customers also face work to migrate to the new version: a SiMa.ai notice says that upgrading from platform 2.1.3 to 3.0.0 requires migration. Developers also need to rebuild native applications with the relevant components.
+
+Dataist’s take: Palette 3.0’s main advantage is the ability to run different AI tasks on one chip and configure priorities without replacing hardware. The claimed speed and energy savings do not replace testing in a finished device: results depend on the workload, and the full cost of deployment includes volume hardware and integration.
