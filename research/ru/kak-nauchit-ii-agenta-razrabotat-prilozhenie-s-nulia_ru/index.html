@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Как научить ИИ-агента разработать приложение с нуля</title>
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://dataist.ai/favicon.png">
+    <link rel="apple-touch-icon" href="https://dataist.ai/favicon.png">
+
+    <!-- Open Graph для Telegram и других соцсетей -->
+    <meta property="og:site_name" content="Лаборатория Датаиста" />
+    <meta property="og:title" content="Как научить ИИ-агента разработать приложение с нуля" />
+    <meta property="og:description" content="Написать приложение с нуля — для ИИ-агента задача не на один шаг: ему нужно спланировать работу, создать множество частей и убедиться, что всё вместе работает.
+
+Исследователи предлагают превращать реальные проекты в учебные задания, где ИИ-агент получает описание приложения и должен собрать его целиком. Затем система сама улучшает такие задания: проверяет, можно ли их выполнить и насколько полно они учат создавать настоящие программы.
+
+В этом обзоре разбираем, как готовят ИИ-агентов к большой разработке, почему качество учебных заданий влияет на результат и что удалось получить авторам." />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content="https://dataist.ai/research/ru/kak-nauchit-ii-agenta-razrabotat-prilozhenie-s-nulia_ru/" /><meta property="og:image" content="https://dataist.ai/research/ru/kak-nauchit-ii-agenta-razrabotat-prilozhenie-s-nulia_ru/cover.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />    <meta property="og:image:width" content="1400" />
+    <meta property="og:image:height" content="933" />    <meta property="article:published_time" content="2026-11-19" />
+
+    <meta name="description" content="Написать приложение с нуля — для ИИ-агента задача не на один шаг: ему нужно спланировать работу, создать множество частей и убедиться, что всё вместе работает." />
+    <link rel="canonical" href="https://dataist.ai/research/ru/kak-nauchit-ii-agenta-razrabotat-prilozhenie-s-nulia_ru/" />    <link rel="alternate" hreflang="ru" href="https://dataist.ai/research/ru/kak-nauchit-ii-agenta-razrabotat-prilozhenie-s-nulia_ru/">
+    <link rel="alternate" hreflang="en" href="https://dataist.ai/research/how-to-teach-an-ai-agent-to-develop-an-app-from-scratch/">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "\u041a\u0430\u043a \u043d\u0430\u0443\u0447\u0438\u0442\u044c \u0418\u0418-\u0430\u0433\u0435\u043d\u0442\u0430 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u0430\u0442\u044c \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u0441 \u043d\u0443\u043b\u044f",
+      "description": "\u041d\u0430\u043f\u0438\u0441\u0430\u0442\u044c \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u0435 \u0441 \u043d\u0443\u043b\u044f \u2014 \u0434\u043b\u044f \u0418\u0418-\u0430\u0433\u0435\u043d\u0442\u0430 \u0437\u0430\u0434\u0430\u0447\u0430 \u043d\u0435 \u043d\u0430 \u043e\u0434\u0438\u043d \u0448\u0430\u0433: \u0435\u043c\u0443 \u043d\u0443\u0436\u043d\u043e \u0441\u043f\u043b\u0430\u043d\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u0440\u0430\u0431\u043e\u0442\u0443, \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u043c\u043d\u043e\u0436\u0435\u0441\u0442\u0432\u043e \u0447\u0430\u0441\u0442\u0435\u0439 \u0438 \u0443\u0431\u0435\u0434\u0438\u0442\u044c\u0441\u044f, \u0447\u0442\u043e \u0432\u0441\u0451 \u0432\u043c\u0435\u0441\u0442\u0435 \u0440\u0430\u0431\u043e\u0442\u0430\u0435\u0442.\n\n\u0418\u0441\u0441\u043b\u0435\u0434\u043e\u0432\u0430\u0442\u0435\u043b\u0438 \u043f\u0440\u0435\u0434\u043b\u0430\u0433\u0430\u044e\u0442 \u043f\u0440\u0435\u0432\u0440\u0430\u0449\u0430\u0442\u044c \u0440\u0435\u0430\u043b\u044c\u043d\u044b\u0435 \u043f\u0440\u043e\u0435\u043a\u0442\u044b \u0432 \u0443\u0447\u0435\u0431\u043d\u044b\u0435 \u0437\u0430\u0434\u0430\u043d\u0438\u044f, \u0433\u0434\u0435 \u0418\u0418-\u0430\u0433\u0435\u043d\u0442 \u043f\u043e\u043b\u0443\u0447\u0430\u0435\u0442 \u043e\u043f\u0438\u0441\u0430\u043d\u0438\u0435 \u043f\u0440\u0438\u043b\u043e\u0436\u0435\u043d\u0438\u044f \u0438 \u0434\u043e\u043b\u0436\u0435\u043d \u0441\u043e\u0431\u0440\u0430\u0442\u044c \u0435\u0433\u043e \u0446\u0435\u043b\u0438\u043a\u043e\u043c. \u0417\u0430\u0442\u0435\u043c \u0441\u0438\u0441\u0442\u0435\u043c\u0430 \u0441\u0430\u043c\u0430 \u0443\u043b\u0443\u0447\u0448\u0430\u0435\u0442 \u0442\u0430\u043a\u0438\u0435 \u0437\u0430\u0434\u0430\u043d\u0438\u044f: \u043f\u0440\u043e\u0432\u0435\u0440\u044f\u0435\u0442, \u043c\u043e\u0436\u043d\u043e \u043b\u0438 \u0438\u0445 \u0432\u044b\u043f\u043e\u043b\u043d\u0438\u0442\u044c \u0438 \u043d\u0430\u0441\u043a\u043e\u043b\u044c\u043a\u043e \u043f\u043e\u043b\u043d\u043e \u043e\u043d\u0438 \u0443\u0447\u0430\u0442 \u0441\u043e\u0437\u0434\u0430\u0432\u0430\u0442\u044c \u043d\u0430\u0441\u0442\u043e\u044f\u0449\u0438\u0435 \u043f\u0440\u043e\u0433\u0440\u0430\u043c\u043c\u044b.\n\n\u0412 \u044d\u0442\u043e\u043c \u043e\u0431\u0437\u043e\u0440\u0435 \u0440\u0430\u0437\u0431\u0438\u0440\u0430\u0435\u043c, \u043a\u0430\u043a \u0433\u043e\u0442\u043e\u0432\u044f\u0442 \u0418\u0418-\u0430\u0433\u0435\u043d\u0442\u043e\u0432 \u043a \u0431\u043e\u043b\u044c\u0448\u043e\u0439 \u0440\u0430\u0437\u0440\u0430\u0431\u043e\u0442\u043a\u0435, \u043f\u043e\u0447\u0435\u043c\u0443 \u043a\u0430\u0447\u0435\u0441\u0442\u0432\u043e \u0443\u0447\u0435\u0431\u043d\u044b\u0445 \u0437\u0430\u0434\u0430\u043d\u0438\u0439 \u0432\u043b\u0438\u044f\u0435\u0442 \u043d\u0430 \u0440\u0435\u0437\u0443\u043b\u044c\u0442\u0430\u0442 \u0438 \u0447\u0442\u043e \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u043f\u043e\u043b\u0443\u0447\u0438\u0442\u044c \u0430\u0432\u0442\u043e\u0440\u0430\u043c.",
+      "image": "https://dataist.ai/research/ru/kak-nauchit-ii-agenta-razrabotat-prilozhenie-s-nulia_ru/cover.jpg",
+      "url": "https://dataist.ai/research/ru/kak-nauchit-ii-agenta-razrabotat-prilozhenie-s-nulia_ru/",
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://dataist.ai/research/ru/kak-nauchit-ii-agenta-razrabotat-prilozhenie-s-nulia_ru/"
+      },
+      "datePublished": "2026-11-19",
+      "inLanguage": "ru",
+      "citation": {
+        "@type": "ScholarlyArticle",        "name": "From Repositories to Training Environments: Scaling Long-Horizon Coding Agents with Environment Evolution Loop",        "identifier": "arXiv:2611.21152",
+        "url": "https://arxiv.org/abs/2611.21152"
+      },
+      "isBasedOn": "https://arxiv.org/abs/2611.21152",      "author": {"@type": "Person", "name": "@dataist_ai"},
+      "publisher": {
+        "@type": "Organization",
+        "name": "Датаист",
+        "logo": {"@type": "ImageObject", "url": "https://dataist.ai/AIT_logo.png"}
+      }
+    }
+    </script>
+
+    <!-- Дополнительно для Twitter (X) и Telegram -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Как научить ИИ-агента разработать приложение с нуля" />
+    <meta name="twitter:description" content="Написать приложение с нуля — для ИИ-агента задача не на один шаг: ему нужно спланировать работу, создать множество частей и убедиться, что всё вместе работает.
+
+Исследователи предлагают превращать реальные проекты в учебные задания, где ИИ-агент получает описание приложения и должен собрать его целиком. Затем система сама улучшает такие задания: проверяет, можно ли их выполнить и насколько полно они учат создавать настоящие программы.
+
+В этом обзоре разбираем, как готовят ИИ-агентов к большой разработке, почему качество учебных заданий влияет на результат и что удалось получить авторам." />
+    <meta name="twitter:image" content="https://dataist.ai/research/ru/kak-nauchit-ii-agenta-razrabotat-prilozhenie-s-nulia_ru/cover.jpg" />
+
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Инициализация темы -->
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem('theme');
+                var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                var dark = stored ? stored === 'dark' : prefersDark;
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) { document.documentElement.classList.add('dark'); }
+        })();
+    </script>
+
+    <!-- Шрифты: Inter и Space Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- Иконки Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script><link rel="stylesheet" href="/static/css/tailwind.css">
+    <style>
+.glass-header{border-bottom-width:1px;border-color:rgba(0,0,0,.05);background-color:hsla(0,0%,100%,.7);--tw-backdrop-blur:blur(40px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.glass-header:is(.dark *){border-color:hsla(0,0%,100%,.1);background-color:rgba(0,0,0,.7)}.glass-panel{border-width:1px;border-color:rgba(0,0,0,.05);--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px rgba(0,0,0,.06);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow)}.glass-panel:is(.dark *){border-color:hsla(0,0%,100%,.1);--tw-bg-opacity:1;background-color:rgb(28 28 30/var(--tw-bg-opacity,1));--tw-shadow:0 4px 24px hsla(0,0%,100%,.04);--tw-shadow-colored:0 4px 24px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow,0 0 #0000),var(--tw-ring-shadow,0 0 #0000),var(--tw-shadow);--tw-shadow-color:#000;--tw-shadow:var(--tw-shadow-colored)}body{--tw-bg-opacity:1;background-color:rgb(245 245 247/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1));transition-property:color,background-color,border-color,text-decoration-color,fill,stroke;transition-timing-function:cubic-bezier(.4,0,.2,1);transition-duration:.3s}body:is(.dark *){--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::-moz-selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}::selection{--tw-bg-opacity:1;background-color:rgb(0 0 0/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(255 255 255/var(--tw-text-opacity,1))}:is(.dark *)::-moz-selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}:is(.dark *)::selection{--tw-bg-opacity:1;background-color:rgb(255 255 255/var(--tw-bg-opacity,1));--tw-text-opacity:1;color:rgb(0 0 0/var(--tw-text-opacity,1))}.article-content p{font-family:Inter,sans-serif;font-size:1.125rem;line-height:1.75;margin-bottom:1.5rem;color:rgba(0,0,0,.85)}.dark .article-content p{color:hsla(0,0%,100%,.85)}@media (min-width:768px){.article-content p{font-size:1.3125rem;line-height:1.8;margin-bottom:2rem}}.article-content strong{font-weight:600;color:#000}.dark .article-content strong{color:#fff}.article-content em{font-style:italic}.article-content h2{font-family:Inter,sans-serif;font-weight:700;font-size:1.5rem;line-height:1.15;letter-spacing:-.02em;margin-top:4rem;margin-bottom:2rem;color:#000}.dark .article-content h2{color:#fff}@media (min-width:768px){.article-content h2{font-size:1.875rem}}@media (min-width:1024px){.article-content h2{font-size:2.25rem}}.article-content section{max-width:48rem;margin-left:auto;margin-right:auto;width:100%}.article-content figure{margin:3rem auto;max-width:48rem}.apple-img,.article-content .arxiv-chart{width:100%;border-radius:1.5rem;overflow:hidden;background:#fff;border:1px solid rgba(0,0,0,.05);box-shadow:0 4px 24px rgba(0,0,0,.04);display:block;padding:0}.dark .apple-img,.dark .article-content .arxiv-chart{border-color:hsla(0,0%,100%,.1);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.article-content figure img{width:100%;height:auto;display:block;-o-object-fit:cover;object-fit:cover}.article-content figure p{font-family:Space Mono,monospace;font-size:.875rem;color:#86868b;margin:1rem auto 0;text-align:center;line-height:1.6;max-width:42rem}.dark .article-content figure p{color:#8e8e93}.article-content .tech-card{display:flex;gap:1rem;align-items:flex-start;padding:1.25rem 1.5rem;margin-bottom:.75rem;border-radius:1rem;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.05)}.dark .article-content .tech-card{background:hsla(0,0%,100%,.04);border-color:hsla(0,0%,100%,.1)}.article-lead{font-family:Inter,sans-serif;font-weight:500;font-size:1.25rem;line-height:1.6;margin:.5rem 0 3rem;padding-left:1.25rem;border-left:2px solid #000;color:#86868b}.dark .article-lead{border-color:#fff;color:#8e8e93}@media (min-width:768px){.article-lead{font-size:1.5rem;padding-left:2rem}}.rel-rail{display:flex;gap:16px;overflow-x:auto;scroll-behavior:smooth;scroll-snap-type:x proximity;padding:4px 2px 12px;overscroll-behavior-x:contain;scrollbar-width:none;-ms-overflow-style:none}.rel-rail::-webkit-scrollbar{display:none}.rel-rail>a{flex:0 0 auto;width:208px;scroll-snap-align:start;text-decoration:none;display:block;transition:transform .25s cubic-bezier(.2,.8,.2,1)}@media (min-width:640px){.rel-rail>a{width:244px}}.rel-rail>a:hover{transform:translateY(-4px)}.rel-thumb{display:block;position:relative;width:100%;aspect-ratio:16/10;overflow:hidden;border-radius:18px;background:rgba(0,0,0,.03);border:1px solid rgba(0,0,0,.1);box-shadow:0 4px 24px rgba(0,0,0,.05)}.dark .rel-thumb{background:hsla(0,0%,100%,.045);border-color:hsla(0,0%,100%,.14);box-shadow:0 4px 24px hsla(0,0%,100%,.04)}.rel-thumb img{width:100%;height:100%;-o-object-fit:cover;object-fit:cover;display:block;transition:transform .5s cubic-bezier(.2,.8,.2,1)}.rel-rail>a:hover .rel-thumb img{transform:scale(1.05)}.rel-rail time{display:block;margin:12px 0 5px;font-family:Space Mono,monospace;font-size:.625rem;letter-spacing:.08em;color:#86868b}.dark .rel-rail time{color:#8e8e93}.rel-title{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:.875rem;font-weight:600;line-height:1.4;letter-spacing:-.01em;color:#000}.dark .rel-title{color:#fff}.rel-fade{position:absolute;top:0;bottom:12px;width:96px;pointer-events:none;opacity:0;z-index:2;transition:opacity .35s ease}.rel-fade-l{left:0;background:linear-gradient(90deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.rel-fade-r{right:0;background:linear-gradient(270deg,#f5f5f7 12%,rgba(245,245,247,.55) 58%,rgba(245,245,247,0))}.dark .rel-fade-l{background:linear-gradient(90deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.dark .rel-fade-r{background:linear-gradient(270deg,#000 12%,rgba(0,0,0,.55) 58%,transparent)}.rel-arrow{position:absolute;top:calc(50% - 34px);translate:0 -50%;z-index:3;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;cursor:pointer;border:1px solid rgba(0,0,0,.1);background:#fff;color:#000;box-shadow:0 8px 26px rgba(0,0,0,.14);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .35s ease,transform .25s ease}.dark .rel-arrow{border-color:hsla(0,0%,100%,.14);background:#1c1c1e;color:#fff}.rel-arrow:hover{transform:scale(1.08)}.rel-arrow-l{left:6px}.rel-arrow-r{right:6px}.rel-wrap[data-left="1"] .rel-fade-l,.rel-wrap[data-right="1"] .rel-fade-r{opacity:1}.rel-wrap[data-left="1"] .rel-arrow-l,.rel-wrap[data-right="1"] .rel-arrow-r{opacity:1;visibility:visible;pointer-events:auto}@media (hover:none){.rel-arrow{display:none}}@media (prefers-reduced-motion:reduce){.rel-arrow,.rel-fade,.rel-rail>a,.rel-thumb img{transition:none}}
+    </style><style>
+        /* --- ряд рубрик в шапке -----------------------------------------
+           Палитра витрин. На странице статьи её не было вовсе: переменные
+           живут в styles.css приложения, которого страница не подключает.
+           Из-за этого и переключатель языка рисовал неактивный язык тем же
+           цветом, что активный — значение var(--text-muted) не определено,
+           объявление отбрасывается, цвет наследуется. */
+        :root {
+            --bg-color: #F5F5F7;
+            --text-main: #1d1d1f;
+            --text-muted: #86868B;
+            --chip-border: rgba(0, 0, 0, 0.08);
+        }
+        .dark {
+            --bg-color: #000000;
+            --text-main: #f5f5f7;
+            --text-muted: #8E8E93;
+            /* 0.19, а не 0.10: на чистом чёрном десятая доля даёт
+               rgb(25,25,25) — ряд читается не кнопками, а россыпью слов. */
+            --chip-border: rgba(255, 255, 255, 0.19);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Края растворяет МАСКА самого ряда, а не градиент поверх него:
+           накладной прямоугольник пришлось бы красить фоном страницы, и на
+           границе тем он выглядел бы грязным мазком.
+
+           Правый край растворён сразу, ещё до пересчёта скриптом: рубрики
+           в шапку обычно не помещаются, и до первого замера честнее
+           показать растворение, чем сухой обрез. Не понадобится — скрипт
+           обнулит. */
+        #category-scroll {
+            --fade-l: 0px;
+            --fade-r: 56px;
+            -webkit-mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+            mask-image: linear-gradient(to right,
+                transparent 0, #000 var(--fade-l),
+                #000 calc(100% - var(--fade-r)), transparent 100%);
+        }
+
+        /* Заливки у рубрики нет, всю форму держит рамка — значит и рамка
+           задаётся здесь, а не только утилитой Tailwind. */
+        .category-btn {
+            transition: all 0.25s ease;
+            background: transparent;
+            border: 1px solid var(--chip-border);
+        }
+        .category-btn.active,
+        .category-btn.active:hover {
+            background: var(--text-main);
+            color: var(--bg-color);
+            border-color: var(--text-main);
+        }
+
+        /* Выбор рубрики на телефоне — на <details>, то есть без единой
+           строки JavaScript: раскрытие списка не должно зависеть от того,
+           доехала ли чужая библиотека. */
+        #cat-menu > summary { list-style: none; cursor: pointer; }
+        #cat-menu > summary::-webkit-details-marker { display: none; }
+        #cat-menu > summary::marker { content: ""; }
+        #cat-menu[open] > summary .cat-caret { transform: rotate(180deg); }
+        .cat-caret { transition: transform 0.2s ease; }
+        /* Подпись на кнопке телефона не должна раздувать шапку, и её ширина не
+           должна зависеть от длины названия рубрики. У «Исследований» кнопка
+           выходила на 135 пикселей против 106 у «Новостей», и правый край
+           «Telegram» уезжал за экран на 390. Замер поймал; на широком экране
+           этого не видно вовсе.
+
+           3.5rem, а не 4.5: с четырьмя с половиной не хватало ровно четырёх
+           пикселей. Теперь длина названия на ширину шапки не влияет никак. */
+        #cat-menu > summary > span {
+            max-width: 3.5rem; overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        #cat-menu .cat-item {
+            display: flex; align-items: center; gap: 0.625rem;
+            padding: 0.625rem 0.75rem; border-radius: 0.75rem;
+            font-family: "Space Mono", monospace; font-size: 11px;
+            font-weight: 700; letter-spacing: 0.02em; text-transform: uppercase;
+            color: var(--text-muted); text-decoration: none;
+        }
+        #cat-menu .cat-item.active {
+            background: var(--text-main); color: var(--bg-color);
+        }
+    </style>
+<style id="dg-style">
+.dg{--dg-bg:#fff;--dg-ink:#1d1d1f;--dg-ink2:#515154;--dg-mute:#86868b;--dg-line:rgba(0,0,0,.14);--dg-card:#f5f5f7;--dg-card2:#fafafc;--dg-cb:rgba(0,0,0,.06);--dg-v:#7c4df0;--dg-o:#e47600;--dg-vs:rgba(124,77,240,.10);--dg-os:rgba(228,118,0,.11);position:relative;width:100%;background:var(--dg-bg);color:var(--dg-ink);border:1px solid rgba(0,0,0,.05);border-radius:1.5rem;box-shadow:0 4px 24px rgba(0,0,0,.04);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;text-align:left;line-height:1.4;overflow:hidden;-webkit-font-smoothing:antialiased}
+.dark .dg{--dg-bg:#1c1c1e;--dg-ink:#f5f5f7;--dg-ink2:#c7c7cc;--dg-mute:#8e8e93;--dg-line:rgba(255,255,255,.2);--dg-card:#2c2c2e;--dg-card2:#242426;--dg-cb:rgba(255,255,255,.07);--dg-v:#9572f2;--dg-o:#d07000;--dg-vs:rgba(149,114,242,.17);--dg-os:rgba(208,112,0,.2);border-color:rgba(255,255,255,.1);box-shadow:0 4px 24px rgba(255,255,255,.04)}
+.dg *{box-sizing:border-box}
+.dg-in{padding:28px 28px 26px}
+.dg-head{margin:0 0 22px}
+.dg-title{font-size:21px;font-weight:700;letter-spacing:-.02em;line-height:1.2;color:var(--dg-ink)}
+.dg-card{position:relative;z-index:1;background:var(--dg-card);border:1px solid var(--dg-cb);border-radius:16px;padding:14px 15px 15px}
+.dg-ct{font-size:15px;font-weight:650;letter-spacing:-.01em;line-height:1.28;color:var(--dg-ink)}
+.dg-cx{margin-top:5px;font-size:13px;line-height:1.45;color:var(--dg-ink2)}
+.dg-lt{font-size:14px;font-weight:600;line-height:1.3;color:var(--dg-ink)}
+.dg-num{display:inline-flex;align-items:center;justify-content:center;min-width:21px;height:21px;padding:0 6px;margin:-2px 8px 0 0;border-radius:11px;background:var(--dg-v);color:#fff;font-family:"Space Mono",ui-monospace,monospace;font-size:11px;font-weight:700;line-height:1;vertical-align:middle}
+.dg-base{margin-top:16px;padding:11px 16px;border-radius:14px;border:1px dashed var(--dg-line);background:var(--dg-card2);font-family:"Space Mono",ui-monospace,monospace;font-size:11.5px;line-height:1.55;color:var(--dg-ink2);text-align:center}
+.dg-cyc{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr;gap:20px 26px}
+.dg-ring{position:absolute;z-index:0;left:calc(16.67% - 6px);right:calc(16.67% - 6px);top:16.67%;bottom:16.67%;border:1.5px solid var(--dg-line);border-radius:34px;pointer-events:none}
+.dg-chev{position:absolute;z-index:0;display:grid;place-items:center;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;background:var(--dg-bg);color:var(--dg-v)}
+.dg-chev svg{width:12px;height:12px}
+.dg-chev-t{left:50%;top:16.67%}
+.dg-chev-r{left:calc(83.33% + 6px);top:50%;transform:rotate(90deg)}
+.dg-chev-b{left:50%;top:83.33%;transform:rotate(180deg)}
+.dg-chev-l{left:calc(16.67% - 6px);top:50%;transform:rotate(-90deg)}
+.dg-hubcell{grid-row:2;grid-column:2;position:relative;z-index:1;display:grid;place-items:center}
+.dg-hub{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:min(100%,138px);aspect-ratio:1;border-radius:50%;border:1.5px solid var(--dg-o);background:var(--dg-bg);box-shadow:0 0 0 10px var(--dg-os);text-align:center;padding:14px}
+.dg-hub-t{font-size:16px;font-weight:700;letter-spacing:-.01em;line-height:1.2;color:var(--dg-ink)}
+.dg-hub-x{font-size:12px;line-height:1.35;color:var(--dg-mute)}
+.dg-at11{grid-row:1;grid-column:1}.dg-at12{grid-row:1;grid-column:2}.dg-at13{grid-row:1;grid-column:3}.dg-at21{grid-row:2;grid-column:1}.dg-at23{grid-row:2;grid-column:3}.dg-at31{grid-row:3;grid-column:1}.dg-at32{grid-row:3;grid-column:2}.dg-at33{grid-row:3;grid-column:3}
+.dg-loop{display:none}
+.dg-frame{position:relative;margin-top:12px;padding:34px 18px 18px;border:1.5px solid var(--dg-v);border-radius:24px;background:linear-gradient(var(--dg-vs),var(--dg-vs)) padding-box}
+.dg-frame .dg-chev,.dg-frame .dg-hub{background:var(--dg-bg)}
+.dg-frame-tab{position:absolute;z-index:2;top:0;left:50%;transform:translate(-50%,-50%);max-width:calc(100% - 32px);width:max-content;padding:5px 14px;border:1.5px solid var(--dg-v);border-radius:999px;background:var(--dg-bg);font-family:"Space Mono",ui-monospace,monospace;font-size:11px;font-weight:700;letter-spacing:.04em;line-height:1.4;color:var(--dg-ink);text-align:center}
+.dg-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.dg-cols.dg-n3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.dg-col{--tone:var(--dg-v);--tone-s:var(--dg-vs);display:flex;flex-direction:column;border-radius:18px;border:1px solid var(--dg-cb);background:var(--dg-card2);padding:18px 18px 16px;border-top:3px solid var(--tone)}
+.dg-col.dg-o{--tone:var(--dg-o);--tone-s:var(--dg-os)}
+.dg-col-h{margin-bottom:14px}
+.dg-col-h .dg-ct{font-size:16px;margin-top:8px}
+.dg-tag{display:inline-block;padding:3px 9px;border-radius:999px;background:var(--tone-s);color:var(--dg-ink);font-family:"Space Mono",ui-monospace,monospace;font-size:11px;font-weight:700;letter-spacing:.06em}
+.dg-q{margin-top:6px;font-size:13px;font-style:italic;line-height:1.4;color:var(--dg-ink2)}
+.dg-chain{position:relative;display:flex;flex-direction:column;gap:12px;padding-left:20px;flex:1}
+.dg-chain::before{content:"";position:absolute;left:5px;top:10px;bottom:14px;width:1.5px;background:var(--tone);opacity:.45}
+.dg-link{position:relative}
+.dg-link::before{content:"";position:absolute;left:-19px;top:5px;width:10px;height:10px;border-radius:50%;background:var(--dg-bg);border:2px solid var(--tone)}
+.dg-end::before{background:var(--tone)}
+.dg-end .dg-lt{font-size:15px;font-weight:700}
+.dg-note{margin-top:14px;padding-top:12px;border-top:1px solid var(--dg-cb);font-family:"Space Mono",ui-monospace,monospace;font-size:11px;line-height:1.5;color:var(--dg-ink2)}
+.dg-layers{display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.dg-layers.dg-has-axis{grid-template-columns:22px minmax(0,1fr)}
+.dg-layers.dg-has-aside{grid-template-columns:minmax(0,1fr) 150px}
+.dg-layers.dg-has-axis.dg-has-aside{grid-template-columns:22px minmax(0,1fr) 150px}
+.dg-stack{display:flex;flex-direction:column;gap:10px}
+.dg-layer{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-left:calc(var(--lv,0) * 5%);background:var(--dg-card);border:1px solid var(--dg-cb);border-radius:16px;padding:13px 15px;border-left:3px solid var(--dg-v)}
+.dg-lbody{min-width:0}
+.dg-lnote{flex:0 0 auto;max-width:38%;font-family:"Space Mono",ui-monospace,monospace;font-size:10.5px;line-height:1.45;letter-spacing:.02em;color:var(--dg-mute);text-align:right}
+.dg-mark{display:flex;align-items:center;gap:10px;margin:2px 0;color:var(--dg-o);font-family:"Space Mono",ui-monospace,monospace;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.dg-mark::before,.dg-mark::after{content:"";flex:1;border-top:1.5px dashed var(--dg-o);opacity:.7}
+.dg-axis{position:relative;display:flex;align-items:center;justify-content:center}
+.dg-axis::before{content:"";position:absolute;top:6px;bottom:6px;left:50%;width:1.5px;background:linear-gradient(to top,var(--dg-line),var(--dg-v))}
+.dg-axis span{position:relative;writing-mode:vertical-rl;transform:rotate(180deg);background:var(--dg-bg);padding:8px 0;font-family:"Space Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dg-mute);white-space:nowrap}
+.dg-aside{display:flex;flex-direction:column;justify-content:center;border-radius:16px;border:1.5px dashed var(--dg-o);background:var(--dg-os);padding:14px;text-align:center}
+.dg-hubline{display:flex;justify-content:center;margin-bottom:16px}
+.dg-hubpill{display:inline-block;padding:8px 18px;border-radius:999px;border:1.5px solid var(--dg-o);box-shadow:0 0 0 6px var(--dg-os);font-size:14px;font-weight:650;color:var(--dg-ink);text-align:center}
+.dg-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.dg-groups.dg-n3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.dg-group{--tone:var(--dg-v);--tone-s:var(--dg-vs);border-radius:18px;border:1px solid var(--dg-cb);background:var(--dg-card2);padding:16px}
+.dg-group.dg-o{--tone:var(--dg-o);--tone-s:var(--dg-os)}
+.dg-gh{display:flex;align-items:center;gap:9px}
+.dg-dot{flex:0 0 auto;width:10px;height:10px;border-radius:3px;background:var(--tone)}
+.dg-group>.dg-cx{margin:6px 0 0 19px;font-family:"Space Mono",ui-monospace,monospace;font-size:11px;color:var(--dg-mute)}
+.dg-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.dg-chip{display:inline-block;padding:5px 10px;border-radius:10px;background:var(--tone-s);font-size:12.5px;line-height:1.35;color:var(--dg-ink)}
+.dg-stairs{display:flex;flex-direction:column;gap:22px}
+.dg-lane{--tone:var(--dg-v);--tone-s:var(--dg-vs)}
+.dg-lane.dg-o{--tone:var(--dg-o);--tone-s:var(--dg-os)}
+.dg-lane-h{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.dg-key{width:18px;height:4px;border-radius:2px;background:var(--tone)}
+.dg-lane.dg-o .dg-key{background:repeating-linear-gradient(90deg,var(--tone) 0 5px,transparent 5px 8px)}
+.dg-srow{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:8px;align-items:end}
+.dg-sstep{display:flex;flex-direction:column;justify-content:flex-end;gap:8px;min-width:0}
+.dg-stxt .dg-lt{font-size:13px}
+.dg-stxt .dg-cx{font-size:11.5px;margin-top:3px}
+.dg-sbar{height:calc(14px + var(--h) * .72px);border-radius:10px 10px 4px 4px;background:var(--tone-s);border:1.5px solid var(--tone);border-bottom-width:3px}
+.dg-lane.dg-o .dg-sbar{border-style:dashed;border-bottom-style:solid}
+.dg-sbar span{display:none}
+.dg-xaxis{display:flex;align-items:center;gap:10px;font-family:"Space Mono",ui-monospace,monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--dg-mute)}
+.dg-xaxis::before{content:"";flex:1;height:1.5px;background:linear-gradient(to right,var(--dg-line),var(--dg-v))}
+.dg-xaxis::after{content:"→";color:var(--dg-v);font-size:14px}
+.dg-flow{display:grid;gap:26px}
+.dg-flow-row{grid-auto-flow:column;grid-auto-columns:minmax(0,1fr)}
+.dg-flow-col{grid-template-columns:minmax(0,1fr);gap:14px}
+.dg-flow-row .dg-fstep:not(:last-child)::after{content:"→";position:absolute;right:-21px;top:50%;transform:translateY(-50%);color:var(--dg-v);font-size:16px;font-weight:700}
+.dg-flow-col .dg-fstep:not(:last-child)::after{content:"↓";position:absolute;left:24px;bottom:-17px;color:var(--dg-v);font-size:13px;font-weight:700;line-height:1}
+.dg-bars{display:flex;flex-direction:column;gap:10px}
+.dg-brow{display:grid;grid-template-columns:minmax(0,38%) minmax(0,1fr);gap:14px;align-items:center}
+.dg-bl{font-size:13.5px;line-height:1.3;color:var(--dg-ink);text-align:right}
+.dg-btrack{display:flex;align-items:center;gap:8px;min-width:0}
+.dg-bfill{display:block;height:20px;border-radius:2px 4px 4px 2px;background:var(--dg-v)}
+.dg-dim .dg-bfill{background:var(--dg-line)}
+.dg-hl .dg-bl{font-weight:650}
+.dg-bv{flex:0 0 auto;font-family:"Space Mono",ui-monospace,monospace;font-size:12px;font-weight:700;color:var(--dg-ink)}
+.dg-dim .dg-bv{color:var(--dg-ink2);font-weight:400}
+.dg-sys{display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.dg-sys.dg-has-side{grid-template-columns:minmax(0,1fr) 200px}
+.dg-sys-main{display:flex;flex-direction:column;min-width:0}
+.dg-sys-h .dg-ct{font-size:15px}
+.dg-sys-tag{display:inline-block;margin:-2px 8px 0 0;padding:2px 8px;border-radius:999px;background:var(--dg-v);color:#fff;font-family:"Space Mono",ui-monospace,monospace;font-size:11px;font-weight:700;letter-spacing:.04em;line-height:1.45;vertical-align:middle}
+.dg-sys-actor{border-radius:16px;border:1.5px dashed var(--dg-line);background:var(--dg-card2);padding:12px 15px}
+.dg-sys-core{border-radius:20px;border:1.5px solid var(--dg-v);background:linear-gradient(var(--dg-vs),var(--dg-vs)) padding-box;padding:16px}
+.dg-sys-core>.dg-sys-h{margin-bottom:12px}
+.dg-sys-core>.dg-sys-h .dg-ct{font-size:16.5px;font-weight:700}
+.dg-sys-parts{display:flex;flex-direction:column}
+.dg-sys-part{--tone:var(--dg-v);--tone-s:var(--dg-vs);border-radius:16px;border:1px solid var(--dg-cb);border-top:3px solid var(--tone);background:var(--dg-bg);padding:12px}
+.dg-sys-part.dg-o{--tone:var(--dg-o);--tone-s:var(--dg-os)}
+.dg-sys-part+.dg-sys-part{margin-top:10px}
+.dg-sys-ph{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-family:"Space Mono",ui-monospace,monospace;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dg-ink2)}
+.dg-sys-part .dg-dot{background:var(--tone)}
+.dg-sys-items{display:flex;flex-wrap:wrap;gap:8px}
+.dg-sys-item{flex:1 1 150px;min-width:0;border-radius:12px;background:var(--dg-card);border:1px solid var(--dg-cb);padding:10px 11px}
+.dg-sys-item .dg-ct{font-size:13.5px}
+.dg-sys-item .dg-cx{font-size:12px;margin-top:4px}
+.dg-sys-item .dg-num{background:var(--tone)}
+.dg-sys-bridge{display:flex;justify-content:center;padding:8px 0}
+.dg-sys-bridge span{padding:4px 12px;border-radius:999px;border:1px solid var(--dg-line);background:var(--dg-bg);font-family:"Space Mono",ui-monospace,monospace;font-size:11px;line-height:1.4;color:var(--dg-ink2);text-align:center}
+.dg-sys-tier{border-radius:16px;border:1px solid var(--dg-cb);border-left:3px solid var(--dg-v);background:var(--dg-card);padding:12px 15px}
+.dg-sys-link{display:grid;grid-template-columns:minmax(0,1fr) 14px minmax(0,1fr);align-items:center;gap:10px;min-height:36px;padding:3px 0;font-family:"Space Mono",ui-monospace,monospace;font-size:11px;line-height:1.35}
+.dg-sys-dn{text-align:right;color:var(--dg-v)}
+.dg-sys-up{text-align:left;color:var(--dg-o)}
+.dg-sys-dn b,.dg-sys-up b{font-size:13px;margin:0 4px}
+.dg-sys-wire{justify-self:center;align-self:stretch;width:2px;min-height:30px;border-radius:1px;background:linear-gradient(var(--dg-v),var(--dg-o))}
+.dg-sys-side{display:flex;flex-direction:column;gap:10px;align-self:start;border-radius:18px;border:1.5px dashed var(--dg-o);background:var(--dg-os);padding:16px}
+.dg-sys-sh{display:flex;align-items:flex-start;gap:9px}
+.dg-sys-pulse{flex:0 0 auto;width:10px;height:10px;margin-top:4px;border-radius:50%;background:var(--dg-o);box-shadow:0 0 0 4px var(--dg-os)}
+.dg-sys-side>.dg-cx{margin-top:0}
+.dg-sys-links{display:flex;flex-direction:column;gap:6px}
+.dg-sys-l{position:relative;padding:7px 10px 7px 24px;border-radius:10px;border:1px solid var(--dg-cb);background:var(--dg-bg);font-size:12.5px;line-height:1.4;color:var(--dg-ink)}
+.dg-sys-l::before{content:"→";position:absolute;left:9px;top:7px;color:var(--dg-o);font-weight:700}
+.dg-numfig{max-width:48rem;margin-left:auto;margin-right:auto}
+.dg-nums{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.dg-nums.dg-n1{grid-template-columns:minmax(0,1fr)}
+.dg-nums.dg-n3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.dg-ntile{position:relative;border-radius:16px;border:1px solid var(--dg-cb);background:var(--dg-card);padding:16px 16px 15px 19px;overflow:hidden}
+.dg-ntile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--dg-v)}
+.dg-ntile:nth-child(even)::before{background:var(--dg-o)}
+.dg-nv{font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.1;color:var(--dg-ink);font-variant-numeric:tabular-nums}
+.dg-nt{margin-top:8px;font-size:13.5px;line-height:1.45;color:var(--dg-ink2)}
+@media (max-width:640px){
+.dg-in{padding:20px 16px 18px}
+.dg-title{font-size:18px}
+.dg-cyc{grid-template-columns:minmax(0,1fr);grid-auto-rows:auto;gap:14px}
+.dg-cyc>.dg-card,.dg-hubcell{grid-row:auto;grid-column:auto}
+.dg-ring,.dg-chev{display:none}
+.dg-hubcell{order:-1}
+.dg-hub{width:auto;aspect-ratio:auto;flex-direction:row;flex-wrap:wrap;gap:4px 8px;padding:9px 16px;border-radius:999px;box-shadow:0 0 0 5px var(--dg-os)}
+.dg-cyc>.dg-card:not(:last-of-type)::after{content:"↓";position:absolute;left:24px;bottom:-15px;color:var(--dg-v);font-size:12px;font-weight:700;line-height:1}
+.dg-loop{display:block;font-family:"Space Mono",ui-monospace,monospace;font-size:11px;color:var(--dg-v);text-align:center}
+.dg-frame{padding:12px}
+.dg-frame-tab{position:static;transform:none;display:block;width:auto;max-width:none;margin:0 0 14px;border-radius:14px}
+.dg-cols,.dg-cols.dg-n3,.dg-groups,.dg-groups.dg-n3{grid-template-columns:minmax(0,1fr)}
+.dg-layers,.dg-layers.dg-has-axis,.dg-layers.dg-has-aside,.dg-layers.dg-has-axis.dg-has-aside{grid-template-columns:minmax(0,1fr)}
+.dg-axis{display:none}
+.dg-layer{margin-left:0;flex-direction:column;gap:6px}
+.dg-lnote{max-width:none;text-align:left}
+.dg-srow{grid-auto-flow:row;grid-auto-columns:auto;grid-template-columns:minmax(0,1fr);gap:8px}
+.dg-sstep{flex-direction:row-reverse;align-items:center;justify-content:flex-end;gap:14px}
+.dg-sbar{flex:0 0 auto;height:10px;width:56px;border-radius:5px;border:0;background:var(--tone-s);overflow:hidden}
+.dg-sbar span{display:block;height:100%;width:calc(var(--h) * 1%);background:var(--tone);border-radius:5px}
+.dg-lane.dg-o .dg-sbar span{background:repeating-linear-gradient(90deg,var(--tone) 0 6px,transparent 6px 8px)}
+.dg-stxt{min-width:0;flex:1}
+.dg-flow-row{grid-auto-flow:row;grid-template-columns:minmax(0,1fr);gap:14px}
+.dg-flow-row .dg-fstep:not(:last-child)::after{content:"↓";right:auto;left:24px;top:auto;bottom:-17px;transform:none;font-size:13px}
+.dg-brow{grid-template-columns:minmax(0,1fr);gap:4px}
+.dg-bl{text-align:left}
+.dg-sys,.dg-sys.dg-has-side{grid-template-columns:minmax(0,1fr)}
+.dg-sys-core{padding:12px}
+.dg-sys-item{flex-basis:100%}
+.dg-sys-link{font-size:10.5px;gap:8px}
+.dg-nums,.dg-nums.dg-n3{grid-template-columns:minmax(0,1fr)}
+.dg-nv{font-size:26px}
+}
+</style>
+</head>
+
+<body class="font-sans antialiased min-h-[100dvh] w-full flex flex-col relative">
+
+    <!-- Хедер -->
+    <header class="fixed top-0 w-full h-16 md:h-20 z-50 flex justify-between items-center px-4 md:px-8 glass-header transition-colors shrink-0 gap-4">
+        <div class="flex items-center gap-4 shrink-0">
+            <a href="/" class="p-2 -ml-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-colors text-black dark:text-white">
+                <i data-lucide="arrow-left" class="w-5 h-5 md:w-6 md:h-6"></i>
+            </a>
+            <a href="/" class="flex items-center gap-3 shrink-0 no-underline group">
+                <div class="w-6 h-6 md:w-8 md:h-8 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center text-xs md:text-sm font-bold font-mono leading-none transition-transform group-hover:scale-105">
+                    i
+                </div>
+                <div class="font-sans font-semibold text-base md:text-xl tracking-tight text-black dark:text-white leading-none mt-[2px] hidden sm:block">
+                    ДАТАИСТ
+                </div>
+            </a>
+        </div>            <div id="category-scroll" class="hidden sm:block flex-1 min-w-0 overflow-x-auto no-scrollbar">
+                <nav aria-label="Рубрики" class="flex flex-nowrap items-center gap-2 w-max mx-auto">
+                    <a href="/ru/?cat=all" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="all" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="sparkles" class="w-3.5 h-3.5 shrink-0"></i><span>Все</span></a>
+                    <a href="/ru/?cat=learning" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="learning" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="graduation-cap" class="w-3.5 h-3.5 shrink-0"></i><span>Обучение</span></a>
+                    <a href="/ru/?cat=research" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="research" aria-current="page" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white active"><i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i><span>Исследования</span></a>
+                    <a href="/ru/?cat=tech" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="tech" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="cpu" class="w-3.5 h-3.5 shrink-0"></i><span>Технологии</span></a>
+                    <a href="/ru/?cat=cases" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="cases" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="briefcase" class="w-3.5 h-3.5 shrink-0"></i><span>Кейсы</span></a>
+                    <a href="/ru/?cat=thoughts" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="thoughts" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="brain" class="w-3.5 h-3.5 shrink-0"></i><span>Мысли</span></a>
+                    <a href="/ru/?cat=news" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" data-cat="news" class="category-btn inline-flex items-center justify-center gap-1.5 shrink-0 whitespace-nowrap px-4 py-2 rounded-full font-mono text-[10px] md:text-xs font-bold tracking-tight uppercase transition-all duration-300 text-apple-textMutedLight dark:text-apple-textMutedDark no-underline hover:border-apple-textMutedLight dark:hover:border-apple-textMutedDark hover:text-black dark:hover:text-white"><i data-lucide="newspaper" class="w-3.5 h-3.5 shrink-0"></i><span>Новости</span></a>
+                </nav>
+            </div>
+        <div class="flex items-center gap-2 md:gap-4 shrink-0"><details id="cat-menu" class="sm:hidden relative">
+                <summary class="category-btn inline-flex items-center gap-1.5 px-3 py-2 rounded-full font-mono text-[10px] font-bold tracking-tight uppercase text-black dark:text-white" aria-label="Выбрать рубрику">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5 shrink-0"></i>
+                    <span>Исследования</span>
+                    <i data-lucide="chevron-down" class="cat-caret w-3.5 h-3.5 shrink-0"></i>
+                </summary>
+                <div class="absolute right-0 top-full mt-2 w-56 p-2 rounded-2xl glass-panel flex flex-col gap-0.5 z-50">
+                    <a href="/ru/?cat=all" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i><span>Все</span></a>
+                    <a href="/ru/?cat=learning" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="graduation-cap" class="w-4 h-4 shrink-0"></i><span>Обучение</span></a>
+                    <a href="/ru/?cat=research" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" aria-current="page" class="cat-item active"><i data-lucide="microscope" class="w-4 h-4 shrink-0"></i><span>Исследования</span></a>
+                    <a href="/ru/?cat=tech" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="cpu" class="w-4 h-4 shrink-0"></i><span>Технологии</span></a>
+                    <a href="/ru/?cat=cases" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="briefcase" class="w-4 h-4 shrink-0"></i><span>Кейсы</span></a>
+                    <a href="/ru/?cat=thoughts" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="brain" class="w-4 h-4 shrink-0"></i><span>Мысли</span></a>
+                    <a href="/ru/?cat=news" onclick="try{localStorage.setItem('dataist_lang','ru')}catch(e){}" class="cat-item"><i data-lucide="newspaper" class="w-4 h-4 shrink-0"></i><span>Новости</span></a>
+                </div>
+            </details>            <nav id="lang-switch" aria-label="Язык" class="flex items-center gap-1.5 md:gap-2 font-mono text-[11px] md:text-sm font-bold uppercase tracking-widest select-none"><span aria-current="true" class="text-black dark:text-white">RU</span><span aria-hidden="true" class="text-apple-textMutedLight dark:text-apple-textMutedDark opacity-40">|</span><a href="/research/how-to-teach-an-ai-agent-to-develop-an-app-from-scratch/" hreflang="en" lang="en" onclick="try{localStorage.setItem('dataist_lang','en')}catch(e){}" class="text-apple-textMutedLight dark:text-apple-textMutedDark hover:text-black dark:hover:text-white transition-colors no-underline">EN</a></nav>            <button id="theme-toggle" class="p-2 md:p-2.5 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all text-black dark:text-white cursor-pointer" title="Сменить тему">
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener"
+               class="flex items-center gap-2 px-4 py-2 md:px-6 md:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full transition-all text-[12px] md:text-sm font-sans font-medium hover:scale-105 active:scale-95">
+                <i data-lucide="arrow-up-right" class="w-4 h-4"></i>
+                <span class="hidden sm:inline">Telegram</span>
+            </a>
+        </div>
+    </header>
+
+    <script>
+        /* Растворение краёв ряда рубрик.
+
+           Отдельным блоком намеренно: в общем блоке внизу страницы первой
+           строкой идёт обращение к библиотеке иконок с unpkg.com, и если
+           она не ответила, весь тот блок не исполняется. Ряду рубрик до
+           этого дела быть не должно. */
+        (function () {
+            var el = document.getElementById('category-scroll');
+            if (!el) return;
+            var row = el.firstElementChild;
+            var RAMP = 48, MAX = 56;          // те же числа, что на витрине
+            var placed = false;
+
+            function update() {
+                var max = el.scrollWidth - el.clientWidth;
+                var w = function (v) {
+                    return max <= 8 ? 0
+                        : Math.round(Math.min(1, Math.max(0, v) / RAMP) * MAX);
+                };
+                el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+
+                if (!placed && max > 8) {
+                    placed = true;
+                    var active = el.querySelector('.category-btn.active');
+                    if (active) {
+                        /* Ровно настолько, чтобы текущая рубрика влезла, и
+                           ни пикселем больше: центрирование утаскивало ряд
+                           до упора и прятало «Все» за краем насовсем.
+                           Запас 64 шире растворения (56), иначе рубрика
+                           встаёт под маску и читается наполовину. */
+                        var pad = 64;
+                        /* BR440: смещение считается ОТ САМОГО РЯДА, а не
+                           через `offsetLeft`. Тот меряет от ближайшего
+                           позиционированного предка, а это `<header>` — он
+                           `fixed`. Разница ровно на отступ ряда внутри шапки
+                           (около 230 пикселей), и ряд уезжал на неё дальше,
+                           чем нужно: активная рубрика оказывалась за левым
+                           краем. Замерено: на 768 её видно −23 пикселя из
+                           137, на 640 — восемь, и те под растворением.
+                           На новостях этого не видно, потому что там активна
+                           ПОСЛЕДНЯЯ рубрика и перелёт упирается в край. */
+                        var box = el.getBoundingClientRect();
+                        var ab = active.getBoundingClientRect();
+                        var from = ab.left - box.left + el.scrollLeft;
+                        var l = from - pad;
+                        var r = from + ab.width + pad;
+                        if (r > el.scrollLeft + el.clientWidth) el.scrollLeft = r - el.clientWidth;
+                        else if (l < el.scrollLeft) el.scrollLeft = Math.max(0, l);
+                        /* Узкий экран: рубрика с обоими запасами уже не
+                           помещается (123 + 64 + 64 больше 216 при 640), и
+                           подгонка по правому краю загоняет левый под маску.
+                           Читают слева направо — значит слева и освобождаем.
+                           Замерено: было 46 при маске 56, стало 56. */
+                        if (from - el.scrollLeft < MAX) el.scrollLeft = Math.max(0, from - MAX);
+                        max = el.scrollWidth - el.clientWidth;
+                        el.style.setProperty('--fade-l', w(el.scrollLeft) + 'px');
+                        el.style.setProperty('--fade-r', w(max - el.scrollLeft) + 'px');
+                    }
+                }
+            }
+
+            el.addEventListener('scroll', update, { passive: true });
+            window.addEventListener('resize', update);
+
+            /* Главное. Ряд меняет ширину ПОСЛЕ первого замера: `<i
+               data-lucide>` превращается в svg, когда догрузится библиотека
+               иконок, и рубрики раздаются. Разовый замер этого не ловит —
+               край резался насухо. Наблюдатель ловит любое изменение
+               размера, чем бы оно ни было вызвано. */
+            if (window.ResizeObserver && row) new ResizeObserver(update).observe(row);
+            window.addEventListener('load', update);
+            if (document.fonts && document.fonts.ready) document.fonts.ready.then(update);
+
+            update();
+        })();
+
+        /* Меню рубрик на телефоне закрывается нажатием мимо него.
+           Раскрытие держится на <details> и работает без скрипта; это лишь
+           удобство — не сработает, меню закроется повторным нажатием. */
+        (function () {
+            var menu = document.getElementById('cat-menu');
+            if (!menu) return;
+            document.addEventListener('click', function (e) {
+                if (menu.open && !menu.contains(e.target)) menu.open = false;
+            });
+        })();
+    </script>
+
+    <!-- Основной контейнер статьи -->
+    <main class="pt-28 md:pt-36 pb-10 px-4 md:px-8 w-full max-w-4xl mx-auto relative z-30">
+        <article class="w-full flex flex-col relative">
+
+            <!-- ОБЛОЖКА СТАТЬИ -->
+            <header class="text-center mb-6 md:mb-10 fade-in">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 mb-8 rounded-full border border-black/10 dark:border-white/20 text-black dark:text-white text-xs font-mono font-bold tracking-widest uppercase bg-black/5 dark:bg-white/5">
+                    <i data-lucide="microscope" class="w-3.5 h-3.5"></i>
+                    <span>Обзор · 2026-11-19</span>
+                </div>
+
+                <h1 class="text-4xl sm:text-5xl md:text-6xl lg:text-[4.25rem] font-sans font-bold tracking-tighter mb-6 leading-[1.05] text-black dark:text-white">
+                    Как научить ИИ-агента разработать приложение с нуля
+                </h1>
+
+                <div class="w-full rounded-2xl md:rounded-3xl border border-black/5 dark:border-white/10 shadow-apple dark:shadow-apple-dark overflow-hidden mt-10 md:mt-14 mb-4 md:mb-8 bg-black">
+                    <img src="https://dataist.ai/research/ru/kak-nauchit-ii-agenta-razrabotat-prilozhenie-s-nulia_ru/cover.jpg"
+                         alt="Обложка: Как научить ИИ-агента разработать приложение с нуля"
+                         class="w-full h-auto object-cover">
+                </div>
+            </header>
+
+            <!-- КОНТЕНТ СТАТЬИ (собирается билдером, та же логика) -->
+            <div class="article-content max-w-3xl mx-auto w-full">
+
+
+                <section>
+<p>Длинные задачи по программированию требуют от модели не только писать код, но и собирать из множества частей работающий проект. RepoFactory автоматически превращает реальные репозитории в учебные задачи, а затем улучшает их с помощью недорогих проверок. Такое обучение заметно повышает результаты модели на задачах по созданию целых проектов.</p>
+</section>
+<section>
+<h2>Главная мысль</h2>
+<p>Обычно систему для обучения проверяют на пригодность: запускается ли код и проходят ли тесты. RepoFactory добавляет второй шаг — меняет сами задачи, чтобы в них было больше работы и связей между компонентами. Затем авторы проверяют, помогает ли такое обучение на независимых бенчмарках.</p>
+<p>🟠 Реальный репозиторий становится задачей: агент должен восстановить проект по описанию, не видя исходного кода.</p>
+<p>🟠 Качество среды оценивают по трём признакам: проходит ли она проверку, связаны ли части проекта между собой и сколько кода предстоит написать.</p>
+<p>🟠 После каждой правки среду проверяют заново; неудачную версию откатывают.</p>
+<p>🟠 Модель, обученная на таких задачах, заметно улучшила результаты на создании репозиториев и других задачах для программных агентов.</p>
+</section>
+<section>
+<h2>Что такое RepoFactory</h2>
+<p>RepoFactory — это <strong>пайплайн, который превращает исходные проекты в проверяемые среды для обучения</strong>. Он находит репозитории, создаёт для них изолированное окружение, составляет описание задачи и затем улучшает её по результатам автоматических проверок.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/kak-nauchit-ii-agenta-razrabotat-prilozhenie-s-nulia_ru/fig_1.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">RepoFactory ищет репозитории, собирает для них окружения, составляет задания и улучшает их по проверкам.</p>
+</div></figure>
+<p>Система состоит из нескольких связанных частей:</p>
+<p>🟣 <strong>Поиск проектов.</strong> Система отбирает открытые репозитории с метаданными пакета и тестами. Проекты, которым нужны внешние сервисы, доступ к сети или специальное оборудование, исключают: среда должна работать изолированно.</p>
+<p>🟣 <strong>Подготовка окружения.</strong> Для проекта создают контейнер — отдельную среду запуска с зависимостями. Система проверяет, что тесты проходят в чистом контейнере без доступа к сети.</p>
+<p>🟣 <strong>Составление задания.</strong> Анализатор извлекает из кода публичные функции и классы, а также интерфейсы, которые вызывают тесты. По этим данным агент составляет описание того, что нужно реализовать. Исходный проект и проверяющий код остаются скрытыми от обучаемого агента.</p>
+<p>🟣 <strong>Цикл улучшения среды.</strong> Система проверяет описание, реализацию и тесты, а затем меняет их вместе. Так можно исправить неудачную среду или увеличить объём работы, которую требует задача.</p>
+<p>Для улучшения используют три оценки. <strong>Пригодность</strong> означает, что исходная реализация проходит тесты, а пустая среда — нет. <strong>Связанность</strong> показывает, насколько тесно взаимодействуют части программы. <strong>Масштаб реализации</strong> учитывает объём кода и число зависимостей. Оценки перемножают: если любой показатель равен нулю, итоговая оценка тоже обнуляется.</p>
+<p>Это приблизительные признаки обучающей ценности, а не прямое измерение того, насколько хорошо агент научится. Поэтому авторы отдельно проверяют эффект на обученной модели.</p>
+</section>
+<section>
+<h2>Как работает восстановление проекта по описанию</h2>
+<p>Представим, что RepoFactory выбрала библиотеку для обработки данных. Она должна превратить её в задачу, в которой агент создаёт библиотеку заново, не имея доступа к исходному проекту.</p>
+<p>🟠 Сначала система запускает библиотеку в контейнере и проверяет её тестами. Если зависимости не установились или тесты не работают, среду исправляют. Если это не удаётся, проект не проходит проверку пригодности.</p>
+<p>🟠 Затем анализатор выясняет, какие функции и классы использует набор тестов. На этой основе агент составляет описание проекта и список интерфейсов, которые нужно реализовать.</p>
+<p>🟠 Система сверяет описание со списком символов, вызываемых тестами. Если нужный интерфейс пропущен, проверка сообщает об ошибке, и описание исправляют.</p>
+<p>🟠 После этого проверяют, что исходная библиотека получает полный балл, а пустая папка — нулевой. Если условие не выполнено, агент изучает отчёт и меняет описание, код или тесты. Если задача слишком мала или её части почти не связаны, агент пытается расширить проект или усилить взаимодействие между компонентами.</p>
+<p>🟠 Каждую новую версию проверяют заново. Если выбранный показатель не вырос, систему возвращают к предыдущей версии. Цикл может повторяться до 12 раз.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/kak-nauchit-ii-agenta-razrabotat-prilozhenie-s-nulia_ru/fig_6.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">По мере исправлений растёт число сред, прошедших проверку пригодности.</p>
+</div></figure>
+<p>В этом процессе агент не решает задачу целиком. Вместо этого RepoFactory использует отчёты тестов и анализ кода — это дешевле, чем каждый раз запускать долгую попытку решения и ждать результата. Но такие проверки могут не заметить, например, что описание стало формально полным, а задача всё ещё не требует содержательного программирования.</p>
+</section>
+<section>
+<h2>Как проверяют RepoFactory</h2>
+<p>Авторы оценивают систему по двум направлениям: удаётся ли создавать больше пригодных сред и помогает ли обучение на них самой модели.</p>
+<p>Для проверки модели используют пять бенчмарков. <strong>NL2Repo</strong> оценивает создание полного репозитория по описанию. Три версии SWE-bench проверяют исправление ошибок в существующих проектах, в том числе на разных языках. Terminal-Bench проверяет выполнение задач в командной строке.</p>
+<p>Сравнение с вариантом без цикла улучшения показывает вклад самой доработки сред. Чтобы оценить ценность данных, авторы также обучают модели на других наборах задач по программированию. В сравнении используют одинаковую модель, сопоставимое число обучающих примеров и одну обвязку для оценки. При этом ранее опубликованные результаты других работ получены в разных условиях.</p>
+<p>Отдельный эксперимент проверяет, помогает ли увеличение числа сред. Ещё один сравнивает обучение на средах с разной сложностью и связанностью. Так авторы пытаются отделить эффект масштаба от эффекта самого цикла улучшения.</p>
+<figure class="my-10 md:my-14 fade-in max-w-4xl mx-auto w-full"><div class="arxiv-chart flex flex-col items-center"><img src="https://dataist.ai/research/ru/kak-nauchit-ii-agenta-razrabotat-prilozhenie-s-nulia_ru/fig_3.jpg" alt="" class="w-full object-contain rounded-lg bg-white/50">
+<p class="text-sm md:text-base text-gray-800 dark:text-gray-300 mt-5 text-center font-mono max-w-3xl leading-relaxed">На бенчмарке NL2Repo точность растёт вместе с числом обучающих сред.</p>
+</div></figure>
+</section>
+<section>
+<h2>Цифры</h2>
+<div class="dg-numfig my-10 md:my-14 fade-in w-full"><div class="dg dg-k-numbers" data-diagram="numbers"><div class="dg-in"><div class="dg-nums dg-n4"><div class="dg-ntile"><div class="dg-nv">10 159</div><div class="dg-nt">столько учебных сред RepoFactory создала из репозиториев</div></div><div class="dg-ntile"><div class="dg-nv">17</div><div class="dg-nt">столько программных областей охватывает набор сред</div></div><div class="dg-ntile"><div class="dg-nv">23,8% → 46,4%</div><div class="dg-nt">настолько вырос результат базовой модели на NL2Repo после обучения на данных RepoFactory</div></div><div class="dg-ntile"><div class="dg-nv">22,6 п. п.</div><div class="dg-nt">прирост на NL2Repo по сравнению с базовой моделью</div></div><div class="dg-ntile"><div class="dg-nv">8,5 п. п.</div><div class="dg-nt">средний прирост на пяти бенчмарках по сравнению с базовой моделью</div></div></div></div></div></div>
+<p>Обучение повысило результат на всех пяти бенчмарках, но эффект оказался неодинаковым: наибольший прирост пришёлся на создание репозиториев. Вариант с циклом улучшения сред также обошёл обучение без него: результаты на NL2Repo составили 46,4% против 41,3%, а среднее по пяти бенчмаркам — 53,5% против 51,5%. Прирост связан не только с количеством задач: их автоматическая доработка тоже улучшила результаты.</p>
+</section>
+<section>
+<h2>Вывод</h2>
+<p>RepoFactory показывает, что реальные репозитории можно превращать в проверяемые задачи по сборке целого проекта, а не только по исправлению отдельного фрагмента кода. Модель, обученная на таких задачах, улучшила результаты не только на создании репозиториев, но и на исправлении ошибок и работе в командной строке.</p>
+<p><strong>Главное ограничение — охват и точность оценок.</strong> Система пока сосредоточена на проектах на Python, а три показателя качества лишь в общих чертах описывают задачу. Они не определяют напрямую, какие именно навыки программирования потребуются агенту. Поэтому дальнейшая работа — расширить поддержку языков и точнее оценивать, чему обучает каждая среда.</p>
+</section>
+
+                <!-- Источник: arXiv / GitHub / HuggingFace (датасет или модель) -->
+                <div class="mt-16 pt-10 border-t border-black/10 dark:border-white/10 flex flex-wrap justify-center gap-4 fade-in">
+                    <a href="https://arxiv.org/abs/2611.21152" target="_blank" rel="noopener"
+                       class="inline-flex items-center gap-3 px-6 py-3 glass-panel rounded-full hover:scale-[1.02] active:scale-95 transition-all text-black dark:text-white">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        <span class="font-sans text-sm md:text-base font-medium">Полная статья на arXiv</span>
+                    </a>
+                </div>
+
+                <section class="mt-16 md:mt-20 fade-in" aria-labelledby="related-heading">
+                    <h2 id="related-heading"
+                        class="font-sans font-bold text-xl md:text-2xl text-black dark:text-white tracking-tight mb-6 md:mb-8">
+                        Читайте также
+                    </h2>
+                    
+                    <div class="rel-wrap relative -mx-4 md:mx-0" data-left="0" data-right="1"
+                         data-date="2026-11-19">
+                        <span class="rel-fade rel-fade-l" aria-hidden="true"></span>
+                        <span class="rel-fade rel-fade-r" aria-hidden="true"></span>
+                        <button type="button" class="rel-arrow rel-arrow-l"
+                                aria-label="Предыдущие материалы">
+                            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                        </button>
+                        <button type="button" class="rel-arrow rel-arrow-r"
+                                aria-label="Следующие материалы">
+                            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                        </button>
+                        <div class="rel-rail px-4 scroll-pl-4 md:px-0 md:scroll-pl-0">
+                            <a href="https://dataist.ai/research/ru/kakoi-ii-vybrat-dlia-meditsinskikh-zadach_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kakoi-ii-vybrat-dlia-meditsinskikh-zadach_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-18">2026-11-18</time>
+                                <span class="rel-title">Какой ИИ выбрать для медицинских задач</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/pochemu-ii-agentu-trudno-deistvovat-v-realnom-mire_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/pochemu-ii-agentu-trudno-deistvovat-v-realnom-mire_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-17">2026-11-17</time>
+                                <span class="rel-title">Почему ИИ-агенту трудно действовать в реальном мире</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/kak-otlichit-generatsiiu-video-ot-simuliatsii-mira_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-otlichit-generatsiiu-video-ot-simuliatsii-mira_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-11">2026-11-11</time>
+                                <span class="rel-title">Как отличить генерацию видео от симуляции мира</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/kak-ii-mozhet-usilit-intellekt-konkretnogo-cheloveka_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-mozhet-usilit-intellekt-konkretnogo-cheloveka_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-09">2026-11-09</time>
+                                <span class="rel-title">Как ИИ может усилить интеллект конкретного человека</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/proverim-sposobny-li-ii-agenty-delat-otkrytiia-v-fizike_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/proverim-sposobny-li-ii-agenty-delat-otkrytiia-v-fizike_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-06">2026-11-06</time>
+                                <span class="rel-title">Проверим, способны ли ИИ-агенты делать открытия в физике</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/kak-ii-vybiraet-podkhodiashchuiu-model-dlia-kazhdoi-zadachi_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-vybiraet-podkhodiashchuiu-model-dlia-kazhdoi-zadachi_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-05">2026-11-05</time>
+                                <span class="rel-title">Как ИИ выбирает подходящую модель для каждой задачи</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/kak-upravliat-robotom-s-pomoshchiu-nebolshoi-ii-modeli_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-upravliat-robotom-s-pomoshchiu-nebolshoi-ii-modeli_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-04">2026-11-04</time>
+                                <span class="rel-title">Как управлять роботом с помощью небольшой ИИ-модели</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/sotni-tysiach-professionalnykh-zadach-pomogli-obuchit-ii-agentov_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/sotni-tysiach-professionalnykh-zadach-pomogli-obuchit-ii-agentov_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-11-02">2026-11-02</time>
+                                <span class="rel-title">Сотни тысяч профессиональных задач помогли обучить ИИ-агентов</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/kak-ii-agenty-uchatsia-obshchim-navykam-na-raznykh-zadachakh_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-agenty-uchatsia-obshchim-navykam-na-raznykh-zadachakh_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-10-29">2026-10-29</time>
+                                <span class="rel-title">Как ИИ-агенты учатся общим навыкам на разных задачах</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/kak-poniat-chto-ii-agent-vypolniaet-zadachu-nepravilno_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-poniat-chto-ii-agent-vypolniaet-zadachu-nepravilno_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-10-28">2026-10-28</time>
+                                <span class="rel-title">Как понять, что ИИ-агент выполняет задачу неправильно</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/kak-ii-agentu-osvoit-novyi-navyk-na-praktike-metodom-sokrata_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-agentu-osvoit-novyi-navyk-na-praktike-metodom-sokrata_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-10-27">2026-10-27</time>
+                                <span class="rel-title">Как ИИ-агенту освоить новый навык на практике методом Сократа</span>
+                            </a>
+                            <a href="https://dataist.ai/research/ru/kak-ii-agent-sam-uluchshaet-interfeisy_ru/">
+                                <span class="rel-thumb">
+                                    <img src="https://dataist.ai/research/ru/kak-ii-agent-sam-uluchshaet-interfeisy_ru/cover.jpg" alt="" loading="lazy" decoding="async">
+                                </span>
+                                <time datetime="2026-10-26">2026-10-26</time>
+                                <span class="rel-title">Как ИИ-агент сам улучшает интерфейсы</span>
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <script>
+                        (function () {
+                            var root = document.currentScript.parentNode;
+                            var wrap = root.querySelector('.rel-wrap');
+                            var rail = root.querySelector('.rel-rail');
+                            var back = root.querySelector('.rel-arrow-l');
+                            var fwd  = root.querySelector('.rel-arrow-r');
+                            if (!wrap || !rail) return;
+
+                            function sync() {
+                                var max = rail.scrollWidth - rail.clientWidth;
+                                var x = rail.scrollLeft;
+                                // Восемь пикселей запаса: браузеры округляют
+                                // ширину по-разному, и без него стрелка мигает
+                                // в самом конце ленты.
+                                wrap.dataset.left = x > 8 ? '1' : '0';
+                                wrap.dataset.right = (max - x) > 8 ? '1' : '0';
+                            }
+                            function step(dir) {
+                                // Листаем на видимую ширину минус нахлёст,
+                                // чтобы следующая карточка подсказывала, что
+                                // лента продолжается.
+                                var delta = Math.max(rail.clientWidth - 96, 200);
+                                rail.scrollBy({ left: dir * delta, behavior: 'smooth' });
+                            }
+                            back && back.addEventListener('click', function () { step(-1); });
+                            fwd && fwd.addEventListener('click', function () { step(1); });
+                            rail.addEventListener('scroll', sync, { passive: true });
+                            window.addEventListener('resize', sync);
+                            sync();
+
+                            // Карточка строится теми же узлами, что и в
+                            // разметке, а текст ставится через textContent:
+                            // заголовки приходят из фида, и разметка из них в
+                            // страницу попадать не должна.
+                            function card(item) {
+                                var a = document.createElement('a');
+                                a.href = item.url;
+                                var thumb = document.createElement('span');
+                                thumb.className = 'rel-thumb';
+                                if (item.cover) {
+                                    var img = document.createElement('img');
+                                    img.src = item.cover;
+                                    img.alt = '';
+                                    img.loading = 'lazy';
+                                    img.decoding = 'async';
+                                    // Битая обложка оставляет пустую подложку,
+                                    // а не значок сломанной картинки.
+                                    img.addEventListener('error', function () { img.remove(); });
+                                    thumb.appendChild(img);
+                                }
+                                a.appendChild(thumb);
+                                var t = document.createElement('time');
+                                if (item.date) { t.dateTime = item.date; t.textContent = item.date; }
+                                a.appendChild(t);
+                                var h = document.createElement('span');
+                                h.className = 'rel-title';
+                                h.textContent = item.title || '';
+                                a.appendChild(h);
+                                return a;
+                            }
+
+                            function same(url) {
+                                try { return new URL(url, location.href).pathname === location.pathname; }
+                                catch (e) { return false; }
+                            }
+
+                            // Лента — на языке самой страницы: на русском разборе только
+                            // русские, на английском только английские. Фид отдаёт оба языка
+                            // вперемешку. Есть в записи поле lang — верим ему; пока его нет,
+                            // русскую запись узнаём по кириллице в заголовке: на всех 403
+                            // записях фида этот признак совпал с lang самой страницы.
+                            var myLang = (document.documentElement.lang || 'ru').slice(0, 2).toLowerCase();
+                            function langOf(x) {
+                                if (x.lang) return String(x.lang).slice(0, 2).toLowerCase();
+                                return /[а-яёА-ЯЁ]/.test(x.title || '') ? 'ru' : 'en';
+                            }
+                            // Лента дотягивается ОДИН раз и только когда
+                            // читатель до неё добрался: 125 КБ фида не должны
+                            // грузиться у того, кто до подвала не дошёл.
+                            var loaded = false;
+                            function fill() {
+                                if (loaded) return;
+                                loaded = true;
+                                fetch('/papers.json')
+                                    .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status); })
+                                    .then(function (list) {
+                                        if (!Array.isArray(list) || !list.length) return;
+                                        var all = list.filter(function (x) {
+                                            return x && x.url && x.title && langOf(x) === myLang;
+                                        });
+                                        // Свежие вперёд. Фид приходит уже в
+                                        // этом порядке, но сортировка здесь
+                                        // стоит явно: порядок ленты — правило
+                                        // блока, а не побочный эффект того,
+                                        // как список собрали на сервере.
+                                        all.sort(function (a, b) {
+                                            return String(b.date || '').localeCompare(String(a.date || ''));
+                                        });
+                                        // Где в этом списке стоит сама статья.
+                                        // Считаем ДО того, как её выбросить:
+                                        // её место и есть «здесь», а первым
+                                        // после неё идёт ровно предыдущий
+                                        // разбор.
+                                        var mineAt = -1;
+                                        for (var i = 0; i < all.length; i++) {
+                                            if (same(all[i].url)) { mineAt = i; break; }
+                                        }
+                                        var rows = all.filter(function (x) { return !same(x.url); });
+                                        if (!rows.length) return;
+                                        rail.replaceChildren.apply(rail, rows.map(card));
+
+                                        // ЛЕНТА ОТКРЫВАЕТСЯ НА МЕСТЕ ЭТОЙ
+                                        // СТАТЬИ, а не с самого свежего
+                                        // разбора. Влево от стартовой позиции
+                                        // остаётся то, что вышло ПОСЛЕ неё,
+                                        // вправо уходит то, что было ДО.
+                                        //
+                                        // Без этого лента получалась одинаковой
+                                        // на всех страницах сайта: у майской
+                                        // статьи она начиналась бы с сентября,
+                                        // и соседство по времени — то самое,
+                                        // ради чего блок и нужен, — пропадало
+                                        // ровно в тот момент, когда страница
+                                        // становится интерактивной.
+                                        //
+                                        // Позицию берём по месту самой статьи
+                                        // в фиде. Сравнивать по дате нельзя:
+                                        // за один день выходит по два разбора
+                                        // («2026-07-05» и «2026-07-05_1»), и
+                                        // правило «дата меньше моей» проскочит
+                                        // собрата того же дня — лента откроется
+                                        // на разборе через один.
+                                        //
+                                        // Дата остаётся запасным ответом на
+                                        // случай, если статьи в фиде нет
+                                        // вовсе: свежая страница попадает туда
+                                        // не раньше, чем пересоберётся индекс.
+                                        var at = 0;
+                                        if (mineAt >= 0) {
+                                            at = mineAt;
+                                        } else {
+                                            var mine = wrap.dataset.date || '';
+                                            if (mine) {
+                                                for (var k = 0; k < rows.length; k++) {
+                                                    if (String(rows[k].date || '') < mine) { at = k; break; }
+                                                }
+                                            }
+                                        }
+                                        // Самый старый разбор: предыдущего у
+                                        // него нет, поэтому лента встаёт в
+                                        // конец — слева от края всё свежее.
+                                        if (at > rows.length - 1) at = rows.length - 1;
+                                        var target = rail.children[at];
+                                        if (target) {
+                                            // Без плавности: это не жест
+                                            // читателя, а исходное положение.
+                                            rail.scrollLeft = target.offsetLeft - rail.offsetLeft;
+                                        }
+                                        sync();
+                                    })
+                                    .catch(function () { /* остаёмся с разметкой */ });
+                            }
+                            if ('IntersectionObserver' in window) {
+                                var io = new IntersectionObserver(function (es) {
+                                    if (es.some(function (e) { return e.isIntersecting; })) {
+                                        io.disconnect();
+                                        fill();
+                                    }
+                                }, { rootMargin: '400px' });
+                                io.observe(wrap);
+                            } else {
+                                fill();
+                            }
+                        })();
+                    </script>
+                </section>
+
+                <!-- Финальная премиум-карточка -->
+                <div class="relative bg-white dark:bg-[#1C1C1E] border border-black/10 dark:border-white/10 p-8 md:p-12 lg:p-14 rounded-[2rem] md:rounded-[3rem] shadow-[0_8px_30px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgba(255,255,255,0.03)] overflow-hidden fade-in mt-12 group">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-black dark:bg-white opacity-90"></div>
+                    <div class="absolute -top-32 -right-32 w-64 h-64 bg-black/[0.02] dark:bg-white/[0.02] rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="relative z-10">
+                        <div class="flex items-center gap-4 mb-8">
+                            <div class="w-12 h-12 rounded-full bg-black/5 dark:bg-white/10 flex items-center justify-center shrink-0">
+                                <i data-lucide="sparkles" class="w-6 h-6 text-black dark:text-white"></i>
+                            </div>
+                            <h2 class="font-sans font-bold text-2xl md:text-3xl lg:text-4xl text-black dark:text-white tracking-tight m-0">
+                                ИИ-обзоры простыми словами
+                            </h2>
+                        </div>
+                        <div class="space-y-6 mb-10">
+                            <p class="font-sans text-lg md:text-xl leading-relaxed text-black/80 dark:text-white/80 font-medium">
+Каждый день читаем свежие статьи об ИИ и пересказываем главное естественным языком — без хайпа и воды. Если хотите понимать, куда движутся ИИ-агенты раньше остальных, — подписывайтесь.                            </p>
+                        </div>
+                        <div class="pt-8 md:pt-10 border-t border-black/10 dark:border-white/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
+                            <p class="text-xl md:text-2xl font-bold text-black dark:text-white tracking-tight max-w-md">
+                                Новые обзоры — каждый день
+                            </p>
+                            <a href="https://t.me/+gjvJGFW0iXUwMjky" target="_blank" rel="noopener" class="shrink-0 inline-flex items-center gap-3 px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full hover:scale-105 active:scale-95 transition-all shadow-xl hover:shadow-2xl group/btn">
+                                <span class="font-sans text-base md:text-lg font-semibold">В Telegram</span>
+                                <i data-lucide="arrow-up-right" class="w-5 h-5 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </article>
+    </main>
+
+    <!-- Прогресс-бар снизу -->
+    <div class="fixed bottom-0 left-0 w-full h-1.5 bg-transparent z-50">
+        <div id="progress-bar" class="h-full bg-black dark:bg-white w-0 transition-all duration-100 ease-out"></div>
+    </div>
+
+    <!-- Инициализация и скрипты -->
+    <script>
+        // BR436: ЧУЖАЯ БИБЛИОТЕКА НЕ РЕШАЕТ, УВИДИТ ЛИ ЧИТАТЕЛЬ ТЕКСТ.
+        // `lucide` едет с unpkg.com, а чужой сервер отвечает не всегда. Без
+        // проверки первая же строка бросала исключение — и ВЕСЬ остальной
+        // блок не исполнялся: ни кнопка темы, ни полоса прогресса, ни лента
+        // «Читайте также». Раньше к ним добавлялся и сам текст разбора: он
+        // был спрятан под `opacity: 0` до тех пор, пока наблюдатель не
+        // проставит `visible`, а наблюдатель регистрировался здесь же. Теперь
+        // правил `.fade-in` в стилях нет вовсе, и текст виден всегда — даже
+        // если JavaScript выключен или не дошёл. Иконка не показалась —
+        // досадно; разбор не показался — потеряли читателя.
+        if (window.lucide) lucide.createIcons();
+
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const html = document.documentElement;
+
+        function applyTheme(isDark) {
+            if (isDark) {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            }
+            setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 50);
+        }
+
+        const tg = window.Telegram?.WebApp;
+        if (tg && tg.initData) {
+            tg.ready();
+            tg.expand();
+            if (tg.colorScheme) {
+                applyTheme(tg.colorScheme === 'dark');
+                tg.onEvent('themeChanged', function() { applyTheme(tg.colorScheme === 'dark'); });
+            }
+        }
+
+        themeToggleBtn.addEventListener('click', () => {
+            applyTheme(!html.classList.contains('dark'));
+        });
+
+        window.addEventListener('scroll', () => {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const observerOptions = { root: null, rootMargin: '0px', threshold: 0.05 };
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+            document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+        });
+    </script>
+</body>
+</html>
