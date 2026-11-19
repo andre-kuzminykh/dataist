@@ -1,0 +1,67 @@
+# Uber limits Claude Code costs with four settings
+
+## Why Uber manages settings
+
+Claude Code settings are part of a broader cost-control effort. In VentureBeat’s October survey on AI computing infrastructure, 38% of 156 respondents said their organization had delayed, scaled back, or canceled a planned AI project over the past year because costs were higher than expected.
+
+At the Agentic Infrastructure Stack Summit on October 28, Medisetti spoke about AIFX, a wrapper that installs and configures Uber’s interactive coding tools and manages their settings. The company tests settings through A/B tests across different employee groups and compares input and output metrics. This means engineers do not have to choose the settings themselves: Uber can experiment while keeping settings consistent for them.
+
+Medisetti called interactive work with an agent the least efficient way to use one. Uber wants to move more tasks to managed agents, where the company can choose a model suited to each task.
+
+## Four settings for controlling costs
+
+1. **Compact context at 400,000 tokens.** The agent sends the model the entire context with every request, so a larger context raises the cost of each step. Medisetti said that at 700,000–800,000 tokens, cache misses and the number of input tokens per request become expensive. He called 400,000 tokens a balanced threshold. Compaction compresses the earlier part of the conversation into a summary, after which the session can continue.
+
+2. **Medium reasoning by default.** This setting determines how much reasoning the model does before responding; the more it reasons, the more tokens it uses. Medisetti said models released in the past few months perform noticeably better at the medium setting, while showing some degradation at the high setting. He did not name the models or the tasks used for the comparison.
+
+3. **Different prompt-cache durations.** The cache lasts an hour for the main agent, which Uber calls the orchestrator, and five minutes for subagents. Reusing text from the cache costs less than processing it again, but storing cache entries also has a cost. An Uber post from August says engineers often step away from the main agent for more than five minutes. By then, the cache has expired, so the next request requires reloading the entire context at full price. Subagents finish tasks faster, so five minutes is enough for them. Uber measures the share of requests served from cache and adjusts cache durations to raise that rate.
+
+4. **No preloading of MCP tool descriptions.** Uber continues to use MCP servers, but agents access them through command-line tools connected to a central MCP gateway. With a direct MCP connection, tool descriptions can be added to the model’s context in advance. According to Uber, when there are more than 100 tools, their descriptions take up 50,000 to 70,000 tokens before an engineer enters the first request. Instead, the agent runs separate commands as needed.
+
+Medisetti did not say how much each setting saves, and Uber’s August post does not break out the results of individual optimizations. Taken together, without changing the model, the cost of 1,000 requests fell by nearly 34% from its peak, while the cost per session was down 52% from its June high. Medisetti separately gave an example of the effect of model choice: comparing models and choosing the right one cut the cost of cleaning up obsolete feature flags by 90%.
+
+Uber is also trying to make agentic tasks less dependent on any one model. Medisetti said the company shifted its focus from the share of requests sent to open-weight models to how easily tasks can move between different models. That is easier with managed agents than with interactive coding tools: when the model changes, engineers have to change their usual workflow. Uber’s August post also says that subagents are assigned cheaper models by default for tasks that do not require frontier-level reasoning.
+
+## When a large context gets in the way
+
+Uber justifies its 400,000-token limit primarily on cost grounds. But other summit participants also said that too much context can make an agent perform worse.
+
+T-Mobile Chief Information Officer Jeff Simon said the company tried loading a large volume of customer support documentation into an agent. The result was poor: the agent got confused by the sheer amount of material. T-Mobile now tries to limit context and routes questions to specialized agents rather than asking one model to work through the entire support library.
+
+Some marketing tasks, by contrast, need more context. Adobe senior vice president of engineering Anjul Bhambhri gave the example of a marketer using Adobe CX Enterprise Coworker, the company’s agent for marketing teams, to refine a brand’s holiday campaign. The agent may need information about offers from the past three years. Without it, the response could be too generic.
+
+In one case, reviewing past offers showed that free shipping increased conversion among returning customers more effectively than a 20% discount on “Black Friday.” Bhambhri said the right amount of context depends on the task and the person.
+
+## Uber’s map of internal systems
+
+Uber addresses how much information to give an agent with a map of its internal systems. The agent gets an initial picture of how the company is organized, then finds the information it needs rather than loading everything in advance.
+
+Uber’s context graph stores data about production services, their owners, datasets, historical queries, and other internal systems. The agent is first given the graph’s schema, a description of its structure. It then traverses the graph and requests relevant documents and source code.
+
+As of October 28, Medisetti said, the graph contained about 200 million nodes and edges. In an August post, Uber reported 104 million elements in total: 24 million nodes and 80 million edges. According to the company’s internal assessments, the graph improved results, lowered costs, and sped up tasks, but Medisetti did not give aggregate figures.
+
+Uber’s August post describes a test using the same model and prompt in both cases. With the graph, the model correctly found a data table in 38 seconds. Without it, the model took 20 minutes and 9 seconds and incorrectly concluded that the data could not be queried.
+
+Uber built the approach over several months. Medisetti said AI is a priority across the company at the CEO and CTO level, making it easier for the project to secure support and the right specialists.
+
+T-Mobile tried a similar system but abandoned it. The company built a knowledge graph for agents responding to customers during calls, but the agents had to search a large graph. They got lost, and the search took too long for a real-time conversation. T-Mobile now uses a simple key-value database cache: it directs the agent to the relevant information based on the customer’s phrasing. The approaches address different needs: Uber helps agents navigate internal engineering systems and data, while T-Mobile needs to handle customer inquiries quickly.
+
+## How Uber measures results
+
+Medisetti described Uber’s goal as increasing the volume of work completed while maintaining the same quality limits. To check whether engineers are becoming more productive, the company counts design documents, pull requests, and releases.
+
+Uber’s quality metrics include incidents per code change, rollback frequency, and the time it takes to review and complete cycles. The company also tracks whether engineers act on AI reviewer comments. Uber aims to keep only substantive comments, so engineers do not have to work through hundreds of minor observations.
+
+The company is building trust in agents gradually, including in continuous integration, the automated building and checking of each code change before it is merged. If a check fails, Uber’s self-healing continuous integration system tries to fix it.
+
+At first, Uber sent every attempted fix to an engineer in Slack for approval. When a particular type of error had a high rate of accepted fixes, the company enabled automatic acceptance and applied the fix directly to the pull request. Uber also moved simple checks earlier in the development process: launching a separate automated fix from scratch was expensive.
+
+Medisetti said the company had only recently begun to see a sustained trend in outcome metrics: the total number of features released and the number released per engineer. He did not provide figures for these metrics.
+
+Among respondents to VentureBeat’s October survey, 26% said they assess whether AI costs are justified by measurable financial returns they can substantiate to the finance team. Another 44% look at measurable operational results, such as time saved or the volume of tasks handled, but not financial returns. Uber’s productivity and code-quality metrics fall into this operational category. Medisetti did not present a calculation of Uber’s overall financial return on AI spending.
+
+## What to check in your own tools
+
+Uber’s four settings give platform teams questions to ask about their own coding tools: where the context limit is set and when automatic compaction begins; which reasoning level is the default; how long prompts are cached for different types of agents; and how many tokens tool descriptions consume before the first request.
+
+Dataist’s take: Uber’s experience shows that costs can be controlled through more than choosing a cheaper model. Context size, prompt-cache duration, and how tools are connected also matter. But the company has not disclosed the savings from each setting separately, so their contributions to the overall result cannot be compared. Its productivity and quality metrics also do not replace a financial-return calculation, which Uber has not yet presented.
