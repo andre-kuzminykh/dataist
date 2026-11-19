@@ -1,0 +1,71 @@
+# OpenAI automates ChatGPT slowdown investigations with Codex
+
+## From manual debugging to a workflow
+
+At first, OpenAI’s team investigated slowdowns manually: reviewing logs and traces, checking code changes, and debugging live services. To speed up the work, engineers built more than 30 specialized tools.
+
+Codex changed how they worked. Instead of searching codebases and monitoring data themselves, engineers could ask the agent why a service had slowed down. Codex examined logs and used tools, but people still directed the investigation.
+
+To reduce that involvement, the team created a reusable Codex skill called `perf-forensics`. It brings together investigation procedures the agent can follow. After testing and refining the skill, engineers could give Codex an issue signal and get a diagnosis in a single run.
+
+The team then connected monitoring signals to cloud Codex sessions. Engineers no longer had to move alerts into Codex by hand and copy the results into Slack. But a person still had to review the diagnosis and deploy a fix. The ChatGPT team was facing regressions almost daily and struggling to keep track of them.
+
+Engineers first built a system to track regressions and handle the growing workload. Then they took the next step: turning each recorded issue into a Codex task. The agent works through the cause, proposes a fix, and checks whether the service has recovered. That idea became the basis for Performance Factory’s architecture.
+
+## How Performance Factory works
+
+Work is organized into tasks that move through predefined stages. A task can start with a performance alert and proceed through investigation, root-cause analysis, a code change, verification, and confirmation of the result.
+
+Each task stores its status and findings separately. That lets different agents work on the same issue at different stages. A record includes a free-form notes field and structured data, such as when a regression began and when its cause was found.
+
+Large volumes of profiling data are not copied into the task. Instead, agents save the relevant metrics, queries, and main findings. The next agent receives the record and can rerun the queries if needed to check the results. This gives agents enough information to hand work off without overloading the records, while keeping the source data accessible.
+
+The system has four parts:
+
+1. The task service stores tasks and their progress. Engineers define workflows in configuration files and write Markdown prompts that specify what the agent should do at each stage.
+2. A dispatch loop checks tasks periodically. When a task is ready to move forward, the loop starts a Codex session and assigns it to the agent. When the work is done, the agent records its findings and updates the task.
+3. An internal API runs Codex in the cloud. Agents work in environments with access to OpenAI code repositories and observability infrastructure. This setup lets the company manage permissions and track agent actions.
+4. Subscriptions connect tasks to external events. For example, if an agent opens a code change request and waits for an engineer to review it, the task pauses until feedback arrives on GitHub.
+
+## How an investigation works
+
+The first practical implementation of Performance Factory is Regression Workflow, a process for investigating performance regressions. It starts when a configured signal fires and creates a task for agents using the `perf-forensics` skill.
+
+First, the agent works out what changed: it examines the affected metrics, determines when the slowdown began, and identifies which requests were affected. It then looks for the cause by comparing code changes, logs, and traces.
+
+Sometimes the agent stopped at the first plausible explanation, even when the data did not fully support it. To check diagnoses, OpenAI added an adversarial review: a separate Codex session receives the full task record but starts with a clean context. Its prompt tells it to look for gaps in the reasoning, check the supporting evidence, and consider other explanations.
+
+In one case, the first agent linked failures in ChatGPT conversations to image-loading errors. The reviewer noticed that the internal file-search service had already recovered while image requests were still failing. It therefore reopened the investigation: the original diagnosis did not explain why the failures continued.
+
+At first, the reviewer sent many diagnoses back for further investigation. The team used those cases to improve the instructions for the main agent. Now adversarial review sends back about 25% of diagnoses.
+
+After review, Codex proposes a fix and opens a code change request. An engineer reviews it and decides whether to accept the changes. According to the OpenAI team, of more than 600 investigations that identified a cause, about 400 led to a proposed fix. Around 50 fixes that shipped incorporated or matched the agent’s suggestions; about 15 shipped fixes were exact copies of code change requests created by Codex.
+
+The team says fully automated remediation is still a long way off. Even so, Performance Factory has already automated a substantial part of the work: detecting regressions, finding their causes, tracking investigations, and checking whether services recover. Improving the quality of proposed fixes remains one of the challenges. OpenAI has also completed a suite of workflow checks that it plans to use to improve agent-generated fixes.
+
+Codex does better when the cause of a regression is clear and the fix is limited in scope. For example, a code change might make an application serialize the same conversation several times while handling a request. The agent can detect the repeated work and suggest serializing the conversation once, then reusing the result.
+
+Architectural changes are harder, especially when a new feature increases latency. In these cases, agents may propose overly complex solutions or introduce new problems. For example, adding a cache could speed up responses but return stale data. That is why OpenAI also introduced adversarial review for proposed fixes.
+
+When an engineer deploys a fix, another agent checks whether the performance issue has been resolved. If it persists, the workflow sends the task back for investigation.
+
+## How engineers work with the results
+
+At first, engineers saw an interface filled with investigation results and had to decide for themselves which ones mattered. Now the system groups related incidents, ranks them by estimated impact, and prepares short reports with charts and metrics. This helps engineers assess agent proposals without reconstructing each investigation from the underlying data.
+
+The team has identified several approaches to working with agent systems that also apply beyond performance analysis:
+
+- To avoid overwhelming people with AI output, show them the information they need to review the agent’s answer, focusing on what matters most.
+- To hand work off between stages, store the main findings and queries that can be rerun. This lets agents exchange information without passing around large volumes of raw monitoring data.
+- Evaluate agents and their interaction with people separately. OpenAI tests investigations against historical incidents, assessing how accurately agents identified when a problem began, its impact, and its possible causes. This requires care: historical data may no longer be available, and information collected after an incident could reveal the right answer. The team separately evaluates agent summaries, checking whether engineers can understand the evidence and proposed actions.
+- Monitor the agents themselves, too. An OpenAI agent runs daily checks of recent logs for recurring tool failures and permission issues. If a problem keeps disrupting investigations, Performance Factory can create a task and propose a fix for an engineer to review. Checks then show whether the change helped.
+
+## From alerts to prevention
+
+Performance Factory currently responds to configured signals, but OpenAI plans to move toward finding problems in advance as well. The team is studying how agents could compare CPU utilization profiles, memory data, and request traces across releases to find slowdowns that monitoring signals missed. Another area of work is service resource tuning: agents could look for inefficient autoscaling configurations.
+
+OpenAI is also exploring whether agents might eventually deploy some low-risk fixes on their own, without human approval.
+
+According to the OpenAI team, automating regression investigations has given engineers more time to work on long-term performance improvements instead of constantly reacting to incidents. The team also wants to turn knowledge from individual investigations into reusable workflows that can help improve services across the organization. Findings from one investigation could help find and fix a similar problem in another project or service months later.
+
+Dataist’s take: Performance Factory automates a substantial part of the path from alert to recovery check, but engineers still decide whether to deploy code. The results also show the limits of the current approach: only about 15 shipped fixes were exact copies of Codex code change requests. The system’s further development depends on how well agents can propose fixes and check for possible side effects.
