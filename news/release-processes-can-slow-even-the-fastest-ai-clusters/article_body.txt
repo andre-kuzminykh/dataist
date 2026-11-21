@@ -1,0 +1,71 @@
+A firmware update rolled through one cluster zone by zone for six days, until automation stopped it: the share of hosts that had failed to reboot correctly in one zone exceeded the safety threshold. An investigation showed that those machines had already been hung before the update. The team changed the rule to exclude hosts that were faulty beforehand and completed the rollout after nine days. The incident shows why a machine’s state must be assessed against its condition before a change: otherwise, an earlier failure can be mistakenly blamed on the release.
+
+## Release processes can limit AI cluster performance
+
+Delays like these do not necessarily stem from defects in chips, models, or code. In large AI clusters, firmware, drivers, and runtime updates have to reach tens of thousands of machines while workloads continue running on them. How much useful work a cluster can complete depends on how quickly and safely that process runs.
+
+## Hardware failures and lost compute
+
+Meta’s paper on training Llama 3 describes a 54-day pretraining run on roughly 16,000 H100 accelerators. During that time, the team recorded 466 job interruptions: 419 were unexpected, or about one every three hours. About 78% of those interruptions were linked to confirmed or suspected hardware problems. Meta also reported that synchronous training caused the data center’s power consumption to fluctuate by tens of megawatts.
+
+Even a low probability of an individual component failing becomes a steady stream of incidents when there are tens of thousands of them. Accelerators, large numbers of high-speed connections, and racks drawing more than 100 kilowatts together create conditions in which rare failures become routine. That is a consequence of scale: racks can go from idle to peak load in milliseconds, and any component failure affects the cluster’s operation.
+
+The losses caused by failures can be measured using compute goodput: the share of paid-for resources that actually advances model training. Google Cloud uses the term goodput for this measure. If a job is interrupted every three hours and checkpoints are saved every 30 minutes, each failure destroys about 15 minutes of work on average. Another 15 minutes or so go to detecting the problem, replacing the node, and restarting. In total, the job loses about half an hour every three hours—roughly one-sixth of its time.
+
+[INFO:facts] 54 days :: pretraining | 16,000 :: H100 accelerators | 466 :: job interruptions | 78% :: interruptions linked to hardware problems
+
+## Updates affect the entire stack
+
+A modern training job uses components with separate versions and release schedules: accelerator and management-controller firmware, network interface card software, drivers, runtimes, and diagnostic tools. They all have to work together on every machine running the job. In a typical release, the author’s team changes most of these components at once.
+
+Deploying an in-house fleet of accelerators requires rethinking the data center: the cluster operates as a single distributed supercomputer. Chips are connected by a dense network of point-to-point links, making signal quality especially important. Racks draw well over 100 kilowatts, making liquid cooling standard, and thousands of application-specific integrated circuits can go from idle to peak load in milliseconds.
+
+Chips, connections, racks, cooling, and compilers are designed as parts of one system. As a result, a problem in one layer can look like a failure in another: an unreliable cable can look like a software hang, and a power fluctuation can look like a chip failure. On-site work calls for stress tests after equipment is assembled, maintenance scheduled in coordination with cluster planners, and special procedures for handling dense enclosures.
+
+That is why release engineering also involves hardware. The author’s team uses three approaches:
+
+- **Test updates in a test zone before rollout.** Deployment still starts with a small pilot zone, but routine machine health checks catch only obvious failures—for example, when a host has not rebooted or cannot run an instance. A problem may show up only when hundreds of chips exchange data under full load or after several hours of operation. So each release is first tested for several days on separate test fleets, with stress tests for collective communications, memory checks, and long-running training tests.
+- **Test both the update and the rollback.** In ordinary software, returning to a previous version is often a matter of one click. In a cluster, some updates install without a reboot, while others require one; some changes cannot simply be reversed, and an old version of one component may be incompatible with a new version of another. On test fleets, machines are moved to the new version and back 20 times over four days. A release is cleared for deployment only if both directions work without failures.
+- **Schedule updates by zone and timing.** A fleet-wide release takes two weeks and rolls out by region. In a given region, two zones are not updated on the same day, the largest zones are left until last, and the schedule accounts for holiday change freezes and other releases underway at the same time. Health checks can stop the process at any stage.
+
+## Failures emerge at component boundaries
+
+The author describes two cases where checks of individual components missed a problem, even though the components caused failures when combined with other parts of the system.
+
+In the first case, a firmware update lowered the default power limit for each accelerator so the rack as a whole would stay within its energy limit. All component tests passed, but a system test showed that the duration of a standard training benchmark step had increased by 5%—enough to fail the performance threshold. The firmware team expected the slowdown and considered it acceptable, but did not tell the people responsible for performance checks. Early tests of individual components used thresholds that were too lenient to catch the degradation. The team reverted to the previous version, losing three days. The cause was a lack of coordination: information about the planned trade-off did not reach the team responsible for threshold checks.
+
+In the second case, a host management agent collected accelerator data in a fixed-size buffer and did not clear it before processing the next card. A new version increased the amount of data from each card by about three times. On hosts with the maximum number of cards, the buffer overflowed on the last one. The agent then lost information about the entire host, making it impossible to launch instances on it. The cards themselves worked normally. The problem occurred only in one host configuration, so system testing caught it, but code review did not.
+
+In both cases, the failure did not originate within the change itself, but at its intersection with other conditions: the power limit, the maximum hardware configuration, or the other components. These problems show up when the entire system is tested as customers will use it.
+
+A job stopping is a relatively visible failure. Harder to detect is a slow node that is not broken but runs slightly slower than the others. Training is synchronized step by step, so one slow machine delays all the other accelerators without triggering an obvious failure signal. Finding these nodes is a recurring topic in research on training across large clusters.
+
+Detecting them requires continuously analyzing low-level telemetry: link error rates, memory error counts, temperature, and power consumption. Faulty hardware should be taken out of service before it fails, not after.
+
+## How AI agents help ship updates
+
+Testing produces more failure data than people can read. Over the past year, the author’s team has started using AI coding agents in release work. They are not asked to manage the fleet on their own; they handle three narrower tasks.
+
+- **Triage failures.** Agents read problem tickets and group them by cause. In one recent case, they combined about 40 tickets into seven root causes; several tickets described the same hardware problem.
+- **Clean up after tests.** When a test run is interrupted, dozens of hosts can be left midway through recovery in different systems: one system may still have an allocation request in effect, another a hardware check in progress, and a third a reservation. An agent can find all unfinished operations and suggest an order for canceling them. The order matters: some systems will not let an action be canceled while another system still holds the host.
+- **Prepare documents.** An agent drafts release summaries, change records, and assessments of whether a failure should block a release. A person reviews and edits them.
+
+There are significant limitations, too. Any action that affects the fleet still requires a human decision. Agents can be confidently wrong: for example, they may read the wrong field or treat a change as verified based on output that contains no supporting evidence.
+
+In one case, an agent told the author that all 10 hosts had returned to the shared fleet after an interrupted test and cited the output of a cancellation command. But that output confirmed only that the cancellation requests had been accepted. Checking the machines themselves showed that three were still recovering. Agents save time by helping people verify information faster, not by removing human oversight.
+
+## What infrastructure teams should consider
+
+For teams managing AI infrastructure, the author offers five practical recommendations:
+
+1. Measure compute goodput for every job and track how long it takes for a fix to go from being merged into the code to being installed on all affected hosts. In the author’s observation, most teams do not track the second metric.
+2. Compare host states before and after an update. A check that ignores a machine’s initial state can stop a healthy release and let a problematic one through.
+3. Treat the test fleet as part of the cluster. A release tested on only a few hosts cannot be considered fully tested.
+4. Develop release engineering as a discipline closely tied to hardware. Specialists need to understand not only pipelines, but also firmware logs and link telemetry.
+5. Start using agents for failure triage and post-test cleanup, while leaving decisions that affect the fleet to people.
+
+Racks are becoming denser, and each new hardware generation brings components with their own release schedules. Chipmakers set the upper limit on performance, but how close operators get to it depends on how quickly and safely they can change the cluster every week.
+
+Vinayak Vashishta is a leader in infrastructure and release engineering.
+
+Dataist’s take: AI cluster performance depends on more than accelerator power. Fixes must reach every machine that needs them safely, and checks must distinguish new failures from pre-existing ones. The more components are updated independently, the more important it becomes to test the whole system and verify rollbacks. AI agents can speed up data triage, but the example above shows why people still need to oversee actions that affect the fleet.
