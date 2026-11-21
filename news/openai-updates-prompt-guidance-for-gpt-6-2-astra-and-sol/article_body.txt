@@ -1,0 +1,60 @@
+OpenAI has published ready-to-use system prompts for GPT-6.2 Astra and Sol and outlined changes to its API. The company recommends reviewing existing instructions: the models now give shorter answers and, when details are unclear, make reversible assumptions and continue instead of asking routine follow-up questions. For coding tasks, they should reuse existing code, avoid unnecessary abstractions and write new tests only when requested, required by the repository or needed to check for specific bugs. API changes may remove earlier reasoning from the conversation history, affecting answer quality and token usage.
+
+# OpenAI updates prompt guidance for GPT-6.2 Astra and Sol
+
+## How to adjust response style
+
+OpenAI recommends that developers moving to GPT-6.2 Astra or Sol review their system prompts, and provides ready-made templates in its documentation. Astra is designed for the most demanding tasks; Sol handles complex work at lower cost.
+
+According to OpenAI, Astra writes more briefly and directly by default than previous models. Instructions such as “answer briefly” may therefore need to be reconsidered. For everyday work as a colleague, the company recommends asking the model to use terms from the user and source materials, write in the active voice and lead with the main point. If the text is for an external audience, the model should account for readers who may lack context. When editing, it should preserve the author’s meaning and wording.
+
+In long tasks, the model sometimes carries abbreviations from its own reasoning or other agents’ messages into the final answer. OpenAI offers a separate prompt for this: the final answer should make sense on its own, without requiring readers to go through earlier messages.
+
+```Prompt for a self-contained final answer
+Treat your final answer as the user's first look at your work, and not as a continuation of intermediate commentary. The final answer must always be fully self-contained: users should never need to read earlier commentary updates for context, since they are collapsed when the final answer is shown to the user.
+Write the final answer and all other human-facing material anew for the intended reader. Do not copy or closely paraphrase your рассуждение or adopt its writing style. Do not carry over working shorthand, jargon, or abbreviations from your рассуждение, tool calls, or instructions to subagents and automations.
+```
+
+The prompt instructs the model to write the final answer and other material for people from scratch, with the intended audience in mind. It should not copy its reasoning, adopt its style or use shorthand and jargon from working messages, tool calls or instructions to other agents.
+
+## When the model should act on its own
+
+If the user’s intent is unclear, GPT-6.2 sometimes suggests a next step and waits for confirmation. OpenAI recommends telling the model to take such steps on its own when it has permission. It should stop when the task’s scope changes substantially, there is a real obstacle, the user needs to make a decision, or an action would be irreversible or destructive.
+
+When details are missing, the model should state reversible assumptions and continue. According to OpenAI, a higher reasoning effort also helps it avoid skipping final checks on long tasks.
+
+```Prompt for continuing a task without unnecessary questions
+Avoid stopping to end the turn while the task is incomplete or if there is an authorized next step you can take, and instead take the next steps within task scope to progress the user's request. If your final response before ending the turn is a suggested next step, a plan, a request to the user for a routine decision, instructions for a task to execute, or similar handoff to the user, take these steps yourself to make progress towards what the user asked for. Make sure that you have authorization to do so, and flag any assumptions or decisions you make to the user.
+Only stop to clarify with the user if there is significant change in task scope, you are concretely blocked, have a decision that the user needs to resolve, or before irreversible or destructive actions.
+```
+
+Here, the model is instructed not to end its response while the task is incomplete and authorized next steps remain. It should tell the user about assumptions and decisions; it should ask for clarification only if the task’s scope changes substantially, it is blocked, the user needs to make a decision, or an action would be irreversible.
+
+## Less unnecessary code and testing
+
+OpenAI says GPT-6.2 writes more efficient code than previous models. Its coding template instructs the model to reuse existing logic and avoid creating new helper functions unless needed. New tests should be added when requested, required by the repository or needed to catch a specific regression that existing checks would miss.
+
+Code should still be readable: fewer lines, shorter variable names, minification and dense one-liners are no substitute for simplicity. Comments and variable names should be clear to people; expressions with many conditions, branches and hidden assumptions are considered overly complex. Unnecessary layers of abstraction and helper functions can also make code harder to understand.
+
+```Prompt for coding tasks
+Above all, be thorough in producing high-quality, correct code that completely fulfills the user's task. Keep the code easy to read and verify that the user-requested outcome works as they intend. Follow these instructions when coding:
+(a) Reuse existing logic in the user's repo when you can. You should reuse existing classes, methods, representations, and APIs in the codebase as long as they preserve correctness. Before consolidating or removing code, preserve the behavior its callers rely on unless the task requires changing it. (b) Skip new tests unless requested, required by the repo, or needed to catch a specific regression existing tests would miss. (c) Make sure that code is human readable. Do not use fewer lines, shorter variable names, minified formatting, or dense one-liners as substitutes for simplicity. Ensure that comments and variable names are readable and understandable to a human. Code-golfed expressions count as overly complex when they encode many branches, conditions, or hidden assumptions. (d) Avoid unnecessary indirection and abstraction. Helper functions, utility functions, and class abstractions can add cognitive complexity even when they do not add branches.
+```
+
+For interfaces, developers are advised to specify requirements for images and typography separately. By default, the template prefers realistic images created by a generator or found through search; SVG should be used only when requested. Decorative numbering, placeholder icons and explanatory captions that repeat text already visible in the interface should be excluded.
+
+## What changes in the API
+
+Starting with GPT-6.2, the Responses API removes earlier reasoning content if a developer edits the conversation history, switches to certain other models, or changes the end user or organization. As a result, the model may repeat work it has already done: answer quality can decline, while token usage increases.
+
+For new integrations, OpenAI recommends a medium reasoning level. For existing settings at “none” or “minimal,” the company recommends switching to low. The `temperature` and `top_p` parameters are no longer supported.
+
+## Earlier guidance and pricing
+
+In April, OpenAI advised against moving old prompt sets to GPT-5.5 and recommended starting with short, outcome-focused instructions. In September, the company released prompts for GPT-6 Astra intended to reduce repeat questions and eliminate stock AI phrases. At the time, OpenAI developer Eric Provancher also warned that overloaded skill files and `AGENTS.md` slow the model down. Astra previously ran thorough checks even for small changes; GPT-6.2 is now supposed to write new tests only when asked.
+
+OpenAI released GPT-6.2 Astra and Sol on November 17. API prices for Astra start at $8 per million input tokens and $40 per million output tokens, with a context window of up to 272,000 tokens. Above that limit, Astra 6.2 costs $16 per million input tokens and $60 per million output tokens; cached reads cost $0.80 per million tokens. Astra 6.0 is even more expensive beyond the threshold, at $20 per million input tokens and $75 per million output tokens.
+
+Long coding and work sessions can quickly exhaust the context limit. Codex therefore automatically compacts the context when it reaches 272,000 tokens. According to OpenAI’s Ted Sanders, the choice of model depends on budget and quality requirements.
+
+Dataist's take: OpenAI’s guidance tunes model behavior for specific workflows, but requires updates to system prompts and integrations. Changes to API history can lead to repeated work and additional costs, while Astra prices rise sharply above the 272,000-token limit.
