@@ -1,0 +1,25 @@
+# Six checks to uncover weaknesses in a machine learning model
+
+## Six checks before release
+
+Clean, familiar data and convenient conditions are like preparing a student for an exam: the results look good until the system faces real work. Pandey says this mistake has been recurring in production machine learning systems for nearly two decades. Avoiding it does not necessarily require the most complex models, but it does require regular checks before and after release.
+
+1. **Check that evaluation data is independent.** Duplicate and near-identical examples can end up in both the training and evaluation sets. Leakage can also occur if the training data covers a period after the evaluation period, or if preprocessing was fitted on the full dataset before it was split. Before release, find out how the evaluation set was assembled, where the time boundary between training and evaluation falls, and what share of its examples resemble training examples. If the team cannot explain this briefly and clearly, the author says, there has been no independent evaluation.
+
+2. **Check metrics by segment.** Overall accuracy can hide weak spots. For example, accuracy might be 94% across the full dataset but only 61% for a segment that matters to revenue, the newest data, or a particular customer group. Results should therefore be broken down by time, data source, customer segments and other business-relevant characteristics. If a significant segment is getting worse and the overall metric does not show it, delay the release.
+
+3. **Check confidence calibration.** Many systems rely not only on a model’s prediction but also on its confidence score: low-confidence cases are sent to a person or handled by a fallback method. This works only if the scores reflect reality: when the model reports 90% confidence, it should be right in roughly 90% of such cases. After fine-tuning or a distribution shift, scores are often miscalibrated. This can be checked with a reliability diagram or expected calibration error on evaluation data similar to recent production data. If the model systematically overstates its confidence, change the thresholds or stop relying on those scores.
+
+4. **Test rare cases deliberately.** Evaluation sets reflect past data, while new expressions, product categories, text recognition errors and other unexpected inputs emerge in production. A set of several hundred deliberately selected difficult examples can uncover errors that ten thousand random test examples would miss. Keep it updated: turn every production incident into a new rare case so the same error does not recur in the next release.
+
+5. **Prepare for drift in advance.** User behavior, data sources and seasons change. A model tested today is validated for today’s conditions. So it is important not only to confirm that it works now, but also to decide in advance how the team will detect a decline. Choose drift metrics—the distributions of inputs and predictions, as well as business metrics—set alert thresholds and assign an owner. The author does not recommend releasing a model without a monitoring plan: an unobserved system becomes a risk.
+
+6. **Deploy the model gradually.** Even after the other checks, evaluate it in production before switching over completely. First, the model can process real traffic in shadow mode without affecting decisions; then it can be rolled out to a small share of traffic, with an automatic rollback configured if metrics deteriorate. Rollback must be a tested procedure. Pandey cites teams that discovered during an incident that a supposedly instant rollback took 40 minutes and required three approvals.
+
+## Checks as part of the release process
+
+A page in a wiki is not enough: every check must be built into the release pipeline. Data leakage audits and segment metrics can run in CI for every candidate model; calibration checks and rare-case test sets should block promotion; drift dashboards and test-run analysis should govern deployment.
+
+Pandey notes that a six-step, one-page audit, with an owner and a pass/fail criterion for each step, helped prevent more problematic releases than the model updates he observed. In his assessment, pre-launch checks are part of routine engineering discipline. Teams that skip them have to find errors in a system that is already running, including during overnight incidents involving customers.
+
+Dataist’s take: this approach makes model releases a consistent process with clear stop conditions, rather than a decision based on one overall metric. Its success depends on whether the team can maintain the checks after launch and whether rollback actually works under the conditions set for it.
