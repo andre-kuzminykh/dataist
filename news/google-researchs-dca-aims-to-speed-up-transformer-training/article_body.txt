@@ -1,0 +1,56 @@
+# Google Research introduces DCA to speed up transformer training
+
+## Why standard residual connections are not enough
+
+In deep neural networks, the training signal can weaken as it passes through many layers. This is known as the vanishing gradient problem. Transformers mitigate it with residual, or skip, connections: these add a layer’s input to its output, allowing information to bypass complex computations.
+
+A standard residual connection adds the input and output element by element. This saves computation, but gives all representations equal weight. In a deep network, details extracted in earlier layers can become mixed with later information and get lost. The model then has to compute them again, making training less efficient.
+
+In their ICML 2025 paper “DeepCrossAttention: Supercharging Transformer Residual Connections,” the researchers examined this limitation and proposed DCA. The architecture lets each layer select and route features from the history of previous layers. The authors report that this approach delivers comparable or better training performance and can reduce the number of parameters by 30–40%.
+
+## How DCA works
+
+DCA treats residual connections as a dynamic routing problem. A lightweight module decides how to combine previous layers’ representations separately for each token, rather than passing them forward with equal weight.
+
+[FIGURE:1]
+
+The architecture has two main mechanisms:
+
+- **Dynamic routing between layers.** For each token, DCA computes a set of mixing weights using a trainable base and an input-dependent projection. As a result, processing can range from sequential to fully parallel, depending on the token’s context.
+- **Depth attention with separate Q/K/V.** Standard transformer attention operates across sequence tokens, while DCA applies attention across layers. Each token accesses a dynamically weighted combination of representations from all previous layers, drawing on the network’s history without the computational cost usually associated with scaling standard attention.
+
+This selection helps recover details from earlier layers and reduce their loss through repeated mixing.
+
+## Experimental results
+
+The researchers tested DCA on synthetic tasks, large language-modeling benchmarks and image-classification tasks. Across these experiments, the architecture improved convergence speed, training stability and final model quality.
+
+[FIGURE:2]
+
+On the cleaned, large-scale Common Crawl C4 web corpus and LM1B, a language-modeling benchmark with one billion words, DCA matched a standard transformer’s performance using up to five times fewer training steps. For the same training duration or number of steps, DCA achieved lower perplexity — meaning it predicted examples more accurately. The authors say this makes more efficient use of the same training budget.
+
+To reach a perplexity below 14 on LM1B, a standard transformer of fixed width required 42 layers. DCA achieved even lower perplexity with 30 layers — 29% fewer in depth and parameter count.
+
+[FIGURE:2]
+
+The number of previous layers included in DCA also made a noticeable difference: increasing the depth of this history consistently lowered perplexity compared with a standard transformer. The 16-DCA and 24-DCA variants performed best in the graph shown.
+
+[FIGURE:3]
+
+The increase in model size is small: DCA requires less than 0.2% additional parameters. The authors consider this negligible in terms of computation and memory use, but note that memory bandwidth increases because representations from different layers are passed in their original form rather than mixed in advance.
+
+DCA can also be added to a transformer that has already been trained. The architecture can be configured to initially behave like a standard residual network. After a short period of continued training, perplexity on LM1B fell by 0.19; for a standard transformer, continued training reduced it by 0.02.
+
+## Other approaches to dynamic residual connections
+
+DCA is part of a broader effort to replace static summation of layer outputs with dynamic selection. The authors note that these methods are attracting researchers’ attention and are already being used in new models.
+
+- **Attention-based residual connections.** Developed by Moonshot AI, this approach uses trainable attention with softmax normalization and a separate pseudo-query for each layer. Instead of summing all previous outputs, each layer selects and weights representations from earlier layers. This helps constrain the unbounded growth of hidden states, preserve information from early layers, stabilize gradients and improve performance on reasoning tasks, including coding and mathematics. Block AttnRes divides layers into blocks to capture the benefits of full attention at lower memory cost. Thinking Machines’ Inkling 2 model uses this approach alongside DCA’s cross-layer attention mechanism with separate Q/K/V.
+- **Hyper-connections.** This approach expands the residual stream into several parallel channels, scaling memory without simply increasing the model’s width or depth. Layer outputs are collected and mixed using trainable weight matrices. However, this mixing breaks the identity-mapping property of standard residual connections: signals can be amplified or weakened, leading to training instability as the model scales.
+- **Manifold-constrained hyper-connections.** To stabilize standard hyper-connections, this variant constrains the mixing matrices. They are made doubly stochastic using the Sinkhorn–Knopp algorithm. The authors say this helps prevent exploding and vanishing gradients while preserving the broad information flow and expressiveness of expanded residual connections.
+
+The authors view the shift from static residual connections to attention-based dynamic routing as a way to improve model efficiency. They predict that future architectures will select and weight representations from previous layers based on specific tokens and inputs, using layers as specialized experts.
+
+The work involved researchers from Google and their academic partners: Mike Heddes, Adele Javanmard, Mohammad Hossein Bateni and Vahab Mirrokni.
+
+Dataist’s take: The results show that a transformer’s performance depends not only on the number of layers, but also on how the network uses the representations accumulated in them. For now, the findings concern specific experiments and benchmarks; the data presented do not establish how broadly DCA will improve other models and tasks.
