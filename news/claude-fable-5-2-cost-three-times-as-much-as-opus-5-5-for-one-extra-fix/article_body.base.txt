@@ -1,0 +1,63 @@
+# Claude Fable 5.2 cost three times as much as Opus 5.5 for one extra successful fix
+
+Fable’s rates for input and output tokens are twice Opus’s. Fable also made more tool calls and generated more output text in the test, which added to its costs.
+
+## Why the cost of a working fix matters
+
+An agent may take dozens of steps to fix one error. The team pays for the model’s use at every step, even if the fix ultimately does not work. That is why token prices alone do not show how much a completed task costs: the total depends on the team’s code and how well the model handles errors.
+
+For its pilot test, VentureBeat introduced errors into a real codebase of 8,400 lines. The publication uses this code to process survey exports. Four models were given the same five error descriptions:
+
+- Claude Fable 5.2
+- Claude Opus 5.5
+- Kimi K3.1 Pro
+- DeepSeek V4.1 Flash
+
+Each model got three attempts at each error, with a limit of 70 tool calls per attempt. A fix counted only if it passed hidden tests.
+
+In VentureBeat Intelligence’s September VB Pulse survey, 23% of respondents named the cost of a million tokens as one factor in choosing AI infrastructure, up from 11% in August. Gartner also pointed to rising costs in August: the company forecast that by 2028, the cost of running inference for one AI agent workflow would increase more than fivefold, even if token prices fell.
+
+## Higher costs brought no clear advantage
+
+Both Anthropic models passed attempts noticeably more often than Kimi and Flash. But comparing the cost of one successful attempt shows what that result cost: total spending across all 15 attempts, including failures, divided by the number of successful attempts.
+
+One successful attempt cost $8.90 with Fable and $3.22 with Opus. Kimi and Flash were cheaper per successful attempt, but passed about half as many tests as Fable.
+
+In a separate run, Opus was allowed up to 100 tool calls per attempt instead of 70. It passed 10 of 15 attempts at a total cost of about $33. In the initial run, with a limit of 70 calls, Opus passed 9 of 15 for $29. In the additional run, Opus matched Fable’s number of successful attempts while spending less than half of its $89. However, the models had different tool-call limits in these runs. The additional calls did not help Opus solve the two hardest tasks.
+
+[INFO:facts] $89 :: Fable 5.2 | $29 :: Opus 5.5 | 10 of 15 :: Fable attempts | 9 of 15 :: Opus attempts
+
+## The difference showed up on difficult errors
+
+The models performed equally on a simple error. They diverged when visible symptoms pointed away from the cause or when a fix required addressing several independent problems.
+
+- <strong>Simple error.</strong> The cause was where the symptom appeared. All four models succeeded in all three attempts, including Flash, the cheapest model in the test.
+- <strong>The symptom pointed elsewhere.</strong> Removing a step that stripped extra spaces from survey responses distorted the calculated percentages. The error could be mistaken for a problem in the code that calculates percentages. Changing that part could hide the problem while leaving incorrect data in storage. Fable and Opus passed all three attempts, Kimi passed one, and Flash passed none.
+- <strong>Hard to trace the cause.</strong> Responses from participants with an empty response type were not counted as complete. This caused the survey round to be marked invalid. The error description did not mention the cause. Opus succeeded in two of three attempts; each of the other models succeeded once.
+- <strong>Two independent errors.</strong> Both had to be fixed. A model could fix one, see an improvement, and stop. Fable succeeded in all three attempts, the only model to fix both errors every time. Opus passed one attempt; Kimi and Flash passed none.
+- <strong>Two errors masked each other.</strong> The total number of participants matched the published report, even though the data contained the wrong people. No model passed any of the 12 attempts.
+
+Fable did better on the task with two independent errors, while Opus did better on the error whose cause was difficult to trace. There was no overall winner across all tasks.
+
+## What to consider when evaluating agents
+
+The test results offer teams several points to consider when assessing coding agents on their own code.
+
+- <strong>Measure the cost of a successful fix.</strong> This measure includes spending on both failed and successful attempts, while token prices do not.
+- <strong>Go beyond simple tasks.</strong> Include errors whose symptoms point away from their cause.
+- <strong>Check what data underlies matching totals.</strong> The same overall numbers do not guarantee that the right records were counted.
+- <strong>Track the type of failure, not just how often it happens.</strong> Flash more often ran out of allowed steps before finishing the task. Opus and Fable more often submitted incorrect fixes. A wrong fix can look like completed work, and a single success rate does not distinguish between these cases.
+
+## How the test was conducted
+
+<strong>Codebase.</strong> The program loaded raw survey exports, filtered out participants who did not meet the criteria, and answered questions such as what percentage chose a particular option. It also compared the number of eligible participants with the published report. If the numbers did not match, the corresponding survey round was marked invalid.
+
+<strong>Errors.</strong> Each task contained one or two planted issues, along with a short description of the kind a team member might send to a colleague.
+
+<strong>Evaluation.</strong> Each model received the entire codebase, but not the hidden tests. A fix counted as successful only if it passed those tests. Before the test began, VentureBeat checked each task: a known correct fix had to pass, while known workarounds had to fail.
+
+<strong>Scale.</strong> The test covered five error descriptions, with three attempts per model for each task and a limit of 70 tool calls per attempt. Tool calls are the steps an agent uses to read, search, and edit code. Each model made 15 attempts on one codebase. The one-attempt difference between Fable and Opus is therefore not strong evidence. The results describe how the models performed on this code, not their coding ability in general.
+
+<strong>Costs.</strong> The amounts reflect actual payment for API calls through OpenRouter, not estimates based on published token prices. Caching was not standardized across models: each provider used its own settings.
+
+Dataist’s take: the test shows why a model’s price should be assessed alongside the share of tasks it completes successfully and the nature of its failures. But 15 attempts on one codebase are not enough to treat a one-attempt difference as proof that Fable or Opus has an advantage. Caching settings also differed, and the results apply only to the code that was tested.
