@@ -1,0 +1,45 @@
+# Z.ai brings repeated-layer processing to GLM-5.4
+
+## How repeated passes work
+
+GLM-5.4 is Z.ai’s first major model built with repeated-layer processing. In a standard language model, each layer is used once per pass. Here, a block of shared layers processes the data multiple times and refines the intermediate result. According to Z.ai, the 750-billion-parameter model delivers results comparable to models with 2–3 trillion parameters. OpenAI has used a similar architecture since GPT-6 Astra.
+
+The company took its base GLM-5 model, released in February, and retrained it for repeated passes: the model runs a block of 28 layers twice. Z.ai says models trained from scratch with repeated passes have so far lagged behind models with separate weights for each layer when given the same compute budget.
+
+[FIGURE:0]
+
+Repeated passes introduce a risk: if intermediate states are overwritten each time, activations can grow sharply. The next layers may then receive values outside the range they were trained on.
+
+In GLM-5.4, each token and pass has separate control mechanisms. They regulate how much of the new result is fed back into the data stream. According to Z.ai, the model builds up context cautiously on the first pass, then writes the changes in full on the second. The first pass has a stronger effect on complex tokens.
+
+To keep the second pass from doubling memory use, both passes share a key-value cache, a temporary store for tokens that have already been processed. The extra values from the second pass are saved only in a small local window. Z.ai says this keeps overhead moderate compared with GLM-5.3, even with a context window of 1 million tokens.
+
+The model also uses sparse attention: it selects the most important previous tokens in advance rather than checking the entire context at every step. On the second pass, it reuses the first pass’s selection instead of making a new one. According to Z.ai, the result is almost identical to selecting tokens independently on each pass. Speed reaches 200 tokens per second during periods of low load and is 70–80 tokens per second under heavy load.
+
+## Test model results
+
+Before adding the architecture to its main model, Z.ai tested it on versions with 1, 4, 30 and 750 billion parameters. For a direct comparison, the team used a 30-billion-parameter model built on the same architecture as the larger base model. The two versions had the same number of parameters, but training the repeated-pass model required about 10% more compute.
+
+The test model’s biggest improvement came on the AIME25 math benchmark, where its score rose from 19.2 to 30.4. Its score on GPQA-Diamond, a test of expert-level scientific questions, increased from 47.6 to 56.3, while its score on AA-LCR, a long-context evaluation, rose from 40.3 to 47.7. On the MMLU-Pro knowledge test and the IFBench instruction-following test, the gains were just over three points.
+
+[FIGURE:1]
+
+The test model’s answers became shorter: by 14.9% on MMLU-Pro, 11.7% on GPQA-Diamond and 2% on AIME25. Z.ai says this is because some of the reasoning shifts from the answer text to additional computation within the repeated pass.
+
+GLM-5.4’s performance at 750 billion parameters cannot yet be assessed: Z.ai has not published benchmark scores for it. The figures in the company’s blog apply only to the 30-billion-parameter test model. There are no independent evaluations either, including from Artificial Analysis.
+
+In Z.ai’s own account, GLM-5.4’s weakness is that its reasoning stages can become excessively long, causing the model to get stuck. The company says repeated checking nevertheless improves accuracy.
+
+Z.ai describes GLM-5.4 as the beginning of “generalized programming”: in the company’s vision, code should become the basis for tasks beyond conventional software development. Z.ai gives as examples a music video for which the model created the music itself, a six-axis robotic arm designed in FreeCAD, a complete game, and an interactive 3D scene featuring mathematical geometry and custom shaders.
+
+## Availability and context
+
+GLM-5.4 is available through the GLM Coding Plan, Z.ai’s ZCode programming environment and Z.ai Chat. API access is expected later; token prices have not yet been announced. Z.ai plans to release the model weights after additional safety checks. The company has also said it plans to release a much larger model soon.
+
+Shared layers have been used since at least 2018, when the Universal Transformer architecture was introduced. In March, researchers in Bonn showed that repeated passes help transformers solve math problems, while increasing memory matters more for everyday knowledge. Z.ai cites the same trade-off in explaining its model’s design. Recently, Thinking Machines drew attention with Inkling 2 Mini, a repeated-pass model that runs locally on Mac computers with at least 32 GB of RAM.
+
+GLM-5.4, with 750 billion parameters, is not designed to run on a laptop. Z.ai is targeting the level of Kimi K3.1 Pro and Qwen3.8-Max. Those models have 2.8 trillion and 2.4 trillion parameters, respectively—more than three times as many as GLM-5.4—and require substantial computing resources.
+
+With its previous model, GLM-5.3, Z.ai kept the base model and made improvements through post-training. The company delayed releasing its weights because the model could find vulnerabilities. Anthropic later found that GLM-5.3 could create exploits autonomously, at a level close to Claude Mythos Preview.
+
+Dataist's take: GLM-5.4’s architecture offers a way to increase computational depth without a proportional rise in parameter count, but the published results so far apply only to the smaller test model. Assessing the main version will require its own results and independent evaluations. Z.ai has not said when it will release the weights or what API access will cost.
