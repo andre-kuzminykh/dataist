@@ -1,21 +1,30 @@
 #!/usr/bin/env python3
 """Еженедельный дайджест Датаиста: собирает материалы недели и верстает письмо (RU/EN).
 
-Источники:
-  * YouTube — RSS канала (RU: «🤖 Датаист»; для EN канал пока не задан);
-  * «Авторский канал» — публичная лента t.me/s/andre_dataist (RU);
-    для EN — англоязычные авторские статьи сайта (technology/en) со ссылкой на X;
-  * исследования — papers.json / papers_en.json и описания страниц сайта;
-  * обучение — education/index.json (только RU).
+Порядок блоков: Видеожурнал → Авторский канал → реклама ИИ-трансформации →
+Исследования → Обучение → реклама Нейрония. Всё идёт одной колонкой, тексты — целыми
+абзацами, без обрывов.
 
-Письмо — чистый HTML для почтовых клиентов: таблицы, встроенные стили, адаптив.
+Источники:
+  * Видеожурнал — RSS канала YouTube (RU: «🤖 Датаист»; для EN канал пока не задан);
+  * Авторский канал — публичная лента t.me/s/andre_dataist (RU), обложка поста —
+    картинка превью первой ссылки; для EN — англоязычные авторские статьи сайта и ссылка на X;
+  * Исследования — papers.json / papers_en.json и описания страниц сайта;
+  * Обучение — education/index.json (только RU).
+
+На выходе в папке выпуска:
+  email.html — письмо для рассылки (таблицы, встроенные стили, без скриптов);
+  index.html — веб-версия «Открыть в браузере»: тот же макет, переключатель
+               светлой/тёмной темы и плеер YouTube прямо на странице;
+  img/       — обложки видео и постов; meta.json — тема письма и состав.
 
 Примеры:
-  python3 digest/build.py --lang ru --date 2026-11-27 --outdir digest/2026-11-27/ru
-  python3 digest/build.py --lang en --date 2026-11-27 --fill --inline --outdir /tmp/preview-en
+  python3 digest/build.py --lang ru --date 2026-11-27 --outdir digest/2026-11-27/ru \
+      --base-url https://dataist.ai/digest/2026-11-27/ru/
+  python3 digest/build.py --lang en --fill --inline --preview --outdir /tmp/preview-en
 Ключи:
   --fill    если в разделе нет новинок за неделю — показать последние («Если пропустили»)
-  --inline  встроить картинки (GIF, обложки видео) в HTML как data URI — автономный файл
+  --inline  встроить картинки в HTML как data URI — автономный файл для просмотра
   --preview пометка «превью» над письмом
 """
 import argparse, base64, datetime as dt, html, io, json, re, sys, urllib.request
@@ -24,7 +33,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SITE = "https://dataist.ai"
-ASSETS = f"{SITE}/digest/assets"
+ASSETS_URL = f"{SITE}/digest/assets"
+ASSETS_DIR = ROOT / "digest" / "assets"
 FIRST_ISSUE = dt.date(2026, 11, 27)            # первый выпуск — пятница
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130 Safari/537.36"
 
@@ -36,34 +46,34 @@ UTM = "utm_source=dataist&utm_medium=email&utm_campaign=digest-{date}"
 T = {
     "ru": {
         "brand": "ДАТАИСТ", "issue": "Выпуск № {n}", "kind": "Еженедельный дайджест",
-        "tagline": "ИИ · Исследования · Бизнес — главное за неделю",
         "hello": "Привет! Это пятничный Датаист — всё главное за неделю в одном письме: {parts}. Устраивайтесь поудобнее.",
         "parts": {"video": "новые видео", "author": "мысли из канала", "research": "свежие исследования",
                   "edu": "уроки Академии"}, "and": "и",
         "sign": "Андрей Кузьминых", "sign_role": "Основатель Andre AI Technologies",
-        "contents": "В номере", "missed": "Если пропустили",
-        "browser": "Открыть в браузере",
+        "missed": "Если пропустили", "browser": "Открыть в браузере",
         "s_video": "Видеожурнал", "s_author": "Авторский канал", "s_research": "Исследования", "s_edu": "Обучение",
-        "l_video": "YouTube ↗", "l_author": "Telegram ↗", "l_research": "Лаборатория ↗", "l_edu": "Академия ↗",
+        "l_video": "Подписаться ↗", "l_author": "Подписаться ↗", "l_research": "Лаборатория ↗", "l_edu": "Академия ↗",
         "u_video": "https://www.youtube.com/@andre_dataist", "u_author": "https://t.me/+AXsoJ7OiMG4zMzFi",
         "u_research": "https://t.me/+gjvJGFW0iXUwMjky", "u_edu": "https://t.me/dataist_academy",
-        "watch": "Смотреть видео", "views": "просмотров", "read_tg": "Читать в Telegram", "read": "Читать разбор",
-        "read_short": "Читать", "lesson": "Открыть урок", "min": "мин чтения", "module": "Модуль {m} · Урок {l}",
+        "watch": "▶ Смотреть видео", "views": ("просмотр", "просмотра", "просмотров"),
+        "open_post": "Открыть пост ↗", "read": "Читать разбор →", "read_article": "Читать статью →",
+        "lesson": "Открыть урок →", "min": "мин чтения", "module": "Модуль {m} · Урок {l}",
         "ait_kicker": "Andre AI Technologies", "ait_title": "ИИ-трансформация вашего бизнеса",
         "ait_text": "Бесплатная диагностика ИИ-зрелости, ИИ-стратегия, ИИ-операционная система «Нейроний» "
                     "и 3 месяца обучения команды с ментором.",
         "ait_stats": [("30+", "компаний"), ("$100+ млн", "эффекта"), ("10+ лет", "в ИИ")],
-        "ait_cta": "Бесплатная ИИ-диагностика →", "ait_video": "▶ Видео · 0:55",
+        "ait_cta": "Бесплатная ИИ-диагностика →", "ait_url": "https://andre.technology/?lang=ru",
+        "ait_gif": "ait-landing-ru.gif",
         "nr_kicker": "Нейроний · AI Operating System", "nr_title": "Ведите ИИ-бизнес в ИИ-операционной системе",
         "nr_text": "Единый контекст бизнеса, ИИ-суперагент и 100 готовых ИИ-сотрудников в десяти отделах — "
                    "от целей и задач до продаж, поддержки и кода.",
-        "nr_cta": "Открыть AI OS →", "nr_demo": "Смотреть демо",
-        "follow": "Датаист в соцсетях",
+        "nr_cta": "Открыть AI OS →", "nr_url": "https://neuronium.ai/",
         "socials": [("YouTube", "https://www.youtube.com/@andre_dataist"), ("Telegram", "https://t.me/+AXsoJ7OiMG4zMzFi"),
                     ("Instagram", "https://www.instagram.com/andre_dataist"), ("TikTok", "https://www.tiktok.com/@andre_dataist")],
         "why": "Вы получили это письмо, потому что подписались на рассылку Датаиста на dataist.ai.",
         "unsub": "Отписаться", "made": "Создано в", "made_name": "Нейроний",
-        "preview": "Превью письма · в разделах без новинок за неделю показаны последние материалы",
+        "to_dark": "Тёмная тема", "to_light": "Светлая тема",
+        "preview": "Превью · в разделах без новинок за неделю показаны последние материалы",
         "months": ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"],
         "mon": ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"],
         "wd": ["понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "воскресенье"],
@@ -71,35 +81,35 @@ T = {
     },
     "en": {
         "brand": "DATAIST", "issue": "Issue No. {n}", "kind": "Weekly digest",
-        "tagline": "AI · Research · Business — the week in one letter",
         "hello": "Hi! This is the Friday Dataist — the week’s essentials in one letter: {parts}. Get comfortable.",
         "parts": {"video": "new videos", "author": "notes from my channel", "research": "the freshest AI research",
                   "edu": "new lessons"}, "and": "and",
         "sign": "Andre Kuzminykh", "sign_role": "Founder of Andre AI Technologies",
-        "contents": "In this issue", "missed": "In case you missed it",
-        "browser": "View in browser",
+        "missed": "In case you missed it", "browser": "View in browser",
         "s_video": "Video Journal", "s_author": "Author’s Channel", "s_research": "Research", "s_edu": "Learning",
-        "l_video": "YouTube ↗", "l_author": "X ↗", "l_research": "Dataist.ai ↗", "l_edu": "Academy ↗",
+        "l_video": "Subscribe ↗", "l_author": "Follow ↗", "l_research": "All research ↗", "l_edu": "Academy ↗",
         "u_video": "https://www.youtube.com/@andre.dataist", "u_author": "https://x.com/andre_dataist",
         "u_research": "https://dataist.ai/", "u_edu": "https://dataist.ai/",
-        "watch": "Watch the video", "views": "views", "read_tg": "Read on X", "read": "Read the breakdown",
-        "read_short": "Read", "lesson": "Open the lesson", "min": "min read", "module": "Module {m} · Lesson {l}",
+        "watch": "▶ Watch the video", "views": ("view", "views", "views"),
+        "open_post": "Open the post ↗", "read": "Read the breakdown →", "read_article": "Read the article →",
+        "lesson": "Open the lesson →", "min": "min read", "module": "Module {m} · Lesson {l}",
         "ait_kicker": "Andre AI Technologies", "ait_title": "AI transformation of your business",
         "ait_text": "Free AI maturity diagnostic, AI strategy, the Neuronium AI Business OS "
                     "and 3 months of team training with a mentor.",
         "ait_stats": [("30+", "companies"), ("$100M+", "impact"), ("10+ yrs", "in AI")],
-        "ait_cta": "Free AI assessment →", "ait_video": "▶ Video · 0:55",
+        "ait_cta": "Free AI assessment →", "ait_url": "https://andre.technology/?lang=en",
+        "ait_gif": "ait-landing-en.gif",
         "nr_kicker": "Neuronium · AI Operating System", "nr_title": "Run AI Business with AI Operating System",
         "nr_text": "One shared business context, one AI Superagent and 100 ready AI employees — "
                    "from goals and tasks to sales, support and code.",
-        "nr_cta": "Open AI OS →", "nr_demo": "Watch the demo",
-        "follow": "Dataist on social",
+        "nr_cta": "Open AI OS →", "nr_url": "https://neuronium.ai/",
         "socials": [("YouTube", "https://www.youtube.com/@andre.dataist"), ("X", "https://x.com/andre_dataist"),
                     ("LinkedIn", "https://www.linkedin.com/in/andre-kuzminykh/"),
                     ("Instagram", "https://www.instagram.com/andre.dataist"), ("TikTok", "https://www.tiktok.com/@andre.dataist")],
         "why": "You are receiving this because you subscribed to the Dataist newsletter on dataist.ai.",
         "unsub": "Unsubscribe", "made": "Made in", "made_name": "Neuronium",
-        "preview": "Email preview · sections with nothing new this week show the latest items",
+        "to_dark": "Dark theme", "to_light": "Light theme",
+        "preview": "Preview · sections with nothing new this week show the latest items",
         "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
         "mon": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
         "wd": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
@@ -119,20 +129,17 @@ def esc(s):
     return html.escape(str(s), quote=True)
 
 
-def clip(text, n):
-    text = re.sub(r"\s+", " ", text or "").strip()
-    if len(text) <= n:
-        return text
-    cut = text[:n].rsplit(" ", 1)[0].rstrip(",;:—-–.!? ")
-    return cut + "…"
-
-
-def plural(n, one, few, many):
+def plural(n, forms):
+    one, few, many = forms
     n = abs(n) % 100
     if 11 <= n <= 19:
         return many
     n %= 10
     return one if n == 1 else few if 2 <= n <= 4 else many
+
+
+def fmt_num(n, lang):
+    return f"{n:,}".replace(",", " " if lang == "ru" else ",")
 
 
 def fmt_date(d, lang, short=False):
@@ -146,11 +153,43 @@ def parse_date(s):
     return dt.date.fromisoformat(str(s)[:10])
 
 
-def meta_description(rel_dir):
+def squash(s):
+    return re.sub(r"\s+", " ", s or "").strip()
+
+
+SENT_END = re.compile(r"(?<=[.!?…])\s+(?=[«\"(A-ZА-ЯЁ0-9])")
+
+
+def by_sentences(text, limit):
+    """Целые предложения, пока влезает в limit (минимум одно)."""
+    out, total = [], 0
+    for s in SENT_END.split(text):
+        if out and total + len(s) > limit:
+            break
+        out.append(s)
+        total += len(s) + 1
+    return " ".join(out)
+
+
+def excerpt(paras, target=420, hard=680):
+    """Целые абзацы без обрывов: набираем, пока не наберётся target; длинный абзац — по предложениям."""
+    out, total = [], 0
+    for p in paras:
+        if out and (total >= target or total + len(p) > hard):
+            break
+        if len(p) > hard:
+            p = by_sentences(p, hard)
+        out.append(p)
+        total += len(p)
+    return out
+
+
+def meta_tag(rel_dir, name):
     p = ROOT / rel_dir / "index.html"
     if not p.exists():
         return ""
-    m = re.search(r'<meta name="description" content="([^"]*)"', p.read_text("utf-8", "replace"))
+    attr = "property" if name.startswith("og:") else "name"
+    m = re.search(r'<meta %s="%s" content="([^"]*)"' % (attr, re.escape(name)), p.read_text("utf-8", "replace"))
     return html.unescape(m.group(1)) if m else ""
 
 
@@ -162,8 +201,8 @@ def strip_prefix(teaser, title):
     return teaser
 
 
-def read_minutes(rel_dir_candidates):
-    for rel in rel_dir_candidates:
+def read_minutes(rel_dirs):
+    for rel in rel_dirs:
         p = ROOT / rel / "article_body.txt"
         if p.exists():
             return max(2, round(len(p.read_text("utf-8", "replace").split()) / 200))
@@ -171,7 +210,7 @@ def read_minutes(rel_dir_candidates):
 
 
 def pick(items, start, end, want, fill):
-    """Новинки окна [start, end]; при fill — добрать последними материалами."""
+    """Новинки окна [start, end]; при fill — если новинок нет, последние материалы."""
     new = [x for x in items if start <= x["date"] <= end]
     if new or not fill:
         return new[:want], False
@@ -179,6 +218,28 @@ def pick(items, start, end, want, fill):
 
 
 # ───────────────────────── источники ─────────────────────────
+def clean_description(desc):
+    lines = []
+    for line in (desc or "").split("\n"):
+        l = line.strip()
+        if not l:
+            lines.append("")
+            continue
+        if re.search(r"https?://|www\.", l) or re.match(r"^\d{1,2}:\d{2}", l) or re.fullmatch(r"(#\S+\s*)+", l):
+            continue
+        lines.append(re.sub(r"\s#\S+", "", l))
+    return [squash(p) for p in re.split(r"\n\s*\n", "\n".join(lines)) if squash(p)]
+
+
+CTA_LINE = re.compile(r"^(👉|👇|🔗|📌|➡|⬇)|ссылк|подпис|шапке профиля|link in bio|subscribe|t\.me/|instagram|tiktok", re.I)
+
+
+def video_text(paras, limit=420):
+    """Описание видео одним абзацем: без призывов и ссылок, только целые предложения."""
+    text = " ".join(p for p in paras if not CTA_LINE.search(p))
+    return [by_sentences(squash(text), limit)] if text else []
+
+
 def youtube(lang):
     cid = YOUTUBE.get(lang)
     if not cid:
@@ -191,13 +252,11 @@ def youtube(lang):
         vid = e.find("yt:videoId", ns).text
         stats = e.find("m:group/m:community/m:statistics", ns)
         desc = e.find("m:group/m:description", ns)
-        out.append({
-            "id": vid, "title": e.find("a:title", ns).text or "",
-            "url": f"https://www.youtube.com/watch?v={vid}",
-            "date": parse_date(e.find("a:published", ns).text),
-            "views": int(stats.get("views")) if stats is not None and stats.get("views") else None,
-            "text": (desc.text or "") if desc is not None else "",
-        })
+        out.append({"id": vid, "title": e.find("a:title", ns).text or "",
+                    "url": f"https://www.youtube.com/watch?v={vid}",
+                    "date": parse_date(e.find("a:published", ns).text),
+                    "views": int(stats.get("views")) if stats is not None and stats.get("views") else None,
+                    "paras": clean_description(desc.text if desc is not None else "")})
     return out
 
 
@@ -206,21 +265,28 @@ def telegram(channel):
     posts = []
     for b in re.split(r'(?=<div class="tgme_widget_message_wrap)', page)[1:]:
         m = re.search(r'data-post="%s/(\d+)"' % re.escape(channel), b)
-        if not m:
-            continue
         tm = re.search(r'<div class="tgme_widget_message_text[^"]*"[^>]*>(.*?)</div>', b, re.S)
-        if not tm:
+        if not m or not tm:
             continue
-        raw = re.sub(r"<br\s*/?>", "\n", tm.group(1))
-        text = html.unescape(re.sub(r"<[^>]+>", "", raw)).strip()
-        lines = [l.strip() for l in text.split("\n")]
-        title = next((l for l in lines if l), "")
-        body = " ".join(l for l in lines[lines.index(title) + 1:] if l) if title else ""
+        links = [html.unescape(u) for u in re.findall(r'<a href="(https?://[^"]+)"', tm.group(1))]
+        text = html.unescape(re.sub(r"<[^>]+>", "", re.sub(r"<br\s*/?>", "\n", tm.group(1)))).strip()
+        lines = text.split("\n")
+        ti = next((i for i, l in enumerate(lines) if l.strip()), None)
+        if ti is None:
+            continue
+        title = squash(lines[ti])
+        rest = "\n".join(lines[ti + 1:])
+        paras = [squash(p) for p in re.split(r"\n\s*\n", rest) if squash(p)]
+        if len(paras) <= 1:
+            paras = [squash(p) for p in rest.split("\n") if squash(p)]
+        prev = re.search(r"link_preview_(?:right_)?image[^>]*background-image:url\('([^']+)'\)", b)
+        photo = re.search(r"tgme_widget_message_photo_wrap[^>]*background-image:url\('([^']+)'\)", b)
         when = re.search(r'<time[^>]+datetime="([^"]+)"', b)
-        posts.append({"id": m.group(1), "title": title, "text": body,
+        posts.append({"id": m.group(1), "title": title, "paras": paras, "links": links,
+                      "preview_img": prev.group(1) if prev else (photo.group(1) if photo else None),
                       "url": f"https://t.me/{channel}/{m.group(1)}",
                       "date": parse_date(when.group(1)) if when else None})
-    posts = [p for p in posts if p["date"] and p["title"]]
+    posts = [p for p in posts if p["date"]]
     return sorted(posts, key=lambda p: p["date"], reverse=True)
 
 
@@ -233,7 +299,7 @@ def research(lang):
         ru_dir = x["cover"].replace(SITE + "/", "").rsplit("/", 1)[0]
         cover = f"{SITE}/{ru_dir}/cover_card.jpg" if (ROOT / ru_dir / "cover_card.jpg").exists() else x["cover"]
         out.append({"title": x["title"], "url": x["url"], "date": parse_date(x["date"]), "cover": cover,
-                    "text": strip_prefix(meta_description(x["slug"]), x["title"]),
+                    "text": strip_prefix(meta_tag(x["slug"], "description"), x["title"]),
                     "minutes": read_minutes([x["slug"], ru_dir])})
     return sorted(out, key=lambda x: x["date"], reverse=True)
 
@@ -244,20 +310,62 @@ def education():
     for x in data:
         m = re.match(r"auto_(\d+)_(\d+)$", x["slug"])
         out.append({"title": x["title"], "url": x["url"], "date": parse_date(x["date"]), "cover": x["cover"],
-                    "text": x.get("teaser", ""), "module": m.groups() if m else None})
+                    "text": squash(x.get("teaser", "")), "module": m.groups() if m else None})
     return sorted(out, key=lambda x: x["date"], reverse=True)
 
 
 def author_en():
     data = json.loads((ROOT / "technology/en/index.json").read_text("utf-8"))
     out = [{"title": x["title"], "url": x["url"], "date": parse_date(x["date"]), "cover": x.get("cover", ""),
-            "text": x.get("teaser", "")} for x in data]
+            "text": squash(x.get("teaser", ""))} for x in data]
     return sorted(out, key=lambda x: x["date"], reverse=True)
 
 
 # ───────────────────────── картинки ─────────────────────────
-def youtube_thumb(vid, out_path, corner=False):
-    """Обложка 16:9 с кнопкой ▶ (2× для ретины): 1120×630; corner — маленькая кнопка в левом нижнем углу."""
+def _image_bytes(src):
+    """Картинка по URL; адреса dataist.ai берём из локальной копии сайта."""
+    if src.startswith(SITE + "/"):
+        p = ROOT / src[len(SITE) + 1:]
+        if p.exists():
+            return p.read_bytes()
+    return fetch(src, binary=True)
+
+
+def save_cover(src, out_path, ratio=16 / 9, width=1120):
+    """Обложка поста: обрезка по центру до 16:9, ширина 1120 (2× для ретины)."""
+    from PIL import Image
+    try:
+        im = Image.open(io.BytesIO(_image_bytes(src))).convert("RGB")
+    except Exception as e:
+        print("cover:", src[:80], e, file=sys.stderr)
+        return False
+    w, h = im.size
+    if w / h > ratio:
+        nw = int(h * ratio)
+        im = im.crop(((w - nw) // 2, 0, (w - nw) // 2 + nw, h))
+    else:
+        nh = int(w / ratio)
+        im = im.crop((0, (h - nh) // 2, w, (h - nh) // 2 + nh))
+    im = im.resize((width, int(width / ratio)), Image.LANCZOS)
+    im.save(out_path, "JPEG", quality=84, optimize=True, progressive=True)
+    return True
+
+
+def post_cover_source(post):
+    """Картинка превью первой ссылки поста; если превью нет — og:image страницы сайта по первой ссылке."""
+    if post.get("preview_img"):
+        return post["preview_img"]
+    for link in post.get("links", []):
+        if link.startswith(SITE + "/"):
+            rel = link[len(SITE) + 1:].split("?")[0].strip("/")
+            og = meta_tag(rel, "og:image")
+            if og:
+                return og
+    return None
+
+
+def youtube_thumb(vid, out_path):
+    """Обложка видео 16:9 с кнопкой ▶ в левом нижнем углу (не закрывает надписи): 1120×630."""
     from PIL import Image, ImageDraw
     im = None
     for name in ("maxresdefault", "sddefault", "hqdefault"):
@@ -275,16 +383,15 @@ def youtube_thumb(vid, out_path, corner=False):
         top = (h - th) // 2
         im = im.crop((0, top, w, top + th))
     im = im.resize((1120, 630), Image.LANCZOS)
-    k = 4                                        # сглаживание кружка
+    k = 4
     layer = Image.new("RGBA", (1120 * k, 630 * k), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
-    cx, cy, r = (560 * k, 315 * k, 62 * k) if not corner else (110 * k, 520 * k, 74 * k)
+    r, s = 58 * k, 21 * k
+    cx, cy = 36 * k + r, (630 - 36) * k - r
     d.ellipse((cx - r, cy - r, cx + r, cy + r), fill=(255, 255, 255, 240))
-    s = (22 if not corner else 26) * k
     d.polygon([(cx - s * 0.7, cy - s), (cx - s * 0.7, cy + s), (cx + s * 1.05, cy)], fill=(10, 10, 10, 255))
-    layer = layer.resize((1120, 630), Image.LANCZOS)
     base = im.convert("RGBA")
-    base.alpha_composite(layer)
+    base.alpha_composite(layer.resize((1120, 630), Image.LANCZOS))
     base.convert("RGB").save(out_path, "JPEG", quality=84, optimize=True, progressive=True)
     return True
 
@@ -312,7 +419,7 @@ def link_cta(url, label, color=INK):
 
 def pill(url, label, bg="#ffffff", fg="#000000"):
     return (f'<a href="{esc(url)}" style="display:inline-block;background:{bg};color:{fg};{sans(14, fg, 700, 1)}'
-            f'text-decoration:none;padding:14px 24px;border-radius:999px;mso-padding-alt:0">{esc(label)}</a>')
+            f'text-decoration:none;padding:14px 24px;border-radius:999px">{esc(label)}</a>')
 
 
 def row(inner, pad="0 40px"):
@@ -325,125 +432,74 @@ def section_header(num, title, label, url, missed=None):
     return row(f'''<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="border-top:2px solid {INK};padding-top:12px;{mono(11, INK, 700, '.2em')}">{num} — {esc(title)}</td>
 <td align="right" style="border-top:2px solid {INK};padding-top:12px;{mono(11, INK, 700, '.14em')}"><a href="{esc(url)}" style="color:{INK};text-decoration:none">{esc(label)}</a></td></tr>{note}
-</table>''', "52px 40px 0")
+</table>''', "56px 40px 0")
 
 
-def lead_card(img, url, meta, title, text, cta, alt=""):
-    img_html = (f'<a href="{esc(url)}" style="text-decoration:none"><img src="{esc(img)}" width="560" alt="{esc(alt or title)}" '
-                f'style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:16px"></a>') if img else ""
-    return row(f'''{img_html}
-<div style="padding-top:{18 if img else 0}px;{mono(11, MUTED, 400, '.12em')}">{meta}</div>
-<h2 class="h1" style="margin:8px 0 0;{sans(26, INK, 800, 1.18, '-.03em')}"><a href="{esc(url)}" style="color:{INK};text-decoration:none">{esc(title)}</a></h2>
-<p style="margin:10px 0 0;{sans(15, BODY)}">{esc(text)}</p>
-<p style="margin:16px 0 0">{link_cta(url, cta)}</p>''', "20px 40px 0")
+def card(url, meta, title, paras, cta, img=None, embed=None, first=False):
+    """Карточка во всю ширину: обложка (или плеер в веб-версии), дата, заголовок, текст целиком, ссылка."""
+    divider = "" if first else row(f'<div style="border-top:1px solid {LINE};height:1px;line-height:1px;font-size:0">&nbsp;</div>', "34px 40px 0")
+    if embed:
+        media = (f'<div class="embed" style="position:relative;width:100%;padding-top:56.25%;border-radius:16px;overflow:hidden;background:#000">'
+                 f'<iframe src="https://www.youtube.com/embed/{esc(embed)}?rel=0&amp;modestbranding=1&amp;playsinline=1" title="{esc(title)}" '
+                 f'style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" loading="lazy" '
+                 f'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" '
+                 f'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>')
+    elif img:
+        media = (f'<a href="{esc(url)}" style="text-decoration:none"><img src="{esc(img)}" width="560" alt="{esc(title)}" '
+                 f'style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:16px"></a>')
+    else:
+        media = ""
+    text = "".join(f'<p style="margin:{10 if i == 0 else 12}px 0 0;{sans(15, BODY)}">{esc(p)}</p>' for i, p in enumerate(paras))
+    return divider + row(f'''{media}
+<div style="padding-top:{18 if media else 0}px;{mono(11, MUTED, 400, '.12em')}">{meta}</div>
+<h2 class="h1" style="margin:8px 0 0;{sans(24, INK, 800, 1.2, '-.03em')}"><a href="{esc(url)}" style="color:{INK};text-decoration:none">{esc(title)}</a></h2>
+{text}
+<p style="margin:16px 0 0">{link_cta(url, cta)}</p>''', f"{20 if first else 34}px 40px 0")
 
 
-def small_card(img, url, meta, title, width=270, radius=12):
-    img_html = (f'<a href="{esc(url)}" style="text-decoration:none"><img src="{esc(img)}" width="{width}" alt="{esc(title)}" '
-                f'class="img-full" style="display:block;width:100%;max-width:{width}px;height:auto;border:0;border-radius:{radius}px"></a>') if img else ""
-    return f'''{img_html}
-<div style="padding-top:12px;{mono(10, MUTED, 400, '.12em')}">{meta}</div>
-<div style="padding-top:6px;{sans(17, INK, 700, 1.3, '-.015em')}"><a href="{esc(url)}" style="color:{INK};text-decoration:none">{esc(title)}</a></div>'''
-
-
-def grid(cards):
-    """Пары карточек в две колонки; на телефоне — в столбик."""
-    out = []
-    for i in range(0, len(cards), 2):
-        pair = cards[i:i + 2]
-        if len(pair) == 1:
-            out.append(row(pair[0], "28px 40px 0"))
-            continue
-        out.append(row(f'''<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td class="stack stack-pad" width="270" valign="top" style="width:270px;padding-right:10px">{pair[0]}</td>
-<td class="stack" width="270" valign="top" style="width:270px;padding-left:10px">{pair[1]}</td>
-</tr></table>''', "28px 40px 0"))
-    return "".join(out)
-
-
-def side_card(img, url, meta, title, text, cta):
-    """Картинка слева, текст справа (уроки)."""
-    return row(f'''<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td class="stack stack-pad" width="210" valign="top" style="width:210px">
-<a href="{esc(url)}" style="text-decoration:none"><img class="img-full" src="{esc(img)}" width="210" alt="{esc(title)}" style="display:block;width:100%;max-width:210px;height:auto;border:0;border-radius:12px"></a></td>
-<td class="stack" valign="top" style="padding-left:22px">
-<div style="{mono(10, MUTED, 400, '.12em')}">{meta}</div>
-<div style="padding-top:6px;{sans(18, INK, 700, 1.3, '-.015em')}"><a href="{esc(url)}" style="color:{INK};text-decoration:none">{esc(title)}</a></div>
-<p style="margin:8px 0 0;{sans(14, BODY, 400, 1.55)}">{esc(text)}</p>
-<p style="margin:12px 0 0">{link_cta(url, cta)}</p></td>
-</tr></table>''', "26px 40px 0")
-
-
-def post_block(meta, title, text, url, cta, first=False):
-    border = "" if first else f"border-top:1px solid {LINE};"
-    size = 24 if first else 19
-    return row(f'''<div style="{border}padding-top:{0 if first else 22}px">
-<div style="{mono(11, MUTED, 400, '.12em')}">{meta}</div>
-<div style="padding-top:8px;{sans(size, INK, 800, 1.22, '-.025em')}"><a href="{esc(url)}" style="color:{INK};text-decoration:none">{esc(title)}</a></div>
-<p style="margin:10px 0 0;{sans(15, BODY)}">{esc(text)}</p>
-<p style="margin:14px 0 0">{link_cta(url, cta)}</p></div>''', f"{20 if first else 22}px 40px 0")
-
-
-def ad_ait(t, asset, utm):
-    url = f"https://andre.technology/?{utm}"
-    stats = "".join(
-        f'<td class="stat" style="padding-right:22px" valign="top"><div class="stat-n" style="{sans(20, "#ffffff", 800, 1.1, "-.03em")}white-space:nowrap">{esc(a)}</div>'
-        f'<div style="padding-top:3px;{mono(10, "#8e8e93", 400, ".1em")}white-space:nowrap">{esc(b)}</div></td>' for a, b in t["ait_stats"])
-    return row(f'''<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#000000" style="background:#000000;border-radius:22px">
-<tr><td class="ad-pad" style="padding:30px">
-<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td class="stack center-m stack-pad" width="180" valign="middle" style="width:180px">
-<a href="{esc(url)}" style="text-decoration:none"><img class="circle" src="{esc(asset('ait-video.gif'))}" width="180" height="180" alt="{esc(t['ait_title'])}" style="display:block;width:180px;height:180px;border:0;border-radius:50%;margin:0 auto"></a>
-<div style="padding-top:12px;text-align:center;{mono(10, '#8e8e93', 700, '.16em')}">{esc(t['ait_video'])}</div></td>
-<td class="stack center-m" valign="middle" style="padding-left:28px">
-<div style="{mono(10, '#a1a1a6', 700, '.2em')}">{esc(t['ait_kicker'])}</div>
-<div class="h1" style="padding-top:10px;{sans(27, '#ffffff', 800, 1.15, '-.03em')}">{esc(t['ait_title'])}</div>
-<p style="margin:12px 0 0;{sans(14, '#c7c7cc', 400, 1.55)}">{esc(t['ait_text'])}</p>
-<table role="presentation" class="center-t" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px"><tr>{stats}</tr></table>
-<p style="margin:22px 0 0">{pill(url, t['ait_cta'])}</p></td>
-</tr></table></td></tr></table>''', "52px 40px 0")
-
-
-def ad_neuronium(t, asset, utm):
-    url = f"https://neuronium.ai/?{utm}"
+def ad_card(gif, url, kicker, title, text, cta, stats=None, nr_tile=False):
+    """Рекламный блок: горизонтальное видео (GIF 16:9) и текст под ним."""
+    tile = (f'<td valign="middle" style="width:26px;height:26px;border:1px solid #5c5c61;border-radius:6px;text-align:center;'
+            f'{sans(13, "#ffffff", 700, 1, "-.05em")}">Nr</td><td valign="middle" style="padding-left:10px;{mono(10, "#a1a1a6", 700, ".2em")}">{esc(kicker)}</td>'
+            if nr_tile else f'<td valign="middle" style="{mono(10, "#a1a1a6", 700, ".2em")}">{esc(kicker)}</td>')
+    stats_html = ""
+    if stats:
+        cells = "".join(
+            f'<td class="stat" style="padding-right:24px" valign="top"><div class="stat-n" style="{sans(20, "#ffffff", 800, 1.1, "-.03em")}white-space:nowrap">{esc(a)}</div>'
+            f'<div style="padding-top:3px;{mono(10, "#8e8e93", 400, ".1em")}white-space:nowrap">{esc(b)}</div></td>' for a, b in stats)
+        stats_html = f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px"><tr>{cells}</tr></table>'
     return row(f'''<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#000000" style="background:#000000;border-radius:22px">
 <tr><td style="padding:10px 10px 0">
-<a href="{esc(url)}" style="text-decoration:none"><img src="{esc(asset('neuronium-demo.gif'))}" width="540" alt="Neuronium — AI Operating System" style="display:block;width:100%;max-width:540px;height:auto;border:0;border-radius:14px"></a></td></tr>
-<tr><td class="ad-pad2" style="padding:24px 30px 30px">
-<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
-<td valign="middle" style="width:26px;height:26px;border:1px solid #5c5c61;border-radius:6px;text-align:center;{sans(13, '#ffffff', 700, 1, '-.05em')}">Nr</td>
-<td valign="middle" style="padding-left:10px;{mono(10, '#a1a1a6', 700, '.2em')}">{esc(t['nr_kicker'])}</td></tr></table>
-<div class="h1" style="padding-top:14px;{sans(27, '#ffffff', 800, 1.15, '-.03em')}">{esc(t['nr_title'])}</div>
-<p style="margin:12px 0 0;{sans(14, '#c7c7cc', 400, 1.55)}">{esc(t['nr_text'])}</p>
-<p style="margin:22px 0 0">{pill(url, t['nr_cta'])}<span style="display:inline-block;width:18px"></span><a href="{esc(url)}" style="{mono(11, '#ffffff', 700, '.14em')}text-decoration:none;border-bottom:1px solid #5c5c61;padding-bottom:2px">{esc(t['nr_demo'])}</a></p>
-</td></tr></table>''', "52px 40px 0")
+<a href="{esc(url)}" style="text-decoration:none"><img src="{esc(gif)}" width="540" alt="{esc(title)}" style="display:block;width:100%;max-width:540px;height:auto;border:0;border-radius:14px"></a></td></tr>
+<tr><td class="ad-pad" style="padding:24px 30px 30px">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>{tile}</tr></table>
+<div class="h1" style="padding-top:14px;{sans(27, '#ffffff', 800, 1.15, '-.03em')}">{esc(title)}</div>
+<p style="margin:12px 0 0;{sans(14, '#c7c7cc', 400, 1.55)}">{esc(text)}</p>
+{stats_html}
+<p style="margin:22px 0 0">{pill(url, cta)}</p>
+</td></tr></table>''', "56px 40px 0")
 
 
-def render(lang, issue, sections, asset, web_url, unsub_url, preview=False):
+SUN = ('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
+       'aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>')
+MOON = ('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
+        'stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>')
+
+
+def render(lang, issue, sections, web_url, unsub_url, web=False, preview=False):
     t = T[lang]
     n = (issue - FIRST_ISSUE).days // 7 + 1
     date_long = f"{t['wd'][issue.weekday()]}, {fmt_date(issue, lang)}"
-    utm = UTM.format(date=issue.isoformat())
-
-    # «В номере»
-    toc_cells = []
-    for i, s in enumerate(sections, 1):
-        toc_cells.append(f'''<td valign="top" style="padding:14px 10px 0 0;border-top:1px solid {LINE}">
-<div style="{mono(10, DIM, 700, '.14em')}">{i:02d}</div>
-<div style="padding-top:4px;{sans(15, INK, 700, 1.3, '-.01em')}">{esc(s['title'])}</div>
-<div style="padding-top:2px;{sans(12, MUTED, 400, 1.4)}">{esc(s['count'])}</div></td>''')
-    toc_rows = "".join(f'''<tr><td width="34" style="width:34px;padding:9px 0;border-top:1px solid {LINE};{mono(10, DIM, 700, '.14em')}">{i:02d}</td>
-<td style="padding:9px 0;border-top:1px solid {LINE};{sans(15, INK, 700, 1.3, '-.01em')}">{esc(s['title'])}</td>
-<td align="right" style="padding:9px 0;border-top:1px solid {LINE};{sans(12, MUTED, 400, 1.3)}">{esc(s['count'])}</td></tr>'''
-                       for i, s in enumerate(sections, 1))
-    toc = row(f'''<div style="{mono(10, INK, 700, '.2em')}">{esc(t['contents'])}</div>
-<table role="presentation" class="toc-d" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:10px"><tr>{''.join(toc_cells)}</tr></table>
-<!--[if !mso]><!--><table role="presentation" class="toc-m" width="100%" cellpadding="0" cellspacing="0" border="0" style="display:none;mso-hide:all;margin-top:10px">{toc_rows}</table><!--<![endif]-->''', "34px 40px 0")
+    parts = [t["parts"][s["key"]] for s in sections]
+    parts_txt = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + f" {t['and']} " + parts[-1]
+    hello = t["hello"].format(parts=parts_txt)
+    preheader = " · ".join(s["count"] for s in sections)
+    subject = t["subject"].format(n=n, lead=sections[0]["lead"] if sections else "")
 
     body = []
     for i, s in enumerate(sections, 1):
         body.append(section_header(f"{i:02d}", s["title"], s["label"], s["url"], t["missed"] if s["stale"] else None))
-        body.append(s["html"])
+        body.append(s["html_web"] if web else s["html"])
         if s.get("after"):
             body.append(s["after"])
 
@@ -451,11 +507,43 @@ def render(lang, issue, sections, asset, web_url, unsub_url, preview=False):
                                     for name, u in t["socials"])
     preview_bar = (f'<tr><td style="padding:12px 20px;background:#f5f5f7;text-align:center;{mono(10, MUTED, 400, ".12em")}">'
                    f'{esc(t["preview"])}</td></tr>') if preview else ""
-    lead = sections[0]["lead"] if sections else ""
-    preheader = " · ".join(s["count"] for s in sections)
-    parts = [t["parts"][s["key"]] for s in sections]
-    parts_txt = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + f" {t['and']} " + parts[-1]
-    hello = t["hello"].format(parts=parts_txt)
+
+    if web:
+        left = f'<a href="{SITE}/" style="color:{MUTED};text-decoration:none">← dataist.ai</a>'
+        right = (f'<button id="theme" type="button" style="{mono(10, MUTED, 700, ".14em")}">'
+                 f'<span class="t-dark">{MOON}<span>{esc(t["to_dark"])}</span></span>'
+                 f'<span class="t-light">{SUN}<span>{esc(t["to_light"])}</span></span></button>')
+        footer_note = ""
+    else:
+        left = f'<a href="{esc(web_url)}" style="color:{DIM};text-decoration:none">{esc(t["browser"])}</a>'
+        right = f'<a href="{SITE}/" style="color:{DIM};text-decoration:none">dataist.ai</a>'
+        footer_note = (f'<tr><td class="px" align="center" style="padding:26px 40px 0;{sans(12, MUTED, 400, 1.6)}">{esc(t["why"])}<br>'
+                       f'<a href="{esc(unsub_url)}" style="color:{MUTED};text-decoration:underline">{esc(t["unsub"])}</a> &nbsp;·&nbsp; '
+                       f'<a href="{esc(web_url)}" style="color:{MUTED};text-decoration:underline">{esc(t["browser"])}</a></td></tr>')
+
+    web_head = ""
+    web_script = ""
+    if web:
+        web_head = '''<script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
+<style>
+  html,body{background:#ffffff}
+  #page{background:#ffffff;min-height:100vh}
+  #theme{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  #theme svg{display:inline-block;vertical-align:middle}
+  #theme .t-light{display:none}
+  #theme > span{display:inline-flex;align-items:center;gap:8px}
+  html[data-theme="dark"],html[data-theme="dark"] body{background:#000000}
+  html[data-theme="dark"] #page{filter:invert(1) hue-rotate(180deg)}
+  html[data-theme="dark"] #page img,html[data-theme="dark"] #page .embed{filter:invert(1) hue-rotate(180deg)}
+  html[data-theme="dark"] #theme .t-dark{display:none}
+  html[data-theme="dark"] #theme .t-light{display:inline-flex}
+</style>'''
+        web_script = '''<script>
+(function(){var b=document.getElementById('theme');if(!b)return;b.addEventListener('click',function(){
+var d=document.documentElement,dark=d.getAttribute('data-theme')!=='dark';
+if(dark)d.setAttribute('data-theme','dark');else d.removeAttribute('data-theme');
+try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}});})();
+</script>'''
 
     return f'''<!DOCTYPE html>
 <html lang="{lang}" xmlns="http://www.w3.org/1999/xhtml">
@@ -464,42 +552,33 @@ def render(lang, issue, sections, asset, web_url, unsub_url, preview=False):
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="x-apple-disable-message-reformatting">
 <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
-<meta name="color-scheme" content="light">
-<meta name="supported-color-schemes" content="light">
-<title>{esc(t['subject'].format(n=n, lead=lead))}</title>
+<meta name="color-scheme" content="{'light dark' if web else 'light'}">
+<meta name="supported-color-schemes" content="{'light dark' if web else 'light'}">
+<title>{esc(subject)}</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
 <style>
   body{{margin:0!important;padding:0!important;background:#ffffff;-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%}}
   table{{border-collapse:collapse;mso-table-lspace:0;mso-table-rspace:0}}
   img{{-ms-interpolation-mode:bicubic}}
   a{{color:{INK}}}
-  :root{{color-scheme:light only;supported-color-schemes:light}}
   @media (max-width:620px){{
     .container{{width:100%!important}}
     .px{{padding-left:20px!important;padding-right:20px!important}}
-    .stack{{display:block!important;width:100%!important;max-width:100%!important;padding-left:0!important;padding-right:0!important}}
-    .stack-pad{{padding-bottom:18px!important}}
-    .toc{{padding:10px 0 10px 0!important}}
     .wordmark{{font-size:46px!important}}
-    .mark{{width:40px!important;height:40px!important;font-size:17px!important}}
-    .h1{{font-size:23px!important}}
+    .mark{{width:40px!important;height:40px!important;font-size:17px!important;line-height:40px!important}}
+    .h1{{font-size:22px!important}}
     .hide-m{{display:none!important}}
-    .center-m{{text-align:center!important}}
-    .center-t{{margin-left:auto!important;margin-right:auto!important}}
-    .circle{{width:160px!important;height:160px!important}}
-    .img-full{{width:100%!important;max-width:100%!important}}
-    .toc-d{{display:none!important}}
-    .toc-m{{display:table!important;width:100%!important}}
-    .tagline{{font-size:9px!important;letter-spacing:.12em!important}}
     .hello{{font-size:16px!important}}
-    .ad-pad{{padding:26px 18px!important}}
-    .ad-pad2{{padding:22px 20px 26px!important}}
-    .stat{{padding:0 7px!important}}
+    .ad-pad{{padding:22px 20px 26px!important}}
+    .stat{{padding-right:14px!important}}
     .stat-n{{font-size:17px!important}}
+    .socials{{font-size:10px!important;letter-spacing:.04em!important}}
   }}
 </style>
+{web_head}
 </head>
 <body style="margin:0;padding:0;background:#ffffff">
+<div id="page">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all">{esc(preheader)}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="background:#ffffff">
 {preview_bar}
@@ -508,8 +587,8 @@ def render(lang, issue, sections, asset, web_url, unsub_url, preview=False):
 
 <tr><td class="px" style="padding:22px 40px 0">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="{mono(10, DIM, 400, '.12em')}"><a href="{esc(web_url)}" style="color:{DIM};text-decoration:none">{esc(t['browser'])}</a></td>
-<td align="right" style="{mono(10, DIM, 400, '.12em')}"><a href="{SITE}/" style="color:{DIM};text-decoration:none">dataist.ai</a></td>
+<td style="{mono(10, DIM, 400, '.12em')}">{left}</td>
+<td align="right" style="{mono(10, DIM, 400, '.12em')}">{right}</td>
 </tr></table></td></tr>
 
 <tr><td class="px" style="padding:18px 40px 0">
@@ -519,14 +598,12 @@ def render(lang, issue, sections, asset, web_url, unsub_url, preview=False):
 <td align="right" style="border-top:1px solid {INK};border-bottom:1px solid {INK};padding:8px 0;{mono(10, INK, 700, '.18em')}">{esc(date_long)}</td>
 </tr></table></td></tr>
 
-<tr><td class="px" align="center" style="padding:34px 40px 0">
+<tr><td class="px" align="center" style="padding:36px 40px 0">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto"><tr>
 <td valign="middle"><div class="mark" style="width:54px;height:54px;border-radius:50%;background:{INK};color:#ffffff;text-align:center;font-family:{MONO};font-size:22px;font-weight:700;line-height:54px">i</div></td>
 <td valign="middle" class="wordmark" style="padding-left:16px;{sans(72, INK, 800, 1, '-.05em')}">{esc(t['brand'])}</td>
 </tr></table></td></tr>
-
-<tr><td class="px tagline" align="center" style="padding:18px 40px 0;{mono(10, MUTED, 700, '.22em')}">{esc(t['tagline'])}</td></tr>
-<tr><td class="px" style="padding:20px 40px 0"><div style="border-top:3px solid {INK};height:3px;border-bottom:1px solid {INK};line-height:3px;font-size:0">&nbsp;</div></td></tr>
+<tr><td class="px" style="padding:30px 40px 0"><div style="border-top:3px solid {INK};height:3px;border-bottom:1px solid {INK};line-height:3px;font-size:0">&nbsp;</div></td></tr>
 
 <tr><td class="px" style="padding:30px 40px 0">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
@@ -536,47 +613,48 @@ def render(lang, issue, sections, asset, web_url, unsub_url, preview=False):
 <p style="margin:12px 0 0;{mono(10, MUTED, 700, '.14em')}">{esc(t['sign'])} · {esc(t['sign_role'])}</p></td>
 </tr></table></td></tr>
 
-{toc}
 {''.join(body)}
 
-<tr><td class="px" style="padding:64px 40px 0"><div style="border-top:3px solid {INK};height:3px;border-bottom:1px solid {INK};line-height:3px;font-size:0">&nbsp;</div></td></tr>
+<tr><td class="px" style="padding:68px 40px 0"><div style="border-top:3px solid {INK};height:3px;border-bottom:1px solid {INK};line-height:3px;font-size:0">&nbsp;</div></td></tr>
 <tr><td class="px" align="center" style="padding:28px 40px 0;{sans(26, INK, 800, 1, '-.04em')}">{esc(t['brand'])}</td></tr>
-<tr><td class="px" align="center" style="padding:10px 40px 0;{mono(10, MUTED, 700, '.2em')}">{esc(t['follow'])}</td></tr>
-<tr><td class="px" align="center" style="padding:12px 40px 0;{mono(11, INK, 700, '.1em')}">{socials}</td></tr>
-<tr><td class="px" align="center" style="padding:26px 40px 0;{sans(12, MUTED, 400, 1.6)}">{esc(t['why'])}<br>
-<a href="{esc(unsub_url)}" style="color:{MUTED};text-decoration:underline">{esc(t['unsub'])}</a> &nbsp;·&nbsp; <a href="{esc(web_url)}" style="color:{MUTED};text-decoration:underline">{esc(t['browser'])}</a></td></tr>
-<tr><td class="px" align="center" style="padding:22px 40px 48px">
+<tr><td class="px socials" align="center" style="padding:16px 40px 0;{mono(11, INK, 700, '.1em')}">{socials}</td></tr>
+{footer_note}
+<tr><td class="px" align="center" style="padding:24px 40px 48px">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto"><tr>
 <td valign="middle" style="{sans(12, MUTED, 400, 1)}">{esc(t['made'])}</td>
 <td valign="middle" style="padding:0 8px"><div style="width:22px;height:22px;border:1px solid #c7c7cc;border-radius:5px;text-align:center;{sans(11, INK, 700, 1, '-.05em')}line-height:22px">Nr</div></td>
 <td valign="middle" style="{sans(12, INK, 700, 1)}">{esc(t['made_name'])}</td></tr></table></td></tr>
 
 </table></td></tr></table>
+</div>
+{web_script}
 </body></html>
-'''
+''', subject, preheader
 
 
 # ───────────────────────── сборка ─────────────────────────
-def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url="#", unsub_url="{{ unsubscribe_url }}",
-          assets_dir=ROOT / "digest/assets", base_url=None):
+def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url="#",
+          unsub_url="{{ unsubscribe_url }}", base_url=None, embed=True):
     t = T[lang]
-    end = issue
-    start = issue - dt.timedelta(days=6)
-    outdir.mkdir(parents=True, exist_ok=True)
-    (outdir / "img").mkdir(exist_ok=True)
+    start, end = issue - dt.timedelta(days=6), issue
+    outdir = Path(outdir)
+    (outdir / "img").mkdir(parents=True, exist_ok=True)
     utm = UTM.format(date=issue.isoformat())
 
     def asset(name):
-        p = assets_dir / name
         if inline:
-            mime = "image/gif" if name.endswith(".gif") else "image/jpeg"
-            return f"data:{mime};base64," + base64.b64encode(p.read_bytes()).decode()
-        return f"{ASSETS}/{name}"
+            return "data:image/gif;base64," + base64.b64encode((ASSETS_DIR / name).read_bytes()).decode()
+        return f"{ASSETS_URL}/{name}"
 
-    def local_img(path):
+    def local_img(path, absolute):
         if inline:
             return "data:image/jpeg;base64," + base64.b64encode(path.read_bytes()).decode()
-        return f"{base_url.rstrip('/')}/img/{path.name}" if base_url else f"img/{path.name}"
+        if absolute and base_url:
+            return f"{base_url.rstrip('/')}/img/{path.name}"
+        return f"img/{path.name}"
+
+    def with_utm(url):
+        return url + ("&" if "?" in url else "?") + utm
 
     sections = []
 
@@ -588,23 +666,20 @@ def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url=
         vids = []
     items, stale = pick(vids, start, end, 3, fill)
     if items:
-        html_parts = []
-        thumbs = {}
+        mail, webv = [], []
         for i, v in enumerate(items):
-            p = outdir / "img" / (f"yt-{v['id']}.jpg" if i == 0 else f"yt-{v['id']}-s.jpg")
-            if p.exists() or youtube_thumb(v["id"], p, corner=(i > 0)):
-                thumbs[v["id"]] = local_img(p)
-        lead, rest = items[0], items[1:]
-        views = f" · {lead['views']:,} {t['views']}".replace(",", " ") if lead.get("views") else ""
-        html_parts.append(lead_card(thumbs.get(lead["id"]), lead["url"], esc(fmt_date(lead["date"], lang, True)) + " · YouTube" + esc(views),
-                                    lead["title"], clip(lead["text"], 220), "▶ " + t["watch"]))
-        if rest:
-            html_parts.append(grid([small_card(thumbs.get(v["id"]), v["url"], esc(fmt_date(v["date"], lang, True)) + " · YouTube", v["title"])
-                                    for v in rest]))
+            p = outdir / "img" / f"yt-{v['id']}.jpg"
+            ok = p.exists() or youtube_thumb(v["id"], p)
+            views = f" · {fmt_num(v['views'], lang)} {plural(v['views'], t['views'])}" if v.get("views") else ""
+            meta = esc(fmt_date(v["date"], lang, True) + views)
+            paras = video_text(v["paras"])
+            mail.append(card(v["url"], meta, v["title"], paras, t["watch"], img=local_img(p, True) if ok else None, first=i == 0))
+            webv.append(card(v["url"], meta, v["title"], paras, t["watch"],
+                             img=None if embed else (local_img(p, False) if ok else None), embed=v["id"] if embed else None, first=i == 0))
         cnt = len(items)
-        count = (f"{cnt} {plural(cnt, 'видео', 'видео', 'видео')}" if lang == "ru" else f"{cnt} video{'s' if cnt > 1 else ''}")
         sections.append({"key": "video", "title": t["s_video"], "label": t["l_video"], "url": t["u_video"], "stale": stale,
-                         "html": "".join(html_parts), "count": count, "lead": lead["title"]})
+                         "html": "".join(mail), "html_web": "".join(webv), "lead": items[0]["title"],
+                         "count": f"{cnt} {plural(cnt, ('видео', 'видео', 'видео'))}" if lang == "ru" else f"{cnt} video{'s' if cnt > 1 else ''}"})
 
     # 02 — Авторский канал
     if lang == "ru":
@@ -615,76 +690,79 @@ def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url=
             posts = []
         items, stale = pick(posts, start, end, 3, fill)
         if items:
-            html_parts = [post_block(esc(fmt_date(p["date"], lang, True)) + " · Telegram", p["title"], clip(p["text"], 260),
-                                     p["url"], t["read_tg"] + " ↗", first=(i == 0)) for i, p in enumerate(items)]
+            mail, webv = [], []
+            for i, p in enumerate(items):
+                img_m = img_w = None
+                src = post_cover_source(p)
+                if src:
+                    path = outdir / "img" / f"tg-{p['id']}.jpg"
+                    if path.exists() or save_cover(src, path):
+                        img_m, img_w = local_img(path, True), local_img(path, False)
+                meta = esc(fmt_date(p["date"], lang, True))
+                paras = excerpt(p["paras"])
+                mail.append(card(p["url"], meta, p["title"], paras, t["open_post"], img=img_m, first=i == 0))
+                webv.append(card(p["url"], meta, p["title"], paras, t["open_post"], img=img_w, first=i == 0))
             cnt = len(items)
-            sections.append({"key": "author", "title": t["s_author"], "label": t["l_author"], "url": t["u_author"], "stale": stale,
-                             "html": "".join(html_parts), "count": f"{cnt} {plural(cnt, 'пост', 'поста', 'постов')}",
-                             "lead": items[0]["title"]})
+            sections.append({"key": "author", "title": t["s_author"], "label": t["l_author"], "url": t["u_author"],
+                             "stale": stale, "html": "".join(mail), "html_web": "".join(webv), "lead": items[0]["title"],
+                             "count": f"{cnt} {plural(cnt, ('пост', 'поста', 'постов'))}"})
     else:
         items, stale = pick(author_en(), start, end, 3, fill)
         if items:
-            lead, rest = items[0], items[1:]
-            html_parts = [lead_card(lead["cover"], lead["url"], esc(fmt_date(lead["date"], lang, True)) + " · Dataist",
-                                    lead["title"], clip(lead["text"], 230), t["read_short"] + " →")]
-            if rest:
-                html_parts.append(grid([small_card(x["cover"], x["url"], esc(fmt_date(x["date"], lang, True)), x["title"]) for x in rest]))
+            cards = "".join(card(x["url"], esc(fmt_date(x["date"], lang, True)), x["title"], [x["text"]], t["read_article"],
+                                 img=x["cover"] or None, first=i == 0) for i, x in enumerate(items))
             cnt = len(items)
-            sections.append({"key": "author", "title": t["s_author"], "label": t["l_author"], "url": t["u_author"], "stale": stale,
-                             "html": "".join(html_parts), "count": f"{cnt} post{'s' if cnt > 1 else ''}", "lead": lead["title"]})
-    if sections and sections[-1]["title"] == t["s_author"]:
-        sections[-1]["after"] = ad_ait(t, asset, utm)
+            sections.append({"key": "author", "title": t["s_author"], "label": t["l_author"], "url": t["u_author"],
+                             "stale": stale, "html": cards, "html_web": cards, "lead": items[0]["title"],
+                             "count": f"{cnt} post{'s' if cnt > 1 else ''}"})
+
+    ait = ad_card(asset(t["ait_gif"]), with_utm(t["ait_url"]), t["ait_kicker"], t["ait_title"], t["ait_text"],
+                  t["ait_cta"], stats=t["ait_stats"])
+    if sections and sections[-1]["key"] == "author":
+        sections[-1]["after"] = ait
+        ait = None
 
     # 03 — Исследования
     papers = research(lang)
     new = [x for x in papers if start <= x["date"] <= end]
-    items = new[:4] if len(new) >= 3 or not fill else (new + [x for x in papers if x not in new])[:3]
-    stale = fill and not new
+    items = new[:5] if (len(new) >= 3 or not fill) else (new + [x for x in papers if x not in new])[:3]
     if items:
-        lead, rest = items[0], items[1:]
-        mins = f" · {lead['minutes']} {t['min']}" if lead.get("minutes") else ""
-        html_parts = [lead_card(lead["cover"], lead["url"], esc(fmt_date(lead["date"], lang, True)) + esc(mins),
-                                lead["title"], clip(lead["text"], 240), t["read"] + " →")]
-        if rest:
-            html_parts.append(grid([small_card(x["cover"], x["url"],
-                                               esc(fmt_date(x["date"], lang, True)) + (f" · {x['minutes']} {t['min']}" if x.get('minutes') else ""),
-                                               x["title"]) for x in rest]))
+        cards = "".join(card(x["url"], esc(fmt_date(x["date"], lang, True) + (f" · {x['minutes']} {t['min']}" if x.get("minutes") else "")),
+                             x["title"], [x["text"]], t["read"], img=x["cover"], first=i == 0) for i, x in enumerate(items))
         cnt = len(items)
-        count = (f"{cnt} {plural(cnt, 'исследование', 'исследования', 'исследований')}" if lang == "ru"
-                 else f"{cnt} paper{'s' if cnt > 1 else ''}")
-        sections.append({"key": "research", "title": t["s_research"], "label": t["l_research"], "url": t["u_research"], "stale": stale,
-                         "html": "".join(html_parts), "count": count, "lead": lead["title"]})
+        sections.append({"key": "research", "title": t["s_research"], "label": t["l_research"], "url": t["u_research"],
+                         "stale": fill and not new, "html": cards, "html_web": cards, "lead": items[0]["title"],
+                         "count": (f"{cnt} {plural(cnt, ('исследование', 'исследования', 'исследований'))}" if lang == "ru"
+                                   else f"{cnt} paper{'s' if cnt > 1 else ''}")})
 
     # 04 — Обучение (уроки Академии есть только на русском)
     if lang == "ru":
         items, stale = pick(education(), start, end, 2, fill)
         if items:
-            html_parts = []
-            for x in items:
-                meta = esc(t["module"].format(m=x["module"][0], l=x["module"][1])) if x["module"] else esc(fmt_date(x["date"], lang, True))
-                html_parts.append(side_card(x["cover"], x["url"], meta, x["title"], clip(x["text"], 170), t["lesson"] + " →"))
+            cards = "".join(card(x["url"], esc(t["module"].format(m=x["module"][0], l=x["module"][1]) if x["module"]
+                                                else fmt_date(x["date"], lang, True)),
+                                 x["title"], [x["text"]], t["lesson"], img=x["cover"], first=i == 0) for i, x in enumerate(items))
             cnt = len(items)
             sections.append({"key": "edu", "title": t["s_edu"], "label": t["l_edu"], "url": t["u_edu"], "stale": stale,
-                             "html": "".join(html_parts), "count": f"{cnt} {plural(cnt, 'урок', 'урока', 'уроков')}",
-                             "lead": items[0]["title"]})
+                             "html": cards, "html_web": cards, "lead": items[0]["title"],
+                             "count": f"{cnt} {plural(cnt, ('урок', 'урока', 'уроков'))}"})
+
     if not sections:
         raise SystemExit("нет материалов для выпуска")
-    # Нейроний — сразу после «Обучения» (или после последнего раздела, если обучения нет)
-    sections[-1]["after"] = (sections[-1].get("after") or "") + ad_neuronium(t, asset, utm)
-    # если «Авторского канала» нет — реклама ИИ-трансформации идёт после первого раздела
-    if not any("andre.technology" in (s.get("after") or "") for s in sections):
-        sections[0]["after"] = ad_ait(t, asset, utm) + (sections[0].get("after") or "")
+    if ait:                                   # «Авторского канала» нет — реклама после первого раздела
+        sections[0]["after"] = ait + (sections[0].get("after") or "")
+    sections[-1]["after"] = (sections[-1].get("after") or "") + ad_card(
+        asset("neuronium-demo.gif"), with_utm(t["nr_url"]), t["nr_kicker"], t["nr_title"], t["nr_text"], t["nr_cta"], nr_tile=True)
 
-    page = render(lang, issue, sections, asset, web_url, unsub_url, preview)
-    out = outdir / "index.html"
-    out.write_text(page, "utf-8")
+    email, subject, preheader = render(lang, issue, sections, web_url, unsub_url, web=False, preview=preview)
+    webpage, _, _ = render(lang, issue, sections, web_url, unsub_url, web=True, preview=preview)
+    (outdir / "email.html").write_text(email, "utf-8")
+    (outdir / "index.html").write_text(webpage, "utf-8")
     n = (issue - FIRST_ISSUE).days // 7 + 1
-    meta = {"lang": lang, "issue": n, "date": issue.isoformat(),
-            "subject": t["subject"].format(n=n, lead=sections[0]["lead"] if sections else ""),
-            "preheader": " · ".join(s["count"] for s in sections),
+    meta = {"lang": lang, "issue": n, "date": issue.isoformat(), "subject": subject, "preheader": preheader,
             "sections": [{"title": s["title"], "count": s["count"], "stale": s["stale"]} for s in sections]}
     (outdir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), "utf-8")
-    return out, meta
+    return outdir, meta
 
 
 def next_friday(today=None):
@@ -700,10 +778,11 @@ if __name__ == "__main__":
     ap.add_argument("--fill", action="store_true")
     ap.add_argument("--inline", action="store_true")
     ap.add_argument("--preview", action="store_true")
-    ap.add_argument("--web-url", default="#")
-    ap.add_argument("--base-url", help="абсолютный адрес папки выпуска для картинок (img/…)")
+    ap.add_argument("--no-embed", action="store_true", help="в веб-версии — обложки видео вместо плеера")
+    ap.add_argument("--web-url", default="#", help="адрес веб-версии для ссылки «Открыть в браузере»")
+    ap.add_argument("--base-url", help="абсолютный адрес папки выпуска — для картинок img/ в письме")
     a = ap.parse_args()
     issue = dt.date.fromisoformat(a.date) if a.date else next_friday()
-    out, meta = build(a.lang, issue, Path(a.outdir), fill=a.fill, inline=a.inline, preview=a.preview,
-                      web_url=a.web_url, unsub_url="#" if a.preview else "{{ unsubscribe_url }}", base_url=a.base_url)
+    out, meta = build(a.lang, issue, a.outdir, fill=a.fill, inline=a.inline, preview=a.preview, web_url=a.web_url,
+                      unsub_url="#" if a.preview else "{{ unsubscribe_url }}", base_url=a.base_url, embed=not a.no_embed)
     print(out, json.dumps(meta, ensure_ascii=False))
