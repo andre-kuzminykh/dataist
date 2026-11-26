@@ -48,10 +48,11 @@ T = {
         "brand": "ДАТАИСТ", "issue": "Выпуск № {n}", "kind": "Еженедельный дайджест",
         "hello": "Привет! Это пятничный Датаист — всё главное за неделю в одном письме: {parts}. Устраивайтесь поудобнее.",
         "parts": {"video": "новые видео", "author": "мысли из канала", "research": "свежие исследования",
-                  "edu": "уроки Академии"}, "and": "и",
+                  "edu": "уроки Академии", "news": "новости недели"}, "and": "и",
         "sign": "Андрей Кузьминых", "sign_role": "Основатель Andre AI Technologies",
         "missed": "Если пропустили", "browser": "Открыть в браузере",
         "s_video": "Видеожурнал", "s_author": "Авторский канал", "s_research": "Исследования", "s_edu": "Обучение",
+        "s_news": "Новости", "l_news": "Live ↗", "u_news": "https://t.me/neuronium_ai",
         "l_video": "Подписаться ↗", "l_author": "Подписаться ↗", "l_research": "Лаборатория ↗", "l_edu": "Академия ↗",
         "u_video": "https://www.youtube.com/@andre_dataist", "u_author": "https://t.me/+AXsoJ7OiMG4zMzFi",
         "u_research": "https://t.me/+gjvJGFW0iXUwMjky", "u_edu": "https://t.me/dataist_academy",
@@ -83,10 +84,11 @@ T = {
         "brand": "DATAIST", "issue": "Issue No. {n}", "kind": "Weekly digest",
         "hello": "Hi! This is the Friday Dataist — the week’s essentials in one letter: {parts}. Get comfortable.",
         "parts": {"video": "new videos", "author": "notes from my channel", "research": "the freshest AI research",
-                  "edu": "new lessons"}, "and": "and",
+                  "edu": "new lessons", "news": "the week’s AI news"}, "and": "and",
         "sign": "Andre Kuzminykh", "sign_role": "Founder of Andre AI Technologies",
         "missed": "In case you missed it", "browser": "View in browser",
         "s_video": "Video Journal", "s_author": "Author’s Channel", "s_research": "Research", "s_edu": "Learning",
+        "s_news": "News", "l_news": "Live ↗", "u_news": "https://x.com/neuronium_ai",
         "l_video": "Subscribe ↗", "l_author": "Follow ↗", "l_research": "All research ↗", "l_edu": "Academy ↗",
         "u_video": "https://www.youtube.com/@andre.dataist", "u_author": "https://x.com/andre_dataist",
         "u_research": "https://dataist.ai/", "u_edu": "https://dataist.ai/",
@@ -171,16 +173,22 @@ def by_sentences(text, limit):
     return " ".join(out)
 
 
+LIST_ITEM = re.compile(r"^(\d{1,2}[.)]|[-•–—▪●])\s")
+
+
 def excerpt(paras, target=420, hard=680):
-    """Целые абзацы без обрывов: набираем, пока не наберётся target; длинный абзац — по предложениям."""
+    """Целые абзацы без обрывов: набираем, пока не наберётся target; длинный абзац — по предложениям.
+    Перед списком останавливаемся, а вводную фразу списка («…:») без самого списка не берём."""
     out, total = [], 0
     for p in paras:
-        if out and (total >= target or total + len(p) > hard):
+        if out and (total >= target or total + len(p) > hard or LIST_ITEM.match(p)):
             break
         if len(p) > hard:
             p = by_sentences(p, hard)
         out.append(p)
         total += len(p)
+    while len(out) > 1 and out[-1].rstrip().endswith(":"):
+        out.pop()
     return out
 
 
@@ -260,6 +268,21 @@ def youtube(lang):
     return out
 
 
+POST_CTA = re.compile(r"^(📜|📄|📖|👉|👇|🔗|📌|➡|⬇)|^(#\S+\s*)+$", re.I)
+POST_CTA_SHORT = re.compile(r"стать|читат|подробн|ссылк|полност|full article|read more", re.I)
+
+
+def clean_post(paras):
+    return [p for p in paras if not POST_CTA.search(p) and not (len(p) < 70 and POST_CTA_SHORT.search(p))]
+
+
+def first_site_link(post, prefix=""):
+    for link in post.get("links", []):
+        if link.startswith(f"{SITE}/{prefix}"):
+            return link
+    return None
+
+
 def telegram(channel):
     page = fetch(f"https://t.me/s/{channel}")
     posts = []
@@ -314,6 +337,40 @@ def education():
     return sorted(out, key=lambda x: x["date"], reverse=True)
 
 
+def news(lang, start, end):
+    """Новости недели: RU — news/index.json; EN — английские версии из реестра коротких ссылок."""
+    if lang == "ru":
+        data = json.loads((ROOT / "news/index.json").read_text("utf-8"))
+        short = {}
+        try:
+            reg = json.loads((ROOT / "shortlinks/registry.json").read_text("utf-8"))["links"]
+            short = {v["ru"]: num for num, v in reg.items() if v.get("section") == "news" and v.get("ru")}
+        except Exception:
+            pass
+
+        def url_of(x):
+            num = short.get("/" + x["url"].replace(SITE + "/", "").strip("/") + "/")
+            return f"{SITE}/{num}" if num else x["url"]
+
+        items = [{"title": squash(x["title"]), "url": url_of(x), "date": parse_date(x["date"]), "at": x.get("published_at", "")}
+                 for x in data if x.get("date")]
+    else:
+        reg = json.loads((ROOT / "shortlinks/registry.json").read_text("utf-8"))["links"]
+        items = []
+        for num, v in reg.items():
+            if v.get("section") != "news" or not v.get("en") or not v.get("date"):
+                continue
+            d = parse_date(v["date"])
+            if not (start <= d <= end):
+                continue
+            rel = v["en"].strip("/")
+            title = meta_tag(rel, "og:title") or ""
+            if title:
+                items.append({"title": squash(title), "url": f"{SITE}/{rel}/", "date": d, "at": v["date"]})
+    items = [x for x in items if start <= x["date"] <= end]
+    return sorted(items, key=lambda x: (x["date"], x["at"]), reverse=True)
+
+
 def author_en():
     data = json.loads((ROOT / "technology/en/index.json").read_text("utf-8"))
     out = [{"title": x["title"], "url": x["url"], "date": parse_date(x["date"]), "cover": x.get("cover", ""),
@@ -352,13 +409,22 @@ def save_cover(src, out_path, ratio=16 / 9, width=1120):
 
 
 def post_cover_source(post):
-    """Картинка превью первой ссылки поста; если превью нет — og:image страницы сайта по первой ссылке."""
+    """Обложка поста — картинка превью его первой ссылки. Если ссылка ведёт на dataist.ai,
+    берём ту же картинку из копии сайта (лучше качество, без CDN Telegram)."""
+    links = post.get("links", [])
+    if links and links[0].startswith(SITE + "/"):
+        rel = links[0][len(SITE) + 1:].split("?")[0].split("#")[0].strip("/")
+        card_img = ROOT / rel / "cover_card.jpg"
+        if card_img.exists():
+            return f"{SITE}/{rel}/cover_card.jpg"
+        og = meta_tag(rel, "og:image")
+        if og:
+            return og
     if post.get("preview_img"):
         return post["preview_img"]
-    for link in post.get("links", []):
+    for link in links:
         if link.startswith(SITE + "/"):
-            rel = link[len(SITE) + 1:].split("?")[0].strip("/")
-            og = meta_tag(rel, "og:image")
+            og = meta_tag(link[len(SITE) + 1:].split("?")[0].strip("/"), "og:image")
             if og:
                 return og
     return None
@@ -451,8 +517,8 @@ def card(url, meta, title, paras, cta, img=None, embed=None, first=False):
         media = ""
     text = "".join(f'<p style="margin:{10 if i == 0 else 12}px 0 0;{sans(15, BODY)}">{esc(p)}</p>' for i, p in enumerate(paras))
     return divider + row(f'''{media}
-<div style="padding-top:{18 if media else 0}px;{mono(11, MUTED, 400, '.12em')}">{meta}</div>
-<h2 class="h1" style="margin:8px 0 0;{sans(24, INK, 800, 1.2, '-.03em')}"><a href="{esc(url)}" style="color:{INK};text-decoration:none">{esc(title)}</a></h2>
+{f'<div style="padding-top:{18 if media else 0}px;{mono(11, MUTED, 400, ".12em")}">{meta}</div>' if meta else ''}
+<h2 class="h1" style="margin:{8 if meta else (18 if media else 0)}px 0 0;{sans(24, INK, 800, 1.2, '-.03em')}"><a href="{esc(url)}" style="color:{INK};text-decoration:none">{esc(title)}</a></h2>
 {text}
 <p style="margin:16px 0 0">{link_cta(url, cta)}</p>''', f"{20 if first else 34}px 40px 0")
 
@@ -480,6 +546,13 @@ def ad_card(gif, url, kicker, title, text, cta, stats=None, nr_tile=False):
 </td></tr></table>''', "56px 40px 0")
 
 
+def news_list(items):
+    """Новости одной колонкой строк: только заголовки-ссылки и тонкие разделители.
+    Стиль строки — в классах .nr/.na (письмо легче: Gmail обрезает письма тяжелее 102 КБ)."""
+    rows = "".join(f'<tr><td class="nr"><a class="na" href="{esc(x["url"])}">{esc(x["title"])}</a></td></tr>' for x in items)
+    return row(f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{rows}</table>', "16px 40px 0")
+
+
 SUN = ('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
        'aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>')
 MOON = ('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
@@ -498,7 +571,7 @@ def render(lang, issue, sections, web_url, unsub_url, web=False, preview=False):
 
     body = []
     for i, s in enumerate(sections, 1):
-        body.append(section_header(f"{i:02d}", s["title"], s["label"], s["url"], t["missed"] if s["stale"] else None))
+        body.append(section_header(f"{i:02d}", s["title"], s["label"], s["url"]))
         body.append(s["html_web"] if web else s["html"])
         if s.get("after"):
             body.append(s["after"])
@@ -561,6 +634,8 @@ try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}});})();
   table{{border-collapse:collapse;mso-table-lspace:0;mso-table-rspace:0}}
   img{{-ms-interpolation-mode:bicubic}}
   a{{color:{INK}}}
+  .nr{{padding:10px 0;border-top:1px solid {LINE}}}
+  .na{{font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.45;font-weight:500;color:{INK};text-decoration:none}}
   @media (max-width:620px){{
     .container{{width:100%!important}}
     .px{{padding-left:20px!important;padding-right:20px!important}}
@@ -658,6 +733,31 @@ def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url=
 
     sections = []
 
+    def tg_posts(channel):
+        try:
+            return telegram(channel)
+        except Exception as e:
+            print(f"telegram {channel}:", e, file=sys.stderr)
+            return []
+
+    def tg_cards(posts, cta, link_of, meta_of, prefix):
+        """Посты Telegram карточками: обложка — превью первой ссылки, текст — целые абзацы."""
+        mail, webv = [], []
+        for i, p in enumerate(posts):
+            img_m = img_w = None
+            src = post_cover_source(p)
+            if src:
+                path = outdir / "img" / f"{prefix}-{p['id']}.jpg"
+                if path.exists() or save_cover(src, path):
+                    img_m, img_w = local_img(path, True), local_img(path, False)
+            url, meta, paras = link_of(p), meta_of(p), excerpt(clean_post(p["paras"]))
+            mail.append(card(url, meta, p["title"], paras, cta, img=img_m, first=i == 0))
+            webv.append(card(url, meta, p["title"], paras, cta, img=img_w, first=i == 0))
+        return "".join(mail), "".join(webv)
+
+    def site_rel(url):
+        return url[len(SITE) + 1:].split("?")[0].split("#")[0].strip("/") if url and url.startswith(SITE + "/") else None
+
     # 01 — Видеожурнал
     try:
         vids = youtube(lang)
@@ -670,47 +770,29 @@ def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url=
         for i, v in enumerate(items):
             p = outdir / "img" / f"yt-{v['id']}.jpg"
             ok = p.exists() or youtube_thumb(v["id"], p)
-            views = f" · {fmt_num(v['views'], lang)} {plural(v['views'], t['views'])}" if v.get("views") else ""
-            meta = esc(fmt_date(v["date"], lang, True) + views)
             paras = video_text(v["paras"])
-            mail.append(card(v["url"], meta, v["title"], paras, t["watch"], img=local_img(p, True) if ok else None, first=i == 0))
-            webv.append(card(v["url"], meta, v["title"], paras, t["watch"],
+            mail.append(card(v["url"], "", v["title"], paras, t["watch"], img=local_img(p, True) if ok else None, first=i == 0))
+            webv.append(card(v["url"], "", v["title"], paras, t["watch"],
                              img=None if embed else (local_img(p, False) if ok else None), embed=v["id"] if embed else None, first=i == 0))
         cnt = len(items)
         sections.append({"key": "video", "title": t["s_video"], "label": t["l_video"], "url": t["u_video"], "stale": stale,
                          "html": "".join(mail), "html_web": "".join(webv), "lead": items[0]["title"],
-                         "count": f"{cnt} {plural(cnt, ('видео', 'видео', 'видео'))}" if lang == "ru" else f"{cnt} video{'s' if cnt > 1 else ''}"})
+                         "count": f"{cnt} видео" if lang == "ru" else f"{cnt} video{'s' if cnt > 1 else ''}"})
 
     # 02 — Авторский канал
     if lang == "ru":
-        try:
-            posts = telegram(TELEGRAM["ru"])
-        except Exception as e:
-            print("telegram:", e, file=sys.stderr)
-            posts = []
-        items, stale = pick(posts, start, end, 3, fill)
+        items, stale = pick(tg_posts(TELEGRAM["ru"]), start, end, 3, fill)
         if items:
-            mail, webv = [], []
-            for i, p in enumerate(items):
-                img_m = img_w = None
-                src = post_cover_source(p)
-                if src:
-                    path = outdir / "img" / f"tg-{p['id']}.jpg"
-                    if path.exists() or save_cover(src, path):
-                        img_m, img_w = local_img(path, True), local_img(path, False)
-                meta = esc(fmt_date(p["date"], lang, True))
-                paras = excerpt(p["paras"])
-                mail.append(card(p["url"], meta, p["title"], paras, t["open_post"], img=img_m, first=i == 0))
-                webv.append(card(p["url"], meta, p["title"], paras, t["open_post"], img=img_w, first=i == 0))
+            mail, webv = tg_cards(items, t["open_post"], lambda p: p["url"], lambda p: "", "tg")
             cnt = len(items)
             sections.append({"key": "author", "title": t["s_author"], "label": t["l_author"], "url": t["u_author"],
-                             "stale": stale, "html": "".join(mail), "html_web": "".join(webv), "lead": items[0]["title"],
+                             "stale": stale, "html": mail, "html_web": webv, "lead": items[0]["title"],
                              "count": f"{cnt} {plural(cnt, ('пост', 'поста', 'постов'))}"})
     else:
         items, stale = pick(author_en(), start, end, 3, fill)
         if items:
-            cards = "".join(card(x["url"], esc(fmt_date(x["date"], lang, True)), x["title"], [x["text"]], t["read_article"],
-                                 img=x["cover"] or None, first=i == 0) for i, x in enumerate(items))
+            cards = "".join(card(x["url"], "", x["title"], [x["text"]], t["read_article"], img=x["cover"] or None, first=i == 0)
+                            for i, x in enumerate(items))
             cnt = len(items)
             sections.append({"key": "author", "title": t["s_author"], "label": t["l_author"], "url": t["u_author"],
                              "stale": stale, "html": cards, "html_web": cards, "lead": items[0]["title"],
@@ -722,37 +804,73 @@ def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url=
         sections[-1]["after"] = ait
         ait = None
 
-    # 03 — Исследования
-    papers = research(lang)
-    new = [x for x in papers if start <= x["date"] <= end]
-    items = new[:5] if (len(new) >= 3 or not fill) else (new + [x for x in papers if x not in new])[:3]
-    if items:
-        cards = "".join(card(x["url"], esc(fmt_date(x["date"], lang, True) + (f" · {x['minutes']} {t['min']}" if x.get("minutes") else "")),
-                             x["title"], [x["text"]], t["read"], img=x["cover"], first=i == 0) for i, x in enumerate(items))
-        cnt = len(items)
-        sections.append({"key": "research", "title": t["s_research"], "label": t["l_research"], "url": t["u_research"],
-                         "stale": fill and not new, "html": cards, "html_web": cards, "lead": items[0]["title"],
-                         "count": (f"{cnt} {plural(cnt, ('исследование', 'исследования', 'исследований'))}" if lang == "ru"
-                                   else f"{cnt} paper{'s' if cnt > 1 else ''}")})
-
-    # 04 — Обучение (уроки Академии есть только на русском)
+    # 03 — Исследования: RU — посты Лаборатории (@dataist_lab), EN — исследования сайта
     if lang == "ru":
-        items, stale = pick(education(), start, end, 2, fill)
+        posts = tg_posts("dataist_lab")
+        new = [p for p in posts if start <= p["date"] <= end]
+        items = new[:5] if (len(new) >= 3 or not fill) else (new + [p for p in posts if p not in new])[:3]
+
+        def research_link(p):
+            return first_site_link(p, "research/") or first_site_link(p) or p["url"]
+
+        def research_meta(p):
+            rel = site_rel(first_site_link(p, "research/"))
+            mins = read_minutes([rel]) if rel else None
+            return esc(f"{mins} {t['min']}") if mins else ""
+
         if items:
-            cards = "".join(card(x["url"], esc(t["module"].format(m=x["module"][0], l=x["module"][1]) if x["module"]
-                                                else fmt_date(x["date"], lang, True)),
-                                 x["title"], [x["text"]], t["lesson"], img=x["cover"], first=i == 0) for i, x in enumerate(items))
+            mail, webv = tg_cards(items, t["read"], research_link, research_meta, "lab")
+            cnt = len(items)
+            sections.append({"key": "research", "title": t["s_research"], "label": t["l_research"], "url": t["u_research"],
+                             "stale": fill and not new, "html": mail, "html_web": webv, "lead": items[0]["title"],
+                             "count": f"{cnt} {plural(cnt, ('исследование', 'исследования', 'исследований'))}"})
+    else:
+        papers = research(lang)
+        new = [x for x in papers if start <= x["date"] <= end]
+        items = new[:5] if (len(new) >= 3 or not fill) else (new + [x for x in papers if x not in new])[:3]
+        if items:
+            cards = "".join(card(x["url"], esc(f"{x['minutes']} {t['min']}") if x.get("minutes") else "",
+                                 x["title"], [x["text"]], t["read"], img=x["cover"], first=i == 0) for i, x in enumerate(items))
+            cnt = len(items)
+            sections.append({"key": "research", "title": t["s_research"], "label": t["l_research"], "url": t["u_research"],
+                             "stale": fill and not new, "html": cards, "html_web": cards, "lead": items[0]["title"],
+                             "count": f"{cnt} paper{'s' if cnt > 1 else ''}"})
+
+    # 04 — Обучение: посты Академии (@dataist_academy), только RU
+    if lang == "ru":
+        items, stale = pick(tg_posts("dataist_academy"), start, end, 2, fill)
+
+        def lesson_link(p):
+            return first_site_link(p, "education/") or (p["links"][0] if p["links"] else p["url"])
+
+        def lesson_meta(p):
+            m = re.search(r"auto_(\d+)_(\d+)", lesson_link(p) or "")
+            return esc(t["module"].format(m=m.group(1), l=m.group(2))) if m else ""
+
+        if items:
+            mail, webv = tg_cards(items, t["lesson"], lesson_link, lesson_meta, "academy")
             cnt = len(items)
             sections.append({"key": "edu", "title": t["s_edu"], "label": t["l_edu"], "url": t["u_edu"], "stale": stale,
-                             "html": cards, "html_web": cards, "lead": items[0]["title"],
+                             "html": mail, "html_web": webv, "lead": items[0]["title"],
                              "count": f"{cnt} {plural(cnt, ('урок', 'урока', 'уроков'))}"})
 
     if not sections:
         raise SystemExit("нет материалов для выпуска")
     if ait:                                   # «Авторского канала» нет — реклама после первого раздела
         sections[0]["after"] = ait + (sections[0].get("after") or "")
+    # Нейроний — сразу после «Обучения» (последнего раздела перед новостями)
     sections[-1]["after"] = (sections[-1].get("after") or "") + ad_card(
         asset("neuronium-demo.gif"), with_utm(t["nr_url"]), t["nr_kicker"], t["nr_title"], t["nr_text"], t["nr_cta"], nr_tile=True)
+
+    # 05 — Новости недели: компактный список, по строке на новость
+    week_news = news(lang, start, end)
+    if week_news:
+        lst = news_list(week_news)
+        cnt = len(week_news)
+        sections.append({"key": "news", "title": t["s_news"], "label": t["l_news"], "url": t["u_news"], "stale": False,
+                         "html": lst, "html_web": lst, "lead": week_news[0]["title"],
+                         "count": (f"{cnt} {plural(cnt, ('новость', 'новости', 'новостей'))}" if lang == "ru"
+                                   else f"{cnt} news")})
 
     email, subject, preheader = render(lang, issue, sections, web_url, unsub_url, web=False, preview=preview)
     webpage, _, _ = render(lang, issue, sections, web_url, unsub_url, web=True, preview=preview)
