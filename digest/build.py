@@ -48,7 +48,7 @@ UTM = "utm_source=dataist&utm_medium=email&utm_campaign=digest-{date}"
 T = {
     "ru": {
         "brand": "ДАТАИСТ", "issue": "Выпуск № {n}", "kind": "Еженедельный дайджест",
-        "hello": "Привет! Это пятничный Датаист — всё главное об ИИ за неделю в одном письме: {parts}. Устраивайтесь поудобнее.",
+        "hello": "Привет! Это Датаист — всё главное об ИИ за неделю в одном письме: {parts}. Устраивайтесь поудобнее.",
         "parts": {"video": "новые видео", "author": "новые статьи", "video_author": "новые видео и статьи",
                   "research": "свежие исследования из Лаборатории", "edu": "уроки Академии",
                   "news": "топ новостей недели"}, "and": "и",
@@ -84,7 +84,7 @@ T = {
     },
     "en": {
         "brand": "DATAIST", "issue": "Issue No. {n}", "kind": "Weekly digest",
-        "hello": "Hi! This is the Friday Dataist — the week’s AI essentials in one letter: {parts}. Get comfortable.",
+        "hello": "Hi! This is Dataist — the week’s AI essentials in one letter: {parts}. Get comfortable.",
         "parts": {"video": "new videos", "author": "new articles", "video_author": "new videos and articles",
                   "research": "the freshest AI research", "edu": "new lessons",
                   "news": "the week’s top AI news"}, "and": "and",
