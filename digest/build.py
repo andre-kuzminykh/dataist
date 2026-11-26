@@ -48,7 +48,7 @@ UTM = "utm_source=dataist&utm_medium=email&utm_campaign=digest-{date}"
 T = {
     "ru": {
         "brand": "ДАТАИСТ", "issue": "Выпуск № {n}", "kind": "Еженедельный дайджест",
-        "hello": "Привет! Это пятничный Датаист — всё главное за неделю в одном письме: {parts}. Устраивайтесь поудобнее.",
+        "hello": "Привет! Это пятничный Датаист — всё главное об ИИ за неделю в одном письме: {parts}. Устраивайтесь поудобнее.",
         "parts": {"video": "новые видео", "author": "новые статьи", "video_author": "новые видео и статьи",
                   "research": "свежие исследования из Лаборатории", "edu": "уроки Академии",
                   "news": "топ новостей недели"}, "and": "и",
@@ -84,7 +84,7 @@ T = {
     },
     "en": {
         "brand": "DATAIST", "issue": "Issue No. {n}", "kind": "Weekly digest",
-        "hello": "Hi! This is the Friday Dataist — the week’s essentials in one letter: {parts}. Get comfortable.",
+        "hello": "Hi! This is the Friday Dataist — the week’s AI essentials in one letter: {parts}. Get comfortable.",
         "parts": {"video": "new videos", "author": "new articles", "video_author": "new videos and articles",
                   "research": "the freshest AI research", "edu": "new lessons",
                   "news": "the week’s top AI news"}, "and": "and",
@@ -620,14 +620,14 @@ def render(lang, issue, sections, web_url, unsub_url, web=False):
                                     for name, u in t["socials"])
 
     if web:
-        left = f'<a href="{SITE}/" style="color:{MUTED};text-decoration:none">dataist.ai</a>'
-        right = (f'<button id="theme" type="button" style="{mono(10, MUTED, 700, ".14em")}">'
-                 f'<span class="t-dark">{MOON}<span>{esc(t["to_dark"])}</span></span>'
-                 f'<span class="t-light">{SUN}<span>{esc(t["to_light"])}</span></span></button>')
+        left = ""
+        right = (f'<button id="theme" type="button" data-dark="{esc(t["to_dark"])}" data-light="{esc(t["to_light"])}" '
+                 f'aria-label="{esc(t["to_dark"])}" title="{esc(t["to_dark"])}">'
+                 f'<span class="t-dark">{MOON}</span><span class="t-light">{SUN}</span></button>')
         footer_note = ""
     else:
         left = f'<a href="{esc(web_url)}" style="color:{DIM};text-decoration:none">{esc(t["browser"])}</a>'
-        right = f'<a href="{SITE}/" style="color:{DIM};text-decoration:none">dataist.ai</a>'
+        right = ""
         footer_note = (f'<tr><td class="px" align="center" style="padding:26px 40px 0;{sans(12, MUTED, 400, 1.6)}">{esc(t["why"])}<br>'
                        f'<a href="{esc(unsub_url)}" style="color:{MUTED};text-decoration:underline">{esc(t["unsub"])}</a> &nbsp;·&nbsp; '
                        f'<a href="{esc(web_url)}" style="color:{MUTED};text-decoration:underline">{esc(t["browser"])}</a></td></tr>')
@@ -639,10 +639,13 @@ def render(lang, issue, sections, web_url, unsub_url, web=False):
 <style>
   html,body{background:#ffffff}
   #page{background:#ffffff;min-height:100vh}
-  #theme{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
-  #theme svg{display:inline-block;vertical-align:middle}
+  #theme{all:unset;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;
+    margin:-9px -9px -9px 0;border-radius:50%;color:#6e6e73;transition:color .2s}
+  #theme:hover{color:#0a0a0a}
+  #theme:focus-visible{outline:2px solid #0a0a0a;outline-offset:2px}
+  #theme svg{display:block;width:18px;height:18px}
   #theme .t-light{display:none}
-  #theme > span{display:inline-flex;align-items:center;gap:8px}
+  #theme > span{display:inline-flex}
   html[data-theme="dark"],html[data-theme="dark"] body{background:#000000}
   html[data-theme="dark"] #page{filter:invert(1) hue-rotate(180deg)}
   html[data-theme="dark"] #page img,html[data-theme="dark"] #page .embed{filter:invert(1) hue-rotate(180deg)}
@@ -650,10 +653,11 @@ def render(lang, issue, sections, web_url, unsub_url, web=False):
   html[data-theme="dark"] #theme .t-light{display:inline-flex}
 </style>'''
         web_script = '''<script>
-(function(){var b=document.getElementById('theme');if(!b)return;b.addEventListener('click',function(){
-var d=document.documentElement,dark=d.getAttribute('data-theme')!=='dark';
+(function(){var b=document.getElementById('theme');if(!b)return;var d=document.documentElement;
+function label(){var l=b.getAttribute(d.getAttribute('data-theme')==='dark'?'data-light':'data-dark');b.setAttribute('aria-label',l);b.title=l;}
+label();b.addEventListener('click',function(){var dark=d.getAttribute('data-theme')!=='dark';
 if(dark)d.setAttribute('data-theme','dark');else d.removeAttribute('data-theme');
-try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}});})();
+try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}label();});})();
 </script>'''
 
     return f'''<!DOCTYPE html>
