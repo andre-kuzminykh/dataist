@@ -56,6 +56,7 @@ T = {
         "missed": "Если пропустили", "browser": "Открыть в браузере",
         "s_video": "Видеожурнал", "s_author": "Авторский канал", "s_research": "Исследования", "s_edu": "Обучение",
         "s_news": "Топ новостей", "l_news": "Live ↗", "u_news": "https://t.me/neuronium_ai",
+        "all_news": "Все новости →", "u_all_news": "https://dataist.ai/news/",
         "l_video": "Подписаться ↗", "l_author": "Подписаться ↗", "l_research": "Лаборатория ↗", "l_edu": "Академия ↗",
         "u_video": "https://www.youtube.com/@andre_dataist", "u_author": "https://t.me/+AXsoJ7OiMG4zMzFi",
         "u_research": "https://t.me/+gjvJGFW0iXUwMjky", "u_edu": "https://t.me/dataist_academy",
@@ -92,6 +93,7 @@ T = {
         "missed": "In case you missed it", "browser": "View in browser",
         "s_video": "Video Journal", "s_author": "Author’s Channel", "s_research": "Research", "s_edu": "Learning",
         "s_news": "Top news", "l_news": "", "u_news": "",   # в X у Нейрония аккаунта нет
+        "all_news": "", "u_all_news": "",                    # английской ленты новостей на сайте пока нет
         "l_video": "Subscribe ↗", "l_author": "Follow ↗", "l_research": "All research ↗", "l_edu": "Academy ↗",
         "u_video": "https://www.youtube.com/@andre.dataist", "u_author": "https://x.com/andre_dataist",
         "u_research": "https://dataist.ai/", "u_edu": "https://dataist.ai/",
@@ -576,8 +578,9 @@ def ad_card(gif, url, kicker, title, text, cta, stats=None, nr_tile=False):
 </td></tr></table>''', "56px 40px 0")
 
 
-def top_news_rows(items, imgs):
-    """Топ новостей: строки одна за другой — маленькая картинка слева, заголовок справа."""
+def top_news_rows(items, imgs, more=None):
+    """Топ новостей: строки одна за другой — маленькая картинка слева, заголовок справа;
+    more = (подпись, адрес) — ссылка «Все новости» справа под списком."""
     rows = []
     for x in items:
         img = imgs.get(x["num"])
@@ -587,6 +590,8 @@ def top_news_rows(items, imgs):
 <td class="tn-img" width="120" valign="middle" style="width:120px;padding:14px 0;border-top:1px solid {LINE}">{thumb}</td>
 <td class="tn-txt" valign="middle" style="padding:14px 0 14px 18px;border-top:1px solid {LINE}"><a class="tn-t" href="{esc(x["url"])}" style="{sans(16, INK, 700, 1.35, '-.01em')}text-decoration:none">{esc(x["title"])}</a></td>
 </tr>''')
+    if more:
+        rows.append(f'<tr><td colspan="2" align="right" style="padding:16px 0 0;border-top:1px solid {LINE}">{link_cta(more[1], more[0])}</td></tr>')
     return row(f'<table role="presentation" class="tn" width="100%" cellpadding="0" cellspacing="0" border="0">{"".join(rows)}</table>', "16px 40px 0")
 
 
@@ -814,10 +819,11 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
             path = outdir / "img" / f"news-{x['num']}.jpg"
             if x.get("cover") and (path.exists() or save_cover(x["cover"], path, ratio=3 / 2, width=240)):
                 thumbs[x["num"]] = path
+        more = (t["all_news"], with_utm(t["u_all_news"])) if t["u_all_news"] else None
         cnt = len(tops)
         sections.append({"key": "news", "title": t["s_news"], "label": t["l_news"], "url": t["u_news"], "stale": False,
-                         "html": top_news_rows(tops, {k: local_img(p, True) for k, p in thumbs.items()}),
-                         "html_web": top_news_rows(tops, {k: local_img(p, False) for k, p in thumbs.items()}),
+                         "html": top_news_rows(tops, {k: local_img(p, True) for k, p in thumbs.items()}, more),
+                         "html_web": top_news_rows(tops, {k: local_img(p, False) for k, p in thumbs.items()}, more),
                          "lead": tops[0]["title"], "marked": marked,
                          "count": (f"{cnt} {plural(cnt, ('новость', 'новости', 'новостей'))}" if lang == "ru"
                                    else f"{cnt} {'story' if cnt == 1 else 'stories'}")})
