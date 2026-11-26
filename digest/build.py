@@ -27,7 +27,7 @@
 Ключи:
   --fill    если в разделе нет новинок за неделю — показать последние («Если пропустили»)
   --inline  встроить картинки в HTML как data URI — автономный файл для просмотра
-  --preview пометка «превью» над письмом
+  --preview для просмотра: вместо ссылки отписки из Kit — заглушка
 """
 import argparse, base64, datetime as dt, html, io, json, re, sys, urllib.request
 import xml.etree.ElementTree as ET
@@ -49,8 +49,9 @@ T = {
     "ru": {
         "brand": "ДАТАИСТ", "issue": "Выпуск № {n}", "kind": "Еженедельный дайджест",
         "hello": "Привет! Это пятничный Датаист — всё главное за неделю в одном письме: {parts}. Устраивайтесь поудобнее.",
-        "parts": {"video": "новые видео", "author": "мысли из канала", "research": "свежие исследования из Лаборатории",
-                  "edu": "уроки Академии", "news": "топ новостей недели"}, "and": "и",
+        "parts": {"video": "новые видео", "author": "новые статьи", "video_author": "новые видео и статьи",
+                  "research": "свежие исследования из Лаборатории", "edu": "уроки Академии",
+                  "news": "топ новостей недели"}, "and": "и",
         "sign": "Андрей Кузьминых", "sign_role": "Основатель Andre AI Technologies",
         "missed": "Если пропустили", "browser": "Открыть в браузере",
         "s_video": "Видеожурнал", "s_author": "Авторский канал", "s_research": "Исследования", "s_edu": "Обучение",
@@ -58,9 +59,9 @@ T = {
         "l_video": "Подписаться ↗", "l_author": "Подписаться ↗", "l_research": "Лаборатория ↗", "l_edu": "Академия ↗",
         "u_video": "https://www.youtube.com/@andre_dataist", "u_author": "https://t.me/+AXsoJ7OiMG4zMzFi",
         "u_research": "https://t.me/+gjvJGFW0iXUwMjky", "u_edu": "https://t.me/dataist_academy",
-        "watch": "▶ Смотреть видео", "views": ("просмотр", "просмотра", "просмотров"),
+        "watch": "▶ Смотреть видео",
         "open_post": "Открыть пост ↗", "read": "Читать разбор →", "read_article": "Читать статью →",
-        "lesson": "Открыть урок →", "min": "мин чтения", "module": "Модуль {m} · Урок {l}",
+        "lesson": "Открыть урок →",
         "ait_kicker": "Andre AI Technologies", "ait_title": "ИИ-трансформация вашего бизнеса",
         "ait_text": "Бесплатная диагностика ИИ-зрелости, ИИ-стратегия, ИИ-операционная система «Нейроний» "
                     "и 3 месяца обучения команды с ментором.",
@@ -76,7 +77,6 @@ T = {
         "why": "Вы получили это письмо, потому что подписались на рассылку Датаиста на dataist.ai.",
         "unsub": "Отписаться", "made": "Создано в", "made_name": "Нейроний",
         "to_dark": "Тёмная тема", "to_light": "Светлая тема",
-        "preview": "Превью · в разделах без новинок за неделю показаны последние материалы",
         "months": ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"],
         "mon": ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"],
         "wd": ["понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "воскресенье"],
@@ -85,8 +85,9 @@ T = {
     "en": {
         "brand": "DATAIST", "issue": "Issue No. {n}", "kind": "Weekly digest",
         "hello": "Hi! This is the Friday Dataist — the week’s essentials in one letter: {parts}. Get comfortable.",
-        "parts": {"video": "new videos", "author": "notes from my channel", "research": "the freshest AI research",
-                  "edu": "new lessons", "news": "the week’s top AI news"}, "and": "and",
+        "parts": {"video": "new videos", "author": "new articles", "video_author": "new videos and articles",
+                  "research": "the freshest AI research", "edu": "new lessons",
+                  "news": "the week’s top AI news"}, "and": "and",
         "sign": "Andre Kuzminykh", "sign_role": "Founder of Andre AI Technologies",
         "missed": "In case you missed it", "browser": "View in browser",
         "s_video": "Video Journal", "s_author": "Author’s Channel", "s_research": "Research", "s_edu": "Learning",
@@ -94,9 +95,9 @@ T = {
         "l_video": "Subscribe ↗", "l_author": "Follow ↗", "l_research": "All research ↗", "l_edu": "Academy ↗",
         "u_video": "https://www.youtube.com/@andre.dataist", "u_author": "https://x.com/andre_dataist",
         "u_research": "https://dataist.ai/", "u_edu": "https://dataist.ai/",
-        "watch": "▶ Watch the video", "views": ("view", "views", "views"),
+        "watch": "▶ Watch the video",
         "open_post": "Open the post ↗", "read": "Read the breakdown →", "read_article": "Read the article →",
-        "lesson": "Open the lesson →", "min": "min read", "module": "Module {m} · Lesson {l}",
+        "lesson": "Open the lesson →",
         "ait_kicker": "Andre AI Technologies", "ait_title": "AI transformation of your business",
         "ait_text": "Free AI maturity diagnostic, AI strategy, the Neuronium AI Business OS "
                     "and 3 months of team training with a mentor.",
@@ -113,7 +114,6 @@ T = {
         "why": "You are receiving this because you subscribed to the Dataist newsletter on dataist.ai.",
         "unsub": "Unsubscribe", "made": "Made in", "made_name": "Neuronium",
         "to_dark": "Dark theme", "to_light": "Light theme",
-        "preview": "Preview · sections with nothing new this week show the latest items",
         "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
         "mon": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
         "wd": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
@@ -140,10 +140,6 @@ def plural(n, forms):
         return many
     n %= 10
     return one if n == 1 else few if 2 <= n <= 4 else many
-
-
-def fmt_num(n, lang):
-    return f"{n:,}".replace(",", " " if lang == "ru" else ",")
 
 
 def fmt_date(d, lang, short=False):
@@ -209,14 +205,6 @@ def strip_prefix(teaser, title):
     if m and title.startswith(m.group(1)):
         return m.group(2)
     return teaser
-
-
-def read_minutes(rel_dirs):
-    for rel in rel_dirs:
-        p = ROOT / rel / "article_body.txt"
-        if p.exists():
-            return max(2, round(len(p.read_text("utf-8", "replace").split()) / 200))
-    return None
 
 
 def pick(items, start, end, want, fill):
@@ -324,18 +312,7 @@ def research(lang):
         ru_dir = x["cover"].replace(SITE + "/", "").rsplit("/", 1)[0]
         cover = f"{SITE}/{ru_dir}/cover_card.jpg" if (ROOT / ru_dir / "cover_card.jpg").exists() else x["cover"]
         out.append({"title": x["title"], "url": x["url"], "date": parse_date(x["date"]), "cover": cover,
-                    "text": strip_prefix(meta_tag(x["slug"], "description"), x["title"]),
-                    "minutes": read_minutes([x["slug"], ru_dir])})
-    return sorted(out, key=lambda x: x["date"], reverse=True)
-
-
-def education():
-    data = json.loads((ROOT / "education/index.json").read_text("utf-8"))
-    out = []
-    for x in data:
-        m = re.match(r"auto_(\d+)_(\d+)$", x["slug"])
-        out.append({"title": x["title"], "url": x["url"], "date": parse_date(x["date"]), "cover": x["cover"],
-                    "text": squash(x.get("teaser", "")), "module": m.groups() if m else None})
+                    "text": strip_prefix(meta_tag(x["slug"], "description"), x["title"])})
     return sorted(out, key=lambda x: x["date"], reverse=True)
 
 
@@ -619,11 +596,14 @@ MOON = ('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="cur
         'stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>')
 
 
-def render(lang, issue, sections, web_url, unsub_url, web=False, preview=False):
+def render(lang, issue, sections, web_url, unsub_url, web=False):
     t = T[lang]
     n = (issue - FIRST_ISSUE).days // 7 + 1
     date_long = f"{t['wd'][issue.weekday()]}, {fmt_date(issue, lang)}"
-    parts = [t["parts"][s["key"]] for s in sections]
+    keys = [s["key"] for s in sections]
+    head = ("video_author" if "video" in keys and "author" in keys else
+            "video" if "video" in keys else "author" if "author" in keys else None)
+    parts = ([t["parts"][head]] if head else []) + [t["parts"][k] for k in keys if k not in ("video", "author")]
     parts_txt = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + f" {t['and']} " + parts[-1]
     hello = t["hello"].format(parts=parts_txt)
     preheader = " · ".join(s["count"] for s in sections)
@@ -638,11 +618,9 @@ def render(lang, issue, sections, web_url, unsub_url, web=False, preview=False):
 
     socials = " &nbsp;·&nbsp; ".join(f'<a href="{esc(u)}" style="color:{INK};text-decoration:none">{esc(name)}</a>'
                                     for name, u in t["socials"])
-    preview_bar = (f'<tr><td style="padding:12px 20px;background:#f5f5f7;text-align:center;{mono(10, MUTED, 400, ".12em")}">'
-                   f'{esc(t["preview"])}</td></tr>') if preview else ""
 
     if web:
-        left = f'<a href="{SITE}/" style="color:{MUTED};text-decoration:none">← dataist.ai</a>'
+        left = f'<a href="{SITE}/" style="color:{MUTED};text-decoration:none">dataist.ai</a>'
         right = (f'<button id="theme" type="button" style="{mono(10, MUTED, 700, ".14em")}">'
                  f'<span class="t-dark">{MOON}<span>{esc(t["to_dark"])}</span></span>'
                  f'<span class="t-light">{SUN}<span>{esc(t["to_light"])}</span></span></button>')
@@ -718,7 +696,6 @@ try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}});})();
 <div id="page">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;mso-hide:all">{esc(preheader)}&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;&#8199;&#65279;&#847;</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="background:#ffffff">
-{preview_bar}
 <tr><td align="center" style="padding:0">
 <table role="presentation" class="container" width="640" cellpadding="0" cellspacing="0" border="0" style="width:640px;max-width:640px;margin:0 auto">
 
@@ -770,7 +747,7 @@ try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}});})();
 
 
 # ───────────────────────── сборка ─────────────────────────
-def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url="#",
+def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
           unsub_url="{{ unsubscribe_url }}", base_url=None, embed=True):
     t = T[lang]
     start, end = issue - dt.timedelta(days=6), issue
@@ -875,13 +852,8 @@ def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url=
         def research_link(p):
             return first_site_link(p, "research/") or first_site_link(p) or p["url"]
 
-        def research_meta(p):
-            rel = site_rel(first_site_link(p, "research/"))
-            mins = read_minutes([rel]) if rel else None
-            return esc(f"{mins} {t['min']}") if mins else ""
-
         if items:
-            mail, webv = tg_cards(items, t["read"], research_link, research_meta, "lab")
+            mail, webv = tg_cards(items, t["read"], research_link, lambda p: "", "lab")
             cnt = len(items)
             sections.append({"key": "research", "title": t["s_research"], "label": t["l_research"], "url": t["u_research"],
                              "stale": fill and not new, "html": mail, "html_web": webv, "lead": items[0]["title"],
@@ -891,8 +863,8 @@ def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url=
         new = [x for x in papers if start <= x["date"] <= end]
         items = new[:5] if (len(new) >= 3 or not fill) else (new + [x for x in papers if x not in new])[:3]
         if items:
-            cards = "".join(card(x["url"], esc(f"{x['minutes']} {t['min']}") if x.get("minutes") else "",
-                                 x["title"], [x["text"]], t["read"], img=x["cover"], first=i == 0) for i, x in enumerate(items))
+            cards = "".join(card(x["url"], "", x["title"], [x["text"]], t["read"], img=x["cover"], first=i == 0)
+                            for i, x in enumerate(items))
             cnt = len(items)
             sections.append({"key": "research", "title": t["s_research"], "label": t["l_research"], "url": t["u_research"],
                              "stale": fill and not new, "html": cards, "html_web": cards, "lead": items[0]["title"],
@@ -905,12 +877,8 @@ def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url=
         def lesson_link(p):
             return first_site_link(p, "education/") or (p["links"][0] if p["links"] else p["url"])
 
-        def lesson_meta(p):
-            m = re.search(r"auto_(\d+)_(\d+)", lesson_link(p) or "")
-            return esc(t["module"].format(m=m.group(1), l=m.group(2))) if m else ""
-
         if items:
-            mail, webv = tg_cards(items, t["lesson"], lesson_link, lesson_meta, "academy")
+            mail, webv = tg_cards(items, t["lesson"], lesson_link, lambda p: "", "academy")
             cnt = len(items)
             sections.append({"key": "edu", "title": t["s_edu"], "label": t["l_edu"], "url": t["u_edu"], "stale": stale,
                              "html": mail, "html_web": webv, "lead": items[0]["title"],
@@ -940,8 +908,8 @@ def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url=
                          "count": (f"{cnt} {plural(cnt, ('новость', 'новости', 'новостей'))}" if lang == "ru"
                                    else f"{cnt} {'story' if cnt == 1 else 'stories'}")})
 
-    email, subject, preheader = render(lang, issue, sections, web_url, unsub_url, web=False, preview=preview)
-    webpage, _, _ = render(lang, issue, sections, web_url, unsub_url, web=True, preview=preview)
+    email, subject, preheader = render(lang, issue, sections, web_url, unsub_url, web=False)
+    webpage, _, _ = render(lang, issue, sections, web_url, unsub_url, web=True)
     (outdir / "email.html").write_text(email, "utf-8")
     (outdir / "index.html").write_text(webpage, "utf-8")
     n = (issue - FIRST_ISSUE).days // 7 + 1
@@ -964,12 +932,12 @@ if __name__ == "__main__":
     ap.add_argument("--outdir", required=True)
     ap.add_argument("--fill", action="store_true")
     ap.add_argument("--inline", action="store_true")
-    ap.add_argument("--preview", action="store_true")
+    ap.add_argument("--preview", action="store_true", help="просмотр: «Отписаться» — заглушка вместо ссылки Kit")
     ap.add_argument("--no-embed", action="store_true", help="в веб-версии — обложки видео вместо плеера")
     ap.add_argument("--web-url", default="#", help="адрес веб-версии для ссылки «Открыть в браузере»")
     ap.add_argument("--base-url", help="абсолютный адрес папки выпуска — для картинок img/ в письме")
     a = ap.parse_args()
     issue = dt.date.fromisoformat(a.date) if a.date else next_friday()
-    out, meta = build(a.lang, issue, a.outdir, fill=a.fill, inline=a.inline, preview=a.preview, web_url=a.web_url,
+    out, meta = build(a.lang, issue, a.outdir, fill=a.fill, inline=a.inline, web_url=a.web_url,
                       unsub_url="#" if a.preview else "{{ unsubscribe_url }}", base_url=a.base_url, embed=not a.no_embed)
     print(out, json.dumps(meta, ensure_ascii=False))
