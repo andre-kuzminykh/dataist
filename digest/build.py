@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Еженедельный дайджест Датаиста: собирает материалы недели и верстает письмо (RU/EN).
 
-Порядок блоков: Видеожурнал → Авторский канал → реклама ИИ-трансформации →
+Порядок блоков: Топ новостей → Видеожурнал → Авторский канал → реклама ИИ-трансформации →
 Исследования → Обучение → реклама Нейрония. Всё идёт одной колонкой, тексты — целыми
 абзацами, без обрывов.
 
@@ -601,9 +601,14 @@ def render(lang, issue, sections, web_url, unsub_url, web=False):
     n = (issue - FIRST_ISSUE).days // 7 + 1
     date_long = f"{t['wd'][issue.weekday()]}, {fmt_date(issue, lang)}"
     keys = [s["key"] for s in sections]
-    head = ("video_author" if "video" in keys and "author" in keys else
-            "video" if "video" in keys else "author" if "author" in keys else None)
-    parts = ([t["parts"][head]] if head else []) + [t["parts"][k] for k in keys if k not in ("video", "author")]
+    parts, merged = [], False                  # «новые видео и статьи» — одной фразой на месте первого из двух
+    for k in keys:
+        if k in ("video", "author"):
+            if merged:
+                continue
+            merged = True
+            k = "video_author" if "video" in keys and "author" in keys else k
+        parts.append(t["parts"][k])
     parts_txt = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + f" {t['and']} " + parts[-1]
     hello = t["hello"].format(parts=parts_txt)
     preheader = " · ".join(s["count"] for s in sections)
@@ -801,7 +806,23 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
     def site_rel(url):
         return url[len(SITE) + 1:].split("?")[0].split("#")[0].strip("/") if url and url.startswith(SITE + "/") else None
 
-    # 01 — Видеожурнал
+    # 01 — Топ новостей недели (первым разделом): отмеченные в digest/top-news.txt, строки с маленькой картинкой
+    tops, marked = top_news(lang, start, end)
+    if tops:
+        thumbs = {}
+        for x in tops:
+            path = outdir / "img" / f"news-{x['num']}.jpg"
+            if x.get("cover") and (path.exists() or save_cover(x["cover"], path, ratio=3 / 2, width=240)):
+                thumbs[x["num"]] = path
+        cnt = len(tops)
+        sections.append({"key": "news", "title": t["s_news"], "label": t["l_news"], "url": t["u_news"], "stale": False,
+                         "html": top_news_rows(tops, {k: local_img(p, True) for k, p in thumbs.items()}),
+                         "html_web": top_news_rows(tops, {k: local_img(p, False) for k, p in thumbs.items()}),
+                         "lead": tops[0]["title"], "marked": marked,
+                         "count": (f"{cnt} {plural(cnt, ('новость', 'новости', 'новостей'))}" if lang == "ru"
+                                   else f"{cnt} {'story' if cnt == 1 else 'stories'}")})
+
+    # 02 — Видеожурнал
     try:
         vids = youtube(lang)
     except Exception as e:
@@ -822,7 +843,7 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
                          "html": "".join(mail), "html_web": "".join(webv), "lead": items[0]["title"],
                          "count": f"{cnt} видео" if lang == "ru" else f"{cnt} video{'s' if cnt > 1 else ''}"})
 
-    # 02 — Авторский канал
+    # 03 — Авторский канал
     if lang == "ru":
         items, stale = pick(tg_posts(TELEGRAM["ru"]), start, end, 3, fill)
         if items:
@@ -847,7 +868,7 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
         sections[-1]["after"] = ait
         ait = None
 
-    # 03 — Исследования: RU — посты Лаборатории (@dataist_lab), EN — исследования сайта
+    # 04 — Исследования: RU — посты Лаборатории (@dataist_lab), EN — исследования сайта
     if lang == "ru":
         posts = tg_posts("dataist_lab")
         new = [p for p in posts if start <= p["date"] <= end]
@@ -874,7 +895,7 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
                              "stale": fill and not new, "html": cards, "html_web": cards, "lead": items[0]["title"],
                              "count": f"{cnt} paper{'s' if cnt > 1 else ''}"})
 
-    # 04 — Обучение: посты Академии (@dataist_academy), только RU
+    # 05 — Обучение: посты Академии (@dataist_academy), только RU
     if lang == "ru":
         items, stale = pick(tg_posts("dataist_academy"), start, end, 2, fill)
 
@@ -890,27 +911,12 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
 
     if not sections:
         raise SystemExit("нет материалов для выпуска")
-    if ait:                                   # «Авторского канала» нет — реклама после первого раздела
-        sections[0]["after"] = ait + (sections[0].get("after") or "")
-    # Нейроний — сразу после «Обучения» (последнего раздела перед новостями)
+    if ait:                                   # «Авторского канала» нет — реклама после первого раздела за топом новостей
+        host = next((x for x in sections if x["key"] != "news"), sections[0])
+        host["after"] = ait + (host.get("after") or "")
+    # Нейроний — сразу после «Обучения» (последнего раздела)
     sections[-1]["after"] = (sections[-1].get("after") or "") + ad_card(
         asset("neuronium-demo.gif"), with_utm(t["nr_url"]), t["nr_kicker"], t["nr_title"], t["nr_text"], t["nr_cta"], nr_tile=True)
-
-    # 05 — Топ новостей недели: отмеченные в digest/top-news.txt, строками с маленькой картинкой
-    tops, marked = top_news(lang, start, end)
-    if tops:
-        thumbs = {}
-        for x in tops:
-            path = outdir / "img" / f"news-{x['num']}.jpg"
-            if x.get("cover") and (path.exists() or save_cover(x["cover"], path, ratio=3 / 2, width=240)):
-                thumbs[x["num"]] = path
-        cnt = len(tops)
-        sections.append({"key": "news", "title": t["s_news"], "label": t["l_news"], "url": t["u_news"], "stale": False,
-                         "html": top_news_rows(tops, {k: local_img(p, True) for k, p in thumbs.items()}),
-                         "html_web": top_news_rows(tops, {k: local_img(p, False) for k, p in thumbs.items()}),
-                         "lead": tops[0]["title"], "marked": marked,
-                         "count": (f"{cnt} {plural(cnt, ('новость', 'новости', 'новостей'))}" if lang == "ru"
-                                   else f"{cnt} {'story' if cnt == 1 else 'stories'}")})
 
     email, subject, preheader = render(lang, issue, sections, web_url, unsub_url, web=False)
     webpage, _, _ = render(lang, issue, sections, web_url, unsub_url, web=True)
