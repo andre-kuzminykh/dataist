@@ -69,7 +69,7 @@ T = {
         "ait_stats": [("30+", "компаний"), ("$100+ млн", "эффекта"), ("10+ лет", "в ИИ")],
         "ait_cta": "Бесплатная ИИ-диагностика →", "ait_url": "https://andre.technology/?lang=ru",
         "ait_gif": "ait-landing-ru.gif",
-        "nr_kicker": "Нейроний · AI Operating System", "nr_title": "Ведите ИИ-бизнес в ИИ-операционной системе",
+        "nr_kicker": "Нейроний · ИИ-операционная система", "nr_title": "Ведите ИИ-бизнес в ИИ-операционной системе",
         "nr_text": "Единый контекст бизнеса, ИИ-суперагент и 100 готовых ИИ-сотрудников в десяти отделах — "
                    "от целей и задач до продаж, поддержки и кода.",
         "nr_cta": "Открыть AI OS →", "nr_url": "https://neuronium.ai/",
@@ -558,8 +558,8 @@ def card(url, meta, title, paras, cta, img=None, embed=None, first=False):
 def ad_card(gif, url, kicker, title, text, cta, stats=None, nr_tile=False):
     """Рекламный блок: горизонтальное видео (GIF 16:9) и текст под ним."""
     tile = (f'<td valign="middle" style="width:26px;height:26px;border:1px solid #5c5c61;border-radius:6px;text-align:center;'
-            f'{sans(13, "#ffffff", 700, 1, "-.05em")}">Nr</td><td valign="middle" style="padding-left:10px;{mono(10, "#a1a1a6", 700, ".2em")}">{esc(kicker)}</td>'
-            if nr_tile else f'<td valign="middle" style="{mono(10, "#a1a1a6", 700, ".2em")}">{esc(kicker)}</td>')
+            f'{sans(13, "#ffffff", 700, 1, "-.05em")}">Nr</td><td class="kick" valign="middle" style="padding-left:10px;{mono(10, "#a1a1a6", 700, ".2em")}">{esc(kicker)}</td>'
+            if nr_tile else f'<td class="kick" valign="middle" style="{mono(10, "#a1a1a6", 700, ".2em")}">{esc(kicker)}</td>')
     stats_html = ""
     if stats:
         cells = "".join(
@@ -698,6 +698,7 @@ try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}label();});})();
     .stat{{padding-right:14px!important}}
     .stat-n{{font-size:17px!important}}
     .socials{{font-size:10px!important;letter-spacing:.04em!important}}
+    .kick{{letter-spacing:.1em!important}}
     .tn-img{{width:96px!important}}
     .tn-thumb{{width:96px!important;height:64px!important}}
     .tn-txt{{padding-left:14px!important}}
