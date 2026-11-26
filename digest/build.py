@@ -10,7 +10,9 @@
   * Авторский канал — публичная лента t.me/s/andre_dataist (RU), обложка поста —
     картинка превью первой ссылки; для EN — англоязычные авторские статьи сайта и ссылка на X;
   * Исследования — papers.json / papers_en.json и описания страниц сайта;
-  * Обучение — education/index.json (только RU).
+  * Обучение — посты Академии (@dataist_academy, только RU);
+  * Топ новостей — новости, отмеченные в digest/top-news.txt (до 7 за неделю); RU и EN версии
+    находятся по реестру коротких ссылок, поэтому одной отметки хватает для обоих писем.
 
 На выходе в папке выпуска:
   email.html — письмо для рассылки (таблицы, встроенные стили, без скриптов);
@@ -48,11 +50,11 @@ T = {
         "brand": "ДАТАИСТ", "issue": "Выпуск № {n}", "kind": "Еженедельный дайджест",
         "hello": "Привет! Это пятничный Датаист — всё главное за неделю в одном письме: {parts}. Устраивайтесь поудобнее.",
         "parts": {"video": "новые видео", "author": "мысли из канала", "research": "свежие исследования из Лаборатории",
-                  "edu": "уроки Академии", "news": "новости недели"}, "and": "и",
+                  "edu": "уроки Академии", "news": "топ новостей недели"}, "and": "и",
         "sign": "Андрей Кузьминых", "sign_role": "Основатель Andre AI Technologies",
         "missed": "Если пропустили", "browser": "Открыть в браузере",
         "s_video": "Видеожурнал", "s_author": "Авторский канал", "s_research": "Исследования", "s_edu": "Обучение",
-        "s_news": "Новости", "l_news": "Live ↗", "u_news": "https://t.me/neuronium_ai",
+        "s_news": "Топ новостей", "l_news": "Live ↗", "u_news": "https://t.me/neuronium_ai",
         "l_video": "Подписаться ↗", "l_author": "Подписаться ↗", "l_research": "Лаборатория ↗", "l_edu": "Академия ↗",
         "u_video": "https://www.youtube.com/@andre_dataist", "u_author": "https://t.me/+AXsoJ7OiMG4zMzFi",
         "u_research": "https://t.me/+gjvJGFW0iXUwMjky", "u_edu": "https://t.me/dataist_academy",
@@ -84,11 +86,11 @@ T = {
         "brand": "DATAIST", "issue": "Issue No. {n}", "kind": "Weekly digest",
         "hello": "Hi! This is the Friday Dataist — the week’s essentials in one letter: {parts}. Get comfortable.",
         "parts": {"video": "new videos", "author": "notes from my channel", "research": "the freshest AI research",
-                  "edu": "new lessons", "news": "the week’s AI news"}, "and": "and",
+                  "edu": "new lessons", "news": "the week’s top AI news"}, "and": "and",
         "sign": "Andre Kuzminykh", "sign_role": "Founder of Andre AI Technologies",
         "missed": "In case you missed it", "browser": "View in browser",
         "s_video": "Video Journal", "s_author": "Author’s Channel", "s_research": "Research", "s_edu": "Learning",
-        "s_news": "News", "l_news": "Live ↗", "u_news": "https://x.com/neuronium_ai",
+        "s_news": "Top news", "l_news": "", "u_news": "",   # в X у Нейрония аккаунта нет
         "l_video": "Subscribe ↗", "l_author": "Follow ↗", "l_research": "All research ↗", "l_edu": "Academy ↗",
         "u_video": "https://www.youtube.com/@andre.dataist", "u_author": "https://x.com/andre_dataist",
         "u_research": "https://dataist.ai/", "u_edu": "https://dataist.ai/",
@@ -337,38 +339,89 @@ def education():
     return sorted(out, key=lambda x: x["date"], reverse=True)
 
 
-def news(lang, start, end):
-    """Новости недели: RU — news/index.json; EN — английские версии из реестра коротких ссылок."""
+TOP_NEWS_FILE = ROOT / "digest" / "top-news.txt"
+TOP_NEWS_LIMIT = 7
+
+
+def _news_catalog():
+    """Все новости по номерам коротких ссылок: дата, пути RU/EN, русский заголовок и обложка."""
+    reg = json.loads((ROOT / "shortlinks/registry.json").read_text("utf-8"))["links"]
+    index = json.loads((ROOT / "news/index.json").read_text("utf-8"))
+    by_ru = {"/" + x["url"].replace(SITE + "/", "").strip("/") + "/": x for x in index}
+    cat = {}
+    for num, v in reg.items():
+        if v.get("section") != "news" or not v.get("date"):
+            continue
+        ru = by_ru.get(v.get("ru") or "")
+        cat[num] = {"num": num, "date": parse_date(v["date"]), "ru": v.get("ru"), "en": v.get("en"),
+                    "ru_title": squash(ru["title"] if ru else v.get("title", "")),
+                    "ru_cover": ru["cover"] if ru else None}
+    return cat
+
+
+def _news_item(e, lang):
+    """Новость на языке письма: заголовок, адрес, обложка."""
     if lang == "ru":
-        data = json.loads((ROOT / "news/index.json").read_text("utf-8"))
-        short = {}
-        try:
-            reg = json.loads((ROOT / "shortlinks/registry.json").read_text("utf-8"))["links"]
-            short = {v["ru"]: num for num, v in reg.items() if v.get("section") == "news" and v.get("ru")}
-        except Exception:
-            pass
-
-        def url_of(x):
-            num = short.get("/" + x["url"].replace(SITE + "/", "").strip("/") + "/")
-            return f"{SITE}/{num}" if num else x["url"]
-
-        items = [{"title": squash(x["title"]), "url": url_of(x), "date": parse_date(x["date"]), "at": x.get("published_at", "")}
-                 for x in data if x.get("date")]
+        if not e["ru"]:
+            return None
+        title, url, cover = e["ru_title"], SITE + e["ru"], e["ru_cover"]
     else:
-        reg = json.loads((ROOT / "shortlinks/registry.json").read_text("utf-8"))["links"]
-        items = []
-        for num, v in reg.items():
-            if v.get("section") != "news" or not v.get("en") or not v.get("date"):
-                continue
-            d = parse_date(v["date"])
-            if not (start <= d <= end):
-                continue
-            rel = v["en"].strip("/")
-            title = meta_tag(rel, "og:title") or ""
-            if title:
-                items.append({"title": squash(title), "url": f"{SITE}/{rel}/", "date": d, "at": v["date"]})
-    items = [x for x in items if start <= x["date"] <= end]
-    return sorted(items, key=lambda x: (x["date"], x["at"]), reverse=True)
+        if not e["en"]:
+            return None
+        rel = e["en"].strip("/")
+        title = squash(meta_tag(rel, "og:title"))
+        if not title:
+            return None
+        url, cover = f"{SITE}/{rel}/", meta_tag(rel, "og:image") or e["ru_cover"]
+    if cover and cover.startswith("/"):
+        cover = SITE + cover
+    return {"num": e["num"], "date": e["date"], "title": title, "url": url, "cover": cover}
+
+
+def read_top_marks():
+    """Строки digest/top-news.txt без комментариев: номера коротких ссылок или адреса новостей."""
+    if not TOP_NEWS_FILE.exists():
+        return []
+    return [l.split("#", 1)[0].strip() for l in TOP_NEWS_FILE.read_text("utf-8").splitlines()
+            if l.split("#", 1)[0].strip()]
+
+
+def top_news(lang, start, end, limit=TOP_NEWS_LIMIT):
+    """Топ новостей недели: отмеченные в digest/top-news.txt, в порядке строк (максимум limit).
+    Если за неделю ничего не отмечено — по одной новости с обложкой за каждый день, от последнего.
+    Возвращает (новости, отмечены_ли_вручную)."""
+    cat = _news_catalog()
+    by_path = {p: num for num, e in cat.items() for p in (e["ru"], e["en"]) if p}
+    picked, seen = [], set()
+    for token in read_top_marks():
+        m = re.search(r"(?:^|dataist\.ai/)(\d{3,6})/?$", token)
+        num = m.group(1) if m else None
+        if not num:
+            pm = re.search(r"(/news/[^/?#\s]+)", token)
+            num = by_path.get(pm.group(1) + "/") if pm else None
+        e = cat.get(num) if num else None
+        if not e or num in seen or not (start <= e["date"] <= end):
+            continue
+        item = _news_item(e, lang)
+        if item:
+            picked.append(item)
+            seen.add(num)
+        if len(picked) >= limit:
+            break
+    if picked:
+        return picked, True
+    days = {}
+    for num, e in sorted(cat.items(), key=lambda kv: int(kv[0]), reverse=True):
+        if start <= e["date"] <= end:
+            item = _news_item(e, lang)
+            if item and item["cover"]:
+                days.setdefault(e["date"], []).append(item)
+    order, out = sorted(days, reverse=True), []
+    while len(out) < limit and any(days[d] for d in order):
+        for d in order:
+            if days[d] and len(out) < limit:
+                out.append(days[d].pop(0))
+    return out, False
 
 
 def author_en():
@@ -497,7 +550,7 @@ def section_header(num, title, label, url, missed=None):
             if missed else "")
     return row(f'''<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
 <tr><td style="border-top:2px solid {INK};padding-top:12px;{mono(11, INK, 700, '.2em')}">{num} — {esc(title)}</td>
-<td align="right" style="border-top:2px solid {INK};padding-top:12px;{mono(11, INK, 700, '.14em')}"><a href="{esc(url)}" style="color:{INK};text-decoration:none">{esc(label)}</a></td></tr>{note}
+<td align="right" style="border-top:2px solid {INK};padding-top:12px;{mono(11, INK, 700, '.14em')}">{f'<a href="{esc(url)}" style="color:{INK};text-decoration:none">{esc(label)}</a>' if label and url else ''}</td></tr>{note}
 </table>''', "56px 40px 0")
 
 
@@ -546,11 +599,18 @@ def ad_card(gif, url, kicker, title, text, cta, stats=None, nr_tile=False):
 </td></tr></table>''', "56px 40px 0")
 
 
-def news_list(items):
-    """Новости одной колонкой строк: только заголовки-ссылки и тонкие разделители.
-    Стиль строки — в классах .nr/.na (письмо легче: Gmail обрезает письма тяжелее 102 КБ)."""
-    rows = "".join(f'<tr><td class="nr"><a class="na" href="{esc(x["url"])}">{esc(x["title"])}</a></td></tr>' for x in items)
-    return row(f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">{rows}</table>', "16px 40px 0")
+def top_news_rows(items, imgs):
+    """Топ новостей: строки одна за другой — маленькая картинка слева, заголовок справа."""
+    rows = []
+    for x in items:
+        img = imgs.get(x["num"])
+        thumb = (f'<a href="{esc(x["url"])}" style="text-decoration:none"><img class="tn-thumb" src="{esc(img)}" width="120" height="80" alt="" '
+                 f'style="display:block;width:120px;height:80px;border:0;border-radius:10px"></a>') if img else ""
+        rows.append(f'''<tr>
+<td class="tn-img" width="120" valign="middle" style="width:120px;padding:14px 0;border-top:1px solid {LINE}">{thumb}</td>
+<td class="tn-txt" valign="middle" style="padding:14px 0 14px 18px;border-top:1px solid {LINE}"><a class="tn-t" href="{esc(x["url"])}" style="{sans(16, INK, 700, 1.35, '-.01em')}text-decoration:none">{esc(x["title"])}</a></td>
+</tr>''')
+    return row(f'<table role="presentation" class="tn" width="100%" cellpadding="0" cellspacing="0" border="0">{"".join(rows)}</table>', "16px 40px 0")
 
 
 SUN = ('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
@@ -634,8 +694,6 @@ try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}});})();
   table{{border-collapse:collapse;mso-table-lspace:0;mso-table-rspace:0}}
   img{{-ms-interpolation-mode:bicubic}}
   a{{color:{INK}}}
-  .nr{{padding:10px 0;border-top:1px solid {LINE}}}
-  .na{{font-family:'Inter',Helvetica,Arial,sans-serif;font-size:14px;line-height:1.45;font-weight:500;color:{INK};text-decoration:none}}
   @media (max-width:620px){{
     .container{{width:100%!important}}
     .px{{padding-left:20px!important;padding-right:20px!important}}
@@ -648,6 +706,10 @@ try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}});})();
     .stat{{padding-right:14px!important}}
     .stat-n{{font-size:17px!important}}
     .socials{{font-size:10px!important;letter-spacing:.04em!important}}
+    .tn-img{{width:96px!important}}
+    .tn-thumb{{width:96px!important;height:64px!important}}
+    .tn-txt{{padding-left:14px!important}}
+    .tn-t{{font-size:14px!important;line-height:1.35!important}}
   }}
 </style>
 {web_head}
@@ -862,15 +924,21 @@ def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url=
     sections[-1]["after"] = (sections[-1].get("after") or "") + ad_card(
         asset("neuronium-demo.gif"), with_utm(t["nr_url"]), t["nr_kicker"], t["nr_title"], t["nr_text"], t["nr_cta"], nr_tile=True)
 
-    # 05 — Новости недели: компактный список, по строке на новость
-    week_news = news(lang, start, end)
-    if week_news:
-        lst = news_list(week_news)
-        cnt = len(week_news)
+    # 05 — Топ новостей недели: отмеченные в digest/top-news.txt, строками с маленькой картинкой
+    tops, marked = top_news(lang, start, end)
+    if tops:
+        thumbs = {}
+        for x in tops:
+            path = outdir / "img" / f"news-{x['num']}.jpg"
+            if x.get("cover") and (path.exists() or save_cover(x["cover"], path, ratio=3 / 2, width=240)):
+                thumbs[x["num"]] = path
+        cnt = len(tops)
         sections.append({"key": "news", "title": t["s_news"], "label": t["l_news"], "url": t["u_news"], "stale": False,
-                         "html": lst, "html_web": lst, "lead": week_news[0]["title"],
+                         "html": top_news_rows(tops, {k: local_img(p, True) for k, p in thumbs.items()}),
+                         "html_web": top_news_rows(tops, {k: local_img(p, False) for k, p in thumbs.items()}),
+                         "lead": tops[0]["title"], "marked": marked,
                          "count": (f"{cnt} {plural(cnt, ('новость', 'новости', 'новостей'))}" if lang == "ru"
-                                   else f"{cnt} news")})
+                                   else f"{cnt} {'story' if cnt == 1 else 'stories'}")})
 
     email, subject, preheader = render(lang, issue, sections, web_url, unsub_url, web=False, preview=preview)
     webpage, _, _ = render(lang, issue, sections, web_url, unsub_url, web=True, preview=preview)
@@ -878,7 +946,8 @@ def build(lang, issue, outdir, fill=False, inline=False, preview=False, web_url=
     (outdir / "index.html").write_text(webpage, "utf-8")
     n = (issue - FIRST_ISSUE).days // 7 + 1
     meta = {"lang": lang, "issue": n, "date": issue.isoformat(), "subject": subject, "preheader": preheader,
-            "sections": [{"title": s["title"], "count": s["count"], "stale": s["stale"]} for s in sections]}
+            "sections": [{"title": s["title"], "count": s["count"], "stale": s["stale"]} for s in sections],
+            "top_news": next(("marked" if s.get("marked") else "auto" for s in sections if s["key"] == "news"), None)}
     (outdir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), "utf-8")
     return outdir, meta
 
