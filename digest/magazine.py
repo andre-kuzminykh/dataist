@@ -11,14 +11,14 @@ import re
 
 MT = {
     "ru": {
-        "tagline": "Еженедельный журнал об ИИ", "contents": "В этом выпуске", "letter": "От автора",
+        "tagline": "Еженедельный журнал об ИИ", "contents": "В этом выпуске",
         "nav": {"news": "Новости", "video": "Видео", "author": "Канал", "research": "Лаборатория", "edu": "Академия"},
         "play": "Смотреть видео", "top": "Наверх ↑", "prev": "Назад", "next": "Дальше",
         "skip": "Перейти к содержанию", "made": "Создано в", "issue": "Выпуск № {n}", "issue_short": "№ {n}",
         "lesson": "Урок", "study": "Исследование",
     },
     "en": {
-        "tagline": "The weekly AI magazine", "contents": "In this issue", "letter": "From the author",
+        "tagline": "The weekly AI magazine", "contents": "In this issue",
         "nav": {"news": "News", "video": "Video", "author": "Channel", "research": "Lab", "edu": "Academy"},
         "play": "Watch the video", "top": "Back to top ↑", "prev": "Back", "next": "Next",
         "skip": "Skip to content", "made": "Made in", "issue": "Issue No. {n}", "issue_short": "No. {n}",
@@ -360,15 +360,6 @@ html.js.ready .rule{transform:none}
 .toc a:hover svg{transform:translateX(4px)}
 .toc .kick{margin-bottom:4px}
 
-/* слово автора */
-.letter{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,9fr);gap:clamp(24px,4vw,72px);margin-top:clamp(48px,5vw,80px);
-  padding-top:clamp(28px,3vw,44px);border-top:1px solid var(--line)}
-.k{font:700 11px/1.3 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
-.sig{display:flex;align-items:center;gap:14px;margin-top:18px}
-.sig img{width:52px;height:52px;border-radius:50%;object-fit:cover}
-.sig b{display:block;font:700 15px/1.3 var(--sans);color:var(--ink)}
-.sig span{font:700 10px/1.4 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
-.lt-p{margin:0;font:italic 500 clamp(24px,2.5vw,38px)/1.32 var(--serif);color:var(--ink);text-wrap:pretty}
 
 /* разделы */
 .sec{padding-top:clamp(64px,7vw,112px)}
@@ -489,7 +480,7 @@ html.js.ready .rule{transform:none}
   .col-lead{order:-1}
   .rail{display:flex;align-items:stretch;border-top:0;margin-top:36px;padding-top:0!important}
   .st{grid-auto-columns:44%}
-  .letter,.au,.lb-f,.ac-f,.band-in{grid-template-columns:1fr}
+  .au,.lb-f,.ac-f,.band-in{grid-template-columns:1fr}
   .cols>*{padding:0!important;border-left:0!important}
   .au-side{margin-top:28px;border-top:1px solid var(--line);padding-top:20px!important}
   .au-i{grid-template-columns:112px minmax(0,1fr);gap:14px}
@@ -654,9 +645,6 @@ def render(ctx):
 {ticker}
 <div class="spread">{"".join(cols)}</div>
 </div>
-<section class="wrap"><div class="letter"><div class="rv"><div class="k">{esc(mt["letter"])}</div>
-<div class="sig"><img src="{esc(ctx["avatar"])}" alt="" width="52" height="52"><div><b>{esc(ctx["sign"])}</b><span>{esc(ctx["sign_role"])}</span></div></div></div>
-<p class="lt-p rv">{esc(ctx["hello"])}</p></div></section>
 {"".join(rest)}
 </main>
 
