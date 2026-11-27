@@ -68,11 +68,11 @@ T = {
                     "и 3 месяца обучения команды с ментором.",
         "ait_stats": [("30+", "компаний"), ("$100+ млн", "эффекта"), ("10+ лет", "в ИИ")],
         "ait_cta": "Бесплатная ИИ-диагностика →", "ait_url": "https://andre.technology/?lang=ru",
-        "ait_gif": "ait-landing-ru.gif",
+        "ait_media": "ait-explainer-ru", "nr_media": "neuronium-explainer-ru",
         "nr_kicker": "Нейроний · ИИ-операционная система", "nr_title": "Ведите ИИ-бизнес в ИИ-операционной системе",
         "nr_text": "Единый контекст бизнеса, ИИ-суперагент и 100 готовых ИИ-сотрудников в десяти отделах — "
                    "от целей и задач до продаж, поддержки и кода.",
-        "nr_cta": "Открыть AI OS →", "nr_url": "https://neuronium.ai/",
+        "nr_cta": "Попробовать бесплатно →", "nr_url": "https://neuronium.ai/",
         "socials": [("YouTube", "https://www.youtube.com/@andre_dataist"), ("Telegram", "https://t.me/+AXsoJ7OiMG4zMzFi"),
                     ("Instagram", "https://www.instagram.com/andre_dataist"), ("TikTok", "https://www.tiktok.com/@andre_dataist")],
         "why": "Вы получили это письмо, потому что подписались на рассылку Датаиста на dataist.ai.",
@@ -105,11 +105,11 @@ T = {
                     "and 3 months of team training with a mentor.",
         "ait_stats": [("30+", "companies"), ("$100M+", "impact"), ("10+ yrs", "in AI")],
         "ait_cta": "Free AI assessment →", "ait_url": "https://andre.technology/?lang=en",
-        "ait_gif": "ait-landing-en.gif",
+        "ait_media": "ait-explainer-en", "nr_media": "neuronium-explainer-en",
         "nr_kicker": "Neuronium · AI Operating System", "nr_title": "Run AI Business with AI Operating System",
         "nr_text": "One shared business context, one AI Superagent and 100 ready AI employees — "
                    "from goals and tasks to sales, support and code.",
-        "nr_cta": "Open AI OS →", "nr_url": "https://neuronium.ai/",
+        "nr_cta": "Start free trial →", "nr_url": "https://neuronium.ai/",
         "socials": [("YouTube", "https://www.youtube.com/@andre.dataist"), ("X", "https://x.com/andre_dataist"),
                     ("LinkedIn", "https://www.linkedin.com/in/andre-kuzminykh/"),
                     ("Instagram", "https://www.instagram.com/andre.dataist"), ("TikTok", "https://www.tiktok.com/@andre.dataist")],
@@ -133,6 +133,11 @@ def fetch(url, binary=False, timeout=30):
 
 def esc(s):
     return html.escape(str(s), quote=True)
+
+
+def esc_nobr(s):
+    """Как esc, но «ИИ-операционной», «AI-ready» и т. п. не рвутся по дефису в конце строки."""
+    return re.sub(r"(?<![\w-])((?:ИИ|AI)-[\w-]+)", r'<span style="white-space:nowrap">\1</span>', esc(s))
 
 
 def plural(n, forms):
@@ -555,8 +560,9 @@ def card(url, meta, title, paras, cta, img=None, embed=None, first=False):
 <p style="margin:16px 0 0">{link_cta(url, cta)}</p>''', f"{20 if first else 34}px 40px 0")
 
 
-def ad_card(gif, url, kicker, title, text, cta, stats=None, nr_tile=False):
-    """Рекламный блок: горизонтальное видео (GIF 16:9) и текст под ним."""
+def ad_card(gif, url, kicker, title, text, cta, stats=None, nr_tile=False, video=None):
+    """Рекламный блок: горизонтальный ролик 16:9 и подпись под ним.
+    В письме — GIF; в веб-версии (video = (mp4, обложка)) — видео без звука, по кругу."""
     tile = (f'<td valign="middle" style="width:26px;height:26px;border:1px solid #5c5c61;border-radius:6px;text-align:center;'
             f'{sans(13, "#ffffff", 700, 1, "-.05em")}">Nr</td><td class="kick" valign="middle" style="padding-left:10px;{mono(10, "#a1a1a6", 700, ".2em")}">{esc(kicker)}</td>'
             if nr_tile else f'<td class="kick" valign="middle" style="{mono(10, "#a1a1a6", 700, ".2em")}">{esc(kicker)}</td>')
@@ -566,13 +572,17 @@ def ad_card(gif, url, kicker, title, text, cta, stats=None, nr_tile=False):
             f'<td class="stat" style="padding-right:24px" valign="top"><div class="stat-n" style="{sans(20, "#ffffff", 800, 1.1, "-.03em")}white-space:nowrap">{esc(a)}</div>'
             f'<div style="padding-top:3px;{mono(10, "#8e8e93", 400, ".1em")}white-space:nowrap">{esc(b)}</div></td>' for a, b in stats)
         stats_html = f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px"><tr>{cells}</tr></table>'
+    media = (f'<video class="ad-video" src="{esc(video[0])}" poster="{esc(video[1])}" width="540" autoplay muted loop playsinline preload="metadata" '
+             f'aria-label="{esc(title)}" style="display:block;width:100%;max-width:540px;height:auto;border:0;border-radius:14px;background:#000"></video>'
+             if video else
+             f'<img src="{esc(gif)}" width="540" alt="{esc(title)}" style="display:block;width:100%;max-width:540px;height:auto;border:0;border-radius:14px">')
     return row(f'''<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#000000" style="background:#000000;border-radius:22px">
 <tr><td style="padding:10px 10px 0">
-<a href="{esc(url)}" style="text-decoration:none"><img src="{esc(gif)}" width="540" alt="{esc(title)}" style="display:block;width:100%;max-width:540px;height:auto;border:0;border-radius:14px"></a></td></tr>
+<a href="{esc(url)}" style="text-decoration:none;display:block">{media}</a></td></tr>
 <tr><td class="ad-pad" style="padding:24px 30px 30px">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>{tile}</tr></table>
-<div class="h1" style="padding-top:14px;{sans(27, '#ffffff', 800, 1.15, '-.03em')}">{esc(title)}</div>
-<p style="margin:12px 0 0;{sans(14, '#c7c7cc', 400, 1.55)}">{esc(text)}</p>
+<div class="h1" style="padding-top:14px;{sans(27, '#ffffff', 800, 1.15, '-.03em')}">{esc_nobr(title)}</div>
+<p style="margin:12px 0 0;{sans(14, '#c7c7cc', 400, 1.55)}">{esc_nobr(text)}</p>
 {stats_html}
 <p style="margin:22px 0 0">{pill(url, cta)}</p>
 </td></tr></table>''', "56px 40px 0")
@@ -623,8 +633,9 @@ def render(lang, issue, sections, web_url, unsub_url, web=False):
     for i, s in enumerate(sections, 1):
         body.append(section_header(f"{i:02d}", s["title"], s["label"], s["url"]))
         body.append(s["html_web"] if web else s["html"])
-        if s.get("after"):
-            body.append(s["after"])
+        extra = s.get("after_web") if web else s.get("after")
+        if extra:
+            body.append(extra)
 
     socials = " &nbsp;·&nbsp; ".join(f'<a href="{esc(u)}" style="color:{INK};text-decoration:none">{esc(name)}</a>'
                                     for name, u in t["socials"])
@@ -645,7 +656,8 @@ def render(lang, issue, sections, web_url, unsub_url, web=False):
     web_head = ""
     web_script = ""
     if web:
-        web_head = '''<script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
+        web_head = '''<script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}
+if('IntersectionObserver' in window)document.documentElement.classList.add('js');</script>
 <style>
   html,body{background:#ffffff}
   #page{background:#ffffff;min-height:100vh}
@@ -658,7 +670,12 @@ def render(lang, issue, sections, web_url, unsub_url, web=False):
   #theme > span{display:inline-flex}
   html[data-theme="dark"],html[data-theme="dark"] body{background:#000000}
   html[data-theme="dark"] #page{filter:invert(1) hue-rotate(180deg)}
-  html[data-theme="dark"] #page img,html[data-theme="dark"] #page .embed{filter:invert(1) hue-rotate(180deg)}
+  html[data-theme="dark"] #page img,html[data-theme="dark"] #page .embed,html[data-theme="dark"] #page video{filter:invert(1) hue-rotate(180deg)}
+  html.js #page td.px{opacity:0;transform:translateY(28px);transition:opacity .9s cubic-bezier(.2,.8,.2,1),transform .9s cubic-bezier(.2,.8,.2,1)}
+  html.js #page td.px.in{opacity:1;transform:none}
+  html.js #page table.tn tr{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
+  html.js #page table.tn.in tr{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){html.js #page td.px,html.js #page table.tn tr{opacity:1;transform:none;transition:none}}
   html[data-theme="dark"] #theme .t-dark{display:none}
   html[data-theme="dark"] #theme .t-light{display:inline-flex}
 </style>'''
@@ -668,6 +685,16 @@ function label(){var l=b.getAttribute(d.getAttribute('data-theme')==='dark'?'dat
 label();b.addEventListener('click',function(){var dark=d.getAttribute('data-theme')!=='dark';
 if(dark)d.setAttribute('data-theme','dark');else d.removeAttribute('data-theme');
 try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}label();});})();
+(function(){if(!('IntersectionObserver' in window))return;
+var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -6% 0px',threshold:0.06});
+document.querySelectorAll('#page td.px, #page table.tn').forEach(function(el){io.observe(el);});
+document.querySelectorAll('#page table.tn tr').forEach(function(tr,i){tr.style.transitionDelay=(i*70)+'ms';});})();
+(function(){var vs=document.querySelectorAll('#page video.ad-video');if(!vs.length||!('IntersectionObserver' in window))return;
+if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches){vs.forEach(function(v){v.removeAttribute('autoplay');v.pause();});return;}
+var seen=[];var vo=new IntersectionObserver(function(es){es.forEach(function(e){var v=e.target;
+if(e.isIntersecting){if(seen.indexOf(v)<0){seen.push(v);try{v.currentTime=0}catch(x){}}var p=v.play();if(p&&p.catch)p.catch(function(){});}
+else v.pause();});},{threshold:0.35});
+vs.forEach(function(v){vo.observe(v);});})();
 </script>'''
 
     return f'''<!DOCTYPE html>
@@ -772,8 +799,18 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
 
     def asset(name):
         if inline:
-            return "data:image/gif;base64," + base64.b64encode((ASSETS_DIR / name).read_bytes()).decode()
+            mime = {".gif": "image/gif", ".mp4": "video/mp4", ".jpg": "image/jpeg"}[Path(name).suffix]
+            return f"data:{mime};base64," + base64.b64encode((ASSETS_DIR / name).read_bytes()).decode()
         return f"{ASSETS_URL}/{name}"
+
+    def ad_pair(media, *args, **kw):
+        """Реклама для письма (GIF) и для веб-версии (MP4 с обложкой)."""
+        return (ad_card(asset(f"{media}.gif"), *args, **kw),
+                ad_card(asset(f"{media}.gif"), *args, video=(asset(f"{media}.mp4"), asset(f"{media}.jpg")), **kw))
+
+    def attach(sec, pair, front=False):
+        for key, html_ in zip(("after", "after_web"), pair):
+            sec[key] = html_ + (sec.get(key) or "") if front else (sec.get(key) or "") + html_
 
     def local_img(path, absolute):
         if inline:
@@ -869,10 +906,10 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
                              "stale": stale, "html": cards, "html_web": cards, "lead": items[0]["title"],
                              "count": f"{cnt} post{'s' if cnt > 1 else ''}"})
 
-    ait = ad_card(asset(t["ait_gif"]), with_utm(t["ait_url"]), t["ait_kicker"], t["ait_title"], t["ait_text"],
+    ait = ad_pair(t["ait_media"], with_utm(t["ait_url"]), t["ait_kicker"], t["ait_title"], t["ait_text"],
                   t["ait_cta"], stats=t["ait_stats"])
     if sections and sections[-1]["key"] == "author":
-        sections[-1]["after"] = ait
+        attach(sections[-1], ait)
         ait = None
 
     # 04 — Исследования: RU — посты Лаборатории (@dataist_lab), EN — исследования сайта
@@ -920,10 +957,10 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
         raise SystemExit("нет материалов для выпуска")
     if ait:                                   # «Авторского канала» нет — реклама после первого раздела за топом новостей
         host = next((x for x in sections if x["key"] != "news"), sections[0])
-        host["after"] = ait + (host.get("after") or "")
+        attach(host, ait, front=True)
     # Нейроний — сразу после «Обучения» (последнего раздела)
-    sections[-1]["after"] = (sections[-1].get("after") or "") + ad_card(
-        asset("neuronium-demo.gif"), with_utm(t["nr_url"]), t["nr_kicker"], t["nr_title"], t["nr_text"], t["nr_cta"], nr_tile=True)
+    attach(sections[-1], ad_pair(t["nr_media"], with_utm(t["nr_url"]), t["nr_kicker"], t["nr_title"], t["nr_text"], t["nr_cta"],
+                                 nr_tile=True))
 
     email, subject, preheader = render(lang, issue, sections, web_url, unsub_url, web=False)
     webpage, _, _ = render(lang, issue, sections, web_url, unsub_url, web=True)
