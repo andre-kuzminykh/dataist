@@ -1,0 +1,124 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Сцена ролика 1120×630: кадр анимации сайта + текст сцены. Управляется из render.js: setup(cfg), render(t). -->
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700;800&family=Geist:wght@400;500;600&display=block" rel="stylesheet">
+<style>
+  html,body{margin:0;background:#000}
+  #stage{position:relative;width:1120px;height:630px;overflow:hidden}
+  .bg{position:absolute;left:0;top:0;width:1120px;height:630px;display:block}
+  #cap{position:absolute;will-change:transform}
+  .w{display:inline-block;white-space:pre}
+  .kicker,.sub,.cta,.dom{will-change:opacity,transform}
+  #logo{position:absolute;left:56px;top:36px}
+  #prog{position:absolute;left:56px;right:56px;bottom:30px;display:flex;gap:8px}
+  #prog i{flex:1;height:3px;border-radius:2px;overflow:hidden;position:relative}
+  #prog i b{position:absolute;left:0;top:0;bottom:0;width:0}
+
+  /* ── AIT: стиль andre.technology ── */
+  .ait #stage{background:#060606}
+  .ait .kicker{font:600 18px/1.4 'JetBrains Mono',monospace;letter-spacing:.12em;white-space:nowrap;color:#8f8f99;text-transform:uppercase;margin-bottom:16px}
+  .ait .title{font:800 46px/1.14 'JetBrains Mono',monospace;letter-spacing:-.01em;text-transform:uppercase;color:#fff;
+    text-shadow:0 0 12.8px rgba(255,255,255,.3),0 0 26px rgba(160,113,255,.3)}
+  .ait .pv{color:#a071ff;text-shadow:0 0 14px rgba(160,113,255,.8),0 0 30px rgba(160,113,255,.45)}
+  .ait .go{color:#ff8a33;text-shadow:0 0 14px rgba(255,138,51,.75),0 0 30px rgba(255,138,51,.4)}
+  .ait .sub{margin-top:20px;font:600 22px/1.42 'JetBrains Mono',monospace;color:#d2d2da}
+  .ait .sub:before{content:"→ ";color:#a071ff}
+  .ait .cta{margin-top:26px;display:inline-block;background:#fff;color:#000;font:800 19px/1 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:18px 28px;border-radius:999px;box-shadow:0 0 30px rgba(160,113,255,.35)}
+  .ait .dom{margin-top:16px;font:600 17px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#8f8f99}
+  .ait #prog i{background:rgba(255,255,255,.12)}
+  .ait #prog i b{background:linear-gradient(90deg,#a071ff,#ff8a33)}
+
+  /* ── Нейроний: стиль neuronium.ai ── */
+  .nr #stage{background:#0c090d}
+  .nr .kicker{font:500 18px/1.4 'JetBrains Mono',monospace;letter-spacing:.16em;white-space:nowrap;color:rgba(248,247,250,.74);text-transform:uppercase;margin-bottom:14px}
+  .nr .title{font:500 52px/1.06 'Geist',sans-serif;letter-spacing:-.045em;color:#f8f7fa;text-shadow:0 2px 24px rgba(12,9,13,.35)}
+  .nr .title .dim{color:rgba(248,247,250,.62)}
+  .nr .sub{margin-top:16px;font:400 25px/1.4 'Geist',sans-serif;letter-spacing:-.01em;color:rgba(248,247,250,.84);text-shadow:0 1px 14px rgba(12,9,13,.45)}
+  .nr .cta{margin-top:26px;display:inline-block;background:#fff;color:#0c090d;font:600 21px/1 'Geist',sans-serif;letter-spacing:-.01em;padding:18px 30px;border-radius:999px}
+  .nr .dom{margin-top:16px;font:500 17px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:rgba(248,247,250,.74)}
+  .nr #logo{font:600 26px/1 'Geist',sans-serif;letter-spacing:-.04em;color:#f8f7fa;left:60px;top:34px}
+  .nr #prog{left:60px;right:60px}
+  .nr #prog i{background:rgba(255,255,255,.18)}
+  .nr #prog i b{background:#fff}
+</style></head>
+<body><div id="stage">
+  <img id="bgCur" class="bg"><img id="bgPrev" class="bg">
+  <div id="logo"></div>
+  <div id="cap"></div>
+  <div id="prog"></div>
+</div>
+<script>
+let CFG = null, built = -1, starts = [], total = 0;
+const ease = x => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
+
+function splitWords(html) {
+  const tpl = document.createElement('template'); tpl.innerHTML = html;
+  const out = [];
+  tpl.content.childNodes.forEach(n => {
+    const cls = n.nodeType === 1 ? n.className : '';
+    const txt = n.textContent;
+    txt.split(/([ \t\n]+)/).forEach(part => { if (part) out.push({ t: part, cls, space: /^[ \t\n]+$/.test(part) }); });
+  });
+  return out.map(p => p.space ? p.t : `<span class="w ${p.cls}">${p.t.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</span>`).join('');
+}
+
+window.setup = cfg => {
+  CFG = cfg;
+  document.body.className = cfg.theme;
+  starts = []; total = 0;
+  cfg.scenes.forEach(s => { starts.push(total); total += s.dur; });
+  document.getElementById('logo').innerHTML = cfg.theme === 'ait' ? `<img src="${cfg.logo}" style="height:28px;display:block">` : 'Nr';
+  document.getElementById('prog').innerHTML = cfg.scenes.map(() => '<i><b></b></i>').join('');
+  return total;
+};
+
+function build(i) {
+  const s = CFG.scenes[i], cap = document.getElementById('cap');
+  cap.innerHTML = (s.kicker ? `<div class="kicker">${s.kicker}</div>` : '') +
+    `<div class="title">${splitWords(s.title)}</div>` +
+    (s.sub ? `<div class="sub">${s.sub}</div>` : '') +
+    (s.cta ? `<div><span class="cta">${s.cta}</span></div>` : '') +
+    (s.dom ? `<div class="dom">${s.dom}</div>` : '');
+  const L = s.layout || {};
+  if (L.size) cap.querySelector('.title').style.fontSize = `${L.size}px`;
+  document.getElementById('logo').style.visibility = L.hideLogo ? 'hidden' : 'visible';
+  cap.style.cssText = `left:${L.left ?? 56}px;width:${L.width ?? 440}px;text-align:${L.align || 'left'};` +
+    (L.top != null ? `top:${L.top}px;` : 'top:50%;');
+  if (L.top == null) cap.style.marginTop = `${-(cap.getBoundingClientRect().height / 2) + (L.dy || 0)}px`;
+  built = i;
+}
+
+async function setImg(el, src) {
+  if (el.getAttribute('src') !== src) { el.setAttribute('src', src); await el.decode().catch(() => {}); }
+}
+
+window.render = async t => {
+  let i = 0; while (i < CFG.scenes.length - 1 && t >= starts[i + 1]) i++;
+  const s = CFG.scenes[i], lt = t - starts[i];
+  if (built !== i) build(i);
+  // фон: кадр сцены; в начале сцены — плавный переход от последнего кадра предыдущей
+  const k = Math.min(Math.floor(lt * CFG.fps), s.frames - 1);
+  await setImg(document.getElementById('bgCur'), `${s.dir}/f${String(k + 1).padStart(4, '0')}.jpg`);
+  const prev = document.getElementById('bgPrev');
+  if (i > 0 && lt < 0.35) {
+    const p = CFG.scenes[i - 1];
+    await setImg(prev, `${p.dir}/f${String(p.frames).padStart(4, '0')}.jpg`);
+    prev.style.opacity = 1 - ease(lt / 0.35);
+  } else prev.style.opacity = 0;
+  // текст: появление по словам, в конце сцены — мягкое затухание
+  const out = Math.min(1, Math.max(0, (s.dur - lt) / 0.28));
+  const fade = (el, a, d, dy) => { if (!el) return; const p = ease((lt - a) / d); el.style.opacity = p * out; el.style.transform = `translateY(${(1 - p) * dy}px)`; };
+  const cap = document.getElementById('cap');
+  fade(cap.querySelector('.kicker'), 0.05, 0.4, 10);
+  const words = [...cap.querySelectorAll('.w')];
+  words.forEach((w, n) => { const a = 0.14 + n * 0.055; const p = ease((lt - a) / 0.42); w.style.opacity = p * out; w.style.transform = `translateY(${(1 - p) * 16}px)`; w.style.filter = `blur(${(1 - p) * 5}px)`; });
+  const after = 0.14 + words.length * 0.055 + 0.12;
+  fade(cap.querySelector('.sub'), after, 0.42, 10);
+  const cta = cap.querySelector('.cta');
+  if (cta) { const p = ease((lt - after - 0.12) / 0.45); cta.style.opacity = p * out; cta.style.transform = `scale(${0.9 + 0.1 * p})`; cta.style.display = 'inline-block'; }
+  fade(cap.querySelector('.dom'), after + 0.25, 0.42, 8);
+  // полоса прогресса по сценам
+  document.querySelectorAll('#prog b').forEach((b, n) => { b.style.width = n < i ? '100%' : n > i ? '0%' : `${Math.min(100, lt / s.dur * 100)}%`; });
+};
+</script>
+</body></html>
