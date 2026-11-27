@@ -56,10 +56,10 @@ T = {
                   "news": "топ новостей недели"}, "and": "и",
         "sign": "Андрей Кузьминых", "sign_role": "Основатель Andre AI Technologies",
         "missed": "Если пропустили", "browser": "Открыть в браузере",
-        "s_video": "Видеожурнал", "s_author": "Авторский канал", "s_research": "Исследования", "s_edu": "Обучение",
+        "s_video": "Видеожурнал", "s_author": "Авторский канал", "s_research": "Лаборатория", "s_edu": "Академия",
         "s_news": "Топ новостей", "l_news": "Live ↗", "u_news": "https://t.me/neuronium_ai",
         "all_news": "Все новости →", "u_all_news": "https://dataist.ai/news/",
-        "l_video": "Подписаться ↗", "l_author": "Подписаться ↗", "l_research": "Лаборатория ↗", "l_edu": "Академия ↗",
+        "l_video": "Подписаться ↗", "l_author": "Подписаться ↗", "l_research": "Подписаться ↗", "l_edu": "Подписаться ↗",
         "u_video": "https://www.youtube.com/@andre_dataist", "u_author": "https://t.me/+AXsoJ7OiMG4zMzFi",
         "u_research": "https://t.me/+gjvJGFW0iXUwMjky", "u_edu": "https://t.me/dataist_academy",
         "watch": "▶ Смотреть видео",
@@ -93,7 +93,7 @@ T = {
                   "news": "the week’s top AI news"}, "and": "and",
         "sign": "Andre Kuzminykh", "sign_role": "Founder of Andre AI Technologies",
         "missed": "In case you missed it", "browser": "View in browser",
-        "s_video": "Video Journal", "s_author": "Author’s Channel", "s_research": "Research", "s_edu": "Learning",
+        "s_video": "Video Journal", "s_author": "Author’s Channel", "s_research": "Lab", "s_edu": "Academy",
         "s_news": "Top news", "l_news": "", "u_news": "",   # в X у Нейрония аккаунта нет
         "all_news": "", "u_all_news": "",                    # английской ленты новостей на сайте пока нет
         "l_video": "Subscribe ↗", "l_author": "Follow ↗", "l_research": "All research ↗", "l_edu": "Academy ↗",
