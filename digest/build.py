@@ -228,12 +228,17 @@ def strip_prefix(teaser, title):
     return teaser
 
 
-def pick(items, start, end, want, fill):
-    """Новинки окна [start, end]; при fill — если новинок нет, последние материалы."""
+PER_SECTION = 7          # материалов в каждом разделе выпуска
+FULL_CARDS = 3           # в письме: столько — карточками с текстом, остальные — строками (иначе Gmail обрежет письмо)
+
+
+def pick(items, start, end, want=PER_SECTION, fill=False):
+    """Новинки окна [start, end]; при fill (превью) — добираем до want последними материалами.
+    Возвращает (материалы, нет_ли_новинок)."""
     new = [x for x in items if start <= x["date"] <= end]
-    if new or not fill:
+    if not fill:
         return new[:want], False
-    return items[:want], True
+    return (new + [x for x in items if x not in new])[:want], not new
 
 
 # ───────────────────────── источники ─────────────────────────
@@ -595,6 +600,19 @@ def ad_card(gif, url, kicker, title, text, cta, stats=None, nr_tile=False):
 </td></tr></table>''', "56px 40px 0")
 
 
+def list_rows(entries, pad="26px 40px 0"):
+    """Материалы строками (после карточек): обложка 16:9 слева, заголовок справа. entries: (адрес, заголовок, картинка)."""
+    rows = []
+    for url, title, img in entries:
+        thumb = (f'<a href="{esc(url)}" style="text-decoration:none"><img class="tn-thumb" src="{esc(img)}" width="120" height="68" alt="" '
+                 f'style="display:block;width:120px;height:68px;border:0;border-radius:10px;object-fit:cover"></a>') if img else ""
+        rows.append(f'''<tr>
+<td class="tn-img" width="120" valign="middle" style="width:120px;padding:14px 0;border-top:1px solid {LINE}">{thumb}</td>
+<td class="tn-txt" valign="middle" style="padding:14px 0 14px 18px;border-top:1px solid {LINE}"><a class="tn-t" href="{esc(url)}" style="{sans(16, INK, 700, 1.35, '-.01em')}text-decoration:none">{esc(title)}</a></td>
+</tr>''')
+    return row(f'<table role="presentation" class="tn" width="100%" cellpadding="0" cellspacing="0" border="0">{"".join(rows)}</table>', pad)
+
+
 def top_news_rows(items, imgs, more=None):
     """Топ новостей: строки одна за другой — маленькая картинка слева, заголовок справа;
     more = (подпись, адрес) — ссылка «Все новости» справа под списком."""
@@ -772,6 +790,12 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
     sections = []   # разделы письма по порядку
     mag = {}        # те же материалы для веб-журнала
 
+    def email_list(parts):
+        """Карточки письма (строки HTML) и следующие за ними материалы строками (кортежи)."""
+        cards = "".join(p for p in parts if isinstance(p, str))
+        extra = [p for p in parts if not isinstance(p, str)]
+        return cards + (list_rows(extra) if extra else "")
+
     def tg_posts(channel):
         try:
             return telegram(channel)
@@ -790,13 +814,15 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
                 if not (path.exists() or save_cover(src, path)):
                     path = None
             url, paras = link_of(p), excerpt(clean_post(p["paras"]))
-            mail.append(card(url, "", p["title"], paras, cta, img=local_img(path, True) if path else None, first=i == 0))
+            img_m = local_img(path, True) if path else None
+            mail.append(card(url, "", p["title"], paras, cta, img=img_m, first=i == 0) if i < FULL_CARDS else (url, p["title"], img_m))
             items.append({"title": p["title"], "url": url, "paras": paras, "img": local_img(path, False) if path else None, "cta": cta})
-        return "".join(mail), items
+        return email_list(mail), items
 
     def site_items(xs, cta):
         """Материалы с сайта (EN): обложка по адресу, текст — анонс."""
-        mail = "".join(card(x["url"], "", x["title"], [x["text"]], cta, img=x["cover"] or None, first=i == 0) for i, x in enumerate(xs))
+        mail = email_list([card(x["url"], "", x["title"], [x["text"]], cta, img=x["cover"] or None, first=i == 0) if i < FULL_CARDS
+                           else (x["url"], x["title"], x["cover"] or None) for i, x in enumerate(xs)])
         return mail, [{"title": x["title"], "url": x["url"], "paras": [x["text"]] if x["text"] else [], "img": x["cover"] or None,
                        "cta": cta} for x in xs]
 
@@ -831,7 +857,7 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
     except Exception as e:
         print("youtube:", e, file=sys.stderr)
         vids = []
-    items, stale = pick(vids, start, end, 3, fill)
+    items, stale = pick(vids, start, end, fill=fill)
     if items:
         mail, web = [], []
         for i, v in enumerate(items):
@@ -840,20 +866,22 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
             pc = outdir / "img" / f"yt-{v['id']}-c.jpg"
             okc = pc.exists() or youtube_thumb(v["id"], pc, play=False)
             paras = video_text(v["paras"])
-            mail.append(card(v["url"], "", v["title"], paras, t["watch"], img=local_img(p, True) if ok else None, first=i == 0))
+            img_m = local_img(p, True) if ok else None
+            mail.append(card(v["url"], "", v["title"], paras, t["watch"], img=img_m, first=i == 0) if i < FULL_CARDS
+                        else (v["url"], v["title"], img_m))
             web.append({"id": v["id"], "title": v["title"], "url": v["url"], "text": " ".join(paras),
                         "cover": local_img(pc, False) if okc else f"https://i.ytimg.com/vi/{v['id']}/hqdefault.jpg"})
             if i == 0 and okc:
                 og_img = pc
         cnt = len(items)
         sections.append({"key": "video", "title": t["s_video"], "label": t["l_video"], "url": t["u_video"], "stale": stale,
-                         "html": "".join(mail), "lead": items[0]["title"],
+                         "html": email_list(mail), "lead": items[0]["title"],
                          "count": f"{cnt} видео" if lang == "ru" else f"{cnt} video{'s' if cnt > 1 else ''}"})
         mag["video"] = web
 
     # 03 — Авторский канал
     if lang == "ru":
-        items, stale = pick(tg_posts(TELEGRAM["ru"]), start, end, 3, fill)
+        items, stale = pick(tg_posts(TELEGRAM["ru"]), start, end, fill=fill)
         if items:
             mail, mag["author"] = tg_cards(items, t["open_post"], lambda p: p["url"], "tg")
             cnt = len(items)
@@ -861,7 +889,7 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
                              "stale": stale, "html": mail, "lead": items[0]["title"],
                              "count": f"{cnt} {plural(cnt, ('пост', 'поста', 'постов'))}"})
     else:
-        items, stale = pick(author_en(), start, end, 3, fill)
+        items, stale = pick(author_en(), start, end, fill=fill)
         if items:
             mail, mag["author"] = site_items(items, t["read_article"])
             cnt = len(items)
@@ -878,9 +906,7 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
 
     # 04 — Исследования: RU — посты Лаборатории (@dataist_lab), EN — исследования сайта
     if lang == "ru":
-        posts = tg_posts("dataist_lab")
-        new = [p for p in posts if start <= p["date"] <= end]
-        items = new[:5] if (len(new) >= 3 or not fill) else (new + [p for p in posts if p not in new])[:3]
+        items, stale = pick(tg_posts("dataist_lab"), start, end, fill=fill)
 
         def research_link(p):
             return first_site_link(p, "research/") or first_site_link(p) or p["url"]
@@ -889,22 +915,20 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
             mail, mag["research"] = tg_cards(items, t["read"], research_link, "lab")
             cnt = len(items)
             sections.append({"key": "research", "title": t["s_research"], "label": t["l_research"], "url": t["u_research"],
-                             "stale": fill and not new, "html": mail, "lead": items[0]["title"],
+                             "stale": stale, "html": mail, "lead": items[0]["title"],
                              "count": f"{cnt} {plural(cnt, ('исследование', 'исследования', 'исследований'))}"})
     else:
-        papers = research(lang)
-        new = [x for x in papers if start <= x["date"] <= end]
-        items = new[:5] if (len(new) >= 3 or not fill) else (new + [x for x in papers if x not in new])[:3]
+        items, stale = pick(research(lang), start, end, fill=fill)
         if items:
             mail, mag["research"] = site_items(items, t["read"])
             cnt = len(items)
             sections.append({"key": "research", "title": t["s_research"], "label": t["l_research"], "url": t["u_research"],
-                             "stale": fill and not new, "html": mail, "lead": items[0]["title"],
+                             "stale": stale, "html": mail, "lead": items[0]["title"],
                              "count": f"{cnt} paper{'s' if cnt > 1 else ''}"})
 
     # 05 — Обучение: посты Академии (@dataist_academy), только RU
     if lang == "ru":
-        items, stale = pick(tg_posts("dataist_academy"), start, end, 2, fill)
+        items, stale = pick(tg_posts("dataist_academy"), start, end, fill=fill)
 
         def lesson_link(p):
             return first_site_link(p, "education/") or (p["links"][0] if p["links"] else p["url"])
