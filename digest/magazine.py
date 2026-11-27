@@ -249,13 +249,19 @@ html[data-theme="dark"] #theme .t-l{display:block}
 .prog i{display:block;height:100%;background:var(--ink);transform-origin:0 50%;transform:scaleX(0)}
 
 /* первый экран */
-.mrow{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;padding-top:6px}
-.mast{display:flex;font:800 clamp(54px,7.4vw,132px)/.84 var(--sans);letter-spacing:-.055em;color:var(--ink);overflow:hidden;padding-bottom:.06em}
-.mast span{display:block}
-html.js .mast span{transform:translateY(104%);transition:transform 1.1s var(--ease);transition-delay:calc(var(--i) * 70ms + 80ms)}
-html.js.ready .mast span{transform:none}
-.mmeta{display:grid;gap:7px;text-align:right;font:700 11px/1.2 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding-bottom:.5em}
-.mmeta b{color:var(--ink)}
+.iss{display:flex;justify-content:space-between;gap:16px;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:10px 0;margin-top:14px;
+  font:700 11px/1.3 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink)}
+.mast{display:flex;align-items:center;gap:.16em;margin-top:clamp(14px,2.2vw,32px);font:800 min(14.6vw,220px)/.8 var(--sans);letter-spacing:-.04em;
+  color:var(--ink);overflow:hidden;padding:.02em 0 .05em}
+.mast-w{flex:1;display:flex;justify-content:space-between}
+.mast-w span{display:block}
+.mast-mk{flex:none;width:.72em;height:.72em;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;
+  letter-spacing:0;transition:background-color .5s var(--ease),color .5s var(--ease)}
+.mast-mk b{display:block;font:700 .4em/1 var(--mono);margin-top:-.04em}
+html.js .mast-w span{transform:translateY(104%);transition:transform 1.1s var(--ease);transition-delay:calc(var(--i) * 70ms + 160ms)}
+html.js .mast-mk{transform:scale(0) rotate(-90deg);transition:transform 1s cubic-bezier(.34,1.56,.64,1) .05s,background-color .5s var(--ease),color .5s var(--ease)}
+html.js .mast-mk b{opacity:0;transform:translateY(-.6em);transition:opacity .5s var(--ease) .7s,transform .8s cubic-bezier(.34,1.56,.64,1) .7s}
+html.js.ready .mast-w span,html.js.ready .mast-mk,html.js.ready .mast-mk b{transform:none;opacity:1}
 .rule{height:7px;border-top:3px solid var(--ink);border-bottom:1px solid var(--ink);margin-top:12px;transform-origin:0 50%}
 html.js .rule{transform:scaleX(0);transition:transform 1.3s var(--ease) .4s}
 html.js.ready .rule{transform:none}
@@ -471,8 +477,11 @@ html[data-theme="dark"] .ac-cta{color:#b9a3ff}
 
 /* подвал */
 .ft{padding:clamp(56px,7vw,104px) 0 40px}
-.ft-mark{display:flex;justify-content:space-between;font:800 min(15.4vw,232px)/.8 var(--sans);letter-spacing:-.04em;color:var(--ghost);
+.ft-mark{display:flex;align-items:center;gap:.16em;font:800 min(14.6vw,220px)/.8 var(--sans);letter-spacing:-.04em;color:var(--ghost);
   padding-bottom:.04em;user-select:none;transition:color .5s var(--ease)}
+.ft-mark .mast-w span{transform:none}
+.ft-mark .mast-mk{background:var(--ghost);color:var(--bg);transform:none}
+.ft-mark .mast-mk b{opacity:1;transform:none}
 .ft-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px 28px;border-top:1px solid var(--ink);
   margin-top:clamp(18px,2vw,28px);padding-top:18px;font:700 11px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
 .soc{display:flex;flex-wrap:wrap;gap:8px 22px}
@@ -498,10 +507,8 @@ html[data-theme="dark"] .ac-cta{color:#b9a3ff}
   .brand{opacity:1;transform:none;font-size:17px}
   .nav{margin:0;flex:1;justify-content:flex-start;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
   .nav a{padding:9px 10px;font-size:10px}
-  .mrow{flex-direction:column;align-items:stretch;gap:12px}
-  .mast{justify-content:space-between;font-size:17.4vw}
-  .mmeta{grid-auto-flow:column;justify-content:space-between;text-align:left;padding:0;font-size:10px}
-  .mmeta span:last-child{display:none}
+  .iss{font-size:10px;letter-spacing:.14em}
+  .iss span:nth-child(2){display:none}
   .tk-l{padding:8px 12px;font-size:9px}
   .spread{grid-template-columns:1fr;gap:40px}
   .col-lead{order:-1}
@@ -522,7 +529,7 @@ html[data-theme="dark"] .ac-cta{color:#b9a3ff}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   *,*::before,*::after{animation:none!important;transition:none!important}
-  html.js .rv,html.js .mast span,html.js .rule{opacity:1;transform:none}
+  html.js .rv,html.js .mast-w span,html.js .mast-mk,html.js .mast-mk b,html.js .rule{opacity:1;transform:none}
   html.js .rv .media,html.js .media.rv{clip-path:none}
 }
 """
@@ -591,7 +598,9 @@ def render(ctx):
     nav = "".join(f'<a href="#{s["key"]}">{esc(mt["nav"][s["key"]])}</a>' for s in secs)
     toc = "".join(f'<li><a href="#{s["key"]}">{esc(s["title"])}{ARROW}</a></li>' for s in secs)
     letters = "".join(f'<span style="--i:{i}" aria-hidden="true">{esc(c)}</span>' for i, c in enumerate(ctx["brand"]))
-    foot_letters = "".join(f"<span>{esc(c)}</span>" for c in ctx["brand"])
+    nameplate = f'<span class="mast-mk" aria-hidden="true"><b>i</b></span><span class="mast-w">{letters}</span>'
+    foot_plate = (f'<span class="mast-mk"><b>i</b></span><span class="mast-w">'
+                  f'{"".join(f"<span>{esc(c)}</span>" for c in ctx["brand"])}</span>')
     issue = mt["issue"].format(n=ctx["n"])
 
     news = ctx.get("news") or {}
@@ -660,8 +669,8 @@ def render(ctx):
 
 <main id="main">
 <div class="wrap front" id="top">
-<div class="mrow"><h1 class="mast" aria-label="{esc(ctx["brand"])} — {esc(issue)}">{letters}</h1>
-<div class="mmeta"><b>{esc(issue)}</b><span>{esc(ctx["date_range"])}</span><span>{esc(mt["tagline"])}</span></div></div>
+<div class="iss"><span>{esc(issue)}</span><span>{esc(mt["tagline"])}</span><span>{esc(ctx["date_range"])}</span></div>
+<h1 class="mast" aria-label="{esc(ctx["brand"])} — {esc(issue)}">{nameplate}</h1>
 <div class="rule" aria-hidden="true"></div>
 {ticker}
 <div class="spread">{"".join(cols)}</div>
@@ -673,7 +682,7 @@ def render(ctx):
 </main>
 
 <footer class="ft"><div class="wrap">
-<div class="ft-mark" aria-hidden="true">{foot_letters}</div>
+<div class="ft-mark" aria-hidden="true">{foot_plate}</div>
 <div class="ft-row"><div class="soc">{socials}</div>
 <span>{esc(issue)} · {esc(ctx["date_long"])}</span>
 <span class="made">{esc(mt["made"])} <span class="nr">Nr</span><b>{esc(ctx["made_name"])}</b></span>
