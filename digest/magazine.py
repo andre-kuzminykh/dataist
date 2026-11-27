@@ -12,14 +12,14 @@ MT = {
     "ru": {
         "tagline": "Еженедельный журнал об ИИ", "contents": "В этом выпуске", "letter": "От автора",
         "nav": {"news": "Новости", "video": "Видео", "author": "Канал", "research": "Исследования", "edu": "Обучение"},
-        "ticker": "Главное за неделю", "play": "Смотреть видео", "top": "Наверх ↑", "prev": "Назад", "next": "Дальше",
+        "play": "Смотреть видео", "top": "Наверх ↑", "prev": "Назад", "next": "Дальше",
         "skip": "Перейти к содержанию", "made": "Создано в", "issue": "Выпуск № {n}", "issue_short": "№ {n}",
         "lesson": "Урок", "study": "Исследование",
     },
     "en": {
         "tagline": "The weekly AI magazine", "contents": "In this issue", "letter": "From the author",
         "nav": {"news": "News", "video": "Video", "author": "Channel", "research": "Research", "edu": "Learning"},
-        "ticker": "This week", "play": "Watch the video", "top": "Back to top ↑", "prev": "Back", "next": "Next",
+        "play": "Watch the video", "top": "Back to top ↑", "prev": "Back", "next": "Next",
         "skip": "Skip to content", "made": "Made in", "issue": "Issue No. {n}", "issue_short": "No. {n}",
         "lesson": "Lesson", "study": "Study",
     },
@@ -226,10 +226,12 @@ h3 a:hover{background-size:100% 2px}
   border-bottom:1px solid transparent;transition:border-color .4s var(--ease),background-color .5s var(--ease)}
 .top.scrolled{border-bottom-color:var(--line)}
 .top-in{height:var(--top);display:flex;align-items:center;gap:24px}
-.brand{display:flex;align-items:center;gap:10px;font:800 19px/1 var(--sans);letter-spacing:-.04em;color:var(--ink);flex:none;
-  opacity:0;transform:translateY(-6px);transition:opacity .5s var(--ease),transform .5s var(--ease)}
-.top.scrolled .brand,.top:focus-within .brand{opacity:1;transform:none}
-.mk{width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font:700 13px/1 var(--mono)}
+/* логотип — как в шапке dataist.ai: круг с «i» и «ДАТАИСТ», ведёт на главную сайта */
+.brand{display:flex;align-items:center;gap:12px;color:var(--ink);flex:none}
+.brand-w{font:600 20px/1 -apple-system,BlinkMacSystemFont,'Inter',sans-serif;letter-spacing:-.025em;margin-top:2px}
+.mk{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font:700 14px/1 var(--mono);
+  transition:transform .3s var(--ease),background-color .5s var(--ease),color .5s var(--ease)}
+.brand:hover .mk{transform:scale(1.05)}
 .nav{display:flex;gap:4px;margin:0 auto;overflow-x:auto;scrollbar-width:none}
 .nav::-webkit-scrollbar{display:none}
 .nav a{font:700 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--muted);padding:10px 12px;border-radius:999px;
@@ -251,26 +253,16 @@ html[data-theme="dark"] #theme .t-l{display:block}
 /* первый экран */
 .iss{display:flex;justify-content:space-between;gap:16px;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:10px 0;margin-top:14px;
   font:700 11px/1.3 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink)}
-.mast{display:flex;align-items:center;gap:.16em;margin-top:clamp(14px,2.2vw,32px);font:800 min(14.6vw,220px)/.8 var(--sans);letter-spacing:-.04em;
+.mast{display:flex;justify-content:space-between;margin-top:clamp(14px,2.2vw,32px);font:800 min(15.4vw,232px)/.8 var(--sans);letter-spacing:-.04em;
   color:var(--ink);overflow:hidden;padding:.02em 0 .05em}
-.mast-w{flex:1;display:flex;justify-content:space-between}
-.mast-w span{display:block}
-.mast-mk{flex:none;width:.72em;height:.72em;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;
-  letter-spacing:0;transition:background-color .5s var(--ease),color .5s var(--ease)}
-.mast-mk b{display:block;font:700 .4em/1 var(--mono);margin-top:-.04em}
-html.js .mast-w span{transform:translateY(104%);transition:transform 1.1s var(--ease);transition-delay:calc(var(--i) * 70ms + 160ms)}
-html.js .mast-mk{transform:scale(0) rotate(-90deg);transition:transform 1s cubic-bezier(.34,1.56,.64,1) .05s,background-color .5s var(--ease),color .5s var(--ease)}
-html.js .mast-mk b{opacity:0;transform:translateY(-.6em);transition:opacity .5s var(--ease) .7s,transform .8s cubic-bezier(.34,1.56,.64,1) .7s}
-html.js.ready .mast-w span,html.js.ready .mast-mk,html.js.ready .mast-mk b{transform:none;opacity:1}
+.mast span{display:block}
+html.js .mast span{transform:translateY(104%);transition:transform 1.1s var(--ease);transition-delay:calc(var(--i) * 70ms + 120ms)}
+html.js.ready .mast span{transform:none}
 .rule{height:7px;border-top:3px solid var(--ink);border-bottom:1px solid var(--ink);margin-top:12px;transform-origin:0 50%}
 html.js .rule{transform:scaleX(0);transition:transform 1.3s var(--ease) .4s}
 html.js.ready .rule{transform:none}
-.ticker{display:flex;align-items:center;gap:6px;background:var(--ink);color:var(--bg);margin-top:12px;border-radius:999px;padding:5px 22px 5px 5px;overflow:hidden}
-.tk-l{flex:none;display:inline-flex;align-items:center;gap:10px;background:var(--bg);color:var(--ink);border-radius:999px;padding:8px 16px 8px 14px;
-  font:700 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
-.tk-l .live{width:7px;height:7px}
-.tk-l .live::after{inset:-4px}
-.tk-in{flex:1;min-width:0;overflow:hidden;
+.ticker{background:var(--ink);color:var(--bg);margin-top:12px;border-radius:999px;padding:5px 22px;overflow:hidden}
+.tk-in{overflow:hidden;
   -webkit-mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent)}
 .tk{display:flex;width:max-content;animation:tk 80s linear infinite}
 .ticker:hover .tk{animation-play-state:paused}
@@ -477,11 +469,8 @@ html[data-theme="dark"] .ac-cta{color:#b9a3ff}
 
 /* подвал */
 .ft{padding:clamp(56px,7vw,104px) 0 40px}
-.ft-mark{display:flex;align-items:center;gap:.16em;font:800 min(14.6vw,220px)/.8 var(--sans);letter-spacing:-.04em;color:var(--ghost);
+.ft-mark{display:flex;justify-content:space-between;font:800 min(15.4vw,232px)/.8 var(--sans);letter-spacing:-.04em;color:var(--ghost);
   padding-bottom:.04em;user-select:none;transition:color .5s var(--ease)}
-.ft-mark .mast-w span{transform:none}
-.ft-mark .mast-mk{background:var(--ghost);color:var(--bg);transform:none}
-.ft-mark .mast-mk b{opacity:1;transform:none}
 .ft-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px 28px;border-top:1px solid var(--ink);
   margin-top:clamp(18px,2vw,28px);padding-top:18px;font:700 11px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
 .soc{display:flex;flex-wrap:wrap;gap:8px 22px}
@@ -504,12 +493,12 @@ html[data-theme="dark"] .ac-cta{color:#b9a3ff}
 @media (max-width:860px){
   :root{--top:56px}
   .top-in{gap:12px}
-  .brand{opacity:1;transform:none;font-size:17px}
+  .mk{width:26px;height:26px;font-size:12px}
+  .brand-w{font-size:18px}
   .nav{margin:0;flex:1;justify-content:flex-start;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
   .nav a{padding:9px 10px;font-size:10px}
   .iss{font-size:10px;letter-spacing:.14em}
   .iss span:nth-child(2){display:none}
-  .tk-l{padding:8px 12px;font-size:9px}
   .spread{grid-template-columns:1fr;gap:40px}
   .col-lead{order:-1}
   .rail{display:flex}
@@ -529,7 +518,7 @@ html[data-theme="dark"] .ac-cta{color:#b9a3ff}
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
   *,*::before,*::after{animation:none!important;transition:none!important}
-  html.js .rv,html.js .mast-w span,html.js .mast-mk,html.js .mast-mk b,html.js .rule{opacity:1;transform:none}
+  html.js .rv,html.js .mast span,html.js .rule{opacity:1;transform:none}
   html.js .rv .media,html.js .media.rv{clip-path:none}
 }
 """
@@ -598,15 +587,13 @@ def render(ctx):
     nav = "".join(f'<a href="#{s["key"]}">{esc(mt["nav"][s["key"]])}</a>' for s in secs)
     toc = "".join(f'<li><a href="#{s["key"]}">{esc(s["title"])}{ARROW}</a></li>' for s in secs)
     letters = "".join(f'<span style="--i:{i}" aria-hidden="true">{esc(c)}</span>' for i, c in enumerate(ctx["brand"]))
-    nameplate = f'<span class="mast-mk" aria-hidden="true"><b>i</b></span><span class="mast-w">{letters}</span>'
-    foot_plate = (f'<span class="mast-mk"><b>i</b></span><span class="mast-w">'
-                  f'{"".join(f"<span>{esc(c)}</span>" for c in ctx["brand"])}</span>')
+    foot_letters = "".join(f"<span>{esc(c)}</span>" for c in ctx["brand"])
     issue = mt["issue"].format(n=ctx["n"])
 
     news = ctx.get("news") or {}
     tick = "".join(f'<a {ext(x["url"])} tabindex="-1">{esc(x["title"])}</a><b>●</b>' for x in news.get("items", []))
-    ticker = (f'<div class="ticker rv" aria-hidden="true"><span class="tk-l"><i class="live"></i>{esc(mt["ticker"])}</span>'
-              f'<div class="tk-in"><div class="tk"><span>{tick}</span><span>{tick}</span></div></div></div>') if tick else ""
+    ticker = (f'<div class="ticker rv" aria-hidden="true"><div class="tk-in"><div class="tk"><span>{tick}</span><span>{tick}</span></div></div></div>'
+              if tick else "")
 
     # первый экран: новости | видеожурнал (или главный материал) | реклама ИИ-трансформации и содержание
     cols = []
@@ -660,7 +647,7 @@ def render(ctx):
 <body>
 <a class="skip" href="#main">{esc(mt["skip"])}</a>
 <header class="top"><div class="wrap top-in">
-<a class="brand" href="#top" aria-label="{esc(ctx["brand"])}"><span class="mk">i</span>{esc(ctx["brand"])}</a>
+<a class="brand" href="{esc(ctx.get("home") or "https://dataist.ai/")}" aria-label="{esc(ctx["brand"])} — dataist.ai"><span class="mk" aria-hidden="true">i</span><span class="brand-w">{esc(ctx["brand"])}</span></a>
 <nav class="nav" aria-label="{esc(mt["contents"])}">{nav}</nav>
 <div class="tools"><span class="chip">{esc(mt["issue_short"].format(n=ctx["n"]))} · {esc(ctx["date_short"])}</span>
 <button id="theme" type="button" data-dark="{esc(ctx["to_dark"])}" data-light="{esc(ctx["to_light"])}" aria-label="{esc(ctx["to_dark"])}">
@@ -670,7 +657,7 @@ def render(ctx):
 <main id="main">
 <div class="wrap front" id="top">
 <div class="iss"><span>{esc(issue)}</span><span>{esc(mt["tagline"])}</span><span>{esc(ctx["date_range"])}</span></div>
-<h1 class="mast" aria-label="{esc(ctx["brand"])} — {esc(issue)}">{nameplate}</h1>
+<h1 class="mast" aria-label="{esc(ctx["brand"])} — {esc(issue)}">{letters}</h1>
 <div class="rule" aria-hidden="true"></div>
 {ticker}
 <div class="spread">{"".join(cols)}</div>
@@ -682,7 +669,7 @@ def render(ctx):
 </main>
 
 <footer class="ft"><div class="wrap">
-<div class="ft-mark" aria-hidden="true">{foot_plate}</div>
+<div class="ft-mark" aria-hidden="true">{foot_letters}</div>
 <div class="ft-row"><div class="soc">{socials}</div>
 <span>{esc(issue)} · {esc(ctx["date_long"])}</span>
 <span class="made">{esc(mt["made"])} <span class="nr">Nr</span><b>{esc(ctx["made_name"])}</b></span>

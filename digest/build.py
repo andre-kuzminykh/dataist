@@ -955,7 +955,7 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
     webpage = magazine.render({
         "lang": lang, "n": n, "brand": t["brand"], "title": subject, "description": hello,
         "hello": hello.replace("в одном письме", "в одном выпуске").replace("in one letter", "in one issue"),
-        "sign": t["sign"], "sign_role": t["sign_role"], "avatar": f"{SITE}/about/andre.jpeg",
+        "sign": t["sign"], "sign_role": t["sign_role"], "avatar": f"{SITE}/about/andre.jpeg", "home": f"{SITE}/",
         "sections": [{k: s.get(k) for k in ("key", "title", "label", "url", "count")} for s in sections],
         "embed": embed, "date_range": fmt_range(start, end, lang), "date_long": fmt_date(issue, lang),
         "date_short": fmt_date(issue, lang, short=True), "socials": t["socials"], "made_name": t["made_name"],
