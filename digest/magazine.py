@@ -80,12 +80,13 @@ def cta(url, label, cls="cta"):
 
 def kick(title, live=False):
     """Заголовок колонки на первой полосе: жирная линия и подпись капителью."""
-    return f'<div class="kick rv">{"<i class=live aria-hidden=true></i>" if live else ""}{esc(title)}</div>'
+    return f'<div class="kick rv">{"<i class=live aria-hidden=true></i>" if live else ""}<span class="kt">{esc(title)}</span></div>'
 
 
 def sec_head(title, icon="", extra=""):
     """Шапка раздела: двойная газетная линия и крупное название."""
-    return f'<div class="sh rv">{icon}<h2 class="sh-t">{esc(title)}</h2>{extra}</div>'
+    words = " ".join(f'<span class="w"><span style="--w:{i}">{esc(w)}</span></span>' for i, w in enumerate(title.split()))
+    return f'<div class="sh rv">{icon}<h2 class="sh-t">{words}</h2>{extra}</div>'
 
 
 def strip(items, label_prev, label_next):
@@ -112,7 +113,7 @@ def video_col(title, videos, embed, mt):
     stage = (f'<button class="ph" type="button" data-id="{esc(v0["id"])}" aria-label="{esc(mt["play"])}: {esc(v0["title"])}">{inner}</button>'
              if embed else f'<a class="ph" {ext(v0["url"])} aria-label="{esc(mt["play"])}: {esc(v0["title"])}">{inner}</a>')
     items = "".join(
-        f'''<li{' class="on"' if i == 0 else ''}><a {ext(v["url"])} data-id="{esc(v["id"])}" data-title="{esc(v["title"])}"
+        f'''<li style="--n:{i}"{' class="on"' if i == 0 else ''}><a {ext(v["url"])} data-id="{esc(v["id"])}" data-title="{esc(v["title"])}"
  data-text="{esc(v["text"])}" data-url="{esc(v["url"])}"><span class="st-m"><img src="{esc(v["cover"])}" alt="" loading="lazy" decoding="async">
 <span class="st-pb">{PLAY}</span></span><span class="st-t">{esc(v["title"])}</span></a></li>''' for i, v in enumerate(videos))
     return f'''{kick(title)}<div class="vid">
@@ -124,11 +125,11 @@ def video_col(title, videos, embed, mt):
 def lead_col(title, items, mt):
     """Центр первой полосы без видео: главный материал крупно и лента остальных."""
     a = items[0]
-    rest = "".join(f'''<li><a {ext(x["url"])}><span class="st-m">{f'<img src="{esc(x["img"])}" alt="" loading="lazy" decoding="async">' if x.get("img") else ''}</span>
-<span class="st-t">{esc(x["title"])}</span></a></li>''' for x in items[1:])
+    rest = "".join(f'''<li style="--n:{i}"><a {ext(x["url"])}><span class="st-m">{f'<img src="{esc(x["img"])}" alt="" loading="lazy" decoding="async">' if x.get("img") else ''}</span>
+<span class="st-t">{esc(x["title"])}</span></a></li>''' for i, x in enumerate(items[1:]))
     return f'''{kick(title)}<div class="vid">
 <div class="rv">{media(a["url"], a.get("img"), a["title"], "media lp-m")}</div>
-<div class="now rv"><a class="now-t" {ext(a["url"])}>{esc(a["title"])}</a>{paras(a["paras"][:1], "now-p")}</div>
+<div class="now rv"><a class="now-t" {ext(a["url"])}>{esc(a["title"])}</a>{paras(a["paras"], "now-p")}</div>
 {strip(rest, mt["prev"], mt["next"]) if rest else ''}</div>'''
 
 
@@ -146,11 +147,21 @@ def ait_card(ad):
 
 
 def nr_band(ad):
-    return f'''<section class="band" aria-label="{esc(ad["kicker"])}"><div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
+    return f'''<section class="band rv" aria-label="{esc(ad["kicker"])}"><i class="cv cv-t" aria-hidden="true"></i><i class="cv cv-b" aria-hidden="true"></i><div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
 <div class="wrap band-in">{ad_video(ad, "band-m rv")}
 <div class="band-b rv"><div class="ad-k"><span class="nr">Nr</span>{esc(ad["kicker"])}</div>
 <h2 class="band-t">{nobr(ad["title"])}</h2><p class="band-p">{nobr(ad["text"])}</p>
 <a class="pill" {ext(ad["url"])}>{esc(ad["cta"])}</a></div></div></section>'''
+
+
+def dropcap(ps):
+    """Первый абзац с буквицей отдельным элементом — чтобы её можно было анимировать."""
+    if not ps:
+        return ""
+    first, k = ps[0], 1
+    while k < len(first) and not first[k - 1].isalnum():
+        k += 1
+    return f'<p class="p"><span class="dc">{esc(first[:k])}</span>{esc(first[k:])}</p>' + paras(ps[1:])
 
 
 def author_sec(title, items, ctx):
@@ -161,7 +172,7 @@ def author_sec(title, items, ctx):
     by = (f'<span class="sh-by"><img src="{esc(ctx["avatar"])}" alt="" width="44" height="44"><span>{esc(ctx["sign"])}</span></span>')
     return f'''<section class="wrap sec" id="author" data-spy>{sec_head(title, extra=by)}
 <div class="cols au"><article class="au-lead rv">{media(a["url"], a.get("img"), a["title"])}
-<h3 class="au-lt"><a {ext(a["url"])}>{esc(a["title"])}</a></h3><div class="au-tx">{paras(a["paras"])}</div>{cta(a["url"], a["cta"])}</article>
+<h3 class="au-lt"><a {ext(a["url"])}>{esc(a["title"])}</a></h3><div class="au-tx">{dropcap(a["paras"])}</div>{cta(a["url"], a["cta"])}</article>
 {f'<div class="au-side">{side}</div>' if side else ''}</div></section>'''
 
 
@@ -170,11 +181,11 @@ def lab_sec(title, items, mt):
     a, rest = items[0], items[1:]
     cards = "".join(f'''<article class="lb-c rv"><div class="xh">{media(x["url"], x.get("img"), x["title"])}</div>
 <span class="tag">{esc(mt["study"])}</span><h3 class="lb-t"><a {ext(x["url"])}>{esc(x["title"])}</a></h3>
-{paras(x["paras"][:1], "lb-p")}{cta(x["url"], x["cta"])}</article>''' for x in rest)
+{paras(x["paras"], "lb-p")}{cta(x["url"], x["cta"])}</article>''' for x in rest)
     return f'''<section class="wrap sec" id="research" data-spy>{sec_head(title, f'<span class="sh-ic">{FLASK}</span>')}
 <article class="lb-f rv"><div class="xh">{media(a["url"], a.get("img"), a["title"])}</div>
 <div class="lb-fb"><span class="tag">{esc(mt["study"])}</span><h3 class="lb-ft"><a {ext(a["url"])}>{esc(a["title"])}</a></h3>
-{paras(a["paras"][:2], "lb-p")}{cta(a["url"], a["cta"])}</div></article>
+{paras(a["paras"], "lb-p")}{cta(a["url"], a["cta"])}</div></article>
 {f'<div class="lb-g">{cards}</div>' if cards else ''}</section>'''
 
 
@@ -183,11 +194,11 @@ def academy_sec(title, items, mt):
     a, rest = items[0], items[1:]
     lessons = "".join(f'''<article class="ac-i rv">{media(x["url"], x.get("img"), x["title"])}
 <div><span class="tag tag-l">{esc(mt["lesson"])}</span><h3 class="ac-t"><a {ext(x["url"])}>{esc(x["title"])}</a></h3>
-{paras(x["paras"][:1], "ac-p")}{cta(x["url"], x["cta"])}</div></article>''' for x in rest)
+{paras(x["paras"], "ac-p")}{cta(x["url"], x["cta"])}</div></article>''' for x in rest)
     return f'''<section class="wrap sec" id="edu" data-spy>{sec_head(title, f'<span class="sh-ic">{CAP}</span>')}
 <article class="ac-f rv">{media(a["url"], a.get("img"), a["title"])}
 <div class="ac-fb"><span class="tag tag-l">{esc(mt["lesson"])}</span><h3 class="ac-ft"><a {ext(a["url"])}>{esc(a["title"])}</a></h3>
-{paras(a["paras"][:2], "ac-p")}{cta(a["url"], a["cta"], "btn")}</div></article>
+{paras(a["paras"], "ac-p")}{cta(a["url"], a["cta"], "btn")}</div></article>
 {f'<div class="ac-l">{lessons}</div>' if lessons else ''}</section>'''
 
 
@@ -229,14 +240,15 @@ h3 a:hover,.now-t:hover{background-size:100% 1.5px}
 .cta{display:inline-block;margin-top:14px;font:700 11px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink);
   padding-bottom:4px;border-bottom:1.5px solid currentColor;transition:opacity .2s}
 .cta:hover{opacity:.6}
-.btn{display:inline-flex;margin-top:22px;font:700 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--bg);background:var(--ink);
-  padding:15px 20px;transition:opacity .2s}
+.btn{display:inline-flex;margin-top:22px;font:700 12px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--bg);
+  background:linear-gradient(var(--ink),var(--ink)) 0 0/100% 100% no-repeat;box-shadow:inset 0 0 0 1.5px var(--ink);
+  padding:15px 20px;transition:opacity .2s,background-size 1s var(--ease),color .4s ease}
 .btn:hover{opacity:.82}
 .tag{display:inline-flex;align-items:center;gap:8px;font:700 10px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink)}
 .tag::before{content:"";width:7px;height:7px;background:var(--ink)}
 .tag-l::before{width:0;height:0;background:none;border-left:7px solid var(--ink);border-top:4px solid transparent;border-bottom:4px solid transparent}
 .pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;color:#000;font:700 15px/1 var(--sans);padding:16px 24px;
-  border-radius:999px;transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
+  border-radius:999px;position:relative;overflow:hidden;isolation:isolate;transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
 .pill:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(160,113,255,.35)}
 
 /* шапка сайта */
@@ -254,9 +266,7 @@ h3 a:hover,.now-t:hover{background-size:100% 1.5px}
 .nav a:hover{color:var(--ink)}
 .nav a.on{color:var(--ink);border-bottom-color:var(--ink)}
 .tools{display:flex;align-items:center;gap:14px;flex:none}
-.chip{font:700 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 .arch-btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:color .2s}
-.arch-btn.chip{font:700 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:8px 0}
 .arch-btn:hover,.arch-btn[aria-expanded="true"]{color:var(--ink)}
 .arch-btn:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 .arch-btn .chev{width:12px;height:12px;flex:none;transition:transform .25s var(--ease)}
@@ -288,7 +298,7 @@ a.arch-i:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
 .arch-d{font:800 20px/1.15 var(--serif);color:var(--ink)}
 .arch-tag{font:700 9px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;padding:5px 7px;background:var(--ink);color:var(--bg);white-space:nowrap}
 .arch-go{font:700 14px/1 var(--mono);color:var(--muted)}
-.arch-t{grid-column:2/-1;font:400 13px/1.45 var(--sans);color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.arch-t{grid-column:2/-1;font:400 13px/1.45 var(--sans);color:var(--muted)}
 .arch-nx .arch-d,.arch-nx .arch-n{color:var(--dim)}
 .arch-nx .arch-tag{background:none;color:var(--muted);border:1px dashed var(--dim);padding:4px 6px}
 #theme{all:unset;cursor:pointer;width:34px;height:34px;display:grid;place-items:center;color:var(--muted);transition:color .2s}
@@ -302,16 +312,12 @@ html[data-theme="dark"] #theme .t-l{display:block}
 .prog i{display:block;height:100%;background:var(--ink);transform-origin:0 50%;transform:scaleX(0)}
 
 /* первая полоса: шапка газеты */
-.iss{display:flex;justify-content:space-between;gap:16px;border-top:1px solid var(--ink);border-bottom:1px solid var(--ink);padding:10px 0;margin-top:14px;
+.iss{position:relative;display:flex;justify-content:space-between;gap:16px;padding:10px 0;margin-top:14px;
   font:700 11px/1.3 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink)}
 .mast{display:flex;justify-content:space-between;margin-top:clamp(14px,2.2vw,32px);font:800 min(15.4vw,232px)/.8 var(--sans);letter-spacing:-.04em;
   color:var(--ink);overflow:hidden;padding:.02em 0 .05em}
 .mast span{display:block}
-html.js .mast span{transform:translateY(104%);transition:transform 1.1s var(--ease);transition-delay:calc(var(--i) * 70ms + 120ms)}
-html.js.ready .mast span{transform:none}
-.rule{height:7px;border-top:3px solid var(--ink);border-bottom:1px solid var(--ink);margin-top:12px;transform-origin:0 50%}
-html.js .rule{transform:scaleX(0);transition:transform 1.3s var(--ease) .4s}
-html.js.ready .rule{transform:none}
+.rule{position:relative;height:7px;margin-top:12px}
 .ticker{overflow:hidden;background:var(--ink);color:var(--bg);margin-top:10px}
 .tk{display:flex;width:max-content;animation:tk 90s linear infinite}
 .ticker:hover .tk{animation-play-state:paused}
@@ -327,7 +333,7 @@ html.js.ready .rule{transform:none}
 .spread>*:first-child{padding-left:0}
 .spread>*:last-child{padding-right:0}
 .spread>*+*{border-left:1px solid var(--line)}
-.kick{display:flex;align-items:center;gap:10px;border-top:3px solid var(--ink);padding-top:10px;margin-bottom:14px;
+.kick{position:relative;display:flex;align-items:center;gap:10px;padding-top:13px;margin-bottom:14px;
   font:700 12px/1.2 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--ink)}
 .live{width:8px;height:8px;border-radius:50%;background:#ff3b30;position:relative;flex:none}
 .live::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:1.5px solid #ff3b30;animation:ping 1.8s var(--ease) infinite}
@@ -339,7 +345,7 @@ html.js.ready .rule{transform:none}
 .nws li+li .nw{border-top:1px solid var(--line)}
 .nws li:first-child .nw{padding-top:2px}
 .nw img,.nw-ph{width:72px;height:48px;object-fit:cover;background:var(--soft);transition:filter .4s}
-.nw span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font:700 15px/1.3 var(--serif);color:var(--ink)}
+.nw span{display:block;font:700 15px/1.3 var(--serif);color:var(--ink)}
 .nw:hover span{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px}
 .nw:hover img{filter:contrast(1.08) saturate(1.1)}
 .more{display:inline-block;margin-top:12px;font:700 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink);
@@ -362,7 +368,7 @@ html.js.ready .rule{transform:none}
 .now{padding-top:14px;transition:opacity .35s var(--ease)}
 .now.swap{opacity:0}
 .now-t{display:inline;font:800 clamp(22px,2vw,30px)/1.16 var(--serif);color:var(--ink)}
-.now-p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:10px 0 0;font:400 15px/1.55 var(--sans);color:var(--body)}
+.now-p{margin:10px 0 0;font:400 15px/1.55 var(--sans);color:var(--body)}
 .lp-m{max-height:calc(100vh - 500px)}
 .strip{display:flex;align-items:flex-start;gap:10px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
 .st{list-style:none;margin:0;padding:0;flex:1;min-width:0;display:grid;grid-auto-flow:column;grid-auto-columns:calc((100% - 28px) / 3);gap:14px;
@@ -376,7 +382,7 @@ html.js.ready .rule{transform:none}
 .st-pb{position:absolute;left:7px;bottom:7px;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.94);color:#0a0a0a;display:grid;place-items:center}
 .st-pb svg{width:11px;height:11px;margin-left:1px}
 .st li.on .st-m{outline:2px solid var(--ink);outline-offset:2px}
-.st-t{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:8px;font:700 13.5px/1.3 var(--serif);color:var(--ink)}
+.st-t{display:block;margin-top:8px;font:700 13.5px/1.3 var(--serif);color:var(--ink)}
 .st-b{all:unset;cursor:pointer;flex:none;width:32px;height:32px;margin-top:20px;display:grid;place-items:center;color:var(--ink);border:1px solid var(--ink);
   transition:background-color .2s,color .2s,opacity .2s}
 .st-b:hover{background:var(--ink);color:var(--bg)}
@@ -393,7 +399,7 @@ html.js.ready .rule{transform:none}
 .ad-b{padding:16px 18px 20px}
 .ad-k{display:flex;align-items:center;gap:10px;font:700 10px/1.3 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:#a1a1a6}
 .ad-t{margin-top:8px;font:800 clamp(18px,1.4vw,22px)/1.15 var(--sans);letter-spacing:-.03em;color:#fff}
-.ad-p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:8px 0 0;font:400 13.5px/1.5 var(--sans);color:#b9b9c0}
+.ad-p{margin:8px 0 0;font:400 13.5px/1.5 var(--sans);color:#b9b9c0}
 .ad .pill{display:flex;width:100%;margin-top:14px;font-size:14px;padding:13px 16px}
 .ad .pill:hover{box-shadow:0 12px 30px rgba(255,138,51,.35)}
 .toc ol{list-style:none;margin:0;padding:0}
@@ -407,8 +413,7 @@ html.js.ready .rule{transform:none}
 
 /* разделы */
 .sec{padding-top:clamp(64px,7vw,112px)}
-.sh{display:flex;align-items:center;gap:18px;border-top:4px solid var(--ink);padding-top:18px;margin-bottom:clamp(26px,3vw,44px);position:relative}
-.sh::before{content:"";position:absolute;left:0;right:0;top:3px;border-top:1px solid var(--ink)}
+.sh{display:flex;align-items:center;gap:18px;padding-top:22px;margin-bottom:clamp(26px,3vw,44px);position:relative}
 .sh-t{font:800 clamp(42px,5vw,80px)/.95 var(--sans);letter-spacing:-.045em;color:var(--ink)}
 .sh-ic{width:clamp(46px,4vw,60px);height:clamp(46px,4vw,60px);flex:none;display:grid;place-items:center;border:2px solid var(--ink);color:var(--ink)}
 .sh-ic svg{width:60%;height:60%}
@@ -424,7 +429,7 @@ html.js.ready .rule{transform:none}
 .au{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}
 .au-lt{margin-top:24px;font:800 clamp(30px,3.1vw,50px)/1.06 var(--serif);letter-spacing:-.01em;color:var(--ink);text-wrap:balance}
 .au-tx p{margin:14px 0 0;font:400 18px/1.7 var(--sans);color:var(--body);text-wrap:pretty}
-.au-tx p:first-child::first-letter{float:left;font:800 3.5em/.8 var(--serif);margin:.07em .1em 0 0;color:var(--ink)}
+.dc{float:left;font:800 3.5em/.8 var(--serif);margin:.07em .1em 0 0;color:var(--ink)}
 .au-side{display:flex;flex-direction:column}
 .au-i{display:grid;grid-template-columns:140px minmax(0,1fr);gap:18px;align-items:center;padding:16px 0;border-bottom:1px solid var(--line)}
 .au-i:first-child{padding-top:0}
@@ -432,7 +437,8 @@ html.js.ready .rule{transform:none}
 .au-it{font:700 clamp(17px,1.35vw,21px)/1.25 var(--serif);color:var(--ink)}
 
 /* лаборатория — рамки-«видоискатели» */
-.xh{--c:var(--ink);padding:9px;background:
+.xh{--c:var(--ink);position:relative;padding:9px}
+.xh::before{content:"";position:absolute;inset:0;pointer-events:none;background:
   linear-gradient(var(--c),var(--c)) 0 0/16px 1.5px no-repeat,linear-gradient(var(--c),var(--c)) 0 0/1.5px 16px no-repeat,
   linear-gradient(var(--c),var(--c)) 100% 0/16px 1.5px no-repeat,linear-gradient(var(--c),var(--c)) 100% 0/1.5px 16px no-repeat,
   linear-gradient(var(--c),var(--c)) 0 100%/16px 1.5px no-repeat,linear-gradient(var(--c),var(--c)) 0 100%/1.5px 16px no-repeat,
@@ -440,8 +446,8 @@ html.js.ready .rule{transform:none}
 .lb-f{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,3.4vw,56px);align-items:center;
   padding-bottom:clamp(28px,3vw,44px);border-bottom:1px solid var(--line)}
 .lb-ft{margin-top:14px;font:800 clamp(28px,2.8vw,44px)/1.05 var(--sans);letter-spacing:-.04em;color:var(--ink);text-wrap:balance}
-.lb-p{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:10px 0 0;font:400 15px/1.58 var(--sans);color:var(--body)}
-.lb-f .lb-p{-webkit-line-clamp:5;font-size:16.5px}
+.lb-p{margin:10px 0 0;font:400 15px/1.58 var(--sans);color:var(--body)}
+.lb-f .lb-p{font-size:16.5px}
 .lb-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
 .lb-c{padding:clamp(24px,2.6vw,36px) clamp(18px,1.9vw,30px);border-bottom:1px solid var(--line)}
 .lb-c:nth-child(3n+1){padding-left:0}
@@ -454,8 +460,8 @@ html.js.ready .rule{transform:none}
 .ac-f{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,3.4vw,56px);align-items:center;
   padding-bottom:clamp(28px,3vw,44px);border-bottom:3px solid var(--ink)}
 .ac-ft{margin-top:14px;font:800 clamp(28px,2.8vw,44px)/1.08 var(--serif);color:var(--ink);text-wrap:balance}
-.ac-p{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin:10px 0 0;font:400 15px/1.58 var(--sans);color:var(--body)}
-.ac-f .ac-p{-webkit-line-clamp:5;font-size:16.5px}
+.ac-p{margin:10px 0 0;font:400 15px/1.58 var(--sans);color:var(--body)}
+.ac-f .ac-p{font-size:16.5px}
 .ac-l{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
 .ac-i{display:grid;grid-template-columns:clamp(140px,13vw,200px) minmax(0,1fr);gap:20px;align-items:start;
   padding:clamp(20px,2.2vw,30px) clamp(20px,2.4vw,40px);border-bottom:1px solid var(--line)}
@@ -494,8 +500,200 @@ html.js.ready .rule{transform:none}
 .made b{color:var(--ink)}
 .made .nr{width:22px;height:22px;font-size:11px;border-color:var(--dim);color:var(--ink);border-radius:5px}
 
+/* ═════════ анимация: у каждого раздела своя ═════════ */
+@keyframes rise{from{opacity:0;transform:translateY(16px)}}
+@keyframes pop{from{opacity:0;transform:translate(-50%,-50%) scale(0)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes scan{0%{top:9px;opacity:1}88%{opacity:1}100%{top:calc(100% - 11px);opacity:0}}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes prog{0%{transform:scaleX(0);opacity:1}70%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1);opacity:0}}
+
+/* строка выпуска: линейки прочерчиваются навстречу, буквы сходятся */
+.iss::before,.iss::after{content:"";position:absolute;left:0;right:0;height:1px;background:var(--ink)}
+.iss::before{top:0;transform-origin:0 50%}
+.iss::after{bottom:0;transform-origin:100% 50%}
+html.js .iss::before,html.js .iss::after{transform:scaleX(0);transition:transform 1.1s cubic-bezier(.7,0,.2,1)}
+html.js .iss::after{transition-delay:.12s}
+html.js .iss>*{opacity:0;letter-spacing:.55em;transition:opacity .9s ease .35s,letter-spacing 1.3s var(--ease) .3s}
+html.js.ready .iss::before,html.js.ready .iss::after{transform:none}
+html.js.ready .iss>*{opacity:1;letter-spacing:inherit}
+
+/* название: бледные буквы поднимаются, потом снизу заливаются краской, как при печати */
+html.js .mast span{transform:translateY(108%) rotate(4deg);transform-origin:0 100%;
+  transition:transform 1.2s cubic-bezier(.2,.9,.2,1) calc(var(--i) * 75ms + 80ms)}
+html.js.ready .mast span{transform:none}
+@supports ((-webkit-background-clip:text) or (background-clip:text)){
+  html.js .mast span{color:transparent;padding:.06em 0 .1em;margin:-.06em 0 -.1em;
+    background:linear-gradient(var(--ink),var(--ink)) 0 100%/100% 0 no-repeat,linear-gradient(var(--line),var(--line));
+    -webkit-background-clip:text;background-clip:text;
+    transition:transform 1.2s cubic-bezier(.2,.9,.2,1) calc(var(--i) * 75ms + 80ms),background-size .9s cubic-bezier(.7,0,.2,1) calc(var(--i) * 85ms + 1s)}
+  html.js.ready .mast span{background-size:100% 100%,auto}
+}
+/* двойная линейка: толстая слева, тонкая справа; бегущая строка выезжает шторкой */
+.rule::before,.rule::after{content:"";position:absolute;left:0;right:0;background:var(--ink)}
+.rule::before{top:0;height:3px;transform-origin:0 50%}
+.rule::after{bottom:0;height:1px;transform-origin:100% 50%}
+html.js .rule::before,html.js .rule::after{transform:scaleX(0);transition:transform 1.3s cubic-bezier(.7,0,.2,1) .5s}
+html.js .rule::after{transition-delay:.65s}
+html.js.ready .rule::before,html.js.ready .rule::after{transform:none}
+html.js .ticker{clip-path:inset(0 100% 0 0);transition:clip-path 1.1s cubic-bezier(.7,0,.2,1) .9s}
+html.js.ready .ticker{clip-path:inset(0)}
+
+/* подписи колонок: линия прочерчивается, подпись выезжает слева */
+.kick::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--ink);transform-origin:0 50%}
+html.js .kick.rv{opacity:1;transform:none}
+html.js .kick.rv::before{transform:scaleX(0);transition:transform 1s cubic-bezier(.7,0,.2,1) var(--d,0s)}
+html.js .kick.rv>*{opacity:0;transform:translateX(-16px);transition:opacity .6s ease calc(var(--d,0s) + .3s),transform .9s var(--ease) calc(var(--d,0s) + .3s)}
+html.js .kick.rv.in::before,html.js .kick.rv.in>*{opacity:1;transform:none}
+
+/* топ новостей: миниатюра открывается шторкой, заголовок поднимается */
+html.js .nws .rv{opacity:1;transform:none}
+html.js .nws .rv img,html.js .nws .rv .nw-ph{clip-path:inset(0 100% 0 0);transition:clip-path .9s cubic-bezier(.7,0,.2,1) var(--d,0s),filter .4s}
+html.js .nws .rv>a>span:last-child{opacity:0;transform:translateY(12px);transition:opacity .7s ease calc(var(--d,0s) + .2s),transform .9s var(--ease) calc(var(--d,0s) + .2s)}
+html.js .nws .rv.in img,html.js .nws .rv.in .nw-ph{clip-path:inset(0)}
+html.js .nws .rv.in>a>span:last-child{opacity:1;transform:none}
+
+/* видеожурнал: экран раскрывается от центра, кнопка «пружинит», ролики въезжают справа */
+html.js .player.rv{opacity:1;transform:none;background-color:transparent}
+html.js .player.rv.in{background-color:#000;transition:background-color 0s linear calc(var(--d,0s) + 1.25s)}
+html.js .player.rv .ph{clip-path:inset(0 50% 0 50%);transition:clip-path 1.25s cubic-bezier(.7,0,.2,1) var(--d,0s)}
+html.js .player.rv.in .ph{clip-path:inset(0)}
+html.js .player.rv:not(.in) .pb{opacity:0}
+html.js .player.rv.in .pb{animation:pop .8s cubic-bezier(.3,1.6,.5,1) calc(var(--d,0s) + 1s) backwards}
+html.js .strip.rv{opacity:1;transform:none}
+html.js .strip.rv .st li{opacity:0;transform:translateX(48px);transition:opacity .7s ease,transform 1s var(--ease);
+  transition-delay:calc(var(--d,0s) + .25s + var(--n,0) * 90ms)}
+html.js .strip.rv.in .st li{opacity:1;transform:none}
+
+/* реклама ИИ-трансформации: ролик поднимается снизу, текст — следом */
+html.js .ad.rv{opacity:1;transform:none;background-color:transparent;transition:background-color .6s ease var(--d,0s)}
+html.js .ad.rv.in{background-color:#060606}
+html.js .ad.rv .ad-m{clip-path:inset(100% 0 0 0);transition:clip-path 1.1s cubic-bezier(.7,0,.2,1) var(--d,0s)}
+html.js .ad.rv.in .ad-m{clip-path:inset(0)}
+html.js .ad.rv .ad-b>:not(.pill){opacity:0;transform:translateY(16px);transition:opacity .7s ease,transform .9s var(--ease)}
+html.js .ad.rv .ad-b>:nth-child(1){transition-delay:calc(var(--d,0s) + .55s)}
+html.js .ad.rv .ad-b>:nth-child(2){transition-delay:calc(var(--d,0s) + .65s)}
+html.js .ad.rv .ad-b>:nth-child(3){transition-delay:calc(var(--d,0s) + .75s)}
+html.js .ad.rv.in .ad-b>:not(.pill){opacity:1;transform:none}
+html.js .ad.rv:not(.in) .pill{opacity:0}
+html.js .ad.rv.in .pill{animation:rise .8s var(--ease) calc(var(--d,0s) + .85s) backwards}
+
+/* оглавление выпуска: пункты выезжают по очереди */
+html.js .toc.rv{opacity:1;transform:none}
+html.js .toc.rv li{opacity:0;transform:translateX(-18px);transition:opacity .6s ease,transform .8s var(--ease);
+  transition-delay:calc(var(--d,0s) + .35s + var(--n,0) * 80ms)}
+html.js .toc.rv.in li{opacity:1;transform:none}
+
+/* шапки разделов: двойная линейка прочерчивается навстречу, слова поднимаются из-под строки */
+.sh::before,.sh::after{content:"";position:absolute;left:0;right:0;background:var(--ink)}
+.sh::before{top:0;height:4px;transform-origin:0 50%}
+.sh::after{top:7px;height:1px;transform-origin:100% 50%}
+.sh-t .w{display:inline-block;overflow:hidden;vertical-align:top;padding:.08em 0 .16em;margin:-.08em 0 -.16em}
+.sh-t .w>span{display:inline-block}
+html.js .sh.rv{opacity:1;transform:none}
+html.js .sh.rv::before,html.js .sh.rv::after{transform:scaleX(0);transition:transform 1.1s cubic-bezier(.7,0,.2,1)}
+html.js .sh.rv::after{transition-delay:.12s}
+html.js .sh.rv .sh-t .w>span{transform:translateY(112%) rotate(5deg);transform-origin:0 100%;
+  transition:transform 1.05s cubic-bezier(.2,.9,.2,1) calc(.25s + var(--w,0) * 90ms)}
+html.js .sh.rv .sh-ic{opacity:0;transform:rotate(-90deg) scale(.4);transition:opacity .5s ease .2s,transform .9s cubic-bezier(.3,1.4,.5,1) .2s}
+html.js .sh.rv .sh-by{opacity:0;transform:translateX(24px);transition:opacity .7s ease .5s,transform .9s var(--ease) .5s}
+html.js .sh.rv.in::before,html.js .sh.rv.in::after,html.js .sh.rv.in .sh-t .w>span,html.js .sh.rv.in .sh-ic,html.js .sh.rv.in .sh-by{opacity:1;transform:none}
+
+/* авторский канал: фото растекается из угла, буквица падает каплей, лента въезжает справа */
+html.js .au-lead.rv{opacity:1;transform:none}
+html.js .au-lead.rv .media{clip-path:circle(0% at 0 0);transition:clip-path 1.7s cubic-bezier(.65,0,.25,1) var(--d,0s)}
+html.js .au-lead.rv.in .media{clip-path:circle(142% at 0 0)}
+html.js .au-lead.rv .au-lt,html.js .au-lead.rv .au-tx{opacity:0;transform:translateY(22px);transition:opacity .8s ease,transform 1.1s var(--ease)}
+html.js .au-lead.rv .au-lt{transition-delay:calc(var(--d,0s) + .45s)}
+html.js .au-lead.rv .au-tx{transition-delay:calc(var(--d,0s) + .65s)}
+html.js .au-lead.rv.in .au-lt,html.js .au-lead.rv.in .au-tx{opacity:1;transform:none}
+html.js .au-lead.rv .dc{opacity:0;transform:translateY(-40%) scale(1.9) rotate(-10deg);filter:blur(8px);transform-origin:50% 100%;
+  transition:opacity .5s ease calc(var(--d,0s) + 1s),transform 1s cubic-bezier(.25,1.4,.45,1) calc(var(--d,0s) + 1s),filter .8s ease calc(var(--d,0s) + 1s)}
+html.js .au-lead.rv.in .dc{opacity:1;transform:none;filter:none}
+html.js .au-lead.rv:not(.in) .cta{opacity:0}
+html.js .au-lead.rv.in .cta{animation:rise .8s var(--ease) calc(var(--d,0s) + .95s) backwards}
+html.js .au-i.rv{opacity:1;transform:none}
+html.js .au-i.rv .media,html.js .au-i.rv .au-ph{clip-path:inset(0 0 0 100%);transition:clip-path 1s cubic-bezier(.7,0,.2,1) var(--d,0s)}
+html.js .au-i.rv.in .media,html.js .au-i.rv.in .au-ph{clip-path:inset(0)}
+html.js .au-i.rv .au-it{opacity:0;transform:translateX(22px);transition:opacity .7s ease calc(var(--d,0s) + .25s),transform 1s var(--ease) calc(var(--d,0s) + .25s)}
+html.js .au-i.rv.in .au-it{opacity:1;transform:none}
+
+/* лаборатория: рамка-видоискатель наводит фокус, кадр проявляется под сканирующим лучом, подпись печатается */
+.xh::after{content:"";position:absolute;left:9px;right:9px;top:9px;height:2px;pointer-events:none;opacity:0;
+  background:linear-gradient(90deg,transparent,#8b5cf6 18%,#fff 50%,#8b5cf6 82%,transparent);box-shadow:0 0 16px 3px rgba(139,92,246,.55)}
+html.js .lb-f.rv,html.js .lb-c.rv{opacity:1;transform:none}
+html.js .lb-f.rv .xh::before,html.js .lb-c.rv .xh::before{opacity:0;transform:scale(1.16);
+  transition:opacity .45s ease var(--d,0s),transform 1s cubic-bezier(.2,.9,.2,1) var(--d,0s)}
+html.js .lb-f.rv.in .xh::before,html.js .lb-c.rv.in .xh::before{opacity:1;transform:none}
+html.js .lb-f.rv .media,html.js .lb-c.rv .media{clip-path:inset(0 0 100% 0);transition:clip-path 1.3s cubic-bezier(.6,0,.35,1) calc(var(--d,0s) + .35s)}
+html.js .lb-f.rv.in .media,html.js .lb-c.rv.in .media{clip-path:inset(0)}
+html.js .lb-f.rv.in .xh::after,html.js .lb-c.rv.in .xh::after{animation:scan 1.3s cubic-bezier(.6,0,.35,1) calc(var(--d,0s) + .35s) both}
+html.js .lb-f.rv .tag,html.js .lb-c.rv .tag{clip-path:inset(-2px 100% -2px -2px);transition:clip-path .9s steps(16,end) calc(var(--d,0s) + .9s)}
+html.js .lb-f.rv.in .tag,html.js .lb-c.rv.in .tag{clip-path:inset(-2px)}
+html.js .lb-f.rv.in .tag::before,html.js .lb-c.rv.in .tag::before{animation:blink .9s linear calc(var(--d,0s) + 1.8s) 3}
+html.js .lb-f.rv .lb-ft,html.js .lb-c.rv .lb-t{opacity:0;transform:translateY(18px);
+  transition:opacity .7s ease calc(var(--d,0s) + .55s),transform 1s var(--ease) calc(var(--d,0s) + .55s)}
+html.js .lb-f.rv .lb-p,html.js .lb-c.rv .lb-p{opacity:0;transition:opacity .9s ease calc(var(--d,0s) + .8s)}
+html.js .lb-f.rv.in .lb-ft,html.js .lb-c.rv.in .lb-t,html.js .lb-f.rv.in .lb-p,html.js .lb-c.rv.in .lb-p{opacity:1;transform:none}
+html.js .lb-f.rv:not(.in) .cta,html.js .lb-c.rv:not(.in) .cta{opacity:0}
+html.js .lb-f.rv.in .cta,html.js .lb-c.rv.in .cta{animation:rise .7s var(--ease) calc(var(--d,0s) + 1s) backwards}
+
+/* академия: обложка урока открывается по диагонали, кнопка «заряжается», уроки идут по программе */
+html.js .ac-f.rv,html.js .ac-i.rv{opacity:1;transform:none}
+html.js .ac-f.rv .media{clip-path:polygon(0 0,0 0,-30% 100%,0 100%);transition:clip-path 1.5s cubic-bezier(.65,0,.3,1) var(--d,0s)}
+html.js .ac-f.rv.in .media{clip-path:polygon(0 0,130% 0,100% 100%,0 100%)}
+html.js .ac-f.rv .ac-fb>:not(.btn){opacity:0;transform:translateX(26px);transition:opacity .7s ease,transform 1s var(--ease)}
+html.js .ac-f.rv .ac-fb>:nth-child(1){transition-delay:calc(var(--d,0s) + .5s)}
+html.js .ac-f.rv .ac-fb>:nth-child(2){transition-delay:calc(var(--d,0s) + .6s)}
+html.js .ac-f.rv .ac-fb>:nth-child(3){transition-delay:calc(var(--d,0s) + .7s)}
+html.js .ac-f.rv .ac-fb>:nth-child(n+4){transition-delay:calc(var(--d,0s) + .8s)}
+html.js .ac-f.rv.in .ac-fb>:not(.btn){opacity:1;transform:none}
+html.js .ac-f.rv .btn{transition-delay:0s,calc(var(--d,0s) + .95s),calc(var(--d,0s) + 1.25s)}
+html.js .ac-f.rv:not(.in) .btn{background-size:0 100%;color:var(--ink)}
+html.js .ac-i.rv .media{clip-path:inset(0 100% 0 0);transition:clip-path 1s cubic-bezier(.7,0,.2,1) var(--d,0s)}
+html.js .ac-i.rv.in .media{clip-path:inset(0)}
+html.js .ac-i.rv>div>:not(.cta){opacity:0;transform:translateX(-18px);transition:opacity .6s ease calc(var(--d,0s) + .3s),transform .9s var(--ease) calc(var(--d,0s) + .3s)}
+html.js .ac-i.rv.in>div>:not(.cta){opacity:1;transform:none}
+html.js .ac-i.rv:not(.in) .cta{opacity:0}
+html.js .ac-i.rv.in .cta{animation:rise .7s var(--ease) calc(var(--d,0s) + .6s) backwards}
+html.js .ac-i.rv .tag-l::before{transform:rotate(-90deg);transition:transform .7s cubic-bezier(.3,1.6,.5,1) calc(var(--d,0s) + .55s)}
+html.js .ac-i.rv.in .tag-l::before{transform:none}
+.ac-i{position:relative}
+.ac-i::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--ink);transform:scaleX(0);transform-origin:0 50%;opacity:0;pointer-events:none}
+html.js .ac-i.rv.in::after{animation:prog 1.6s cubic-bezier(.6,0,.3,1) calc(var(--d,0s) + .2s)}
+
+/* Нейроний: полоса открывается от центра, ролик «приближается», текст — следом */
+.band .cv{display:none}
+html.js .band .cv{display:block;position:absolute;left:0;right:0;height:50.5%;z-index:3;background:var(--bg);pointer-events:none;
+  transition:transform 1.3s cubic-bezier(.7,0,.2,1)}
+html.js .band .cv-t{top:0}
+html.js .band .cv-b{bottom:0}
+html.js .band.rv{opacity:1;transform:none}
+html.js .band.rv.in .cv-t{transform:translateY(-101%)}
+html.js .band.rv.in .cv-b{transform:translateY(101%)}
+html.js .band-m.rv{opacity:0;transform:scale(1.12);transition:opacity .9s ease calc(var(--d,0s) + .5s),transform 1.6s var(--ease) calc(var(--d,0s) + .5s)}
+html.js .band-m.rv.in{opacity:1;transform:none}
+html.js .band-b.rv{opacity:1;transform:none}
+html.js .band-b.rv>:not(.pill){opacity:0;transform:translateY(24px);transition:opacity .8s ease,transform 1.1s var(--ease)}
+html.js .band-b.rv>:nth-child(1){transition-delay:calc(var(--d,0s) + .7s)}
+html.js .band-b.rv>:nth-child(2){transition-delay:calc(var(--d,0s) + .82s)}
+html.js .band-b.rv>:nth-child(3){transition-delay:calc(var(--d,0s) + .94s)}
+html.js .band-b.rv.in>:not(.pill){opacity:1;transform:none}
+html.js .band-b.rv:not(.in) .pill{opacity:0}
+html.js .band-b.rv.in .pill{animation:rise .8s var(--ease) calc(var(--d,0s) + 1.1s) backwards}
+
+/* подвал: буквы съезжаются сверху и снизу */
+.ft-mark span:nth-child(odd){--s:-1}
+html.js .ft-mark.rv{opacity:1;transform:none}
+html.js .ft-mark.rv span{opacity:0;transform:translateY(calc(var(--s,1) * 55%)) scale(.9);
+  transition:opacity .8s ease calc(var(--i) * 80ms),transform 1.3s cubic-bezier(.2,.9,.2,1) calc(var(--i) * 80ms)}
+html.js .ft-mark.rv.in span{opacity:1;transform:none}
+
+/* кнопки: по наведению пробегает блик */
+.pill::after{content:"";position:absolute;top:-20%;bottom:-20%;left:-75%;width:45%;z-index:-1;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(139,92,246,.28),rgba(249,115,22,.28),transparent);transform:skewX(-18deg);transition:left .8s var(--ease)}
+.pill:hover::after{left:130%}
+
 /* адаптивность */
-@media (max-height:900px) and (min-width:1181px){.now-p{display:none}.ad-p{-webkit-line-clamp:2}}
 @media (max-width:1180px){
   .spread{grid-template-columns:minmax(0,4fr) minmax(0,8fr)}
   .spread>.col-lead{padding-right:0}
@@ -508,7 +706,6 @@ html.js.ready .rule{transform:none}
   .lb-c:nth-child(2n+1){padding-left:0;border-left:0}
   .lb-c:nth-child(2n){padding-right:0}
   .ac-i{grid-template-columns:140px minmax(0,1fr)}
-  .chip{display:none}
 }
 @media (max-width:860px){
   :root{--top:56px}
@@ -535,12 +732,11 @@ html.js.ready .rule{transform:none}
   .ft-row{flex-direction:column;align-items:flex-start}
 }
 @media (max-width:480px){
-  .chip,.nav{display:none}
+  .nav{display:none}
   .tools{margin-left:auto}
   .st{grid-auto-columns:66%}
   .st-b{display:none}
   .au-tx p{font-size:17px}
-  .ac-i .ac-p,.au-i .p{display:none}
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
@@ -602,7 +798,9 @@ var tb=document.getElementById('theme');
 function lab(){var l=tb.getAttribute(d.getAttribute('data-theme')==='dark'?'data-light':'data-dark');tb.setAttribute('aria-label',l);tb.title=l;}
 if(tb){lab();tb.addEventListener('click',function(){var dark=d.getAttribute('data-theme')!=='dark';
   if(dark)d.setAttribute('data-theme','dark');else d.removeAttribute('data-theme');try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}lab();});}
-function go(){d.classList.add('ready')}
+var io=null,ioBand=null;
+function startIO(){if(!io)return;document.querySelectorAll('.rv').forEach(function(el){(el.classList.contains('band')?ioBand:io).observe(el)})}
+function go(){d.classList.add('ready');setTimeout(startIO,450)}
 if(document.fonts&&document.fonts.ready){var done=false;document.fonts.ready.then(function(){if(!done){done=true;go()}});setTimeout(function(){if(!done){done=true;go()}},900)}else go();
 var bar=document.querySelector('.prog i'),ticking=false;
 function onScroll(){ticking=false;var y=window.scrollY||0,h=d.scrollHeight-innerHeight;
@@ -615,10 +813,21 @@ document.querySelectorAll('.strip').forEach(function(s){var ol=s.querySelector('
   bs.forEach(function(b){b.addEventListener('click',function(){ol.scrollBy({left:+b.getAttribute('data-d')*ol.clientWidth,behavior:reduce?'auto':'smooth'})})});
   ol.addEventListener('scroll',upd,{passive:true});addEventListener('resize',upd);upd();});
 if(!('IntersectionObserver' in window)){d.classList.remove('js');return;}
-var io=new IntersectionObserver(function(es){var k=0;es.forEach(function(e){if(e.isIntersecting){
-  e.target.style.setProperty('--d',Math.min(k++,6)*0.07+'s');e.target.classList.add('in');io.unobserve(e.target);}});},
-  {rootMargin:'0px 0px -6% 0px',threshold:0.05});
-document.querySelectorAll('.rv').forEach(function(el){io.observe(el)});
+function shown(get){return function(es){var k=0;es.forEach(function(e){if(e.isIntersecting){
+  e.target.style.setProperty('--d',Math.min(k++,6)*0.09+'s');e.target.classList.add('in');get().unobserve(e.target);}});}}
+io=new IntersectionObserver(shown(function(){return io}),{rootMargin:'0px 0px -10% 0px',threshold:0.05});
+ioBand=new IntersectionObserver(shown(function(){return ioBand}),{threshold:0.3});
+// параллакс: буквы названия уходят вверх с разной скоростью, большие фото чуть «плывут»
+if(d.classList.contains('js')){
+  var ml=[].slice.call(document.querySelectorAll('.mast span')),sp=[.12,.05,.15,.07,.13,.04,.1],
+    px=[].slice.call(document.querySelectorAll('.au-lead .media img,.lb-f .media img,.ac-f .media img')),pt=false;
+  px.forEach(function(im){im.style.scale='1.14'});
+  var para=function(){pt=false;var vh=innerHeight,y=scrollY||0,f=Math.min(1,innerWidth/1100);
+    if(y<vh*1.6)ml.forEach(function(s,i){s.style.translate='0 '+(-y*sp[i%sp.length]*f).toFixed(1)+'px'});
+    px.forEach(function(im){var r=im.parentNode.getBoundingClientRect();if(r.bottom<-60||r.top>vh+60)return;
+      im.style.translate='0 '+(((r.top+r.height/2)-vh/2)/vh*-7).toFixed(2)+'%'});};
+  addEventListener('scroll',function(){if(!pt){pt=true;requestAnimationFrame(para)}},{passive:true});para();
+}
 var links={};document.querySelectorAll('.nav a').forEach(function(a){links[a.getAttribute('href').slice(1)]=a});
 var spy=new IntersectionObserver(function(es){es.forEach(function(e){var a=links[e.target.id];if(a&&e.isIntersecting&&(window.scrollY||0)>=160){
   for(var k in links)links[k].classList.remove('on');a.classList.add('on');
@@ -657,9 +866,9 @@ def render(ctx):
     lead = "video" if "video" in by else ("author" if "author" in by else None)
 
     nav = "".join(f'<a href="#{s["key"]}">{esc(mt["nav"][s["key"]])}</a>' for s in secs)
-    toc = "".join(f'<li><a href="#{s["key"]}">{esc(s["title"])}{ARROW}</a></li>' for s in secs)
+    toc = "".join(f'<li style="--n:{i}"><a href="#{s["key"]}">{esc(s["title"])}{ARROW}</a></li>' for i, s in enumerate(secs))
     letters = "".join(f'<span style="--i:{i}" aria-hidden="true">{esc(c)}</span>' for i, c in enumerate(ctx["brand"]))
-    foot_letters = "".join(f"<span>{esc(c)}</span>" for c in ctx["brand"])
+    foot_letters = "".join(f'<span style="--i:{i}">{esc(c)}</span>' for i, c in enumerate(ctx["brand"]))
     issue = mt["issue"].format(n=ctx["n"])
     arch, arch_box = ctx.get("archive"), ""
     btn = 'type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="arch"'
@@ -672,16 +881,13 @@ def render(ctx):
                     f'<div class="arch-y" role="tablist"></div></div><ol class="arch-l"></ol></div>\n'
                     f'<script type="application/json" id="arch-data">'
                     f'{blob}</script>')
-        chip = (f'<button class="chip arch-btn" {btn} title="{esc(mt["archive"])}">'
-                f'{esc(mt["issue_short"].format(n=ctx["n"]))} · {esc(ctx["date_long"])}{CHEV}</button>')
         iss_date = (f'<button class="arch-btn" {btn} title="{esc(mt["archive"])}">{esc(ctx["date_range"])}{CHEV}</button>')
     else:
-        chip = f'<span class="chip">{esc(mt["issue_short"].format(n=ctx["n"]))} · {esc(ctx["date_long"])}</span>'
         iss_date = f'<span>{esc(ctx["date_range"])}</span>'
 
     news = ctx.get("news") or {}
     tick = "".join(f'<a {ext(x["url"])} tabindex="-1">{esc(x["title"])}</a><b>●</b>' for x in news.get("items", []))
-    ticker = (f'<div class="ticker rv" aria-hidden="true"><div class="tk"><span>{tick}</span><span>{tick}</span></div></div>'
+    ticker = (f'<div class="ticker" aria-hidden="true"><div class="tk"><span>{tick}</span><span>{tick}</span></div></div>'
               if tick else "")
 
     # первая полоса: новости | видеожурнал (или главный материал) | реклама ИИ-трансформации и содержание
@@ -693,7 +899,7 @@ def render(ctx):
                 else lead_col(by[lead]["title"], ctx[lead], mt))
         cols.append(f'<section class="col-lead" id="{lead}" data-spy>{body}</section>')
     cols.append(f'<div class="rail">{ait_card(ctx["ait"]) if ctx.get("ait") else ""}'
-                f'<nav class="toc" aria-label="{esc(mt["contents"])}">{kick(mt["contents"])}<ol>{toc}</ol></nav></div>')
+                f'<nav class="toc rv" aria-label="{esc(mt["contents"])}">{kick(mt["contents"])}<ol>{toc}</ol></nav></div>')
 
     # дальше разделы, у каждого своя вёрстка; Нейроний — в конце во всю ширину
     rest = []
@@ -728,7 +934,7 @@ def render(ctx):
 <meta name="description" content="{esc(ctx["description"])}">
 <meta name="color-scheme" content="light dark">
 {og}
-<script>document.documentElement.classList.add('js');try{{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}}catch(e){{}}</script>
+<script>if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))document.documentElement.classList.add('js');try{{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}}catch(e){{}}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Playfair+Display:ital,wght@0,700;0,800;1,500&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
 <style>{CSS}</style>
@@ -738,7 +944,7 @@ def render(ctx):
 <header class="top"><div class="wrap top-in">
 <a class="brand" href="{esc(ctx.get("home") or "https://dataist.ai/")}" aria-label="{esc(ctx["brand"])} — dataist.ai"><span class="mk" aria-hidden="true">i</span></a>
 <nav class="nav" aria-label="{esc(mt["contents"])}">{nav}</nav>
-<div class="tools">{chip}
+<div class="tools">
 <button id="theme" type="button" data-dark="{esc(ctx["to_dark"])}" data-light="{esc(ctx["to_light"])}" aria-label="{esc(ctx["to_dark"])}">
 <span class="t-d">{MOON}</span><span class="t-l">{SUN}</span></button></div></div>
 <div class="prog" aria-hidden="true"><i></i></div></header>
@@ -755,7 +961,7 @@ def render(ctx):
 </main>
 
 <footer class="ft"><div class="wrap">
-<div class="ft-mark" aria-hidden="true">{foot_letters}</div>
+<div class="ft-mark rv" aria-hidden="true">{foot_letters}</div>
 <div class="ft-row"><div class="soc">{socials}</div>
 <span>{esc(issue)} · {esc(ctx["date_long"])}</span>
 <span class="made">{esc(mt["made"])} <span class="nr">Nr</span><b>{esc(ctx["made_name"])}</b></span>

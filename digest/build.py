@@ -29,7 +29,7 @@
   --inline  встроить картинки в HTML как data URI — автономный файл для просмотра
   --preview для просмотра: вместо ссылки отписки из Kit — заглушка
 """
-import argparse, base64, datetime as dt, html, io, json, re, sys, urllib.request
+import argparse, base64, datetime as dt, html, io, json, re, sys, time, urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -290,7 +290,15 @@ def youtube(lang):
         return []
     ns = {"a": "http://www.w3.org/2005/Atom", "yt": "http://www.youtube.com/xml/schemas/2015",
           "m": "http://search.yahoo.com/mrss/"}
-    root = ET.fromstring(fetch(f"https://www.youtube.com/feeds/videos.xml?channel_id={cid}"))
+    for attempt in range(4):                  # лента YouTube временами отвечает 404/500 — повторяем
+        try:
+            xml = fetch(f"https://www.youtube.com/feeds/videos.xml?channel_id={cid}")
+            break
+        except Exception:
+            if attempt == 3:
+                raise
+            time.sleep(3 * (attempt + 1))
+    root = ET.fromstring(xml)
     out = []
     for e in root.findall("a:entry", ns):
         vid = e.find("yt:videoId", ns).text
