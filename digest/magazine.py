@@ -15,7 +15,7 @@ MT = {
         "tagline": "Еженедельный журнал об ИИ", "contents": "В этом выпуске",
         "nav": {"news": "Новости", "video": "Видео", "author": "Канал", "research": "Лаборатория", "edu": "Академия"},
         "play": "Смотреть видео", "top": "Наверх ↑", "prev": "Назад", "next": "Дальше",
-        "skip": "Перейти к содержанию", "made": "Создано в", "issue": "Выпуск № {n}", "issue_short": "№ {n}",
+        "skip": "Перейти к содержанию", "made": "Создано в", "issue": "Выпуск № {n}", "issue_short": "№ {n}", "next_up": "Далее",
         "lesson": "Урок", "study": "Исследование",
         "archive": "Архив выпусков", "you": "Вы читаете", "soon": "Выйдет в пятницу", "close": "Закрыть",
     },
@@ -23,7 +23,7 @@ MT = {
         "tagline": "The weekly AI magazine", "contents": "In this issue",
         "nav": {"news": "News", "video": "Video", "author": "Channel", "research": "Lab", "edu": "Academy"},
         "play": "Watch the video", "top": "Back to top ↑", "prev": "Back", "next": "Next",
-        "skip": "Skip to content", "made": "Made in", "issue": "Issue No. {n}", "issue_short": "No. {n}",
+        "skip": "Skip to content", "made": "Made in", "issue": "Issue No. {n}", "issue_short": "No. {n}", "next_up": "Up next",
         "lesson": "Lesson", "study": "Study",
         "archive": "Issue archive", "you": "You’re reading", "soon": "Out on Friday", "close": "Close",
     },
@@ -107,18 +107,25 @@ def news_col(title, news):
 
 
 def video_col(title, videos, embed, mt):
-    """Видеожурнал: плеер на странице, заголовок, лента всех видео выпуска."""
-    v0 = videos[0]
+    """Видеожурнал: ролики сами сменяют друг друга на главном экране, снизу — какие дальше; клик — смотреть на странице."""
+    v0, lab, nx = videos[0], esc(mt["play"]), esc(mt["next_up"])
     inner = f'<img src="{esc(v0["cover"])}" alt="" decoding="async"><span class="pb">{PLAY}</span>'
-    stage = (f'<button class="ph" type="button" data-id="{esc(v0["id"])}" aria-label="{esc(mt["play"])}: {esc(v0["title"])}">{inner}</button>'
-             if embed else f'<a class="ph" {ext(v0["url"])} aria-label="{esc(mt["play"])}: {esc(v0["title"])}">{inner}</a>')
+    named = f'data-label="{lab}" aria-label="{lab}: {esc(v0["title"])}"'
+    stage = (f'<button class="ph" type="button" data-id="{esc(v0["id"])}" {named}>{inner}</button>'
+             if embed else f'<a class="ph" {ext(v0["url"])} {named}>{inner}</a>')
+    nows = []
+    for i, v in enumerate(videos):                     # все описания лежат друг на друге: высота блока не прыгает
+        attrs = ' class="now-i on"' if i == 0 else ' class="now-i" aria-hidden="true"'
+        text = f'<p class="now-p">{esc(v["text"])}</p>' if v.get("text") else ""
+        nows.append(f'<div{attrs}><a class="now-t" {ext(v["url"])}>{esc(v["title"])}</a>{text}</div>')
     items = "".join(
         f'''<li style="--n:{i}"{' class="on"' if i == 0 else ''}><a {ext(v["url"])} data-id="{esc(v["id"])}" data-title="{esc(v["title"])}"
- data-text="{esc(v["text"])}" data-url="{esc(v["url"])}"><span class="st-m"><img src="{esc(v["cover"])}" alt="" loading="lazy" decoding="async">
+ data-url="{esc(v["url"])}"><span class="st-m" data-nx="{nx}"><img src="{esc(v["cover"])}" alt="" loading="lazy" decoding="async">
 <span class="st-pb">{PLAY}</span></span><span class="st-t">{esc(v["title"])}</span></a></li>''' for i, v in enumerate(videos))
-    return f'''{kick(title)}<div class="vid">
-<div class="player rv" data-embed="{1 if embed else 0}">{stage}</div>
-<div class="now rv"><a class="now-t" {ext(v0["url"])}>{esc(v0["title"])}</a><p class="now-p">{esc(v0["text"])}</p></div>
+    rotate = " data-rotate" if len(videos) > 1 else ""
+    return f'''{kick(title)}<div class="vid"{rotate}>
+<div class="player rv" data-embed="{1 if embed else 0}">{stage}<span class="vid-prog" aria-hidden="true"><i></i></span></div>
+<div class="now rv">{"".join(nows)}</div>
 {strip(items, mt["prev"], mt["next"]) if len(videos) > 1 else ''}</div>'''
 
 
@@ -356,7 +363,15 @@ html[data-theme="dark"] #theme .t-l{display:block}
 .player{position:relative;width:min(100%,calc((100vh - 500px) * 16 / 9));min-width:min(100%,440px);margin:0 auto;aspect-ratio:16/9;overflow:hidden;background:#000}
 .player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .ph{all:unset;cursor:pointer;position:absolute;inset:0;display:block}
-.ph img{width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease),filter .6s}
+.ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:transform 1.2s var(--ease),filter .6s,opacity .9s ease}
+.ph img.in{opacity:0}
+.vid.rot .ph img{animation:kb 8s linear both}
+.vid.rot.held .ph img{animation-play-state:paused}
+@keyframes kb{from{scale:1}to{scale:1.08}}
+.vid-prog{position:absolute;left:0;right:0;bottom:0;z-index:2;height:3px;background:rgba(255,255,255,.22);pointer-events:none;display:none}
+.vid.rot .vid-prog{display:block}
+.vid.playing .vid-prog,.vid.playing .ph{display:none}
+.vid-prog i{display:block;height:100%;background:#fff;transform-origin:0 50%;transform:scaleX(var(--p,0))}
 .ph:hover img{transform:scale(1.03);filter:brightness(.9)}
 .pb{position:absolute;left:50%;top:50%;width:clamp(58px,5.4vw,82px);height:clamp(58px,5.4vw,82px);transform:translate(-50%,-50%);
   border-radius:50%;background:rgba(255,255,255,.95);color:#0a0a0a;display:grid;place-items:center;box-shadow:0 18px 50px rgba(0,0,0,.35);transition:transform .45s var(--ease)}
@@ -365,8 +380,10 @@ html[data-theme="dark"] #theme .t-l{display:block}
 @keyframes pulse{from{transform:scale(.9);opacity:1}to{transform:scale(1.35);opacity:0}}
 .ph:hover .pb{transform:translate(-50%,-50%) scale(1.08)}
 .ph:focus-visible{outline:3px solid #fff;outline-offset:-6px}
-.now{padding-top:14px;transition:opacity .35s var(--ease)}
-.now.swap{opacity:0}
+.now{display:grid;padding-top:14px}
+.now-i{grid-area:1/1;min-width:0;opacity:0;visibility:hidden;transform:translateY(10px);
+  transition:opacity .4s ease,transform .5s var(--ease),visibility 0s linear .4s}
+.now-i.on{opacity:1;visibility:visible;transform:none;transition:opacity .6s ease .12s,transform .8s var(--ease) .12s,visibility 0s}
 .now-t{display:inline;font:800 clamp(22px,2vw,30px)/1.16 var(--serif);color:var(--ink)}
 .now-p{margin:10px 0 0;font:400 15px/1.55 var(--sans);color:var(--body)}
 .lp-m{max-height:calc(100vh - 500px)}
@@ -382,6 +399,10 @@ html[data-theme="dark"] #theme .t-l{display:block}
 .st-pb{position:absolute;left:7px;bottom:7px;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.94);color:#0a0a0a;display:grid;place-items:center}
 .st-pb svg{width:11px;height:11px;margin-left:1px}
 .st li.on .st-m{outline:2px solid var(--ink);outline-offset:2px}
+.st-m::before{content:attr(data-nx);position:absolute;left:6px;top:6px;z-index:2;padding:4px 6px 3px;background:var(--ink);color:var(--bg);
+  font:700 9px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;opacity:0;transform:translateY(-4px);pointer-events:none;
+  transition:opacity .35s ease,transform .45s var(--ease)}
+.st li.nx .st-m::before{opacity:1;transform:none}
 .st-t{display:block;margin-top:8px;font:700 13.5px/1.3 var(--serif);color:var(--ink)}
 .st-b{all:unset;cursor:pointer;flex:none;width:32px;height:32px;margin-top:20px;display:grid;place-items:center;color:var(--ink);border:1px solid var(--ink);
   transition:background-color .2s,color .2s,opacity .2s}
@@ -491,12 +512,14 @@ html[data-theme="dark"] #theme .t-l{display:block}
 .ft{padding:clamp(56px,7vw,104px) 0 40px}
 .ft-mark{display:flex;justify-content:space-between;font:800 min(15.4vw,232px)/.8 var(--sans);letter-spacing:-.04em;color:var(--ghost);
   padding-bottom:.04em;user-select:none;transition:color .5s var(--ease)}
-.ft-row{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:18px 28px;border-top:1px solid var(--ink);
+.ft-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:18px 28px;border-top:1px solid var(--ink);
   margin-top:clamp(18px,2vw,28px);padding-top:18px;font:700 11px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
 .soc{display:flex;flex-wrap:wrap;gap:8px 22px}
 .soc a,.up{border-bottom:1px solid transparent;padding-bottom:2px;transition:border-color .3s}
 .soc a:hover,.up:hover{border-bottom-color:currentColor}
-.made{display:inline-flex;align-items:center;gap:8px;color:var(--muted)}
+.made{display:inline-flex;align-items:center;gap:8px;color:var(--muted);justify-self:center}
+.ft-row .soc{justify-self:start}
+.ft-row .up{justify-self:end}
 .made b{color:var(--ink)}
 .made .nr{width:22px;height:22px;font-size:11px;border-color:var(--dim);color:var(--ink);border-radius:5px}
 
@@ -560,9 +583,9 @@ html.js .player.rv.in .ph{clip-path:inset(0)}
 html.js .player.rv:not(.in) .pb{opacity:0}
 html.js .player.rv.in .pb{animation:pop .8s cubic-bezier(.3,1.6,.5,1) calc(var(--d,0s) + 1s) backwards}
 html.js .strip.rv{opacity:1;transform:none}
-html.js .strip.rv .st li{opacity:0;transform:translateX(48px);transition:opacity .7s ease,transform 1s var(--ease);
+html.js .strip.rv .st li>a{opacity:0;transform:translateX(48px);transition:opacity .7s ease,transform 1s var(--ease);
   transition-delay:calc(var(--d,0s) + .25s + var(--n,0) * 90ms)}
-html.js .strip.rv.in .st li{opacity:1;transform:none}
+html.js .strip.rv.in .st li>a{opacity:1;transform:none}
 
 /* реклама ИИ-трансформации: ролик поднимается снизу, текст — следом */
 html.js .ad.rv{opacity:1;transform:none;background-color:transparent;transition:background-color .6s ease var(--d,0s)}
@@ -729,7 +752,9 @@ html.js .ft-mark.rv.in span{opacity:1;transform:none}
   .lb-c:nth-child(n),.ac-i:nth-child(n){padding-left:0;padding-right:0;border-left:0}
   .ac-i{grid-template-columns:120px minmax(0,1fr);gap:14px}
   .sh-by span{display:none}
-  .ft-row{flex-direction:column;align-items:flex-start}
+  .ft-row{grid-template-columns:1fr;justify-items:center;text-align:center}
+  .ft-row>*,.ft-row .soc,.ft-row .up{justify-self:center}
+  .soc{justify-content:center}
 }
 @media (max-width:480px){
   .nav{display:none}
@@ -808,7 +833,7 @@ function onScroll(){ticking=false;var y=window.scrollY||0,h=d.scrollHeight-inner
   if(y<160)document.querySelectorAll('.nav a.on').forEach(function(a){a.classList.remove('on')});}
 addEventListener('scroll',function(){if(!ticking){ticking=true;requestAnimationFrame(onScroll)}},{passive:true});onScroll();
 // ленты карточек со стрелками
-document.querySelectorAll('.strip').forEach(function(s){var ol=s.querySelector('.st'),bs=s.querySelectorAll('.st-b');if(!ol||bs.length<2)return;
+document.querySelectorAll('.strip').forEach(function(s){var ol=s.querySelector('.st'),bs=s.querySelectorAll('.st-b');if(!ol||bs.length<2||s.closest('[data-rotate]'))return;
   function upd(){bs[0].disabled=ol.scrollLeft<4;bs[1].disabled=ol.scrollLeft+ol.clientWidth>=ol.scrollWidth-4;}
   bs.forEach(function(b){b.addEventListener('click',function(){ol.scrollBy({left:+b.getAttribute('data-d')*ol.clientWidth,behavior:reduce?'auto':'smooth'})})});
   ol.addEventListener('scroll',upd,{passive:true});addEventListener('resize',upd);upd();});
@@ -839,21 +864,54 @@ if(reduce)vs.forEach(function(v){v.removeAttribute('autoplay');v.pause()});
 else{var seen=[];var vo=new IntersectionObserver(function(es){es.forEach(function(e){var v=e.target;
   if(e.isIntersecting){if(seen.indexOf(v)<0){seen.push(v);try{v.currentTime=0}catch(x){}}var p=v.play();if(p&&p.catch)p.catch(function(){});}
   else v.pause();});},{threshold:0.35});vs.forEach(function(v){vo.observe(v)});}
-var player=document.querySelector('.player');
-if(player&&player.getAttribute('data-embed')==='1'){
-  var box=player.closest('.vid'),now=box.querySelector('.now'),nt=now.querySelector('.now-t'),np=now.querySelector('.now-p');
-  var play=function(id,title){var f=document.createElement('iframe');
-    f.src='https://www.youtube.com/embed/'+id+'?autoplay=1&rel=0&modestbranding=1&playsinline=1';f.title=title||'';
+// видеожурнал: ролики сами сменяют друг друга, снизу видно, какой дальше; стрелки и клик по ленте — листать
+var vid=document.querySelector('.vid[data-rotate]')||document.querySelector('.vid');
+var player=vid&&vid.querySelector('.player');
+if(player){
+  var ph=player.querySelector('.ph'),embed=player.getAttribute('data-embed')==='1',ol=vid.querySelector('.st'),
+    items=[].slice.call(vid.querySelectorAll('.st li')),vlinks=items.map(function(li){return li.querySelector('a')}),
+    nows=[].slice.call(vid.querySelectorAll('.now-i')),n=vlinks.length,cur=0,playing=false,hover=false,vis=false,
+    el=0,last=0,raf=0,DUR=6500,auto=!reduce&&vid.hasAttribute('data-rotate')&&n>1;
+  vid.classList.toggle('rot',auto);
+  var running=function(){return auto&&!playing&&!hover&&vis&&!document.hidden};
+  var cover=function(i){var im=vlinks[i]&&vlinks[i].querySelector('img');return im?im.getAttribute('src'):''};
+  var swapCover=function(i){var old=ph&&ph.querySelector('img:last-of-type'),src=cover(i);if(!old||!src||old.getAttribute('src')===src)return;
+    if(reduce){old.src=src;return}
+    var olds=[].slice.call(ph.querySelectorAll('img')),im=new Image();im.alt='';im.className='in';im.decoding='async';im.src=src;
+    ph.insertBefore(im,ph.querySelector('.pb'));
+    requestAnimationFrame(function(){requestAnimationFrame(function(){im.classList.remove('in')})});
+    setTimeout(function(){olds.forEach(function(x){if(x.parentNode)x.parentNode.removeChild(x)})},1000)};
+  var stripTo=function(i){if(!ol||!items[i])return;var x=items[i].getBoundingClientRect().left-ol.getBoundingClientRect().left+ol.scrollLeft;
+    ol.scrollTo({left:Math.max(0,Math.min(x,ol.scrollWidth-ol.clientWidth)),behavior:reduce?'auto':'smooth'})};
+  var play=function(i){var a=vlinks[i];if(!a)return;playing=true;vid.classList.add('playing');
+    var f=document.createElement('iframe');
+    f.src='https://www.youtube.com/embed/'+a.getAttribute('data-id')+'?autoplay=1&rel=0&modestbranding=1&playsinline=1';f.title=a.getAttribute('data-title')||'';
     f.allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
-    f.referrerPolicy='strict-origin-when-cross-origin';f.allowFullscreen=true;player.innerHTML='';player.appendChild(f);};
-  player.addEventListener('click',function(e){var b=e.target.closest('.ph');if(!b)return;e.preventDefault();play(b.getAttribute('data-id'),nt.textContent);});
-  box.querySelectorAll('.st a[data-id]').forEach(function(a){a.addEventListener('click',function(e){
-    if(e.metaKey||e.ctrlKey||e.shiftKey)return;e.preventDefault();
-    box.querySelectorAll('.st li').forEach(function(li){li.classList.remove('on')});a.parentNode.classList.add('on');
-    now.classList.add('swap');setTimeout(function(){nt.textContent=a.getAttribute('data-title');nt.href=a.getAttribute('data-url');
-      if(np)np.textContent=a.getAttribute('data-text');now.classList.remove('swap');},reduce?0:220);
-    play(a.getAttribute('data-id'),a.getAttribute('data-title'));
-    var r=player.getBoundingClientRect();if(r.top<60||r.bottom>innerHeight)player.scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'});});});
+    f.referrerPolicy='strict-origin-when-cross-origin';f.allowFullscreen=true;
+    [].slice.call(player.querySelectorAll('iframe')).forEach(function(x){x.parentNode.removeChild(x)});player.appendChild(f)};
+  var show=function(i,keepStrip){if(!n)return;cur=(i+n)%n;var a=vlinks[cur];
+    items.forEach(function(li,k){li.classList.toggle('on',k===cur);li.classList.toggle('nx',auto&&k===(cur+1)%n)});
+    nows.forEach(function(x,k){x.classList.toggle('on',k===cur);if(k===cur)x.removeAttribute('aria-hidden');else x.setAttribute('aria-hidden','true')});
+    if(ph){ph.setAttribute('aria-label',(ph.getAttribute('data-label')||'')+': '+a.getAttribute('data-title'));
+      if(embed)ph.setAttribute('data-id',a.getAttribute('data-id'));else ph.href=a.getAttribute('data-url')}
+    if(playing&&embed)play(cur);else swapCover(cur);
+    if(!keepStrip)stripTo(cur);
+    el=0;vid.style.setProperty('--p',0)};
+  var tick=function(t){if(!running()){raf=0;return}var dt=last?Math.min(t-last,100):0;last=t;el+=dt;
+    if(el>=DUR)show(cur+1);else vid.style.setProperty('--p',(el/DUR).toFixed(4));raf=requestAnimationFrame(tick)};
+  var sync=function(){vid.classList.toggle('held',!running());if(running()&&!raf){last=0;raf=requestAnimationFrame(tick)}};
+  if(ph&&embed)player.addEventListener('click',function(e){if(!e.target.closest('.ph'))return;e.preventDefault();play(cur);sync()});
+  vlinks.forEach(function(a,k){a.addEventListener('click',function(e){if(e.metaKey||e.ctrlKey||e.shiftKey)return;e.preventDefault();
+    if(embed){playing=true;vid.classList.add('playing')}show(k,true);sync();
+    var r=player.getBoundingClientRect();if(r.top<60||r.bottom>innerHeight)player.scrollIntoView({behavior:reduce?'auto':'smooth',block:'center'})})});
+  [].slice.call(vid.querySelectorAll('.st-b')).forEach(function(b){b.disabled=false;
+    b.addEventListener('click',function(){show(cur+(+b.getAttribute('data-d')));sync()})});
+  if(window.matchMedia&&matchMedia('(hover: hover) and (pointer: fine)').matches){
+    vid.addEventListener('mouseenter',function(){hover=true;sync()});vid.addEventListener('mouseleave',function(){hover=false;sync()})}
+  document.addEventListener('visibilitychange',sync);
+  if('IntersectionObserver' in window)new IntersectionObserver(function(es){vis=es[0].isIntersecting;sync()},{threshold:.5}).observe(player);
+  else vis=true;
+  if(n)show(0,true);sync();
 }
 })();
 """
@@ -963,7 +1021,6 @@ def render(ctx):
 <footer class="ft"><div class="wrap">
 <div class="ft-mark rv" aria-hidden="true">{foot_letters}</div>
 <div class="ft-row"><div class="soc">{socials}</div>
-<span>{esc(issue)} · {esc(ctx["date_long"])}</span>
 <span class="made">{esc(mt["made"])} <span class="nr">Nr</span><b>{esc(ctx["made_name"])}</b></span>
 <a class="up" href="#top">{esc(mt["top"])}</a></div></div></footer>
 {arch_box}
