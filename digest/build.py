@@ -170,6 +170,26 @@ def fmt_range(a, b, lang):
     return f"{m[a.month - 1]} {a.day} – {fmt_date(b, lang)}"
 
 
+def fmt_week(a, b, lang):
+    """Неделя без года — для архива выпусков: «21–27 ноября» / «November 21–27»."""
+    m = T[lang]["months"]
+    if lang == "ru":
+        return (f"{a.day}–{b.day} {m[b.month - 1]}" if a.month == b.month
+                else f"{a.day} {m[a.month - 1]} – {b.day} {m[b.month - 1]}")
+    return (f"{m[b.month - 1]} {a.day}–{b.day}" if a.month == b.month
+            else f"{m[a.month - 1]} {a.day} – {m[b.month - 1]} {b.day}")
+
+
+ARCHIVE = Path(__file__).resolve().parent / "issues.json"
+
+
+def load_archive(path):
+    try:
+        return json.loads(Path(path).read_text("utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
 def parse_date(s):
     return dt.date.fromisoformat(str(s)[:10])
 
@@ -756,7 +776,7 @@ def render(lang, issue, sections, web_url, unsub_url):
 
 # ───────────────────────── сборка ─────────────────────────
 def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
-          unsub_url="{{ unsubscribe_url }}", base_url=None, embed=True):
+          unsub_url="{{ unsubscribe_url }}", base_url=None, embed=True, archive=ARCHIVE, record=False):
     """Собирает выпуск: email.html (письмо), index.html (веб-журнал), meta.json."""
     t = T[lang]
     start, end = issue - dt.timedelta(days=6), issue
@@ -952,6 +972,12 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
 
     email, subject, preheader, hello = render(lang, issue, sections, web_url, unsub_url)
     n = (issue - FIRST_ISSUE).days // 7 + 1
+    # архив: все выпуски этого языка (свежие сверху), текущий — всегда в списке
+    entry = {"n": n, "date": issue.isoformat(), "year": issue.year, "week": fmt_week(start, end, lang),
+             "title": sections[0]["lead"], "url": web_url if web_url.startswith("http") else ""}
+    book = load_archive(archive)
+    issues = [x for x in book.get(lang, []) if x.get("date") != entry["date"]] + [entry]
+    issues.sort(key=lambda x: x["date"], reverse=True)
     webpage = magazine.render({
         "lang": lang, "n": n, "brand": t["brand"], "title": subject, "description": hello,
         "hello": hello.replace("в одном письме", "в одном выпуске").replace("in one letter", "in one issue"),
@@ -961,13 +987,20 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
         "date_short": fmt_date(issue, lang, short=True), "socials": t["socials"], "made_name": t["made_name"],
         "to_dark": t["to_dark"], "to_light": t["to_light"],
         "og_image": local_img(og_img, True) if (og_img and base_url and not inline) else None,
-        "url": web_url if web_url.startswith("http") else None, **mag})
+        "url": web_url if web_url.startswith("http") else None,
+        "archive": {"issues": issues, "current": entry["date"], "months": t["months"],
+                    "src": f"{SITE}/digest/issues.json"}, **mag})
     (outdir / "email.html").write_text(email, "utf-8")
     (outdir / "index.html").write_text(webpage, "utf-8")
     meta = {"lang": lang, "issue": n, "date": issue.isoformat(), "subject": subject, "preheader": preheader,
             "sections": [{"title": s["title"], "count": s["count"], "stale": s["stale"]} for s in sections],
             "top_news": next(("marked" if s.get("marked") else "auto" for s in sections if s["key"] == "news"), None)}
     (outdir / "meta.json").write_text(json.dumps(meta, ensure_ascii=False, indent=2), "utf-8")
+    if record:                                # опубликованный выпуск попадает в архив — его увидят все номера
+        if not entry["url"]:
+            raise SystemExit("--record: нужен --web-url с адресом выпуска")
+        book[lang] = issues
+        Path(archive).write_text(json.dumps(book, ensure_ascii=False, indent=1) + "\n", "utf-8")
     return outdir, meta
 
 
@@ -987,8 +1020,11 @@ if __name__ == "__main__":
     ap.add_argument("--no-embed", action="store_true", help="в журнале — видео открываются на YouTube (для просмотра файла с диска)")
     ap.add_argument("--web-url", default="#", help="адрес веб-версии для ссылки «Открыть в браузере»")
     ap.add_argument("--base-url", help="абсолютный адрес папки выпуска — для картинок img/ в письме")
+    ap.add_argument("--archive", default=str(ARCHIVE), help="файл архива выпусков (issues.json)")
+    ap.add_argument("--record", action="store_true", help="записать этот выпуск в архив (для опубликованных выпусков)")
     a = ap.parse_args()
     issue = dt.date.fromisoformat(a.date) if a.date else next_friday()
     out, meta = build(a.lang, issue, a.outdir, fill=a.fill, inline=a.inline, web_url=a.web_url,
-                      unsub_url="#" if a.preview else "{{ unsubscribe_url }}", base_url=a.base_url, embed=not a.no_embed)
+                      unsub_url="#" if a.preview else "{{ unsubscribe_url }}", base_url=a.base_url, embed=not a.no_embed,
+                      archive=a.archive, record=a.record)
     print(out, json.dumps(meta, ensure_ascii=False))

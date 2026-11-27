@@ -7,6 +7,7 @@ render(ctx) → HTML-страница. Материалы те же, что в �
 Дальше разделы различаются вёрсткой: колонка автора, Лаборатория (рамки-«видоискатели»), Академия (программа уроков).
 """
 import html
+import json
 import re
 
 MT = {
@@ -16,6 +17,7 @@ MT = {
         "play": "Смотреть видео", "top": "Наверх ↑", "prev": "Назад", "next": "Дальше",
         "skip": "Перейти к содержанию", "made": "Создано в", "issue": "Выпуск № {n}", "issue_short": "№ {n}",
         "lesson": "Урок", "study": "Исследование",
+        "archive": "Архив выпусков", "you": "Вы читаете", "soon": "Выйдет в пятницу", "close": "Закрыть",
     },
     "en": {
         "tagline": "The weekly AI magazine", "contents": "In this issue",
@@ -23,8 +25,14 @@ MT = {
         "play": "Watch the video", "top": "Back to top ↑", "prev": "Back", "next": "Next",
         "skip": "Skip to content", "made": "Made in", "issue": "Issue No. {n}", "issue_short": "No. {n}",
         "lesson": "Lesson", "study": "Study",
+        "archive": "Issue archive", "you": "You’re reading", "soon": "Out on Friday", "close": "Close",
     },
 }
+
+CHEV = ('<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" '
+        'stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>')
+CROSS = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
+         '<path d="M18 6 6 18M6 6l12 12"/></svg>')
 
 SUN = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
        '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2'
@@ -247,6 +255,42 @@ h3 a:hover,.now-t:hover{background-size:100% 1.5px}
 .nav a.on{color:var(--ink);border-bottom-color:var(--ink)}
 .tools{display:flex;align-items:center;gap:14px;flex:none}
 .chip{font:700 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.arch-btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:color .2s}
+.arch-btn.chip{font:700 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:8px 0}
+.arch-btn:hover,.arch-btn[aria-expanded="true"]{color:var(--ink)}
+.arch-btn:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.arch-btn .chev{width:12px;height:12px;flex:none;transition:transform .25s var(--ease)}
+.arch-btn[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.iss .arch-btn{font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;border-bottom:1px dashed currentColor;margin-bottom:-1px}
+.arch{position:fixed;z-index:80;background:var(--bg);color:var(--ink);border:1px solid var(--ink);box-shadow:0 22px 60px rgba(0,0,0,.18);
+  overflow:auto;overscroll-behavior:contain;padding:0 18px 6px;opacity:0;transform:translateY(-6px);transition:opacity .18s ease,transform .25s var(--ease)}
+.arch.open{opacity:1;transform:none}
+.arch-h{position:sticky;top:0;z-index:1;display:flex;flex-wrap:wrap;align-items:center;gap:12px;background:var(--bg);padding:16px 0 12px;
+  border-bottom:4px solid var(--ink)}
+.arch-h::after{content:"";position:absolute;left:0;right:0;bottom:-8px;height:1px;background:var(--ink)}
+.arch-h b{flex:1;font:800 22px/1 var(--sans);letter-spacing:-.035em}
+.arch-x{all:unset;cursor:pointer;width:30px;height:30px;display:grid;place-items:center;color:var(--muted)}
+.arch-x:hover{color:var(--ink)}
+.arch-x:focus-visible{outline:2px solid var(--ink)}
+.arch-x svg{width:16px;height:16px}
+.arch-y{display:flex;gap:6px;width:100%}
+.arch-y button{all:unset;cursor:pointer;font:700 11px/1 var(--mono);letter-spacing:.14em;padding:7px 10px;border:1px solid var(--line);color:var(--muted)}
+.arch-y button:hover{color:var(--ink);border-color:var(--ink)}
+.arch-y button[aria-selected="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.arch-y button:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.arch-l{list-style:none;margin:8px 0 0;padding:0}
+.arch-l li+li{border-top:1px solid var(--line)}
+.arch-i,.arch-nx{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:6px 12px;align-items:baseline;padding:14px 2px}
+a.arch-i{color:var(--ink)}
+a.arch-i:hover .arch-d{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:4px}
+a.arch-i:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.arch-n{font:700 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.arch-d{font:800 20px/1.15 var(--serif);color:var(--ink)}
+.arch-tag{font:700 9px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;padding:5px 7px;background:var(--ink);color:var(--bg);white-space:nowrap}
+.arch-go{font:700 14px/1 var(--mono);color:var(--muted)}
+.arch-t{grid-column:2/-1;font:400 13px/1.45 var(--sans);color:var(--muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.arch-nx .arch-d,.arch-nx .arch-n{color:var(--dim)}
+.arch-nx .arch-tag{background:none;color:var(--muted);border:1px dashed var(--dim);padding:4px 6px}
 #theme{all:unset;cursor:pointer;width:34px;height:34px;display:grid;place-items:center;color:var(--muted);transition:color .2s}
 #theme:hover{color:var(--ink)}
 #theme:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
@@ -508,6 +552,51 @@ html.js.ready .rule{transform:none}
 
 JS = r"""
 (function(){
+var box=document.getElementById('arch'),raw=document.getElementById('arch-data');
+if(!box||!raw)return;
+var A;try{A=JSON.parse(raw.textContent)}catch(e){return}
+var btns=[].slice.call(document.querySelectorAll('.arch-btn')),list=box.querySelector('.arch-l'),tabs=box.querySelector('.arch-y'),
+  cur=A.current,year=+cur.slice(0,4),opener=null,fetched=false,y0=0;
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function nextIssue(){var a=A.issues[0];if(!a)return null;var d=new Date(a.date+'T12:00:00');d.setDate(d.getDate()+7);
+  var today=new Date();today.setHours(0,0,0,0);if(d<=today)return null;var m=A.months[d.getMonth()];
+  return {n:a.n+1,year:d.getFullYear(),label:A.lang==='ru'?d.getDate()+' '+m:m+' '+d.getDate()}}
+function years(){var s={},nx=nextIssue();A.issues.forEach(function(x){s[x.year]=1});if(nx)s[nx.year]=1;
+  return Object.keys(s).map(Number).sort(function(a,b){return b-a})}
+function draw(){
+  tabs.innerHTML='';years().forEach(function(y){var b=el('button',null,String(y));b.type='button';b.setAttribute('role','tab');
+    b.setAttribute('aria-selected',y===year?'true':'false');b.addEventListener('click',function(e){e.stopPropagation();year=y;draw()});tabs.appendChild(b)});
+  list.innerHTML='';var nx=nextIssue();
+  if(nx&&nx.year===year){var li=el('li'),r=el('div','arch-nx');r.appendChild(el('span','arch-n',A.t.issue.replace('{n}',nx.n)));
+    r.appendChild(el('span','arch-d',nx.label));r.appendChild(el('span','arch-tag',A.t.soon));li.appendChild(r);list.appendChild(li)}
+  A.issues.filter(function(x){return x.year===year}).forEach(function(x){
+    var me=x.date===cur,li=el('li'),a=el(x.url||me?'a':'div','arch-i');
+    if(a.tagName==='A'){a.href=me?'#top':x.url;if(me)a.setAttribute('aria-current','page')}
+    a.appendChild(el('span','arch-n',A.t.issue.replace('{n}',x.n)));a.appendChild(el('span','arch-d',x.week));
+    a.appendChild(me?el('span','arch-tag',A.t.you):el('span','arch-go','→'));
+    if(x.title)a.appendChild(el('span','arch-t',x.title));li.appendChild(a);list.appendChild(li)})}
+function place(b){var r=b.getBoundingClientRect(),w=Math.min(420,innerWidth-24);box.style.width=w+'px';
+  box.style.top=Math.round(r.bottom+10)+'px';box.style.left=Math.round(Math.min(Math.max(12,r.right-w),innerWidth-w-12))+'px';
+  box.style.maxHeight=Math.max(240,innerHeight-r.bottom-24)+'px'}
+function refresh(){if(fetched||!A.src||!/^https?:$/.test(location.protocol))return;fetched=true;
+  fetch(A.src,{cache:'no-cache'}).then(function(r){return r.ok?r.json():null}).then(function(j){var l=j&&j[A.lang];if(!l||!l.length)return;
+    var mine=A.issues.filter(function(x){return x.date===cur})[0];if(mine&&!l.some(function(x){return x.date===cur}))l.push(mine);
+    A.issues=l.slice().sort(function(a,b){return a.date<b.date?1:-1});if(!box.hidden)draw()}).catch(function(){})}
+function open(b){opener=b;y0=scrollY;year=+cur.slice(0,4);draw();place(b);box.hidden=false;
+  requestAnimationFrame(function(){box.classList.add('open')});
+  btns.forEach(function(x){x.setAttribute('aria-expanded',x===b?'true':'false')});
+  var f=box.querySelector('[aria-current]')||box.querySelector('a');if(f)f.focus({preventScroll:true});refresh()}
+function close(back){if(box.hidden)return;box.classList.remove('open');btns.forEach(function(x){x.setAttribute('aria-expanded','false')});
+  setTimeout(function(){if(!box.classList.contains('open'))box.hidden=true},200);if(back&&opener)opener.focus({preventScroll:true})}
+btns.forEach(function(b){b.addEventListener('click',function(e){e.stopPropagation();if(!box.hidden&&opener===b)close();else open(b)})});
+box.querySelector('.arch-x').addEventListener('click',function(){close(true)});
+list.addEventListener('click',function(e){if(e.target.closest('a'))close()});
+document.addEventListener('click',function(e){if(!box.hidden&&!box.contains(e.target))close()});
+document.addEventListener('keydown',function(e){if(e.key==='Escape')close(true)});
+addEventListener('scroll',function(){if(!box.hidden&&Math.abs(scrollY-y0)>80)close()},{passive:true});
+addEventListener('resize',function(){close()});
+})();
+(function(){
 var d=document.documentElement,reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 var tb=document.getElementById('theme');
 function lab(){var l=tb.getAttribute(d.getAttribute('data-theme')==='dark'?'data-light':'data-dark');tb.setAttribute('aria-label',l);tb.title=l;}
@@ -572,6 +661,23 @@ def render(ctx):
     letters = "".join(f'<span style="--i:{i}" aria-hidden="true">{esc(c)}</span>' for i, c in enumerate(ctx["brand"]))
     foot_letters = "".join(f"<span>{esc(c)}</span>" for c in ctx["brand"])
     issue = mt["issue"].format(n=ctx["n"])
+    arch, arch_box = ctx.get("archive"), ""
+    btn = 'type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="arch"'
+    if arch:
+        data = dict(arch, lang=lang, t={"issue": mt["issue_short"], "you": mt["you"], "soon": mt["soon"]})
+        blob = json.dumps(data, ensure_ascii=False).replace("<", "\\u003c")   # «</script>» внутри данных не закроет тег
+        arch_box = (f'<div class="arch" id="arch" role="dialog" aria-label="{esc(mt["archive"])}" hidden>'
+                    f'<div class="arch-h"><b>{esc(mt["archive"])}</b>'
+                    f'<button type="button" class="arch-x" aria-label="{esc(mt["close"])}">{CROSS}</button>'
+                    f'<div class="arch-y" role="tablist"></div></div><ol class="arch-l"></ol></div>\n'
+                    f'<script type="application/json" id="arch-data">'
+                    f'{blob}</script>')
+        chip = (f'<button class="chip arch-btn" {btn} title="{esc(mt["archive"])}">'
+                f'{esc(mt["issue_short"].format(n=ctx["n"]))} · {esc(ctx["date_long"])}{CHEV}</button>')
+        iss_date = (f'<button class="arch-btn" {btn} title="{esc(mt["archive"])}">{esc(ctx["date_range"])}{CHEV}</button>')
+    else:
+        chip = f'<span class="chip">{esc(mt["issue_short"].format(n=ctx["n"]))} · {esc(ctx["date_long"])}</span>'
+        iss_date = f'<span>{esc(ctx["date_range"])}</span>'
 
     news = ctx.get("news") or {}
     tick = "".join(f'<a {ext(x["url"])} tabindex="-1">{esc(x["title"])}</a><b>●</b>' for x in news.get("items", []))
@@ -632,14 +738,14 @@ def render(ctx):
 <header class="top"><div class="wrap top-in">
 <a class="brand" href="{esc(ctx.get("home") or "https://dataist.ai/")}" aria-label="{esc(ctx["brand"])} — dataist.ai"><span class="mk" aria-hidden="true">i</span></a>
 <nav class="nav" aria-label="{esc(mt["contents"])}">{nav}</nav>
-<div class="tools"><span class="chip">{esc(mt["issue_short"].format(n=ctx["n"]))} · {esc(ctx["date_short"])}</span>
+<div class="tools">{chip}
 <button id="theme" type="button" data-dark="{esc(ctx["to_dark"])}" data-light="{esc(ctx["to_light"])}" aria-label="{esc(ctx["to_dark"])}">
 <span class="t-d">{MOON}</span><span class="t-l">{SUN}</span></button></div></div>
 <div class="prog" aria-hidden="true"><i></i></div></header>
 
 <main id="main">
 <div class="wrap front" id="top">
-<div class="iss"><span>{esc(issue)}</span><span>{esc(mt["tagline"])}</span><span>{esc(ctx["date_range"])}</span></div>
+<div class="iss"><span>{esc(issue)}</span><span>{esc(mt["tagline"])}</span>{iss_date}</div>
 <h1 class="mast" aria-label="{esc(ctx["brand"])} — {esc(issue)}">{letters}</h1>
 <div class="rule" aria-hidden="true"></div>
 {ticker}
@@ -654,6 +760,7 @@ def render(ctx):
 <span>{esc(issue)} · {esc(ctx["date_long"])}</span>
 <span class="made">{esc(mt["made"])} <span class="nr">Nr</span><b>{esc(ctx["made_name"])}</b></span>
 <a class="up" href="#top">{esc(mt["top"])}</a></div></div></footer>
+{arch_box}
 <script>{JS}</script>
 </body></html>
 '''
