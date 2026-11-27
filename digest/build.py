@@ -33,6 +33,8 @@ import argparse, base64, datetime as dt, html, io, json, re, sys, urllib.request
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import magazine
+
 ROOT = Path(__file__).resolve().parent.parent
 SITE = "https://dataist.ai"
 ASSETS_URL = f"{SITE}/digest/assets"
@@ -42,7 +44,7 @@ UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML,
 
 YOUTUBE = {"ru": "UCWWDNv21uZDQEi4UhvhNQIA", "en": None}   # channel_id; EN — когда появится канал
 TELEGRAM = {"ru": "andre_dataist"}
-UTM = "utm_source=dataist&utm_medium=email&utm_campaign=digest-{date}"
+UTM = "utm_source=dataist&utm_medium={medium}&utm_campaign=digest-{date}"
 
 # ───────────────────────── тексты ─────────────────────────
 T = {
@@ -154,6 +156,18 @@ def fmt_date(d, lang, short=False):
     if short:
         return f"{d.day} {t['mon'][d.month - 1]}" if lang == "ru" else f"{t['mon'][d.month - 1]} {d.day}"
     return f"{d.day} {t['months'][d.month - 1]} {d.year}" if lang == "ru" else f"{t['months'][d.month - 1]} {d.day}, {d.year}"
+
+
+def fmt_range(a, b, lang):
+    """Неделя выпуска: «21–27 ноября 2026» / «November 21–27, 2026»."""
+    m = T[lang]["months"]
+    if lang == "ru":
+        if a.month == b.month:
+            return f"{a.day}–{b.day} {m[b.month - 1]} {b.year}"
+        return f"{a.day} {m[a.month - 1]} – {fmt_date(b, lang)}"
+    if a.month == b.month:
+        return f"{m[b.month - 1]} {a.day}–{b.day}, {b.year}"
+    return f"{m[a.month - 1]} {a.day} – {fmt_date(b, lang)}"
 
 
 def parse_date(s):
@@ -467,8 +481,8 @@ def post_cover_source(post):
     return None
 
 
-def youtube_thumb(vid, out_path):
-    """Обложка видео 16:9 с кнопкой ▶ в левом нижнем углу (не закрывает надписи): 1120×630."""
+def youtube_thumb(vid, out_path, play=True):
+    """Обложка видео 16:9, 1120×630; play — кнопка ▶ в левом нижнем углу (не закрывает надписи)."""
     from PIL import Image, ImageDraw
     im = None
     for name in ("maxresdefault", "sddefault", "hqdefault"):
@@ -486,6 +500,9 @@ def youtube_thumb(vid, out_path):
         top = (h - th) // 2
         im = im.crop((0, top, w, top + th))
     im = im.resize((1120, 630), Image.LANCZOS)
+    if not play:
+        im.save(out_path, "JPEG", quality=84, optimize=True, progressive=True)
+        return True
     k = 4
     layer = Image.new("RGBA", (1120 * k, 630 * k), (0, 0, 0, 0))
     d = ImageDraw.Draw(layer)
@@ -538,16 +555,10 @@ def section_header(num, title, label, url, missed=None):
 </table>''', "56px 40px 0")
 
 
-def card(url, meta, title, paras, cta, img=None, embed=None, first=False):
-    """Карточка во всю ширину: обложка (или плеер в веб-версии), дата, заголовок, текст целиком, ссылка."""
+def card(url, meta, title, paras, cta, img=None, first=False):
+    """Карточка во всю ширину: обложка, дата, заголовок, текст целиком, ссылка."""
     divider = "" if first else row(f'<div style="border-top:1px solid {LINE};height:1px;line-height:1px;font-size:0">&nbsp;</div>', "34px 40px 0")
-    if embed:
-        media = (f'<div class="embed" style="position:relative;width:100%;padding-top:56.25%;border-radius:16px;overflow:hidden;background:#000">'
-                 f'<iframe src="https://www.youtube.com/embed/{esc(embed)}?rel=0&amp;modestbranding=1&amp;playsinline=1" title="{esc(title)}" '
-                 f'style="position:absolute;top:0;left:0;width:100%;height:100%;border:0" loading="lazy" '
-                 f'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" '
-                 f'referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe></div>')
-    elif img:
+    if img:
         media = (f'<a href="{esc(url)}" style="text-decoration:none"><img src="{esc(img)}" width="560" alt="{esc(title)}" '
                  f'style="display:block;width:100%;max-width:560px;height:auto;border:0;border-radius:16px"></a>')
     else:
@@ -560,9 +571,8 @@ def card(url, meta, title, paras, cta, img=None, embed=None, first=False):
 <p style="margin:16px 0 0">{link_cta(url, cta)}</p>''', f"{20 if first else 34}px 40px 0")
 
 
-def ad_card(gif, url, kicker, title, text, cta, stats=None, nr_tile=False, video=None):
-    """Рекламный блок: горизонтальный ролик 16:9 и подпись под ним.
-    В письме — GIF; в веб-версии (video = (mp4, обложка)) — видео без звука, по кругу."""
+def ad_card(gif, url, kicker, title, text, cta, stats=None, nr_tile=False):
+    """Рекламный блок письма: горизонтальный ролик 16:9 (GIF) и подпись под ним."""
     tile = (f'<td valign="middle" style="width:26px;height:26px;border:1px solid #5c5c61;border-radius:6px;text-align:center;'
             f'{sans(13, "#ffffff", 700, 1, "-.05em")}">Nr</td><td class="kick" valign="middle" style="padding-left:10px;{mono(10, "#a1a1a6", 700, ".2em")}">{esc(kicker)}</td>'
             if nr_tile else f'<td class="kick" valign="middle" style="{mono(10, "#a1a1a6", 700, ".2em")}">{esc(kicker)}</td>')
@@ -572,10 +582,7 @@ def ad_card(gif, url, kicker, title, text, cta, stats=None, nr_tile=False, video
             f'<td class="stat" style="padding-right:24px" valign="top"><div class="stat-n" style="{sans(20, "#ffffff", 800, 1.1, "-.03em")}white-space:nowrap">{esc(a)}</div>'
             f'<div style="padding-top:3px;{mono(10, "#8e8e93", 400, ".1em")}white-space:nowrap">{esc(b)}</div></td>' for a, b in stats)
         stats_html = f'<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin-top:18px"><tr>{cells}</tr></table>'
-    media = (f'<video class="ad-video" src="{esc(video[0])}" poster="{esc(video[1])}" width="540" autoplay muted loop playsinline preload="metadata" '
-             f'aria-label="{esc(title)}" style="display:block;width:100%;max-width:540px;height:auto;border:0;border-radius:14px;background:#000"></video>'
-             if video else
-             f'<img src="{esc(gif)}" width="540" alt="{esc(title)}" style="display:block;width:100%;max-width:540px;height:auto;border:0;border-radius:14px">')
+    media = f'<img src="{esc(gif)}" width="540" alt="{esc(title)}" style="display:block;width:100%;max-width:540px;height:auto;border:0;border-radius:14px">'
     return row(f'''<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#000000" style="background:#000000;border-radius:22px">
 <tr><td style="padding:10px 10px 0">
 <a href="{esc(url)}" style="text-decoration:none;display:block">{media}</a></td></tr>
@@ -605,13 +612,8 @@ def top_news_rows(items, imgs, more=None):
     return row(f'<table role="presentation" class="tn" width="100%" cellpadding="0" cellspacing="0" border="0">{"".join(rows)}</table>', "16px 40px 0")
 
 
-SUN = ('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
-       'aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>')
-MOON = ('<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" '
-        'stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>')
-
-
-def render(lang, issue, sections, web_url, unsub_url, web=False):
+def render(lang, issue, sections, web_url, unsub_url):
+    """Письмо. Возвращает (html, тема, прехедер, приветствие)."""
     t = T[lang]
     n = (issue - FIRST_ISSUE).days // 7 + 1
     date_long = f"{t['wd'][issue.weekday()]}, {fmt_date(issue, lang)}"
@@ -632,70 +634,18 @@ def render(lang, issue, sections, web_url, unsub_url, web=False):
     body = []
     for i, s in enumerate(sections, 1):
         body.append(section_header(f"{i:02d}", s["title"], s["label"], s["url"]))
-        body.append(s["html_web"] if web else s["html"])
-        extra = s.get("after_web") if web else s.get("after")
-        if extra:
-            body.append(extra)
+        body.append(s["html"])
+        if s.get("after"):
+            body.append(s["after"])
 
     socials = " &nbsp;·&nbsp; ".join(f'<a href="{esc(u)}" style="color:{INK};text-decoration:none">{esc(name)}</a>'
                                     for name, u in t["socials"])
 
-    if web:
-        left = ""
-        right = (f'<button id="theme" type="button" data-dark="{esc(t["to_dark"])}" data-light="{esc(t["to_light"])}" '
-                 f'aria-label="{esc(t["to_dark"])}" title="{esc(t["to_dark"])}">'
-                 f'<span class="t-dark">{MOON}</span><span class="t-light">{SUN}</span></button>')
-        footer_note = ""
-    else:
-        left = f'<a href="{esc(web_url)}" style="color:{DIM};text-decoration:none">{esc(t["browser"])}</a>'
-        right = ""
-        footer_note = (f'<tr><td class="px" align="center" style="padding:26px 40px 0;{sans(12, MUTED, 400, 1.6)}">{esc(t["why"])}<br>'
-                       f'<a href="{esc(unsub_url)}" style="color:{MUTED};text-decoration:underline">{esc(t["unsub"])}</a> &nbsp;·&nbsp; '
-                       f'<a href="{esc(web_url)}" style="color:{MUTED};text-decoration:underline">{esc(t["browser"])}</a></td></tr>')
-
-    web_head = ""
-    web_script = ""
-    if web:
-        web_head = '''<script>try{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}
-if('IntersectionObserver' in window)document.documentElement.classList.add('js');</script>
-<style>
-  html,body{background:#ffffff}
-  #page{background:#ffffff;min-height:100vh}
-  #theme{all:unset;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;
-    margin:-9px -9px -9px 0;border-radius:50%;color:#6e6e73;transition:color .2s}
-  #theme:hover{color:#0a0a0a}
-  #theme:focus-visible{outline:2px solid #0a0a0a;outline-offset:2px}
-  #theme svg{display:block;width:18px;height:18px}
-  #theme .t-light{display:none}
-  #theme > span{display:inline-flex}
-  html[data-theme="dark"],html[data-theme="dark"] body{background:#000000}
-  html[data-theme="dark"] #page{filter:invert(1) hue-rotate(180deg)}
-  html[data-theme="dark"] #page img,html[data-theme="dark"] #page .embed,html[data-theme="dark"] #page video{filter:invert(1) hue-rotate(180deg)}
-  html.js #page td.px{opacity:0;transform:translateY(28px);transition:opacity .9s cubic-bezier(.2,.8,.2,1),transform .9s cubic-bezier(.2,.8,.2,1)}
-  html.js #page td.px.in{opacity:1;transform:none}
-  html.js #page table.tn tr{opacity:0;transform:translateY(16px);transition:opacity .6s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
-  html.js #page table.tn.in tr{opacity:1;transform:none}
-  @media (prefers-reduced-motion:reduce){html.js #page td.px,html.js #page table.tn tr{opacity:1;transform:none;transition:none}}
-  html[data-theme="dark"] #theme .t-dark{display:none}
-  html[data-theme="dark"] #theme .t-light{display:inline-flex}
-</style>'''
-        web_script = '''<script>
-(function(){var b=document.getElementById('theme');if(!b)return;var d=document.documentElement;
-function label(){var l=b.getAttribute(d.getAttribute('data-theme')==='dark'?'data-light':'data-dark');b.setAttribute('aria-label',l);b.title=l;}
-label();b.addEventListener('click',function(){var dark=d.getAttribute('data-theme')!=='dark';
-if(dark)d.setAttribute('data-theme','dark');else d.removeAttribute('data-theme');
-try{localStorage.setItem('theme',dark?'dark':'light')}catch(e){}label();});})();
-(function(){if(!('IntersectionObserver' in window))return;
-var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}});},{rootMargin:'0px 0px -6% 0px',threshold:0.06});
-document.querySelectorAll('#page td.px, #page table.tn').forEach(function(el){io.observe(el);});
-document.querySelectorAll('#page table.tn tr').forEach(function(tr,i){tr.style.transitionDelay=(i*70)+'ms';});})();
-(function(){var vs=document.querySelectorAll('#page video.ad-video');if(!vs.length||!('IntersectionObserver' in window))return;
-if(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches){vs.forEach(function(v){v.removeAttribute('autoplay');v.pause();});return;}
-var seen=[];var vo=new IntersectionObserver(function(es){es.forEach(function(e){var v=e.target;
-if(e.isIntersecting){if(seen.indexOf(v)<0){seen.push(v);try{v.currentTime=0}catch(x){}}var p=v.play();if(p&&p.catch)p.catch(function(){});}
-else v.pause();});},{threshold:0.35});
-vs.forEach(function(v){vo.observe(v);});})();
-</script>'''
+    left = f'<a href="{esc(web_url)}" style="color:{DIM};text-decoration:none">{esc(t["browser"])}</a>'
+    right = ""
+    footer_note = (f'<tr><td class="px" align="center" style="padding:26px 40px 0;{sans(12, MUTED, 400, 1.6)}">{esc(t["why"])}<br>'
+                   f'<a href="{esc(unsub_url)}" style="color:{MUTED};text-decoration:underline">{esc(t["unsub"])}</a> &nbsp;·&nbsp; '
+                   f'<a href="{esc(web_url)}" style="color:{MUTED};text-decoration:underline">{esc(t["browser"])}</a></td></tr>')
 
     return f'''<!DOCTYPE html>
 <html lang="{lang}" xmlns="http://www.w3.org/1999/xhtml">
@@ -704,8 +654,8 @@ vs.forEach(function(v){vo.observe(v);});})();
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="x-apple-disable-message-reformatting">
 <meta name="format-detection" content="telephone=no,date=no,address=no,email=no">
-<meta name="color-scheme" content="{'light dark' if web else 'light'}">
-<meta name="supported-color-schemes" content="{'light dark' if web else 'light'}">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
 <title>{esc(subject)}</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&amp;family=Space+Mono:wght@400;700&amp;display=swap" rel="stylesheet">
 <style>
@@ -732,7 +682,6 @@ vs.forEach(function(v){vo.observe(v);});})();
     .tn-t{{font-size:14px!important;line-height:1.35!important}}
   }}
 </style>
-{web_head}
 </head>
 <body style="margin:0;padding:0;background:#ffffff">
 <div id="page">
@@ -783,34 +732,24 @@ vs.forEach(function(v){vo.observe(v);});})();
 
 </table></td></tr></table>
 </div>
-{web_script}
 </body></html>
-''', subject, preheader
+''', subject, preheader, hello
 
 
 # ───────────────────────── сборка ─────────────────────────
 def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
           unsub_url="{{ unsubscribe_url }}", base_url=None, embed=True):
+    """Собирает выпуск: email.html (письмо), index.html (веб-журнал), meta.json."""
     t = T[lang]
     start, end = issue - dt.timedelta(days=6), issue
     outdir = Path(outdir)
     (outdir / "img").mkdir(parents=True, exist_ok=True)
-    utm = UTM.format(date=issue.isoformat())
 
     def asset(name):
         if inline:
             mime = {".gif": "image/gif", ".mp4": "video/mp4", ".jpg": "image/jpeg"}[Path(name).suffix]
             return f"data:{mime};base64," + base64.b64encode((ASSETS_DIR / name).read_bytes()).decode()
         return f"{ASSETS_URL}/{name}"
-
-    def ad_pair(media, *args, **kw):
-        """Реклама для письма (GIF) и для веб-версии (MP4 с обложкой)."""
-        return (ad_card(asset(f"{media}.gif"), *args, **kw),
-                ad_card(asset(f"{media}.gif"), *args, video=(asset(f"{media}.mp4"), asset(f"{media}.jpg")), **kw))
-
-    def attach(sec, pair, front=False):
-        for key, html_ in zip(("after", "after_web"), pair):
-            sec[key] = html_ + (sec.get(key) or "") if front else (sec.get(key) or "") + html_
 
     def local_img(path, absolute):
         if inline:
@@ -819,10 +758,19 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
             return f"{base_url.rstrip('/')}/img/{path.name}"
         return f"img/{path.name}"
 
-    def with_utm(url):
-        return url + ("&" if "?" in url else "?") + utm
+    def with_utm(url, medium="email"):
+        return url + ("&" if "?" in url else "?") + UTM.format(medium=medium, date=issue.isoformat())
 
-    sections = []
+    def ad_web(media, url, kicker, title, text, cta, stats=None):
+        """Реклама в журнале: MP4 без звука с обложкой."""
+        return {"url": with_utm(url, "web"), "kicker": kicker, "title": title, "text": text, "cta": cta, "stats": stats,
+                "mp4": asset(f"{media}.mp4"), "poster": asset(f"{media}.jpg")}
+
+    def attach(sec, html_, front=False):
+        sec["after"] = html_ + (sec.get("after") or "") if front else (sec.get("after") or "") + html_
+
+    sections = []   # разделы письма по порядку
+    mag = {}        # те же материалы для веб-журнала
 
     def tg_posts(channel):
         try:
@@ -831,23 +779,28 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
             print(f"telegram {channel}:", e, file=sys.stderr)
             return []
 
-    def tg_cards(posts, cta, link_of, meta_of, prefix):
-        """Посты Telegram карточками: обложка — превью первой ссылки, текст — целые абзацы."""
-        mail, webv = [], []
+    def tg_cards(posts, cta, link_of, prefix):
+        """Посты Telegram: карточки письма + материалы журнала. Обложка — превью первой ссылки, текст — целые абзацы."""
+        mail, items = [], []
         for i, p in enumerate(posts):
-            img_m = img_w = None
+            path = None
             src = post_cover_source(p)
             if src:
                 path = outdir / "img" / f"{prefix}-{p['id']}.jpg"
-                if path.exists() or save_cover(src, path):
-                    img_m, img_w = local_img(path, True), local_img(path, False)
-            url, meta, paras = link_of(p), meta_of(p), excerpt(clean_post(p["paras"]))
-            mail.append(card(url, meta, p["title"], paras, cta, img=img_m, first=i == 0))
-            webv.append(card(url, meta, p["title"], paras, cta, img=img_w, first=i == 0))
-        return "".join(mail), "".join(webv)
+                if not (path.exists() or save_cover(src, path)):
+                    path = None
+            url, paras = link_of(p), excerpt(clean_post(p["paras"]))
+            mail.append(card(url, "", p["title"], paras, cta, img=local_img(path, True) if path else None, first=i == 0))
+            items.append({"title": p["title"], "url": url, "paras": paras, "img": local_img(path, False) if path else None, "cta": cta})
+        return "".join(mail), items
 
-    def site_rel(url):
-        return url[len(SITE) + 1:].split("?")[0].split("#")[0].strip("/") if url and url.startswith(SITE + "/") else None
+    def site_items(xs, cta):
+        """Материалы с сайта (EN): обложка по адресу, текст — анонс."""
+        mail = "".join(card(x["url"], "", x["title"], [x["text"]], cta, img=x["cover"] or None, first=i == 0) for i, x in enumerate(xs))
+        return mail, [{"title": x["title"], "url": x["url"], "paras": [x["text"]] if x["text"] else [], "img": x["cover"] or None,
+                       "cta": cta} for x in xs]
+
+    og_img = None
 
     # 01 — Топ новостей недели (первым разделом): отмеченные в digest/top-news.txt, строки с маленькой картинкой
     tops, marked = top_news(lang, start, end)
@@ -857,14 +810,20 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
             path = outdir / "img" / f"news-{x['num']}.jpg"
             if x.get("cover") and (path.exists() or save_cover(x["cover"], path, ratio=3 / 2, width=240)):
                 thumbs[x["num"]] = path
+        big = outdir / "img" / f"news-{tops[0]['num']}-l.jpg"
+        big = big if tops[0].get("cover") and (big.exists() or save_cover(tops[0]["cover"], big, ratio=3 / 2, width=760)) else None
         more = (t["all_news"], with_utm(t["u_all_news"])) if t["u_all_news"] else None
         cnt = len(tops)
         sections.append({"key": "news", "title": t["s_news"], "label": t["l_news"], "url": t["u_news"], "stale": False,
                          "html": top_news_rows(tops, {k: local_img(p, True) for k, p in thumbs.items()}, more),
-                         "html_web": top_news_rows(tops, {k: local_img(p, False) for k, p in thumbs.items()}, more),
                          "lead": tops[0]["title"], "marked": marked,
                          "count": (f"{cnt} {plural(cnt, ('новость', 'новости', 'новостей'))}" if lang == "ru"
                                    else f"{cnt} {'story' if cnt == 1 else 'stories'}")})
+        mag["news"] = {"items": [{"num": x["num"], "title": x["title"], "url": x["url"],
+                                  "img": local_img(thumbs[x["num"]], False) if x["num"] in thumbs else None,
+                                  "img_l": local_img(big, False) if (big and i == 0) else None} for i, x in enumerate(tops)],
+                       "more": (t["all_news"], with_utm(t["u_all_news"], "web")) if t["u_all_news"] else None}
+        og_img = big
 
     # 02 — Видеожурнал
     try:
@@ -874,40 +833,45 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
         vids = []
     items, stale = pick(vids, start, end, 3, fill)
     if items:
-        mail, webv = [], []
+        mail, web = [], []
         for i, v in enumerate(items):
             p = outdir / "img" / f"yt-{v['id']}.jpg"
             ok = p.exists() or youtube_thumb(v["id"], p)
+            pc = outdir / "img" / f"yt-{v['id']}-c.jpg"
+            okc = pc.exists() or youtube_thumb(v["id"], pc, play=False)
             paras = video_text(v["paras"])
             mail.append(card(v["url"], "", v["title"], paras, t["watch"], img=local_img(p, True) if ok else None, first=i == 0))
-            webv.append(card(v["url"], "", v["title"], paras, t["watch"],
-                             img=None if embed else (local_img(p, False) if ok else None), embed=v["id"] if embed else None, first=i == 0))
+            web.append({"id": v["id"], "title": v["title"], "url": v["url"], "text": " ".join(paras),
+                        "cover": local_img(pc, False) if okc else f"https://i.ytimg.com/vi/{v['id']}/hqdefault.jpg"})
+            if i == 0 and okc:
+                og_img = pc
         cnt = len(items)
         sections.append({"key": "video", "title": t["s_video"], "label": t["l_video"], "url": t["u_video"], "stale": stale,
-                         "html": "".join(mail), "html_web": "".join(webv), "lead": items[0]["title"],
+                         "html": "".join(mail), "lead": items[0]["title"],
                          "count": f"{cnt} видео" if lang == "ru" else f"{cnt} video{'s' if cnt > 1 else ''}"})
+        mag["video"] = web
 
     # 03 — Авторский канал
     if lang == "ru":
         items, stale = pick(tg_posts(TELEGRAM["ru"]), start, end, 3, fill)
         if items:
-            mail, webv = tg_cards(items, t["open_post"], lambda p: p["url"], lambda p: "", "tg")
+            mail, mag["author"] = tg_cards(items, t["open_post"], lambda p: p["url"], "tg")
             cnt = len(items)
             sections.append({"key": "author", "title": t["s_author"], "label": t["l_author"], "url": t["u_author"],
-                             "stale": stale, "html": mail, "html_web": webv, "lead": items[0]["title"],
+                             "stale": stale, "html": mail, "lead": items[0]["title"],
                              "count": f"{cnt} {plural(cnt, ('пост', 'поста', 'постов'))}"})
     else:
         items, stale = pick(author_en(), start, end, 3, fill)
         if items:
-            cards = "".join(card(x["url"], "", x["title"], [x["text"]], t["read_article"], img=x["cover"] or None, first=i == 0)
-                            for i, x in enumerate(items))
+            mail, mag["author"] = site_items(items, t["read_article"])
             cnt = len(items)
             sections.append({"key": "author", "title": t["s_author"], "label": t["l_author"], "url": t["u_author"],
-                             "stale": stale, "html": cards, "html_web": cards, "lead": items[0]["title"],
+                             "stale": stale, "html": mail, "lead": items[0]["title"],
                              "count": f"{cnt} post{'s' if cnt > 1 else ''}"})
 
-    ait = ad_pair(t["ait_media"], with_utm(t["ait_url"]), t["ait_kicker"], t["ait_title"], t["ait_text"],
-                  t["ait_cta"], stats=t["ait_stats"])
+    ait_args = (t["ait_url"], t["ait_kicker"], t["ait_title"], t["ait_text"], t["ait_cta"])
+    ait = ad_card(asset(f"{t['ait_media']}.gif"), with_utm(ait_args[0]), *ait_args[1:], stats=t["ait_stats"])
+    mag["ait"] = ad_web(t["ait_media"], *ait_args, stats=t["ait_stats"])
     if sections and sections[-1]["key"] == "author":
         attach(sections[-1], ait)
         ait = None
@@ -922,21 +886,20 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
             return first_site_link(p, "research/") or first_site_link(p) or p["url"]
 
         if items:
-            mail, webv = tg_cards(items, t["read"], research_link, lambda p: "", "lab")
+            mail, mag["research"] = tg_cards(items, t["read"], research_link, "lab")
             cnt = len(items)
             sections.append({"key": "research", "title": t["s_research"], "label": t["l_research"], "url": t["u_research"],
-                             "stale": fill and not new, "html": mail, "html_web": webv, "lead": items[0]["title"],
+                             "stale": fill and not new, "html": mail, "lead": items[0]["title"],
                              "count": f"{cnt} {plural(cnt, ('исследование', 'исследования', 'исследований'))}"})
     else:
         papers = research(lang)
         new = [x for x in papers if start <= x["date"] <= end]
         items = new[:5] if (len(new) >= 3 or not fill) else (new + [x for x in papers if x not in new])[:3]
         if items:
-            cards = "".join(card(x["url"], "", x["title"], [x["text"]], t["read"], img=x["cover"], first=i == 0)
-                            for i, x in enumerate(items))
+            mail, mag["research"] = site_items(items, t["read"])
             cnt = len(items)
             sections.append({"key": "research", "title": t["s_research"], "label": t["l_research"], "url": t["u_research"],
-                             "stale": fill and not new, "html": cards, "html_web": cards, "lead": items[0]["title"],
+                             "stale": fill and not new, "html": mail, "lead": items[0]["title"],
                              "count": f"{cnt} paper{'s' if cnt > 1 else ''}"})
 
     # 05 — Обучение: посты Академии (@dataist_academy), только RU
@@ -947,10 +910,10 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
             return first_site_link(p, "education/") or (p["links"][0] if p["links"] else p["url"])
 
         if items:
-            mail, webv = tg_cards(items, t["lesson"], lesson_link, lambda p: "", "academy")
+            mail, mag["edu"] = tg_cards(items, t["lesson"], lesson_link, "academy")
             cnt = len(items)
             sections.append({"key": "edu", "title": t["s_edu"], "label": t["l_edu"], "url": t["u_edu"], "stale": stale,
-                             "html": mail, "html_web": webv, "lead": items[0]["title"],
+                             "html": mail, "lead": items[0]["title"],
                              "count": f"{cnt} {plural(cnt, ('урок', 'урока', 'уроков'))}"})
 
     if not sections:
@@ -959,14 +922,24 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
         host = next((x for x in sections if x["key"] != "news"), sections[0])
         attach(host, ait, front=True)
     # Нейроний — сразу после «Обучения» (последнего раздела)
-    attach(sections[-1], ad_pair(t["nr_media"], with_utm(t["nr_url"]), t["nr_kicker"], t["nr_title"], t["nr_text"], t["nr_cta"],
-                                 nr_tile=True))
+    nr_args = (t["nr_url"], t["nr_kicker"], t["nr_title"], t["nr_text"], t["nr_cta"])
+    attach(sections[-1], ad_card(asset(f"{t['nr_media']}.gif"), with_utm(nr_args[0]), *nr_args[1:], nr_tile=True))
+    mag["nr"] = ad_web(t["nr_media"], *nr_args)
 
-    email, subject, preheader = render(lang, issue, sections, web_url, unsub_url, web=False)
-    webpage, _, _ = render(lang, issue, sections, web_url, unsub_url, web=True)
+    email, subject, preheader, hello = render(lang, issue, sections, web_url, unsub_url)
+    n = (issue - FIRST_ISSUE).days // 7 + 1
+    webpage = magazine.render({
+        "lang": lang, "n": n, "brand": t["brand"], "title": subject, "description": hello,
+        "hello": hello.replace("в одном письме", "в одном выпуске").replace("in one letter", "in one issue"),
+        "sign": t["sign"], "sign_role": t["sign_role"], "avatar": f"{SITE}/about/andre.jpeg",
+        "sections": [{k: s.get(k) for k in ("key", "title", "label", "url", "count")} for s in sections],
+        "embed": embed, "date_range": fmt_range(start, end, lang), "date_long": fmt_date(issue, lang),
+        "date_short": fmt_date(issue, lang, short=True), "socials": t["socials"], "made_name": t["made_name"],
+        "to_dark": t["to_dark"], "to_light": t["to_light"],
+        "og_image": local_img(og_img, True) if (og_img and base_url and not inline) else None,
+        "url": web_url if web_url.startswith("http") else None, **mag})
     (outdir / "email.html").write_text(email, "utf-8")
     (outdir / "index.html").write_text(webpage, "utf-8")
-    n = (issue - FIRST_ISSUE).days // 7 + 1
     meta = {"lang": lang, "issue": n, "date": issue.isoformat(), "subject": subject, "preheader": preheader,
             "sections": [{"title": s["title"], "count": s["count"], "stale": s["stale"]} for s in sections],
             "top_news": next(("marked" if s.get("marked") else "auto" for s in sections if s["key"] == "news"), None)}
@@ -987,7 +960,7 @@ if __name__ == "__main__":
     ap.add_argument("--fill", action="store_true")
     ap.add_argument("--inline", action="store_true")
     ap.add_argument("--preview", action="store_true", help="просмотр: «Отписаться» — заглушка вместо ссылки Kit")
-    ap.add_argument("--no-embed", action="store_true", help="в веб-версии — обложки видео вместо плеера")
+    ap.add_argument("--no-embed", action="store_true", help="в журнале — видео открываются на YouTube (для просмотра файла с диска)")
     ap.add_argument("--web-url", default="#", help="адрес веб-версии для ссылки «Открыть в браузере»")
     ap.add_argument("--base-url", help="абсолютный адрес папки выпуска — для картинок img/ в письме")
     a = ap.parse_args()
