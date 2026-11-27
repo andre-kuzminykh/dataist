@@ -236,7 +236,6 @@ h3 a:hover,.now-t:hover{background-size:100% 1.5px}
   border-bottom:1px solid var(--line);transition:background-color .5s var(--ease)}
 .top-in{height:var(--top);display:flex;align-items:center;gap:24px}
 .brand{display:flex;align-items:center;gap:12px;color:var(--ink);flex:none}
-.brand-w{font:600 20px/1 -apple-system,BlinkMacSystemFont,'Inter',sans-serif;letter-spacing:-.025em;margin-top:2px}
 .mk{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;font:700 14px/1 var(--mono);
   transition:transform .3s var(--ease),background-color .5s var(--ease),color .5s var(--ease)}
 .brand:hover .mk{transform:scale(1.05)}
@@ -480,7 +479,6 @@ html.js.ready .rule{transform:none}
   :root{--top:56px}
   .top-in{gap:14px}
   .mk{width:26px;height:26px;font-size:12px}
-  .brand-w{font-size:18px}
   .nav{margin:0;flex:1;justify-content:flex-start;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
   .nav a{font-size:10px}
   .iss{font-size:10px;letter-spacing:.14em}
@@ -641,7 +639,7 @@ def render(ctx):
 <body>
 <a class="skip" href="#main">{esc(mt["skip"])}</a>
 <header class="top"><div class="wrap top-in">
-<a class="brand" href="{esc(ctx.get("home") or "https://dataist.ai/")}" aria-label="{esc(ctx["brand"])} — dataist.ai"><span class="mk" aria-hidden="true">i</span><span class="brand-w">{esc(ctx["brand"])}</span></a>
+<a class="brand" href="{esc(ctx.get("home") or "https://dataist.ai/")}" aria-label="{esc(ctx["brand"])} — dataist.ai"><span class="mk" aria-hidden="true">i</span></a>
 <nav class="nav" aria-label="{esc(mt["contents"])}">{nav}</nav>
 <div class="tools"><span class="chip">{esc(mt["issue_short"].format(n=ctx["n"]))} · {esc(ctx["date_short"])}</span>
 <button id="theme" type="button" data-dark="{esc(ctx["to_dark"])}" data-light="{esc(ctx["to_light"])}" aria-label="{esc(ctx["to_dark"])}">
