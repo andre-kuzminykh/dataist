@@ -480,11 +480,11 @@ html[data-theme="dark"] #theme .t-l{display:block}
 
 /* лаборатория — рамки-«видоискатели» */
 .xh{--c:var(--ink);position:relative;padding:9px;overflow:hidden}
-.xh::before{content:"";position:absolute;inset:0;pointer-events:none;background:
-  linear-gradient(var(--c),var(--c)) 0 0/16px 1.5px no-repeat,linear-gradient(var(--c),var(--c)) 0 0/1.5px 16px no-repeat,
-  linear-gradient(var(--c),var(--c)) 100% 0/16px 1.5px no-repeat,linear-gradient(var(--c),var(--c)) 100% 0/1.5px 16px no-repeat,
-  linear-gradient(var(--c),var(--c)) 0 100%/16px 1.5px no-repeat,linear-gradient(var(--c),var(--c)) 0 100%/1.5px 16px no-repeat,
-  linear-gradient(var(--c),var(--c)) 100% 100%/16px 1.5px no-repeat,linear-gradient(var(--c),var(--c)) 100% 100%/1.5px 16px no-repeat}
+.xh::before{content:"";position:absolute;inset:0;pointer-events:none;color:var(--c);background:
+  linear-gradient(currentColor,currentColor) 0 0/16px 1.5px no-repeat,linear-gradient(currentColor,currentColor) 0 0/1.5px 16px no-repeat,
+  linear-gradient(currentColor,currentColor) 100% 0/16px 1.5px no-repeat,linear-gradient(currentColor,currentColor) 100% 0/1.5px 16px no-repeat,
+  linear-gradient(currentColor,currentColor) 0 100%/16px 1.5px no-repeat,linear-gradient(currentColor,currentColor) 0 100%/1.5px 16px no-repeat,
+  linear-gradient(currentColor,currentColor) 100% 100%/16px 1.5px no-repeat,linear-gradient(currentColor,currentColor) 100% 100%/1.5px 16px no-repeat}
 .lb-f{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,3.4vw,56px);align-items:center;
   padding-bottom:clamp(28px,3vw,44px);border-bottom:1px solid var(--line)}
 .lb-ft{margin-top:14px;font:800 clamp(28px,2.8vw,44px)/1.05 var(--sans);letter-spacing:-.04em;color:var(--ink);text-wrap:balance}
@@ -600,9 +600,12 @@ html.js .kick.rv.in::before,html.js .kick.rv.in>*{opacity:1;transform:none}
 
 /* топ новостей: миниатюра открывается шторкой, заголовок поднимается */
 html.js .nws .rv{opacity:1;transform:none}
-html.js .nws .rv img,html.js .nws .rv .nw-ph{clip-path:inset(0 100% 0 0);transition:clip-path .9s cubic-bezier(.7,0,.2,1) var(--d,0s),filter .4s}
+html.js .nws .rv:not(.in) img,html.js .nws .rv:not(.in) .nw-ph{opacity:0}
+html.js .nws .rv.in img,html.js .nws .rv.in .nw-ph{animation:flash 1s ease-out var(--d,0s) backwards}
+@keyframes flash{0%{opacity:0;transform:scale(1.1);filter:none}
+  7%{opacity:1;filter:brightness(5) saturate(0);box-shadow:0 0 26px 10px rgba(255,255,255,.95)}
+  30%{filter:brightness(1.7) saturate(.5);box-shadow:0 0 0 0 rgba(255,255,255,0)}100%{opacity:1;transform:none;filter:none}}
 html.js .nws .rv>a>span:last-child{opacity:0;transform:translateY(12px);transition:opacity .7s ease calc(var(--d,0s) + .2s),transform .9s var(--ease) calc(var(--d,0s) + .2s)}
-html.js .nws .rv.in img,html.js .nws .rv.in .nw-ph{clip-path:inset(0)}
 html.js .nws .rv.in>a>span:last-child{opacity:1;transform:none}
 
 /* видеожурнал: экран раскрывается от центра, кнопка «пружинит», ролики въезжают справа */
@@ -670,16 +673,29 @@ html.js .au-i.rv.in .media,html.js .au-i.rv.in .au-ph{clip-path:inset(0)}
 html.js .au-i.rv .au-it{opacity:0;transform:translateY(14px);transition:opacity .7s ease calc(var(--d,0s) + .25s),transform 1s var(--ease) calc(var(--d,0s) + .25s)}
 html.js .au-i.rv.in .au-it{opacity:1;transform:none}
 
-/* лаборатория: рамка-видоискатель наводит фокус, кадр проявляется под сканирующим лучом, подпись печатается */
-.xh::after{content:"";position:absolute;left:9px;right:9px;top:9px;height:2px;pointer-events:none;opacity:0;
-  background:linear-gradient(90deg,transparent,#8b5cf6 18%,#fff 50%,#8b5cf6 82%,transparent);box-shadow:0 0 16px 3px rgba(139,92,246,.55)}
+/* лаборатория: рамка-видоискатель наводит фокус, салатовый лазер выжигает кадр сверху вниз —
+   за лучом тянется светящийся шлейф, кадр проявляется зелёным, как в приборе ночного видения, и «остывает»; подпись печатается */
+.lb-f,.lb-c{--laser:#9dff1e}
+.xh::after{content:"";position:absolute;left:9px;right:9px;top:9px;height:2px;z-index:2;pointer-events:none;opacity:0;border-radius:2px;
+  background:linear-gradient(90deg,transparent,var(--laser) 8%,#f1ffd6 50%,var(--laser) 92%,transparent);
+  box-shadow:0 0 6px 1px rgba(157,255,30,1),0 0 22px 6px rgba(130,255,0,.6),0 0 60px 16px rgba(130,255,0,.25)}
+.xh .media::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;transform:translateY(-100%);mix-blend-mode:screen;
+  background:linear-gradient(to bottom,transparent calc(100% - 140px),rgba(130,255,0,.14) calc(100% - 70px),rgba(170,255,60,.55) calc(100% - 8px),#f1ffd6)}
+.lb-f .tag::before,.lb-c .tag::before{background:var(--laser);box-shadow:0 0 8px rgba(130,255,0,.9)}
+@keyframes burn{from{transform:translateY(-100%)}to{transform:none}}
+@keyframes burnoff{from{opacity:1}to{opacity:0}}
+@keyframes nv{0%,48%{filter:grayscale(1) sepia(1) hue-rotate(48deg) saturate(5) brightness(1.08) contrast(1.15)}100%{filter:none}}
+@keyframes xhflash{0%,55%{color:var(--laser);filter:drop-shadow(0 0 4px rgba(157,255,30,.95))}100%{color:var(--c);filter:none}}
 html.js .lb-f.rv,html.js .lb-c.rv{opacity:1;transform:none}
 html.js .lb-f.rv .xh::before,html.js .lb-c.rv .xh::before{opacity:0;transform:scale(1.16);
   transition:opacity .45s ease var(--d,0s),transform 1s cubic-bezier(.2,.9,.2,1) var(--d,0s)}
-html.js .lb-f.rv.in .xh::before,html.js .lb-c.rv.in .xh::before{opacity:1;transform:none}
+html.js .lb-f.rv.in .xh::before,html.js .lb-c.rv.in .xh::before{opacity:1;transform:none;animation:xhflash 1.9s ease calc(var(--d,0s) + .35s) backwards}
 html.js .lb-f.rv .media,html.js .lb-c.rv .media{clip-path:inset(0 0 100% 0);transition:clip-path 1.3s cubic-bezier(.6,0,.35,1) calc(var(--d,0s) + .35s)}
 html.js .lb-f.rv.in .media,html.js .lb-c.rv.in .media{clip-path:inset(0)}
 html.js .lb-f.rv.in .xh::after,html.js .lb-c.rv.in .xh::after{animation:scan 1.3s cubic-bezier(.6,0,.35,1) calc(var(--d,0s) + .35s) both}
+html.js .lb-f.rv.in .xh .media::after,html.js .lb-c.rv.in .xh .media::after{
+  animation:burn 1.3s cubic-bezier(.6,0,.35,1) calc(var(--d,0s) + .35s) both,burnoff .6s ease calc(var(--d,0s) + 1.55s) both}
+html.js .lb-f.rv.in .media img,html.js .lb-c.rv.in .media img{animation:nv 2.7s ease-out calc(var(--d,0s) + .35s) backwards}
 html.js .lb-f.rv .tag,html.js .lb-c.rv .tag{clip-path:inset(-2px 100% -2px -2px);transition:clip-path .9s steps(16,end) calc(var(--d,0s) + .9s)}
 html.js .lb-f.rv.in .tag,html.js .lb-c.rv.in .tag{clip-path:inset(-2px)}
 html.js .lb-f.rv.in .tag::before,html.js .lb-c.rv.in .tag::before{animation:blink .9s linear calc(var(--d,0s) + 1.8s) 3}
@@ -690,26 +706,32 @@ html.js .lb-f.rv.in .lb-ft,html.js .lb-c.rv.in .lb-t,html.js .lb-f.rv.in .lb-p,h
 html.js .lb-f.rv:not(.in) .cta,html.js .lb-c.rv:not(.in) .cta{opacity:0}
 html.js .lb-f.rv.in .cta,html.js .lb-c.rv.in .cta{animation:rise .7s var(--ease) calc(var(--d,0s) + 1s) backwards}
 
-/* академия: обложка урока открывается по диагонали, кнопка «заряжается», уроки идут по программе */
+/* академия: обложка и уроки перелистываются, как страницы книги, — от корешка слева, с тенью по сгибу
+   и лёгким «шлепком» в конце; метка «Урок» падает сверху, как закладка; кнопка «заряжается», уроки идут по программе */
+.ac-f .media::after,.ac-i .media::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
+  background:linear-gradient(90deg,rgba(0,0,0,.62),rgba(0,0,0,.2) 42%,rgba(255,255,255,.14) 74%,rgba(0,0,0,.08))}
+@keyframes leaf{0%{transform:perspective(2000px) rotateY(-90deg);box-shadow:40px 10px 60px rgba(0,0,0,.35)}
+  60%{transform:perspective(2000px) rotateY(5deg)}80%{transform:perspective(2000px) rotateY(-1.5deg)}
+  100%{transform:perspective(2000px) rotateY(0);box-shadow:0 0 0 rgba(0,0,0,0)}}
+@keyframes leafshade{0%{opacity:1}55%{opacity:.3}100%{opacity:0}}
 html.js .ac-f.rv,html.js .ac-i.rv{opacity:1;transform:none}
-html.js .ac-f.rv .media{clip-path:polygon(0 0,0 0,-30% 100%,0 100%);transition:clip-path 1.5s cubic-bezier(.65,0,.3,1) var(--d,0s)}
-html.js .ac-f.rv.in .media{clip-path:polygon(0 0,130% 0,100% 100%,0 100%)}
-html.js .ac-f.rv .ac-fb>:not(.btn){opacity:0;transform:translateX(-26px);transition:opacity .7s ease,transform 1s var(--ease)}
-html.js .ac-f.rv .ac-fb>:nth-child(1){transition-delay:calc(var(--d,0s) + .5s)}
+html.js .ac-f.rv .media,html.js .ac-i.rv .media{clip-path:none;transition:none;transform-origin:0 50%;transform:perspective(2000px) rotateY(-90deg)}
+html.js .ac-f.rv.in .media,html.js .ac-i.rv.in .media{animation:leaf 1.6s cubic-bezier(.5,.05,.3,1) var(--d,0s) both}
+html.js .ac-f.rv.in .media::after,html.js .ac-i.rv.in .media::after{animation:leafshade 1.6s ease-in var(--d,0s) both}
+html.js .ac-f.rv .ac-fb>.tag,html.js .ac-i.rv>div>.tag{opacity:0;transform:translateY(-170%)}
+html.js .ac-f.rv.in .ac-fb>.tag,html.js .ac-i.rv.in>div>.tag{opacity:1;transform:none;
+  transition:opacity .2s ease calc(var(--d,0s) + .8s),transform .8s cubic-bezier(.3,1.8,.45,1) calc(var(--d,0s) + .8s)}
+html.js .ac-f.rv .ac-fb>:not(.btn):not(.tag){opacity:0;transform:translateX(-26px);transition:opacity .7s ease,transform 1s var(--ease)}
 html.js .ac-f.rv .ac-fb>:nth-child(2){transition-delay:calc(var(--d,0s) + .6s)}
 html.js .ac-f.rv .ac-fb>:nth-child(3){transition-delay:calc(var(--d,0s) + .7s)}
 html.js .ac-f.rv .ac-fb>:nth-child(n+4){transition-delay:calc(var(--d,0s) + .8s)}
-html.js .ac-f.rv.in .ac-fb>:not(.btn){opacity:1;transform:none}
+html.js .ac-f.rv.in .ac-fb>:not(.btn):not(.tag){opacity:1;transform:none}
 html.js .ac-f.rv .btn{transition-delay:0s,calc(var(--d,0s) + .95s),calc(var(--d,0s) + 1.25s)}
 html.js .ac-f.rv:not(.in) .btn{background-size:0 100%;color:var(--ink)}
-html.js .ac-i.rv .media{clip-path:inset(0 100% 0 0);transition:clip-path 1s cubic-bezier(.7,0,.2,1) var(--d,0s)}
-html.js .ac-i.rv.in .media{clip-path:inset(0)}
-html.js .ac-i.rv>div>:not(.cta){opacity:0;transform:translateX(-18px);transition:opacity .6s ease calc(var(--d,0s) + .3s),transform .9s var(--ease) calc(var(--d,0s) + .3s)}
-html.js .ac-i.rv.in>div>:not(.cta){opacity:1;transform:none}
+html.js .ac-i.rv>div>:not(.cta):not(.tag){opacity:0;transform:translateX(-18px);transition:opacity .6s ease calc(var(--d,0s) + .45s),transform .9s var(--ease) calc(var(--d,0s) + .45s)}
+html.js .ac-i.rv.in>div>:not(.cta):not(.tag){opacity:1;transform:none}
 html.js .ac-i.rv:not(.in) .cta{opacity:0}
-html.js .ac-i.rv.in .cta{animation:rise .7s var(--ease) calc(var(--d,0s) + .6s) backwards}
-html.js .ac-i.rv .tag-l::before{transform:rotate(-90deg);transition:transform .7s cubic-bezier(.3,1.6,.5,1) calc(var(--d,0s) + .55s)}
-html.js .ac-i.rv.in .tag-l::before{transform:none}
+html.js .ac-i.rv.in .cta{animation:rise .7s var(--ease) calc(var(--d,0s) + .7s) backwards}
 .ac-i{position:relative}
 .ac-i::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--ink);transform:scaleX(0);transform-origin:0 50%;opacity:0;pointer-events:none}
 html.js .ac-i.rv.in::after{animation:prog 1.6s cubic-bezier(.6,0,.3,1) calc(var(--d,0s) + .2s)}
@@ -788,10 +810,12 @@ html.js .ft-mark.rv.in span{opacity:1;transform:none}
   .au-i{grid-template-columns:112px minmax(0,1fr);gap:14px}
   .lb-g,.ac-l{grid-template-columns:1fr}
   .lb-c:nth-child(n),.ac-i:nth-child(n){padding-left:0;padding-right:0;border-left:0}
-  .ac-i{grid-template-columns:120px minmax(0,1fr);gap:14px}
+  .ac-i{grid-template-columns:1fr;gap:16px}
   .sh-by span{display:none}
-  .ft-row{grid-template-columns:1fr;justify-items:center;text-align:center}
-  .ft-row>*,.ft-row .soc,.ft-row .up{justify-self:center}
+  .ft-row{grid-template-columns:46px minmax(0,1fr) 46px;column-gap:12px;text-align:center}
+  .ft-row .soc{grid-column:1/-1;justify-self:center}
+  .ft-row .made{grid-column:2;justify-self:center}
+  .ft-row .up{grid-column:3;justify-self:end}
   .soc{justify-content:center}
 }
 @media (max-width:560px){
