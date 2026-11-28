@@ -13,7 +13,7 @@ import re
 MT = {
     "ru": {
         "tagline": "Еженедельный журнал об ИИ", "contents": "В этом выпуске",
-        "nav": {"news": "Новости", "video": "Видео", "author": "Канал", "research": "Лаборатория", "edu": "Академия"},
+        "nav": {"news": "Новости", "video": "Видео", "author": "Колонка", "research": "Лаборатория", "edu": "Академия"},
         "play": "Смотреть видео", "top": "Наверх", "prev": "Назад", "next": "Дальше",
         "skip": "Перейти к содержанию", "made": "Создано в", "issue": "Выпуск № {n}", "issue_short": "№ {n}", "next_up": "Далее", "language": "Язык",
         "lesson": "Урок", "study": "Исследование",
@@ -21,7 +21,7 @@ MT = {
     },
     "en": {
         "tagline": "The weekly AI magazine", "contents": "In this issue",
-        "nav": {"news": "News", "video": "Video", "author": "Channel", "research": "Lab", "edu": "Academy"},
+        "nav": {"news": "News", "video": "Video", "author": "Column", "research": "Lab", "edu": "Academy"},
         "play": "Watch the video", "top": "Back to top", "prev": "Back", "next": "Next",
         "skip": "Skip to content", "made": "Made in", "issue": "Issue No. {n}", "issue_short": "No. {n}", "next_up": "Up next", "language": "Language",
         "lesson": "Lesson", "study": "Study",
@@ -184,7 +184,7 @@ def dropcap(ps):
 
 
 def author_sec(title, items, ctx):
-    """Авторский канал — колонка автора: главный пост с буквицей и лента остальных справа."""
+    """Авторская колонка: главный пост с буквицей и лента остальных справа."""
     a, rest = items[0], items[1:]
     side = "".join(f'''<article class="au-i rv">{media(x["url"], x.get("img"), x["title"], "media au-im") or '<span class="au-ph" aria-hidden="true">“</span>'}
 <h3 class="au-it"><a {ext(x["url"])}>{esc(x["title"])}</a></h3></article>''' for x in rest)
@@ -435,7 +435,8 @@ html[data-theme="dark"] #theme .t-l{display:block}
 .rail{display:flex;flex-direction:column;gap:22px}
 .ad{background:#060606;color:#fff}
 .ad-m{display:block}
-.ad-m video,.band-m video{width:100%;height:auto;aspect-ratio:16/9;background:#000}
+.ad-m video,.band-m video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#000}
+.ad-m video{aspect-ratio:1/1;background:#060606}   /* ИИ-трансформация: квадратный ролик с крупным текстом */
 .ad-b{padding:16px 18px 20px}
 .ad-k{display:flex;align-items:center;gap:10px;font:700 10px/1.3 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:#a1a1a6}
 .ad-t{margin-top:8px;font:800 clamp(18px,1.4vw,22px)/1.15 var(--sans);letter-spacing:-.03em;color:#fff}
@@ -758,6 +759,9 @@ html.js .ft-mark.rv.in span{opacity:1;transform:none}
   .lb-c:nth-child(2n+1){padding-left:0;border-left:0}
   .lb-c:nth-child(2n){padding-right:0}
   .ac-i{grid-template-columns:140px minmax(0,1fr)}
+  .ad{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:center}
+  .ad-b{padding:18px 20px}
+  .ad .pill{white-space:nowrap;padding:13px 12px}
 }
 @media (max-width:860px){
   :root{--top:56px}
@@ -783,6 +787,10 @@ html.js .ft-mark.rv.in span{opacity:1;transform:none}
   .ft-row{grid-template-columns:1fr;justify-items:center;text-align:center}
   .ft-row>*,.ft-row .soc,.ft-row .up{justify-self:center}
   .soc{justify-content:center}
+}
+@media (max-width:560px){
+  .ad{display:block}
+  .ad-b{padding:16px 18px 20px}
 }
 @media (max-width:480px){
   .nav{display:none}

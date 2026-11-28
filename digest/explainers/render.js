@@ -1,5 +1,6 @@
 // Покадровый рендер ролика: node render.js work/cfg-<ролик>.json work/out-<ролик> [секунды для пробных кадров...]
 // compose.html кладёт поверх кадров фона текст сцены и рисует кадр; кадр — скриншот 1120×630.
+// В cfg можно указать другую сцену и размер кадра: "compose": "compose-square.html", "size": [720, 720].
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
@@ -9,8 +10,9 @@ const path = require('path');
   if (!probe.length) fs.rmSync(outDir, { recursive: true, force: true }); // без старых кадров от прошлого, более длинного ролика
   fs.mkdirSync(outDir, { recursive: true });
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1120, height: 630 }, deviceScaleFactor: 1 });
-  await page.goto('file://' + path.resolve(__dirname, 'compose.html'), { waitUntil: 'networkidle' });
+  const [width, height] = cfg.size || [1120, 630];
+  const page = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 1 });
+  await page.goto('file://' + path.resolve(__dirname, cfg.compose || 'compose.html'), { waitUntil: 'networkidle' });
   await page.evaluate(async () => {
     await document.fonts.load("800 40px 'JetBrains Mono'"); await document.fonts.load("600 16px 'JetBrains Mono'");
     await document.fonts.load("500 46px 'Geist'"); await document.fonts.load("400 21px 'Geist'"); await document.fonts.load("600 18px 'Geist'");

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """Еженедельный дайджест Датаиста: собирает материалы недели и верстает письмо (RU/EN).
 
-Порядок блоков: Топ новостей → Видеожурнал → Авторский канал → реклама ИИ-трансформации →
+Порядок блоков: Топ новостей → Видеожурнал → Авторская колонка → реклама ИИ-трансформации →
 Исследования → Обучение → реклама Нейрония. Всё идёт одной колонкой, тексты — целыми
 абзацами, без обрывов.
 
 Источники:
   * Видеожурнал — RSS канала YouTube (RU: «🤖 Датаист»; для EN канал пока не задан);
-  * Авторский канал — публичная лента t.me/s/andre_dataist (RU), обложка поста —
+  * Авторская колонка — публичная лента t.me/s/andre_dataist (RU), обложка поста —
     картинка превью первой ссылки; для EN — англоязычные авторские статьи сайта и ссылка на X;
   * Исследования — papers.json / papers_en.json и описания страниц сайта;
   * Обучение — посты Академии (@dataist_academy, только RU);
@@ -56,7 +56,7 @@ T = {
                   "news": "топ новостей недели"}, "and": "и",
         "sign": "Андрей Кузьминых", "sign_role": "Основатель Andre AI Technologies",
         "missed": "Если пропустили", "browser": "Открыть в браузере",
-        "s_video": "Видеожурнал", "s_author": "Авторский канал", "s_research": "Лаборатория", "s_edu": "Академия",
+        "s_video": "Видеожурнал", "s_author": "Авторская колонка", "s_research": "Лаборатория", "s_edu": "Академия",
         "s_news": "Топ новостей", "l_news": "Live ↗", "u_news": "https://t.me/neuronium_ai",
         "all_news": "Все новости →", "u_all_news": "https://dataist.ai/news/",
         "l_video": "Подписаться ↗", "l_author": "Подписаться ↗", "l_research": "Подписаться ↗", "l_edu": "Подписаться ↗",
@@ -70,10 +70,9 @@ T = {
                     "и 3 месяца обучения команды с ментором.",
         "ait_stats": [("30+", "компаний"), ("$100+ млн", "эффекта"), ("10+ лет", "в ИИ")],
         "ait_cta": "Бесплатная ИИ-диагностика →", "ait_url": "https://andre.technology/?lang=ru",
-        "ait_media": "ait-explainer-ru", "nr_media": "neuronium-explainer-ru",
-        "nr_kicker": "Нейроний · ИИ-операционная система", "nr_title": "Ведите ИИ-бизнес в ИИ-операционной системе",
-        "nr_text": "Единый контекст бизнеса, ИИ-суперагент и 100 готовых ИИ-сотрудников в десяти отделах — "
-                   "от целей и задач до продаж, поддержки и кода.",
+        "ait_media": "ait-explainer-ru", "ait_web": "ait-square-ru", "nr_media": "neuronium-explainer-ru",
+        "nr_kicker": "Нейроний · ИИ-операционная система", "nr_title": "Ведите ИИ-бизнес в\u00a0операционной системе на\u00a0базе ИИ",
+        "nr_text": "ИИ-суперагент управляет 100 готовыми ИИ-сотрудниками в десяти отделах.",
         "nr_cta": "Попробовать бесплатно →", "nr_url": "https://neuronium.ai/",
         "socials": [("YouTube", "https://www.youtube.com/@andre_dataist"), ("Telegram", "https://t.me/+AXsoJ7OiMG4zMzFi"),
                     ("Instagram", "https://www.instagram.com/andre_dataist"), ("TikTok", "https://www.tiktok.com/@andre_dataist")],
@@ -93,7 +92,7 @@ T = {
                   "news": "the week’s top AI news"}, "and": "and",
         "sign": "Andre Kuzminykh", "sign_role": "Founder of Andre AI Technologies",
         "missed": "In case you missed it", "browser": "View in browser",
-        "s_video": "Video Journal", "s_author": "Author’s Channel", "s_research": "Lab", "s_edu": "Academy",
+        "s_video": "Video Journal", "s_author": "Author’s Column", "s_research": "Lab", "s_edu": "Academy",
         "s_news": "Top news", "l_news": "", "u_news": "",   # в X у Нейрония аккаунта нет
         "all_news": "", "u_all_news": "",                    # английской ленты новостей на сайте пока нет
         "l_video": "Subscribe ↗", "l_author": "Follow ↗", "l_research": "All research ↗", "l_edu": "Academy ↗",
@@ -107,10 +106,9 @@ T = {
                     "and 3 months of team training with a mentor.",
         "ait_stats": [("30+", "companies"), ("$100M+", "impact"), ("10+ yrs", "in AI")],
         "ait_cta": "Free AI assessment →", "ait_url": "https://andre.technology/?lang=en",
-        "ait_media": "ait-explainer-en", "nr_media": "neuronium-explainer-en",
+        "ait_media": "ait-explainer-en", "ait_web": "ait-square-en", "nr_media": "neuronium-explainer-en",
         "nr_kicker": "Neuronium · AI Operating System", "nr_title": "Run AI Business with AI Operating System",
-        "nr_text": "One shared business context, one AI Superagent and 100 ready AI employees — "
-                   "from goals and tasks to sales, support and code.",
+        "nr_text": "AI Superagent manages 100 ready AI employees across ten departments.",
         "nr_cta": "Start free trial →", "nr_url": "https://neuronium.ai/",
         "socials": [("YouTube", "https://www.youtube.com/@andre.dataist"), ("X", "https://x.com/andre_dataist"),
                     ("LinkedIn", "https://www.linkedin.com/in/andre-kuzminykh/"),
@@ -907,7 +905,7 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
                          "count": f"{cnt} видео" if lang == "ru" else f"{cnt} video{'s' if cnt > 1 else ''}"})
         mag["video"] = web
 
-    # 03 — Авторский канал
+    # 03 — Авторская колонка
     if lang == "ru":
         items, stale = pick(tg_posts(TELEGRAM["ru"]), start, end, fill=fill)
         if items:
@@ -927,7 +925,7 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
 
     ait_args = (t["ait_url"], t["ait_kicker"], t["ait_title"], t["ait_text"], t["ait_cta"])
     ait = ad_card(asset(f"{t['ait_media']}.gif"), with_utm(ait_args[0]), *ait_args[1:], stats=t["ait_stats"])
-    mag["ait"] = ad_web(t["ait_media"], *ait_args, stats=t["ait_stats"])
+    mag["ait"] = ad_web(t["ait_web"], *ait_args, stats=t["ait_stats"])   # в узкой колонке газеты — квадратный ролик
     if sections and sections[-1]["key"] == "author":
         attach(sections[-1], ait)
         ait = None
@@ -970,7 +968,7 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
 
     if not sections:
         raise SystemExit("нет материалов для выпуска")
-    if ait:                                   # «Авторского канала» нет — реклама после первого раздела за топом новостей
+    if ait:                                   # «Авторской колонки» нет — реклама после первого раздела за топом новостей
         host = next((x for x in sections if x["key"] != "news"), sections[0])
         attach(host, ait, front=True)
     # Нейроний — сразу после «Обучения» (последнего раздела)
