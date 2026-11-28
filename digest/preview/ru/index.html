@@ -580,7 +580,12 @@ html.js .ft-mark.rv.in span{opacity:1;transform:none}
   .top-in{gap:14px}
   .lang{font-size:11px;gap:6px}
   .mk{width:26px;height:26px;font-size:12px}
-  .nav{margin:0;flex:1;justify-content:flex-start;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
+  /* разделы — ровно по центру шапки; если не влезают, листаются вбок, а правый край гаснет */
+  .top-in{display:grid;grid-template-columns:minmax(max-content,1fr) minmax(0,auto) minmax(max-content,1fr)}
+  .brand{grid-column:1;justify-self:start}
+  .nav{grid-column:2;margin:0;justify-self:center;max-width:100%}
+  .nav.ovf{justify-self:stretch;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
+  .tools{grid-column:3;justify-self:end}
   .nav a{font-size:10px}
   .iss{font-size:10px;letter-spacing:.14em}
   .iss span:nth-child(2){display:none}
@@ -780,6 +785,9 @@ addEventListener('resize',function(){close()});
 })();
 (function(){
 var d=document.documentElement,reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+// разделы в шапке не влезают — гасим правый край, чтобы было видно, что их можно листать
+var nv=document.querySelector('.nav');if(nv){var ovf=function(){nv.classList.remove('ovf');nv.classList.toggle('ovf',nv.scrollWidth>nv.clientWidth+1)};
+  ovf();addEventListener('resize',ovf);if(document.fonts&&document.fonts.ready)document.fonts.ready.then(ovf)}
 var tb=document.getElementById('theme');
 function lab(){var l=tb.getAttribute(d.getAttribute('data-theme')==='dark'?'data-light':'data-dark');tb.setAttribute('aria-label',l);tb.title=l;}
 if(tb){lab();tb.addEventListener('click',function(){var dark=d.getAttribute('data-theme')!=='dark';
