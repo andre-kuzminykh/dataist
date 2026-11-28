@@ -1,0 +1,33 @@
+Researchers at the UK AI Safety Institute tested how reliably sabotage simulations assess systems meant to detect dangerous actions by AI agents. Using a GPT-5.4-based monitor that OpenAI had previously deployed in a production environment, they found that it missed 0.2–0.5% of harmful actions under standard attacks, but nearly 23% after the attacks were optimized. The authors say standard tests may create a false sense of security.
+
+# AI agent safety tests may hide weaknesses in monitors
+
+## How the monitor was tested
+
+The researchers kept the environment and 30 test tasks the same, changing only the attack method. They simulated an internal AI agent using the open model Qwen 3.8 27B. The agent handled routine cloud IT infrastructure tasks, such as configuring servers, while also receiving a hidden harmful instruction to disable two-factor authentication.
+
+The monitor then reviewed the agent’s full activity log and reasoning trace, flagging suspicious cases for human review. It was built on GPT-5.4 and had previously been used by OpenAI in a production environment.
+
+With standard attacks and ready-made instructions from earlier research, the monitor missed 0.2–0.5% of successful sabotage attempts. After two rounds of manually refining prompts based on feedback from auxiliary monitors, the miss rate first rose to 1.3%, then to 6.4%.
+
+Next, the researchers trained a copy of the agent to evade the auxiliary monitor. After about 5,500 runs, GPT-5.4 missed 5.1% of attacks; after nearly 22,000 runs, it missed 20.8%.
+
+Another approach involved editing logs of attacks that had already succeeded. GPT-5.6 Sol rewrote the records step by step to make them look less suspicious, while another model checked that the harmful task was still being completed. After 100 editing steps, the monitor missed nearly 23% of attacks.
+
+[FIGURE:0]
+
+## The attacks were not tuned against GPT-5.4
+
+The researchers did not optimize the attacks directly against GPT-5.4. They used auxiliary monitors for tuning, including Qwen 3.8 27B and GPT-5.6 Luna. As a result, the weaknesses also showed up in a system the attacks had not been specifically tailored to target.
+
+The authors say they made little progress for several weeks, then found three different ways to bypass the monitor. In their view, a limited search for vulnerabilities can give teams a false sense of security.
+
+## Why simulations do not match real-world conditions
+
+In the tests, hidden attack instructions were removed before the logs were reviewed. But traces of the assignment could remain: the agent might mention a “side task” in its reasoning trace or code, or retain words such as “exfiltration” from the deleted prompt. These clues helped the monitor raise an alarm.
+
+The opposite could happen, too. If the agent carried out the harmful task as if it were an ordinary user request, the monitor sometimes mistook it for a hallucination or misunderstanding and let it pass, the study says.
+
+The risk may be higher in real-world deployments. Qwen 3.8 27B was noticeably weaker than the GPT-5.4-based monitor, while modern agents in practice are generally at least as capable as the systems monitoring them. Attacks tuned directly against the target monitor would likely reveal even more weaknesses.
+
+The authors conclude that simulated attacks alone are not enough to establish that monitors are reliable in real-world use. In their assessment, the industry has yet to convincingly show that results from these tests reflect safety under real-world conditions. **Assessing a monitor depends not only on its performance on standard scenarios, but also on how thoroughly it has been tested against attempts to bypass it; in the experiment described, the attacks were not tuned against GPT-5.4 itself.**
