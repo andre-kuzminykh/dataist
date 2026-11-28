@@ -1,4 +1,5 @@
-// Запись анимаций сайтов без их текста (текст потом кладёт compose.html).
+// Запись анимаций сайтов без их текста (текст потом кладёт compose.html). Прячется весь текст сайта,
+// даже мелкие подписи на схемах (в ролике их всё равно не прочитать) — остаются фигуры и иконки, см. hide-text.js.
 // node record.js ait-ru | ait-en | nr | nr-gradient | nr-still   →  work/rec-<что>.webm + .json (время каждого слайда)
 //   ait-*       — слайды andre.technology;
 //   nr          — слайды neuronium.ai (живой свет фона — для MP4 на сайте);
@@ -7,6 +8,7 @@
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
+const { hideText } = require('./hide-text');
 
 const WORK = path.join(__dirname, 'work');
 const VIEW = { width: 1280, height: 720 };
@@ -14,7 +16,7 @@ const HOLD = 7200; // сколько показывать каждый слай�
 const AIT_SLIDES = ['change', 'maturity', 'strategy', 'neuronium', 'training', 'cases'];
 const NR_SLIDES = ['slide-hero', 'slide-context', 'slide-management', 'slide-cases'];
 const OFF = '{visibility:hidden!important;opacity:0!important}';
-const NR_TEXT = ['#slide-hero .hero__line', '#slide-hero .hero__bar', '.ctx__head', '.dept__text', '.cs__title', '.cs-all'];
+const NR_TEXT = ['#slide-hero .hero__line', '#slide-hero .hero__bar', '.ctx__head', '.dept__text', '.cs__title', '.cs-all', '.kq-km'];
 const freezeCss = src => `.light-field__canvas{visibility:hidden!important} .light-field{background:#0c090d url(${src}) center/cover no-repeat!important}`;
 
 async function lightSnapshots(browser) {
@@ -51,6 +53,7 @@ async function lightSnapshots(browser) {
       if (document.documentElement) add(); else document.addEventListener('DOMContentLoaded', add);
     }, freezeCss(snaps['slide-hero']));
   }
+  await ctx.addInitScript(hideText, what.startsWith('ait-') ? '' : '.hero__word');  // NEURONIUM на первом слайде — крупный, оставляем
   const page = await ctx.newPage();
   const t0 = Date.now();
   const log = [];

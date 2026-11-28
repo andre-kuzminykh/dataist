@@ -1,7 +1,8 @@
 """Кадры фона для каждой сцены: кусок записи слайда (record.js), ускоренный до нужной длины, 24 к/с.
 
 work/frames/<вариант>/<сцена>/f0001.jpg …  и work/frames.json (сколько кадров в каждой сцене)
-  at-ru, at-en — andre.technology; nr — neuronium.ai с живым светом фона; nrs — с неподвижным (для GIF).
+  at-ru, at-en — andre.technology; ath-ru, ath-en — они же в исходном размере 1280×720 (для вертикального ролика,
+  где схема идёт крупным планом); nr — neuronium.ai с живым светом фона; nrs — с неподвижным (для GIF).
 """
 import json
 import os
@@ -51,6 +52,7 @@ for lang in ("ru", "en"):
     log = starts(f"ait-{lang}")
     for sid, a, b, d in PLAN["at"]:
         counts[f"at-{lang}/{sid}"] = extract(WORK / f"rec-ait-{lang}.webm", log[sid], a, b, d, WORK / f"frames/at-{lang}/{sid}", AIT_VF)
+        counts[f"ath-{lang}/{sid}"] = extract(WORK / f"rec-ait-{lang}.webm", log[sid], a, b, d, WORK / f"frames/ath-{lang}/{sid}", "null")
 live, calm, grad = starts("nr"), starts("nr-still"), starts("nr-gradient")["slide-hero"]
 for sid, a, b, d in PLAN["nr"]:
     if sid == "gradient":

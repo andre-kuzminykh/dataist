@@ -1,6 +1,6 @@
 // Покадровый рендер ролика: node render.js work/cfg-<ролик>.json work/out-<ролик> [секунды для пробных кадров...]
 // compose.html кладёт поверх кадров фона текст сцены и рисует кадр; кадр — скриншот 1120×630.
-// В cfg можно указать другую сцену и размер кадра: "compose": "compose-square.html", "size": [720, 720].
+// В cfg можно указать другую сцену и размер кадра: "compose": "compose-vertical.html", "size": [720, 900].
 const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');

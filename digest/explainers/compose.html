@@ -13,7 +13,6 @@
   #prog{position:absolute;left:56px;right:56px;bottom:30px;display:flex;gap:8px}
   #prog i{flex:1;height:3px;border-radius:2px;overflow:hidden;position:relative}
   #prog i b{position:absolute;left:0;top:0;bottom:0;width:0}
-  #act{position:absolute;right:56px;bottom:16px;display:none;white-space:nowrap;border-radius:999px;will-change:opacity,transform}
 
   /* ── AIT: стиль andre.technology ── */
   .ait #stage{background:#060606}
@@ -26,8 +25,6 @@
   .ait .sub:before{content:"→ ";color:#a071ff}
   .ait .cta{margin-top:26px;display:inline-block;background:#fff;color:#000;font:800 19px/1 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;padding:18px 28px;border-radius:999px;box-shadow:0 0 30px rgba(160,113,255,.35)}
   .ait .dom{margin-top:16px;font:600 17px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:#8f8f99}
-  .ait #act{background:#fff;color:#000;font:800 15px/1 'JetBrains Mono',monospace;letter-spacing:.06em;text-transform:uppercase;
-    padding:14px 22px;box-shadow:0 0 26px rgba(160,113,255,.45)}
   .ait #prog i{background:rgba(255,255,255,.12)}
   .ait #prog i b{background:linear-gradient(90deg,#a071ff,#ff8a33)}
 
@@ -40,8 +37,6 @@
   .nr .cta{margin-top:26px;display:inline-block;background:#fff;color:#0c090d;font:600 21px/1 'Geist',sans-serif;letter-spacing:-.01em;padding:18px 30px;border-radius:999px}
   .nr .dom{margin-top:16px;font:500 17px/1 'JetBrains Mono',monospace;letter-spacing:.16em;color:rgba(248,247,250,.74)}
   .nr #logo{font:600 26px/1 'Geist',sans-serif;letter-spacing:-.04em;color:#f8f7fa;left:60px;top:34px}
-  .nr #act{right:60px;background:#fff;color:#0c090d;font:600 18px/1 'Geist',sans-serif;letter-spacing:-.01em;padding:13px 24px;
-    box-shadow:0 8px 30px rgba(12,9,13,.4)}
   .nr #prog{left:60px;right:60px}
   .nr #prog i{background:rgba(255,255,255,.18)}
   .nr #prog i b{background:#fff}
@@ -51,7 +46,6 @@
   <div id="logo"></div>
   <div id="cap"></div>
   <div id="prog"></div>
-  <div id="act"></div>
 </div>
 <script>
 let CFG = null, built = -1, starts = [], total = 0;
@@ -75,13 +69,7 @@ window.setup = cfg => {
   starts = []; total = 0;
   cfg.scenes.forEach(s => { starts.push(total); total += s.dur; });
   document.getElementById('logo').innerHTML = cfg.theme === 'ait' ? `<img src="${cfg.logo}" style="height:28px;display:block">` : 'Nr';
-  const prog = document.getElementById('prog'), act = document.getElementById('act');
-  prog.innerHTML = cfg.scenes.map(() => '<i><b></b></i>').join('');
-  if (cfg.cta) {           // кнопка видна с первого кадра (и на обложке), полоса прогресса уступает ей место
-    act.textContent = cfg.cta; act.style.display = 'block';
-    const r = act.getBoundingClientRect(), right = 1120 - r.left + 24;
-    prog.style.right = `${right}px`; prog.style.bottom = `${630 - (r.top + r.height / 2) - 1.5}px`;
-  }
+  document.getElementById('prog').innerHTML = cfg.scenes.map(() => '<i><b></b></i>').join('');
   return total;
 };
 
@@ -130,12 +118,6 @@ window.render = async t => {
   const cta = cap.querySelector('.cta');
   if (cta) { const p = ease((lt - after - 0.12) / 0.45); cta.style.opacity = p * out; cta.style.transform = `scale(${0.9 + 0.1 * p})`; cta.style.display = 'inline-block'; }
   fade(cap.querySelector('.dom'), after + 0.25, 0.42, 8);
-  // постоянная кнопка: гаснет, когда в последней сцене появляется большая
-  const act = document.getElementById('act');
-  if (CFG.cta) {
-    const fin = CFG.scenes.findIndex(x => x.cta), off = fin >= 0 && i >= fin ? ease(lt / 0.4) : 0;
-    act.style.opacity = 1 - off; act.style.transform = `scale(${1 - 0.06 * off})`;
-  }
   // полоса прогресса по сценам
   document.querySelectorAll('#prog b').forEach((b, n) => { b.style.width = n < i ? '100%' : n > i ? '0%' : `${Math.min(100, lt / s.dur * 100)}%`; });
 };

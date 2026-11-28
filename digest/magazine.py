@@ -330,7 +330,8 @@ a.arch-i:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
 #theme{all:unset;cursor:pointer;width:34px;height:34px;display:grid;place-items:center;color:var(--muted);transition:color .2s}
 #theme:hover{color:var(--ink)}
 #theme:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-#theme svg{width:18px;height:18px}
+#theme svg{width:18px;height:18px;display:block}
+#theme .t-d{display:block}
 #theme .t-l{display:none}
 html[data-theme="dark"] #theme .t-d{display:none}
 html[data-theme="dark"] #theme .t-l{display:block}
@@ -436,7 +437,7 @@ html[data-theme="dark"] #theme .t-l{display:block}
 .ad{background:#060606;color:#fff}
 .ad-m{display:block}
 .ad-m video,.band-m video{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#000}
-.ad-m video{aspect-ratio:1/1;background:#060606}   /* ИИ-трансформация: квадратный ролик с крупным текстом */
+.ad-m video{aspect-ratio:4/5;background:#060606}   /* ИИ-трансформация: вертикальный ролик с крупным заголовком */
 .ad-b{padding:16px 18px 20px}
 .ad-k{display:flex;align-items:center;gap:10px;font:700 10px/1.3 var(--mono);letter-spacing:.2em;text-transform:uppercase;color:#a1a1a6}
 .ad-t{margin-top:8px;font:800 clamp(18px,1.4vw,22px)/1.15 var(--sans);letter-spacing:-.03em;color:#fff}
@@ -862,8 +863,13 @@ if(tb){lab();tb.addEventListener('click',function(){var dark=d.getAttribute('dat
 var io=null,ioBand=null;
 function startIO(){if(!io)return;document.querySelectorAll('.rv').forEach(function(el){(el.classList.contains('band')?ioBand:io).observe(el)})}
 function go(){d.classList.add('ready');setTimeout(startIO,450)}
-document.querySelectorAll('.lang a[data-lang]').forEach(function(a){a.addEventListener('click',function(){
-  try{localStorage.setItem('dataist_lang',a.getAttribute('data-lang'))}catch(e){}})});
+document.querySelectorAll('.lang a[data-lang]').forEach(function(a){a.addEventListener('click',function(e){
+  try{localStorage.setItem('dataist_lang',a.getAttribute('data-lang'))}catch(x){}
+  if(window.name==='dataist-bundle'&&window.parent!==window){e.preventDefault();parent.postMessage({dataistLang:a.getAttribute('data-lang')},'*')}})});
+// в файле-сборке (страница внутри рамки, адрес blob:) переход по якорю сам не прокручивает — прокручиваем сами
+if(window.name==='dataist-bundle')document.addEventListener('click',function(e){var a=e.target.closest&&e.target.closest('a[href^="#"]');if(!a)return;
+  var id=a.getAttribute('href').slice(1),t=id?document.getElementById(id):null;e.preventDefault();
+  if(t)t.scrollIntoView({behavior:reduce?'auto':'smooth'});else window.scrollTo({top:0,behavior:reduce?'auto':'smooth'})});
 if(document.fonts&&document.fonts.ready){var done=false;document.fonts.ready.then(function(){if(!done){done=true;go()}});setTimeout(function(){if(!done){done=true;go()}},900)}else go();
 var bar=document.querySelector('.prog i'),ticking=false;
 function onScroll(){ticking=false;var y=window.scrollY||0,h=d.scrollHeight-innerHeight;

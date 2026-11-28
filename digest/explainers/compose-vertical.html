@@ -1,0 +1,89 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<!-- Вертикальная сцена 720×900 (4:5) для узкой колонки газеты: сверху — анимация сайта крупным планом,
+     снизу — только крупный заголовок (мелкий текст в колонке не читается, кнопка — под роликом, на странице).
+     Управляется из render.js: setup(cfg), render(t). Кадры фона — запись сайта в исходном размере 1280×720. -->
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700;800&display=block" rel="stylesheet">
+<style>
+  html,body{margin:0;background:#060606}
+  #stage{position:relative;width:720px;height:900px;overflow:hidden;background:#060606}
+  #vis{position:absolute;left:0;top:96px;width:720px;height:520px;overflow:hidden}
+  #vis img{position:absolute;left:0;top:0;width:1280px;height:720px;transform-origin:0 0;display:block}
+  #vis:after{content:"";position:absolute;left:0;right:0;bottom:0;height:90px;background:linear-gradient(rgba(6,6,6,0),#060606)}
+  #vis:before{content:"";position:absolute;left:0;right:0;top:0;height:40px;z-index:1;background:linear-gradient(#060606,rgba(6,6,6,0))}
+  #logo{position:absolute;left:40px;top:34px}
+  #cap{position:absolute;left:40px;right:40px;bottom:80px}
+  .w{display:inline-block;white-space:pre}
+  .title{font:800 54px/1.1 'JetBrains Mono',monospace;letter-spacing:-.015em;text-transform:uppercase;color:#fff;
+    text-shadow:0 0 14px rgba(255,255,255,.28),0 0 30px rgba(160,113,255,.3)}
+  .pv{color:#b48cff;text-shadow:0 0 16px rgba(160,113,255,.85),0 0 34px rgba(160,113,255,.45)}
+  .go{color:#ff8a33;text-shadow:0 0 16px rgba(255,138,51,.8),0 0 34px rgba(255,138,51,.4)}
+  #prog{position:absolute;left:40px;right:40px;bottom:36px;display:flex;gap:8px}
+  #prog i{flex:1;height:5px;border-radius:3px;overflow:hidden;position:relative;background:rgba(255,255,255,.12)}
+  #prog i b{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#a071ff,#ff8a33)}
+</style></head>
+<body><div id="stage">
+  <div id="vis"><img id="bgCur"><img id="bgPrev"></div>
+  <div id="logo"></div>
+  <div id="cap"></div>
+  <div id="prog"></div>
+</div>
+<script>
+let CFG = null, built = -1, starts = [], total = 0;
+const W = 720, H = 520;
+const ease = x => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
+
+function splitWords(html) {
+  const tpl = document.createElement('template'); tpl.innerHTML = html;
+  const out = [];
+  tpl.content.childNodes.forEach(n => {
+    if (n.nodeName === 'BR') { out.push({ br: true }); return; }
+    const cls = n.nodeType === 1 ? n.className : '';
+    n.textContent.split(/([ \t\n]+)/).forEach(part => { if (part) out.push({ t: part, cls, space: /^[ \t\n]+$/.test(part) }); });
+  });
+  return out.map(p => p.br ? '<br>' : p.space ? p.t : `<span class="w ${p.cls}">${p.t.replace(/&/g, '&amp;').replace(/</g, '&lt;')}</span>`).join('');
+}
+
+window.setup = cfg => {
+  CFG = cfg; starts = []; total = 0;
+  cfg.scenes.forEach(s => { starts.push(total); total += s.dur; });
+  document.getElementById('logo').innerHTML = `<img src="${cfg.logo}" style="height:34px;display:block">`;
+  document.getElementById('prog').innerHTML = cfg.scenes.map(() => '<i><b></b></i>').join('');
+  return total;
+};
+
+function build(i) {
+  document.getElementById('cap').innerHTML = `<div class="title">${splitWords(CFG.scenes[i].title)}</div>`;
+  built = i;
+}
+
+// крупный план: окно кадра (x, y, ширина) растягивается на всю ширину верхней части; за сцену — лёгкий наезд
+function frame(img, s, p) {
+  const [x, y, w] = s.crop, z = 1 + 0.05 * p, k = W / w * z;
+  const cx = x + w / 2, cy = y + w * H / W / 2;
+  img.style.transform = `translate(${W / 2 - cx * k}px,${H / 2 - cy * k}px) scale(${k})`;
+}
+async function setImg(el, src) {
+  if (el.getAttribute('src') !== src) { el.setAttribute('src', src); await el.decode().catch(() => {}); }
+}
+
+window.render = async t => {
+  let i = 0; while (i < CFG.scenes.length - 1 && t >= starts[i + 1]) i++;
+  const s = CFG.scenes[i], lt = t - starts[i];
+  if (built !== i) build(i);
+  const cur = document.getElementById('bgCur'), prev = document.getElementById('bgPrev');
+  const k = Math.min(Math.floor(lt * CFG.fps), s.frames - 1);
+  await setImg(cur, `${s.dir}/f${String(k + 1).padStart(4, '0')}.jpg`); frame(cur, s, lt / s.dur);
+  if (i > 0 && lt < 0.35) {
+    const p = CFG.scenes[i - 1];
+    await setImg(prev, `${p.dir}/f${String(p.frames).padStart(4, '0')}.jpg`); frame(prev, p, 1);
+    prev.style.opacity = 1 - ease(lt / 0.35);
+  } else prev.style.opacity = 0;
+  const out = Math.min(1, Math.max(0, (s.dur - lt) / 0.28));
+  const words = [...document.querySelectorAll('#cap .w')];
+  words.forEach((w, n) => { const a = 0.1 + n * 0.08; const p = ease((lt - a) / 0.45); w.style.opacity = p * out;
+    w.style.transform = `translateY(${(1 - p) * 20}px)`; w.style.filter = `blur(${(1 - p) * 6}px)`; });
+  document.querySelectorAll('#prog b').forEach((b, n) => { b.style.width = n < i ? '100%' : n > i ? '0%' : `${Math.min(100, lt / s.dur * 100)}%`; });
+};
+</script>
+</body></html>

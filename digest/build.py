@@ -70,7 +70,7 @@ T = {
                     "и 3 месяца обучения команды с ментором.",
         "ait_stats": [("30+", "компаний"), ("$100+ млн", "эффекта"), ("10+ лет", "в ИИ")],
         "ait_cta": "Бесплатная ИИ-диагностика →", "ait_url": "https://andre.technology/?lang=ru",
-        "ait_media": "ait-explainer-ru", "ait_web": "ait-square-ru", "nr_media": "neuronium-explainer-ru",
+        "ait_media": "ait-explainer-ru", "ait_web": "ait-vertical-ru", "nr_media": "neuronium-explainer-ru",
         "nr_kicker": "Нейроний · ИИ-операционная система", "nr_title": "Ведите ИИ-бизнес в\u00a0операционной системе на\u00a0базе ИИ",
         "nr_text": "ИИ-суперагент управляет 100 готовыми ИИ-сотрудниками в десяти отделах.",
         "nr_cta": "Попробовать бесплатно →", "nr_url": "https://neuronium.ai/",
@@ -106,7 +106,7 @@ T = {
                     "and 3 months of team training with a mentor.",
         "ait_stats": [("30+", "companies"), ("$100M+", "impact"), ("10+ yrs", "in AI")],
         "ait_cta": "Free AI assessment →", "ait_url": "https://andre.technology/?lang=en",
-        "ait_media": "ait-explainer-en", "ait_web": "ait-square-en", "nr_media": "neuronium-explainer-en",
+        "ait_media": "ait-explainer-en", "ait_web": "ait-vertical-en", "nr_media": "neuronium-explainer-en",
         "nr_kicker": "Neuronium · AI Operating System", "nr_title": "Run AI Business with AI Operating System",
         "nr_text": "AI Superagent manages 100 ready AI employees across ten departments.",
         "nr_cta": "Start free trial →", "nr_url": "https://neuronium.ai/",
@@ -925,7 +925,7 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
 
     ait_args = (t["ait_url"], t["ait_kicker"], t["ait_title"], t["ait_text"], t["ait_cta"])
     ait = ad_card(asset(f"{t['ait_media']}.gif"), with_utm(ait_args[0]), *ait_args[1:], stats=t["ait_stats"])
-    mag["ait"] = ad_web(t["ait_web"], *ait_args, stats=t["ait_stats"])   # в узкой колонке газеты — квадратный ролик
+    mag["ait"] = ad_web(t["ait_web"], *ait_args, stats=t["ait_stats"])   # в узкой колонке газеты — вертикальный ролик
     if sections and sections[-1]["key"] == "author":
         attach(sections[-1], ait)
         ait = None
