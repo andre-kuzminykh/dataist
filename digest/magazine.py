@@ -775,7 +775,12 @@ html.js .ft-mark.rv.in span{opacity:1;transform:none}
   .iss span:nth-child(2){display:none}
   .spread{grid-template-columns:1fr;row-gap:36px}
   .spread>*{padding:0!important;border-left:0!important}
-  .rail{display:flex;align-items:stretch;border-top:0;margin-top:0;padding-top:0!important}
+  /* на телефоне друг за другом: «В этом выпуске» → топ новостей → видеожурнал → реклама */
+  .rail{display:contents}
+  .spread>.rail>.toc{order:1}
+  .spread>.col-news{order:2}
+  .spread>.col-lead{order:3}
+  .spread>.rail>.ad{order:4}
   .st{grid-auto-columns:44%}
   .au,.lb-f,.ac-f,.band-in{grid-template-columns:1fr}
   .cols>*{padding:0!important;border-left:0!important}
