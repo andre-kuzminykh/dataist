@@ -16,7 +16,7 @@ MT = {
         "nav": {"news": "Новости", "video": "Видео", "author": "Колонка", "research": "Лаборатория", "edu": "Академия"},
         "play": "Смотреть видео", "top": "Наверх", "prev": "Назад", "next": "Дальше",
         "skip": "Перейти к содержанию", "made": "Создано в", "issue": "Выпуск № {n}", "issue_short": "№ {n}", "next_up": "Далее", "language": "Язык",
-        "lesson": "Урок", "study": "Исследование",
+        
         "archive": "Архив выпусков", "you": "Вы читаете", "soon": "Выйдет в пятницу", "close": "Закрыть",
     },
     "en": {
@@ -24,7 +24,7 @@ MT = {
         "nav": {"news": "News", "video": "Video", "author": "Column", "research": "Lab", "edu": "Academy"},
         "play": "Watch the video", "top": "Back to top", "prev": "Back", "next": "Next",
         "skip": "Skip to content", "made": "Made in", "issue": "Issue No. {n}", "issue_short": "No. {n}", "next_up": "Up next", "language": "Language",
-        "lesson": "Lesson", "study": "Study",
+        
         "archive": "Issue archive", "you": "You’re reading", "soon": "Out on Friday", "close": "Close",
     },
 }
@@ -199,11 +199,11 @@ def lab_sec(title, items, mt):
     """Лаборатория: картинки в рамках-«видоискателях», техничные заголовки, сетка в три колонки."""
     a, rest = items[0], items[1:]
     cards = "".join(f'''<article class="lb-c rv"><div class="xh">{media(x["url"], x.get("img"), x["title"])}</div>
-<span class="tag">{esc(mt["study"])}</span><h3 class="lb-t"><a {ext(x["url"])}>{esc(x["title"])}</a></h3>
+<h3 class="lb-t"><a {ext(x["url"])}>{esc(x["title"])}</a></h3>
 {paras(x["paras"], "lb-p")}{cta(x["url"], x["cta"])}</article>''' for x in rest)
     return f'''<section class="wrap sec" id="research" data-spy>{sec_head(title, f'<span class="sh-ic">{FLASK}</span>')}
 <article class="lb-f rv"><div class="xh">{media(a["url"], a.get("img"), a["title"])}</div>
-<div class="lb-fb"><span class="tag">{esc(mt["study"])}</span><h3 class="lb-ft"><a {ext(a["url"])}>{esc(a["title"])}</a></h3>
+<div class="lb-fb"><h3 class="lb-ft"><a {ext(a["url"])}>{esc(a["title"])}</a></h3>
 {paras(a["paras"], "lb-p")}{cta(a["url"], a["cta"])}</div></article>
 {f'<div class="lb-g">{cards}</div>' if cards else ''}</section>'''
 
@@ -212,11 +212,11 @@ def academy_sec(title, items, mt):
     """Академия: главный урок и программа — уроки списком в две колонки."""
     a, rest = items[0], items[1:]
     lessons = "".join(f'''<article class="ac-i rv">{media(x["url"], x.get("img"), x["title"])}
-<div><span class="tag tag-l">{esc(mt["lesson"])}</span><h3 class="ac-t"><a {ext(x["url"])}>{esc(x["title"])}</a></h3>
+<div><h3 class="ac-t"><a {ext(x["url"])}>{esc(x["title"])}</a></h3>
 {paras(x["paras"], "ac-p")}{cta(x["url"], x["cta"])}</div></article>''' for x in rest)
     return f'''<section class="wrap sec" id="edu" data-spy>{sec_head(title, f'<span class="sh-ic">{CAP}</span>')}
 <article class="ac-f rv">{media(a["url"], a.get("img"), a["title"])}
-<div class="ac-fb"><span class="tag tag-l">{esc(mt["lesson"])}</span><h3 class="ac-ft"><a {ext(a["url"])}>{esc(a["title"])}</a></h3>
+<div class="ac-fb"><h3 class="ac-ft"><a {ext(a["url"])}>{esc(a["title"])}</a></h3>
 {paras(a["paras"], "ac-p")}{cta(a["url"], a["cta"], "btn")}</div></article>
 {f'<div class="ac-l">{lessons}</div>' if lessons else ''}</section>'''
 
@@ -264,9 +264,6 @@ h3 a:hover,.now-t:hover{background-size:100% 1.5px}
   background:linear-gradient(var(--ink),var(--ink)) 0 0/100% 100% no-repeat;box-shadow:inset 0 0 0 1.5px var(--ink);
   padding:15px 20px;transition:opacity .2s,background-size 1s var(--ease),color .4s ease}
 .btn:hover{opacity:.82}
-.tag{display:inline-flex;align-items:center;gap:8px;font:700 10px/1 var(--mono);letter-spacing:.18em;text-transform:uppercase;color:var(--ink)}
-.tag::before{content:"";width:7px;height:7px;background:var(--ink)}
-.tag-l::before{width:0;height:0;background:none;border-left:7px solid var(--ink);border-top:4px solid transparent;border-bottom:4px solid transparent}
 .pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:#fff;color:#000;font:700 15px/1 var(--sans);padding:16px 24px;
   border-radius:999px;position:relative;overflow:hidden;isolation:isolate;transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
 .pill:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(160,113,255,.35)}
@@ -488,7 +485,7 @@ html[data-theme="dark"] #theme .t-l{display:block}
   linear-gradient(currentColor,currentColor) 100% 100%/16px 1.5px no-repeat,linear-gradient(currentColor,currentColor) 100% 100%/1.5px 16px no-repeat}
 .lb-f{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,3.4vw,56px);align-items:center;
   padding-bottom:clamp(28px,3vw,44px);border-bottom:1px solid var(--line)}
-.lb-ft{margin-top:14px;font:800 clamp(28px,2.8vw,44px)/1.05 var(--sans);letter-spacing:-.04em;color:var(--ink);text-wrap:balance}
+.lb-ft{margin-top:0;font:800 clamp(28px,2.8vw,44px)/1.05 var(--sans);letter-spacing:-.04em;color:var(--ink);text-wrap:balance}
 .lb-p{margin:10px 0 0;font:400 15px/1.58 var(--sans);color:var(--body)}
 .lb-f .lb-p{font-size:16.5px}
 .lb-g{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -496,13 +493,13 @@ html[data-theme="dark"] #theme .t-l{display:block}
 .lb-c:nth-child(3n+1){padding-left:0}
 .lb-c:nth-child(3n){padding-right:0}
 .lb-c:not(:nth-child(3n+1)){border-left:1px solid var(--line)}
-.lb-c .tag{margin-top:14px}
+.lb-c .lb-t{margin-top:16px}
 .lb-t{margin-top:10px;font:800 clamp(19px,1.5vw,23px)/1.18 var(--sans);letter-spacing:-.025em;color:var(--ink)}
 
 /* академия — программа уроков */
 .ac-f{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:clamp(24px,3.4vw,56px);align-items:center;
   padding-bottom:clamp(28px,3vw,44px);border-bottom:3px solid var(--ink)}
-.ac-ft{margin-top:14px;font:800 clamp(28px,2.8vw,44px)/1.08 var(--serif);color:var(--ink);text-wrap:balance}
+.ac-ft{margin-top:0;font:800 clamp(28px,2.8vw,44px)/1.08 var(--serif);color:var(--ink);text-wrap:balance}
 .ac-p{margin:10px 0 0;font:400 15px/1.58 var(--sans);color:var(--body)}
 .ac-f .ac-p{font-size:16.5px}
 .ac-l{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -510,7 +507,7 @@ html[data-theme="dark"] #theme .t-l{display:block}
   padding:clamp(20px,2.2vw,30px) clamp(20px,2.4vw,40px);border-bottom:1px solid var(--line)}
 .ac-i:nth-child(odd){padding-left:0}
 .ac-i:nth-child(even){padding-right:0;border-left:1px solid var(--line)}
-.ac-t{margin-top:10px;font:700 clamp(18px,1.45vw,22px)/1.22 var(--serif);color:var(--ink)}
+.ac-t{margin-top:0;font:700 clamp(18px,1.45vw,22px)/1.22 var(--serif);color:var(--ink)}
 .ac-i .cta{margin-top:12px}
 
 /* Нейроний — реклама во всю ширину */
@@ -558,7 +555,6 @@ html[data-theme="dark"] #theme .t-l{display:block}
 @keyframes rise{from{opacity:0;transform:translateY(16px)}}
 @keyframes pop{from{opacity:0;transform:translate(-50%,-50%) scale(0)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
 @keyframes scan{0%{top:9px;opacity:1}88%{opacity:1}100%{top:calc(100% - 11px);opacity:0}}
-@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
 @keyframes prog{0%{transform:scaleX(0);opacity:1}70%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1);opacity:0}}
 
 /* строка выпуска: линейки прочерчиваются навстречу, буквы сходятся */
@@ -675,14 +671,13 @@ html.js .au-i.rv .au-it{opacity:0;transform:translateY(14px);transition:opacity 
 html.js .au-i.rv.in .au-it{opacity:1;transform:none}
 
 /* лаборатория: рамка-видоискатель наводит фокус, салатовый лазер выжигает кадр сверху вниз —
-   за лучом тянется светящийся шлейф, кадр проявляется зелёным, как в приборе ночного видения, и «остывает»; подпись печатается */
+   за лучом тянется светящийся шлейф, кадр проявляется зелёным, как в приборе ночного видения, и «остывает» */
 .lb-f,.lb-c{--laser:#9dff1e}
 .xh::after{content:"";position:absolute;left:9px;right:9px;top:9px;height:2px;z-index:2;pointer-events:none;opacity:0;border-radius:2px;
   background:linear-gradient(90deg,transparent,var(--laser) 8%,#f1ffd6 50%,var(--laser) 92%,transparent);
   box-shadow:0 0 6px 1px rgba(157,255,30,1),0 0 22px 6px rgba(130,255,0,.6),0 0 60px 16px rgba(130,255,0,.25)}
 .xh .media::after{content:"";position:absolute;inset:0;z-index:1;pointer-events:none;opacity:0;transform:translateY(-100%);mix-blend-mode:screen;
   background:linear-gradient(to bottom,transparent calc(100% - 140px),rgba(130,255,0,.14) calc(100% - 70px),rgba(170,255,60,.55) calc(100% - 8px),#f1ffd6)}
-.lb-f .tag::before,.lb-c .tag::before{background:var(--laser);box-shadow:0 0 8px rgba(130,255,0,.9)}
 @keyframes burn{from{transform:translateY(-100%)}to{transform:none}}
 @keyframes burnoff{from{opacity:1}to{opacity:0}}
 @keyframes nv{0%,48%{filter:grayscale(1) sepia(1) hue-rotate(48deg) saturate(5) brightness(1.08) contrast(1.15)}100%{filter:none}}
@@ -697,9 +692,6 @@ html.js .lb-f.rv.in .xh::after,html.js .lb-c.rv.in .xh::after{animation:scan 1.3
 html.js .lb-f.rv.in .xh .media::after,html.js .lb-c.rv.in .xh .media::after{
   animation:burn 1.3s cubic-bezier(.6,0,.35,1) calc(var(--d,0s) + .35s) both,burnoff .6s ease calc(var(--d,0s) + 1.55s) both}
 html.js .lb-f.rv.in .media img,html.js .lb-c.rv.in .media img{animation:nv 2.7s ease-out calc(var(--d,0s) + .35s) backwards}
-html.js .lb-f.rv .tag,html.js .lb-c.rv .tag{clip-path:inset(-2px 100% -2px -2px);transition:clip-path .9s steps(16,end) calc(var(--d,0s) + .9s)}
-html.js .lb-f.rv.in .tag,html.js .lb-c.rv.in .tag{clip-path:inset(-2px)}
-html.js .lb-f.rv.in .tag::before,html.js .lb-c.rv.in .tag::before{animation:blink .9s linear calc(var(--d,0s) + 1.8s) 3}
 html.js .lb-f.rv .lb-ft,html.js .lb-c.rv .lb-t{opacity:0;transform:translateY(18px);
   transition:opacity .7s ease calc(var(--d,0s) + .55s),transform 1s var(--ease) calc(var(--d,0s) + .55s)}
 html.js .lb-f.rv .lb-p,html.js .lb-c.rv .lb-p{opacity:0;transition:opacity .9s ease calc(var(--d,0s) + .8s)}
@@ -708,7 +700,7 @@ html.js .lb-f.rv:not(.in) .cta,html.js .lb-c.rv:not(.in) .cta{opacity:0}
 html.js .lb-f.rv.in .cta,html.js .lb-c.rv.in .cta{animation:rise .7s var(--ease) calc(var(--d,0s) + 1s) backwards}
 
 /* академия: обложка и уроки перелистываются, как страницы книги, — от корешка слева, с тенью по сгибу
-   и лёгким «шлепком» в конце; метка «Урок» падает сверху, как закладка; кнопка «заряжается», уроки идут по программе */
+   и лёгким «шлепком» в конце; кнопка «заряжается», уроки идут по программе */
 .ac-f .media::after,.ac-i .media::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;
   background:linear-gradient(90deg,rgba(0,0,0,.62),rgba(0,0,0,.2) 42%,rgba(255,255,255,.14) 74%,rgba(0,0,0,.08))}
 @keyframes leaf{0%{transform:perspective(2000px) rotateY(-90deg);box-shadow:40px 10px 60px rgba(0,0,0,.35)}
@@ -719,18 +711,15 @@ html.js .ac-f.rv,html.js .ac-i.rv{opacity:1;transform:none}
 html.js .ac-f.rv .media,html.js .ac-i.rv .media{clip-path:none;transition:none;transform-origin:0 50%;transform:perspective(2000px) rotateY(-90deg)}
 html.js .ac-f.rv.in .media,html.js .ac-i.rv.in .media{animation:leaf 1.6s cubic-bezier(.5,.05,.3,1) var(--d,0s) both}
 html.js .ac-f.rv.in .media::after,html.js .ac-i.rv.in .media::after{animation:leafshade 1.6s ease-in var(--d,0s) both}
-html.js .ac-f.rv .ac-fb>.tag,html.js .ac-i.rv>div>.tag{opacity:0;transform:translateY(-170%)}
-html.js .ac-f.rv.in .ac-fb>.tag,html.js .ac-i.rv.in>div>.tag{opacity:1;transform:none;
-  transition:opacity .2s ease calc(var(--d,0s) + .8s),transform .8s cubic-bezier(.3,1.8,.45,1) calc(var(--d,0s) + .8s)}
-html.js .ac-f.rv .ac-fb>:not(.btn):not(.tag){opacity:0;transform:translateX(-26px);transition:opacity .7s ease,transform 1s var(--ease)}
-html.js .ac-f.rv .ac-fb>:nth-child(2){transition-delay:calc(var(--d,0s) + .6s)}
-html.js .ac-f.rv .ac-fb>:nth-child(3){transition-delay:calc(var(--d,0s) + .7s)}
-html.js .ac-f.rv .ac-fb>:nth-child(n+4){transition-delay:calc(var(--d,0s) + .8s)}
-html.js .ac-f.rv.in .ac-fb>:not(.btn):not(.tag){opacity:1;transform:none}
+html.js .ac-f.rv .ac-fb>:not(.btn){opacity:0;transform:translateX(-26px);transition:opacity .7s ease,transform 1s var(--ease)}
+html.js .ac-f.rv .ac-fb>:nth-child(1){transition-delay:calc(var(--d,0s) + .6s)}
+html.js .ac-f.rv .ac-fb>:nth-child(2){transition-delay:calc(var(--d,0s) + .7s)}
+html.js .ac-f.rv .ac-fb>:nth-child(n+3){transition-delay:calc(var(--d,0s) + .8s)}
+html.js .ac-f.rv.in .ac-fb>:not(.btn){opacity:1;transform:none}
 html.js .ac-f.rv .btn{transition-delay:0s,calc(var(--d,0s) + .95s),calc(var(--d,0s) + 1.25s)}
 html.js .ac-f.rv:not(.in) .btn{background-size:0 100%;color:var(--ink)}
-html.js .ac-i.rv>div>:not(.cta):not(.tag){opacity:0;transform:translateX(-18px);transition:opacity .6s ease calc(var(--d,0s) + .45s),transform .9s var(--ease) calc(var(--d,0s) + .45s)}
-html.js .ac-i.rv.in>div>:not(.cta):not(.tag){opacity:1;transform:none}
+html.js .ac-i.rv>div>:not(.cta){opacity:0;transform:translateX(-18px);transition:opacity .6s ease calc(var(--d,0s) + .45s),transform .9s var(--ease) calc(var(--d,0s) + .45s)}
+html.js .ac-i.rv.in>div>:not(.cta){opacity:1;transform:none}
 html.js .ac-i.rv:not(.in) .cta{opacity:0}
 html.js .ac-i.rv.in .cta{animation:rise .7s var(--ease) calc(var(--d,0s) + .7s) backwards}
 .ac-i{position:relative}
