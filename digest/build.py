@@ -986,6 +986,15 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
     book = load_archive(archive)
     issues = [x for x in book.get(lang, []) if x.get("date") != entry["date"]] + [entry]
     issues.sort(key=lambda x: x["date"], reverse=True)
+
+    def issue_url(code):                      # этот же выпуск на другом языке: из архива, иначе по соседней папке
+        if code == lang:
+            return entry["url"] or None
+        hit = next((x["url"] for x in book.get(code, []) if x.get("date") == entry["date"] and x.get("url")), None)
+        if hit:
+            return hit
+        return entry["url"].replace(f"/{lang}/", f"/{code}/") if f"/{lang}/" in entry["url"] else None
+    langs = [{"code": c, "label": c.upper(), "url": issue_url(c), "current": c == lang} for c in ("ru", "en")]
     webpage = magazine.render({
         "lang": lang, "n": n, "brand": t["brand"], "title": subject, "description": hello,
         "hello": hello.replace("в одном письме", "в одном выпуске").replace("in one letter", "in one issue"),
@@ -995,7 +1004,7 @@ def build(lang, issue, outdir, fill=False, inline=False, web_url="#",
         "date_short": fmt_date(issue, lang, short=True), "socials": t["socials"], "made_name": t["made_name"],
         "to_dark": t["to_dark"], "to_light": t["to_light"],
         "og_image": local_img(og_img, True) if (og_img and base_url and not inline) else None,
-        "url": web_url if web_url.startswith("http") else None,
+        "url": web_url if web_url.startswith("http") else None, "langs": langs,
         "archive": {"issues": issues, "current": entry["date"], "months": t["months"],
                     "src": f"{SITE}/digest/issues.json"}, **mag})
     (outdir / "email.html").write_text(email, "utf-8")

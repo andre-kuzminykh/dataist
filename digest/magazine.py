@@ -14,16 +14,16 @@ MT = {
     "ru": {
         "tagline": "Еженедельный журнал об ИИ", "contents": "В этом выпуске",
         "nav": {"news": "Новости", "video": "Видео", "author": "Канал", "research": "Лаборатория", "edu": "Академия"},
-        "play": "Смотреть видео", "top": "Наверх ↑", "prev": "Назад", "next": "Дальше",
-        "skip": "Перейти к содержанию", "made": "Создано в", "issue": "Выпуск № {n}", "issue_short": "№ {n}", "next_up": "Далее",
+        "play": "Смотреть видео", "top": "Наверх", "prev": "Назад", "next": "Дальше",
+        "skip": "Перейти к содержанию", "made": "Создано в", "issue": "Выпуск № {n}", "issue_short": "№ {n}", "next_up": "Далее", "language": "Язык",
         "lesson": "Урок", "study": "Исследование",
         "archive": "Архив выпусков", "you": "Вы читаете", "soon": "Выйдет в пятницу", "close": "Закрыть",
     },
     "en": {
         "tagline": "The weekly AI magazine", "contents": "In this issue",
         "nav": {"news": "News", "video": "Video", "author": "Channel", "research": "Lab", "edu": "Academy"},
-        "play": "Watch the video", "top": "Back to top ↑", "prev": "Back", "next": "Next",
-        "skip": "Skip to content", "made": "Made in", "issue": "Issue No. {n}", "issue_short": "No. {n}", "next_up": "Up next",
+        "play": "Watch the video", "top": "Back to top", "prev": "Back", "next": "Next",
+        "skip": "Skip to content", "made": "Made in", "issue": "Issue No. {n}", "issue_short": "No. {n}", "next_up": "Up next", "language": "Language",
         "lesson": "Lesson", "study": "Study",
         "archive": "Issue archive", "you": "You’re reading", "soon": "Out on Friday", "close": "Close",
     },
@@ -33,6 +33,18 @@ CHEV = ('<svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor"
         'stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>')
 CROSS = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
          '<path d="M18 6 6 18M6 6l12 12"/></svg>')
+
+UP = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" '
+      'aria-hidden="true"><path d="M12 19V5"/><path d="m5 12 7-7 7 7"/></svg>')
+
+SOCIAL = {  # значки соцсетей — те же, что на dataist.ai/about
+    "telegram": '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.94 4.3 18.8 19.1c-.24 1.05-.86 1.31-1.73.82l-4.78-3.53-2.31 2.22c-.25.25-.47.47-.96.47l.34-4.86 8.85-8c.39-.34-.08-.53-.6-.19L6.68 12.92 1.97 11.45c-1.02-.32-1.04-1.02.22-1.51L20.6 2.84c.85-.32 1.6.19 1.34 1.46Z"/></svg>',
+    "linkedin": '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.14 1.45-2.14 2.94v5.67H9.35V9h3.41v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.46v6.28ZM5.34 7.43a2.06 2.06 0 1 1 0-4.13 2.06 2.06 0 0 1 0 4.13Zm1.78 13.02H3.56V9h3.56v11.45ZM22.22 0H1.77C.79 0 0 .77 0 1.73v20.54C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.73V1.73C24 .77 23.2 0 22.22 0Z"/></svg>',
+    "x": '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.9 1.15h3.68l-8.04 9.19L24 22.85h-7.4l-5.8-7.59-6.64 7.59H.47l8.6-9.83L0 1.15h7.6l5.24 6.93 6.06-6.93Zm-1.29 19.5h2.04L6.49 3.24H4.3l13.31 17.41Z"/></svg>',
+    "youtube": '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M23.5 6.19a3.02 3.02 0 0 0-2.12-2.14C19.5 3.55 12 3.55 12 3.55s-7.5 0-9.38.5A3.02 3.02 0 0 0 .5 6.19C0 8.07 0 12 0 12s0 3.93.5 5.81a3.02 3.02 0 0 0 2.12 2.14c1.88.5 9.38.5 9.38.5s7.5 0 9.38-.5a3.02 3.02 0 0 0 2.12-2.14C24 15.93 24 12 24 12s0-3.93-.5-5.81ZM9.55 15.57V8.43L15.82 12l-6.27 3.57Z"/></svg>',
+    "instagram": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="19" height="19" rx="5.5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.6" cy="6.4" r=".6" fill="currentColor"/></svg>',
+    "tiktok": '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12.53.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07Z"/></svg>',
+}
 
 SUN = ('<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">'
        '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2'
@@ -220,7 +232,7 @@ CSS = r"""
 html[data-theme="dark"]{--bg:#0a0a0b;--ink:#f5f5f7;--text:#ececf0;--body:#c7c7cc;--muted:#8e8e93;--dim:#636366;--line:#2c2c2f;
   --soft:#161618;--hdr:rgba(10,10,11,.9);--ghost:#18181a;color-scheme:dark}
 *,*::before,*::after{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:calc(var(--top) + 12px);-webkit-text-size-adjust:100%}
+html{scroll-behavior:smooth;scroll-padding-top:calc(var(--top) + 12px);-webkit-text-size-adjust:100%;overflow-x:hidden;overflow-x:clip}
 body{margin:0;background:var(--bg);color:var(--text);font:400 16px/1.6 var(--sans);-webkit-font-smoothing:antialiased;
   transition:background-color .5s var(--ease),color .5s var(--ease)}
 a{color:inherit;text-decoration:none}
@@ -273,6 +285,13 @@ h3 a:hover,.now-t:hover{background-size:100% 1.5px}
 .nav a:hover{color:var(--ink)}
 .nav a.on{color:var(--ink);border-bottom-color:var(--ink)}
 .tools{display:flex;align-items:center;gap:14px;flex:none}
+.lang{display:flex;align-items:center;gap:7px;font:700 13px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;user-select:none}
+.lang .on{color:var(--ink)}
+.lang a,.lang .off{color:var(--muted);transition:color .2s}
+.lang a:hover{color:var(--ink)}
+.lang .off{opacity:.5}
+.lang .sep{color:var(--muted);opacity:.4}
+.lang a:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 .arch-btn{all:unset;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;transition:color .2s}
 .arch-btn:hover,.arch-btn[aria-expanded="true"]{color:var(--ink)}
 .arch-btn:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
@@ -458,7 +477,7 @@ html[data-theme="dark"] #theme .t-l{display:block}
 .au-it{font:700 clamp(17px,1.35vw,21px)/1.25 var(--serif);color:var(--ink)}
 
 /* лаборатория — рамки-«видоискатели» */
-.xh{--c:var(--ink);position:relative;padding:9px}
+.xh{--c:var(--ink);position:relative;padding:9px;overflow:hidden}
 .xh::before{content:"";position:absolute;inset:0;pointer-events:none;background:
   linear-gradient(var(--c),var(--c)) 0 0/16px 1.5px no-repeat,linear-gradient(var(--c),var(--c)) 0 0/1.5px 16px no-repeat,
   linear-gradient(var(--c),var(--c)) 100% 0/16px 1.5px no-repeat,linear-gradient(var(--c),var(--c)) 100% 0/1.5px 16px no-repeat,
@@ -514,9 +533,18 @@ html[data-theme="dark"] #theme .t-l{display:block}
   padding-bottom:.04em;user-select:none;transition:color .5s var(--ease)}
 .ft-row{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:18px 28px;border-top:1px solid var(--ink);
   margin-top:clamp(18px,2vw,28px);padding-top:18px;font:700 11px/1.4 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink)}
-.soc{display:flex;flex-wrap:wrap;gap:8px 22px}
-.soc a,.up{border-bottom:1px solid transparent;padding-bottom:2px;transition:border-color .3s}
-.soc a:hover,.up:hover{border-bottom-color:currentColor}
+.soc{display:flex;flex-wrap:wrap;gap:4px}
+.soc a{width:38px;height:38px;display:grid;place-items:center;border-radius:50%;color:var(--ink);
+  transition:background-color .25s,color .25s,transform .35s var(--ease)}
+.soc a svg{width:19px;height:19px}
+.soc a:hover{background:var(--ink);color:var(--bg);transform:translateY(-2px)}
+.soc a:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.up{width:46px;height:46px;border-radius:50%;background:var(--ink);color:var(--bg);display:grid;place-items:center;
+  transition:transform .35s var(--ease),box-shadow .35s var(--ease)}
+.up svg{width:20px;height:20px;transition:transform .35s var(--ease)}
+.up:hover{transform:translateY(-3px);box-shadow:0 12px 28px rgba(0,0,0,.22)}
+.up:hover svg{transform:translateY(-2px)}
+.up:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
 .made{display:inline-flex;align-items:center;gap:8px;color:var(--muted);justify-self:center}
 .ft-row .soc{justify-self:start}
 .ft-row .up{justify-self:end}
@@ -545,7 +573,7 @@ html.js .mast span{transform:translateY(108%) rotate(4deg);transform-origin:0 10
   transition:transform 1.2s cubic-bezier(.2,.9,.2,1) calc(var(--i) * 75ms + 80ms)}
 html.js.ready .mast span{transform:none}
 @supports ((-webkit-background-clip:text) or (background-clip:text)){
-  html.js .mast span{color:transparent;padding:.06em 0 .1em;margin:-.06em 0 -.1em;
+  html.js .mast span{color:transparent;padding:.08em .14em .12em;margin:-.08em -.14em -.12em;
     background:linear-gradient(var(--ink),var(--ink)) 0 100%/100% 0 no-repeat,linear-gradient(var(--line),var(--line));
     -webkit-background-clip:text;background-clip:text;
     transition:transform 1.2s cubic-bezier(.2,.9,.2,1) calc(var(--i) * 75ms + 80ms),background-size .9s cubic-bezier(.7,0,.2,1) calc(var(--i) * 85ms + 1s)}
@@ -618,7 +646,7 @@ html.js .sh.rv::after{transition-delay:.12s}
 html.js .sh.rv .sh-t .w>span{transform:translateY(112%) rotate(5deg);transform-origin:0 100%;
   transition:transform 1.05s cubic-bezier(.2,.9,.2,1) calc(.25s + var(--w,0) * 90ms)}
 html.js .sh.rv .sh-ic{opacity:0;transform:rotate(-90deg) scale(.4);transition:opacity .5s ease .2s,transform .9s cubic-bezier(.3,1.4,.5,1) .2s}
-html.js .sh.rv .sh-by{opacity:0;transform:translateX(24px);transition:opacity .7s ease .5s,transform .9s var(--ease) .5s}
+html.js .sh.rv .sh-by{opacity:0;transform:translateY(12px);transition:opacity .7s ease .5s,transform .9s var(--ease) .5s}
 html.js .sh.rv.in::before,html.js .sh.rv.in::after,html.js .sh.rv.in .sh-t .w>span,html.js .sh.rv.in .sh-ic,html.js .sh.rv.in .sh-by{opacity:1;transform:none}
 
 /* авторский канал: фото растекается из угла, буквица падает каплей, лента въезжает справа */
@@ -637,7 +665,7 @@ html.js .au-lead.rv.in .cta{animation:rise .8s var(--ease) calc(var(--d,0s) + .9
 html.js .au-i.rv{opacity:1;transform:none}
 html.js .au-i.rv .media,html.js .au-i.rv .au-ph{clip-path:inset(0 0 0 100%);transition:clip-path 1s cubic-bezier(.7,0,.2,1) var(--d,0s)}
 html.js .au-i.rv.in .media,html.js .au-i.rv.in .au-ph{clip-path:inset(0)}
-html.js .au-i.rv .au-it{opacity:0;transform:translateX(22px);transition:opacity .7s ease calc(var(--d,0s) + .25s),transform 1s var(--ease) calc(var(--d,0s) + .25s)}
+html.js .au-i.rv .au-it{opacity:0;transform:translateY(14px);transition:opacity .7s ease calc(var(--d,0s) + .25s),transform 1s var(--ease) calc(var(--d,0s) + .25s)}
 html.js .au-i.rv.in .au-it{opacity:1;transform:none}
 
 /* лаборатория: рамка-видоискатель наводит фокус, кадр проявляется под сканирующим лучом, подпись печатается */
@@ -664,7 +692,7 @@ html.js .lb-f.rv.in .cta,html.js .lb-c.rv.in .cta{animation:rise .7s var(--ease)
 html.js .ac-f.rv,html.js .ac-i.rv{opacity:1;transform:none}
 html.js .ac-f.rv .media{clip-path:polygon(0 0,0 0,-30% 100%,0 100%);transition:clip-path 1.5s cubic-bezier(.65,0,.3,1) var(--d,0s)}
 html.js .ac-f.rv.in .media{clip-path:polygon(0 0,130% 0,100% 100%,0 100%)}
-html.js .ac-f.rv .ac-fb>:not(.btn){opacity:0;transform:translateX(26px);transition:opacity .7s ease,transform 1s var(--ease)}
+html.js .ac-f.rv .ac-fb>:not(.btn){opacity:0;transform:translateX(-26px);transition:opacity .7s ease,transform 1s var(--ease)}
 html.js .ac-f.rv .ac-fb>:nth-child(1){transition-delay:calc(var(--d,0s) + .5s)}
 html.js .ac-f.rv .ac-fb>:nth-child(2){transition-delay:calc(var(--d,0s) + .6s)}
 html.js .ac-f.rv .ac-fb>:nth-child(3){transition-delay:calc(var(--d,0s) + .7s)}
@@ -718,9 +746,10 @@ html.js .ft-mark.rv.in span{opacity:1;transform:none}
 
 /* адаптивность */
 @media (max-width:1180px){
-  .spread{grid-template-columns:minmax(0,4fr) minmax(0,8fr)}
-  .spread>.col-lead{padding-right:0}
-  .rail{grid-column:1/-1;display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:var(--colgap);align-items:start;
+  .spread{grid-template-columns:minmax(0,8fr) minmax(0,4fr)}
+  .spread>.col-lead{order:1;padding-left:0;border-left:0}
+  .spread>.col-news{order:2}
+  .rail{order:3;grid-column:1/-1;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:var(--colgap);align-items:start;
     border-left:0!important;border-top:1px solid var(--line);margin-top:28px;padding:28px 0 0!important}
   .player{width:100%;min-width:0}
   .lp-m{max-height:none}
@@ -733,16 +762,15 @@ html.js .ft-mark.rv.in span{opacity:1;transform:none}
 @media (max-width:860px){
   :root{--top:56px}
   .top-in{gap:14px}
+  .lang{font-size:11px;gap:6px}
   .mk{width:26px;height:26px;font-size:12px}
   .nav{margin:0;flex:1;justify-content:flex-start;-webkit-mask-image:linear-gradient(90deg,#000 85%,transparent);mask-image:linear-gradient(90deg,#000 85%,transparent)}
   .nav a{font-size:10px}
   .iss{font-size:10px;letter-spacing:.14em}
   .iss span:nth-child(2){display:none}
-  .spread{grid-template-columns:1fr}
+  .spread{grid-template-columns:1fr;row-gap:36px}
   .spread>*{padding:0!important;border-left:0!important}
-  .spread>*+*{margin-top:36px}
-  .col-lead{order:-1}
-  .rail{display:flex;align-items:stretch;border-top:0;margin-top:36px;padding-top:0!important}
+  .rail{display:flex;align-items:stretch;border-top:0;margin-top:0;padding-top:0!important}
   .st{grid-auto-columns:44%}
   .au,.lb-f,.ac-f,.band-in{grid-template-columns:1fr}
   .cols>*{padding:0!important;border-left:0!important}
@@ -826,6 +854,8 @@ if(tb){lab();tb.addEventListener('click',function(){var dark=d.getAttribute('dat
 var io=null,ioBand=null;
 function startIO(){if(!io)return;document.querySelectorAll('.rv').forEach(function(el){(el.classList.contains('band')?ioBand:io).observe(el)})}
 function go(){d.classList.add('ready');setTimeout(startIO,450)}
+document.querySelectorAll('.lang a[data-lang]').forEach(function(a){a.addEventListener('click',function(){
+  try{localStorage.setItem('dataist_lang',a.getAttribute('data-lang'))}catch(e){}})});
 if(document.fonts&&document.fonts.ready){var done=false;document.fonts.ready.then(function(){if(!done){done=true;go()}});setTimeout(function(){if(!done){done=true;go()}},900)}else go();
 var bar=document.querySelector('.prog i'),ticking=false;
 function onScroll(){ticking=false;var y=window.scrollY||0,h=d.scrollHeight-innerHeight;
@@ -948,16 +978,15 @@ def render(ctx):
     ticker = (f'<div class="ticker" aria-hidden="true"><div class="tk"><span>{tick}</span><span>{tick}</span></div></div>'
               if tick else "")
 
-    # первая полоса: новости | видеожурнал (или главный материал) | реклама ИИ-трансформации и содержание
-    cols = []
-    if "news" in by:
-        cols.append(f'<section class="col-news" id="news" data-spy>{news_col(by["news"]["title"], news)}</section>')
+    # первая полоса: «В этом выпуске» и под ним реклама | видеожурнал (или главный материал) | новости
+    cols = [f'<div class="rail"><nav class="toc rv" aria-label="{esc(mt["contents"])}">{kick(mt["contents"])}<ol>{toc}</ol></nav>'
+            f'{ait_card(ctx["ait"]) if ctx.get("ait") else ""}</div>']
     if lead:
         body = (video_col(by[lead]["title"], ctx["video"], ctx["embed"], mt) if lead == "video"
                 else lead_col(by[lead]["title"], ctx[lead], mt))
         cols.append(f'<section class="col-lead" id="{lead}" data-spy>{body}</section>')
-    cols.append(f'<div class="rail">{ait_card(ctx["ait"]) if ctx.get("ait") else ""}'
-                f'<nav class="toc rv" aria-label="{esc(mt["contents"])}">{kick(mt["contents"])}<ol>{toc}</ol></nav></div>')
+    if "news" in by:
+        cols.append(f'<section class="col-news" id="news" data-spy>{news_col(by["news"]["title"], news)}</section>')
 
     # дальше разделы, у каждого своя вёрстка; Нейроний — в конце во всю ширину
     rest = []
@@ -974,7 +1003,22 @@ def render(ctx):
     if ctx.get("nr"):
         rest.append(nr_band(ctx["nr"]))
 
-    socials = "".join(f'<a {ext(u)}>{esc(n)}</a>' for n, u in ctx["socials"])
+    socials = "".join(f'<a {ext(u)} aria-label="{esc(n)}" title="{esc(n)}">{SOCIAL.get(n.lower(), esc(n))}</a>'
+                      for n, u in ctx["socials"])
+    # RU | EN — как на dataist.ai: текущий язык чёрным, второй — ссылкой на этот же выпуск
+    langs, parts = ctx.get("langs") or [], []
+    for i, l in enumerate(langs):
+        if i:
+            parts.append('<span class="sep" aria-hidden="true">|</span>')
+        if l["current"]:
+            parts.append(f'<span class="on" aria-current="true">{esc(l["label"])}</span>')
+        elif l["url"]:
+            parts.append(f'<a href="{esc(l["url"])}" hreflang="{l["code"]}" lang="{l["code"]}" data-lang="{l["code"]}">{esc(l["label"])}</a>')
+        else:
+            parts.append(f'<span class="off">{esc(l["label"])}</span>')
+    lang_nav = f'<nav class="lang" aria-label="{esc(mt["language"])}">{"".join(parts)}</nav>' if parts else ""
+    alternates = "".join(f'<link rel="alternate" hreflang="{l["code"]}" href="{esc(l["url"])}">'
+                         for l in langs if (l["url"] or "").startswith("http"))
     og = ""
     if ctx.get("og_image"):
         og = (f'<meta property="og:type" content="article"><meta property="og:title" content="{esc(ctx["title"])}">'
@@ -990,6 +1034,7 @@ def render(ctx):
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{esc(ctx["title"])}</title>
 <meta name="description" content="{esc(ctx["description"])}">
+{alternates}
 <meta name="color-scheme" content="light dark">
 {og}
 <script>if(!(window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches))document.documentElement.classList.add('js');try{{if(localStorage.getItem('theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}}catch(e){{}}</script>
@@ -1002,7 +1047,7 @@ def render(ctx):
 <header class="top"><div class="wrap top-in">
 <a class="brand" href="{esc(ctx.get("home") or "https://dataist.ai/")}" aria-label="{esc(ctx["brand"])} — dataist.ai"><span class="mk" aria-hidden="true">i</span></a>
 <nav class="nav" aria-label="{esc(mt["contents"])}">{nav}</nav>
-<div class="tools">
+<div class="tools">{lang_nav}
 <button id="theme" type="button" data-dark="{esc(ctx["to_dark"])}" data-light="{esc(ctx["to_light"])}" aria-label="{esc(ctx["to_dark"])}">
 <span class="t-d">{MOON}</span><span class="t-l">{SUN}</span></button></div></div>
 <div class="prog" aria-hidden="true"><i></i></div></header>
@@ -1022,7 +1067,7 @@ def render(ctx):
 <div class="ft-mark rv" aria-hidden="true">{foot_letters}</div>
 <div class="ft-row"><div class="soc">{socials}</div>
 <span class="made">{esc(mt["made"])} <span class="nr">Nr</span><b>{esc(ctx["made_name"])}</b></span>
-<a class="up" href="#top">{esc(mt["top"])}</a></div></div></footer>
+<a class="up" href="#top" aria-label="{esc(mt["top"])}" title="{esc(mt["top"])}">{UP}</a></div></div></footer>
 {arch_box}
 <script>{JS}</script>
 </body></html>
